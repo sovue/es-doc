@@ -22,7 +22,12 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="{ name, path } in data" :key="name" :id="name">
+        <tr
+          v-for="{ name, path } in data"
+          class="scroll-margin"
+          :key="name"
+          :id="name"
+        >
           <td>
             <a :href="'#' + name">#</a>
             <code>{{ codeTemplate.replace('%', name) }}</code>
@@ -92,3 +97,9 @@ export default {
   },
 }
 </script>
+
+<style scoped>
+.scroll-margin {
+  scroll-margin-top: 5rem;
+}
+</style>
