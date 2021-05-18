@@ -37,7 +37,13 @@
               :src="path"
               :class="{ nsfw: nsfw && nsfw.includes(name) }"
             />
-            <audio v-else-if="type === 'audio'" :src="path" controls></audio>
+            <audio
+              v-else-if="type === 'audio'"
+              :src="path"
+              :type="`audio/${path.split('/').pop().split('.').pop()}`"
+              preload="auto"
+              controls
+            ></audio>
           </td>
         </tr>
       </tbody>
