@@ -1,0 +1,25 @@
+pids
+logs
+node_modules
+npm-debug.log
+coverage/
+run
+dist
+.DS_Store
+.nyc_output
+.basement
+config.local.js
+basement_dist
+
+# Vuepress
+.cache
+.temp
+
+# Desktop ini files
+*.ini
+
+# Файлы хостинга
+.vercel
+
+# Local Netlify folder
+.netlify

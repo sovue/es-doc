@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "eamodio.gitlens",
+    "esbenp.prettier-vscode",
+    "luquedaniel.languague-renpy",
+    "alan.stylus",
+    "octref.vetur"
+  ]
+}

@@ -1,0 +1,45 @@
+/**
+ * Custom Styles here.
+ *
+ * ref：https://v1.vuepress.vuejs.org/config/#index-styl
+ */
+.home .hero img {
+	max-width: 450px !important;
+}
+
+.theme-default-content :not(a) > img {
+	cursor: pointer;
+}
+
+img {
+	&.nsfw:not(.medium-zoom-image--opened) {
+		filter: blur(10px);
+	}
+}
+
+th, td {
+	text-align: center;
+}
+
+tr {
+	&:target {
+		background: alpha($accentColor, 0.2);
+	}
+}
+
+body {
+	min-height: 100vh;
+}
+
+html {
+	min-height: 100vh;
+
+	&.dark {
+		background: black;
+		filter: invert(1) hue-rotate(180deg);
+
+		img {
+			filter: invert(1) hue-rotate(180deg);
+		}
+	}
+}

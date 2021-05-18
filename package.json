@@ -1,0 +1,44 @@
+{
+  "name": "es-doc",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Документация по созданию модов для БЛ",
+  "url": "https://github.com/sovue/es-doc",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sovue/es-doc.git"
+  },
+  "scripts": {
+    "dev": "vuepress dev src",
+    "build": "vuepress build src",
+    "prepare": "husky install",
+    "netlify": "netlify"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@octokit/request": "^5.4.15",
+    "lodash.clonedeep": "^4.5.0"
+  },
+  "devDependencies": {
+    "@vuepress/plugin-back-to-top": "^1.8.2",
+    "@vuepress/plugin-medium-zoom": "^1.8.2",
+    "@vuepress/plugin-pwa": "^1.8.2",
+    "eslint": "^7.23.0",
+    "eslint-config-prettier": "^8.1.0",
+    "husky": ">=6",
+    "lint-staged": ">=10",
+    "netlify-cli": "^3.29.9",
+    "prettier": "2.2.1",
+    "stylus-supremacy": "^2.15.0",
+    "vuepress": "^1.5.3",
+    "vuepress-plugin-check-md": "^0.0.2",
+    "vuepress-plugin-fulltext-search": "^2.1.0",
+    "vuepress-plugin-img-lazy": "^1.0.4"
+  },
+  "lint-staged": {
+    "*.js": "eslint --cache --fix",
+    "*.{js,css,md}": "prettier --write",
+    "*.md": "vuepress check-md src --fix",
+    "*.styl": "stylus-supremacy format -r ./src/.*/**/*.styl"
+  }
+}

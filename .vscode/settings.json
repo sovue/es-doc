@@ -1,0 +1,27 @@
+{
+  "editor.tabSize": 2,
+  "editor.renderWhitespace": "boundary",
+  "editor.renderIndentGuides": true,
+  "editor.wordWrap": "on",
+
+  "files.trimFinalNewlines": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true
+  },
+  "vetur.validation.template": true,
+  "vetur.format.defaultFormatter.html": "prettyhtml",
+  "vetur.format.defaultFormatter.js": "prettier-eslint",
+  "prettier.requireConfig": true,
+  "eslint.lintTask.enable": true,
+  "eslint.packageManager": "yarn",
+  "[stylus]": {
+    "editor.defaultFormatter": "thisismanta.stylus-supremacy",
+    "gitlens.codeLens.scopes": ["document"]
+  }
+}
