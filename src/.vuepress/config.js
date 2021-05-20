@@ -52,6 +52,14 @@ module.exports = {
       },
     ],
     ['meta', { name: 'msapplication-TileColor', content: '#000000' }],
+    [
+      'script',
+      {
+        data-ad-client: 'ca-pub-7346417257046723',
+        async: true,
+        src: 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js'
+      }
+    ]
   ],
 
   /**
