@@ -1,9 +1,10 @@
 const { resolve } = require('path')
+const { writeFileSync } = require('fs')
 const { request } = require('@octokit/request')
 
 const { description } = require('../../package')
-
 const resources = require('./assets/resources')
+const resourcesCache = require('../../resources-cache.json')
 
 module.exports = {
   /**
@@ -57,9 +58,9 @@ module.exports = {
       {
         'data-ad-client': 'ca-pub-7346417257046723',
         async: true,
-        src: 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js'
-      }
-    ]
+        src: 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js',
+      },
+    ],
   ],
 
   /**
@@ -205,18 +206,33 @@ module.exports = {
     },
   },
   async clientDynamicModules() {
+    const { data: latestCommitData } = await request(
+      `GET /repos/sovue/es-doc-assets/commits/main`
+    )
     let content = ''
 
-    for (const { name, path } of resources) {
-      const { data } = await request(
-        `GET /repos/sovue/es-doc-assets/contents/${path}`
+    if (resourcesCache.sha && resourcesCache.sha === latestCommitData.sha) {
+      content = JSON.parse(resourcesCache.data)
+    } else {
+      for (const { name, path } of resources) {
+        const { data } = await request(
+          `GET /repos/sovue/es-doc-assets/contents/${path}`
+        )
+        content += `export const ${name}=${JSON.stringify(
+          data.map(({ name, download_url }) => ({
+            name: name.split('.')[0],
+            path: download_url,
+          }))
+        )};`
+      }
+
+      writeFileSync(
+        resolve(__dirname, '..', '..', 'resources-cache.json'),
+        JSON.stringify({
+          sha: latestCommitData.sha,
+          data: content,
+        })
       )
-      content += `export const ${name}=${JSON.stringify(
-        data.map(({ name, download_url }) => ({
-          name: name.split('.')[0],
-          path: download_url,
-        }))
-      )};`
     }
 
     return {
