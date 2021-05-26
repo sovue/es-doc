@@ -212,7 +212,7 @@ module.exports = {
     let content = ''
 
     if (resourcesCache.sha && resourcesCache.sha === latestCommitData.sha) {
-      content = JSON.parse(resourcesCache.data)
+      content = resourcesCache.data
     } else {
       for (const { name, path } of resources) {
         const { data } = await request(
