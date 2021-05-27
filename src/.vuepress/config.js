@@ -99,10 +99,6 @@ module.exports = {
         text: 'Разное',
         link: '/misc/',
       },
-      {
-        text: 'Настройки',
-        link: '/settings.md',
-      },
     ],
     sidebar: {
       '/guide/': [
