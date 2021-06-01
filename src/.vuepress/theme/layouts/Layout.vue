@@ -1,5 +1,9 @@
 <template>
-  <ParentLayout></ParentLayout>
+  <ParentLayout>
+    <template #page-bottom>
+      <Footer />
+    </template>
+  </ParentLayout>
 </template>
 
 <script>

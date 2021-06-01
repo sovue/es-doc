@@ -11,6 +11,8 @@
 
 [![GitHub](https://img.shields.io/github/license/sovue/es-doc?label=%D0%BB%D0%B8%D1%86%D0%B5%D0%BD%D0%B7%D0%B8%D1%8F&style=for-the-badge)](LICENSE)
 
+![Powered by Vercel](https://www.datocms-assets.com/31049/1618983297-powered-by-vercel.svg)
+
 ## Внесение изменений
 
 Приветствуются изменения в любом виде. Однако, существуют некоторые правила, которых следует придерживаться. Вся информация о внесении и предложении изменений описана в [CONTRIBUTING.md](CONTRIBUTING.md) и является обязательной к прочтению.
