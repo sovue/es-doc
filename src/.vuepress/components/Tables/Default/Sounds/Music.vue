@@ -2,6 +2,7 @@
   <Tables-Base
     type="audio"
     :data="music"
+    :descriptions="descriptions"
     codeTemplate='play music music_list["%"]'
     file="music_list"
   />
@@ -9,11 +10,13 @@
 
 <script>
 import { music } from '@dynamic/resources'
+import { music as musicDescriptions} from '@/assets/descriptions'
 
 export default {
   data() {
     return {
       music,
+      descriptions: musicDescriptions,
     }
   },
 }
