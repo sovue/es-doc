@@ -2,6 +2,12 @@
 
 ![Главная страница](.github/preview.jpg)
 
+<p align="center">
+  <a href="https://vercel.com/?utm_source=sovue&utm_campaign=oss">
+    <img alt="Powered by Vercel" src="https://www.datocms-assets.com/31049/1618983297-powered-by-vercel.svg" />
+  </a>
+</p>
+
 Документация по созданию модов для БЛ.
 
 [![GitHub last commit](https://img.shields.io/github/last-commit/sovue/es-doc?label=%D0%BF%D0%BE%D1%81%D0%BB%D0%B5%D0%B4%D0%BD%D0%B5%D0%B5%20%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D0%B5&style=for-the-badge)](https://github.com/sovue/es-doc/commits/master)
@@ -10,8 +16,6 @@
 ![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/sovue/es-doc?label=%D1%80%D0%B0%D0%B7%D0%BC%D0%B5%D1%80%20%D0%BA%D0%BE%D0%B4%D0%B0%20%D1%80%D0%B5%D0%BF%D0%BE%D0%B7%D0%B8%D1%82%D0%BE%D1%80%D0%B8%D1%8F&style=for-the-badge)
 
 [![GitHub](https://img.shields.io/github/license/sovue/es-doc?label=%D0%BB%D0%B8%D1%86%D0%B5%D0%BD%D0%B7%D0%B8%D1%8F&style=for-the-badge)](LICENSE)
-
-![Powered by Vercel](https://www.datocms-assets.com/31049/1618983297-powered-by-vercel.svg)
 
 ## Внесение изменений
 
