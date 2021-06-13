@@ -3,7 +3,7 @@
     type="audio"
     :data="ambiences"
     :descriptions="descriptions"
-    codeTemplate="play ambience %"
+    codeTemplate="play ambience ambience_%"
     file="ambiences_list"
   />
 </template>
