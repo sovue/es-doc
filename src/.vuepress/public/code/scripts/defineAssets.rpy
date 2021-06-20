@@ -2,7 +2,6 @@ init python:
     from os import path
 
     MOD_ID = ""
-    MOD_NAME = ""
 
     for file in renpy.list_files():
         if MOD_ID in file:
