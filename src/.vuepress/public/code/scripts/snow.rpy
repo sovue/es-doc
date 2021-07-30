@@ -3,7 +3,16 @@ init python:
 
     random.seed()
 
-    def Snow(image, max_particles=50, speed=150, wind=100, xborder=(0,100), yborder=(50,400), **kwargs):
+
+    def Snow(
+        image,
+        max_particles=50,
+        speed=150,
+        wind=100,
+        xborder=(0, 100),
+        yborder=(50, 400),
+        **kwargs
+    ):
         """
         This creates the snow effect. You should use this function instead of instancing
         the SnowFactory directly (we'll, doesn't matter actually, but it saves typing if you're
@@ -30,13 +39,16 @@ init python:
             The vertical border range. A random value between those two will be applyed when creating particles.
             The higher the values, the fartest from the screen they will be created.
         """
-        return Particles(SnowFactory(image, max_particles, speed, wind, xborder, yborder, **kwargs))
+        return Particles(
+            SnowFactory(image, max_particles, speed, wind, xborder, yborder, **kwargs)
+        )
 
 
     class SnowFactory(object):
         """
         The factory that creates the particles we use in the snow effect.
         """
+
         def __init__(self, image, max_particles, speed, wind, xborder, yborder, **kwargs):
             """
             Initialize the factory. Parameters are the same as the Snow function.
@@ -59,21 +71,17 @@ init python:
 
             if particles is None or len(particles) < self.max_particles:
                 depth = random.randint(1, self.depth)
-                depth_speed = 1.5-depth/(self.depth+0.0)
+                depth_speed = 1.5 - depth / (self.depth + 0.0)
 
                 return [
-                  SnowParticle(
-                    self.image[depth - 1],
-                    random.uniform(
-                      -self.wind,
-                      self.wind
-                    ) * depth_speed,
-                    self.speed * depth_speed,
-                    random.randint(self.xborder[0], self.xborder[1]),
-                    random.randint(self.yborder[0], self.yborder[1]),
-                  )
+                    SnowParticle(
+                        self.image[depth - 1],
+                        random.uniform(-self.wind, self.wind) * depth_speed,
+                        self.speed * depth_speed,
+                        random.randint(self.xborder[0], self.xborder[1]),
+                        random.randint(self.yborder[0], self.yborder[1]),
+                    )
                 ]
-
 
         def image_init(self, image):
             """
@@ -81,17 +89,16 @@ init python:
             will create a list of images with different sizes, so we
             can predict them all and use the cached versions to make it more memory efficient.
             """
-            rv = [ ]
+            rv = []
 
             for depth in range(self.depth):
-                p = 1.1 - depth/(self.depth+0.0)
+                p = 1.1 - depth / (self.depth + 0.0)
                 if p > 1:
                     p = 1.0
 
-                rv.append( im.FactorScale( im.Alpha(image, p), p ) )
+                rv.append(im.FactorScale(im.Alpha(image, p), p))
 
             return rv
-
 
         def predict(self):
             """
@@ -105,6 +112,7 @@ init python:
         """
         Represents every particle in the screen.
         """
+
         def __init__(self, image, wind, speed, xborder, yborder):
             """
             Initializes the snow particle. This is called automatically when the object is created.
@@ -118,15 +126,13 @@ init python:
             self.wind = wind
             self.speed = speed
             self.oldst = None
-            self.xpos = random.uniform(0-xborder, renpy.config.screen_width+xborder)
+            self.xpos = random.uniform(0 - xborder, renpy.config.screen_width + xborder)
             self.ypos = -yborder
-
 
         def update(self, st):
             """
             Called internally in every frame to update the particle.
             """
-
 
             if self.oldst is None:
                 self.oldst = st
@@ -137,9 +143,12 @@ init python:
             self.xpos += lag * self.wind
             self.ypos += lag * self.speed
 
-            if self.ypos > renpy.config.screen_height or\
-            (self.wind< 0 and self.xpos < 0) or (self.wind > 0 and self.xpos > renpy.config.screen_width):
+            if (
+                self.ypos > renpy.config.screen_height
+                or (self.wind < 0 and self.xpos < 0)
+                or (self.wind > 0 and self.xpos > renpy.config.screen_width)
+            ):
 
-              return None
+                return None
 
             return int(self.xpos), int(self.ypos), st, self.image
