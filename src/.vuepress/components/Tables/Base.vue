@@ -36,7 +36,7 @@
             </p>
           </td>
           <td>
-            <img-lazy
+            <img
               v-if="type === 'img'"
               :alt="name"
               :src="path"
@@ -45,10 +45,9 @@
             <audio
               v-else-if="type === 'audio'"
               :src="path"
-              :type="`audio/${path.split('/').pop().split('.').pop()}`"
               preload="auto"
               controls
-            ></audio>
+            />
           </td>
         </tr>
       </tbody>

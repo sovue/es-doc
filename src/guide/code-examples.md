@@ -211,3 +211,34 @@ label playing_music:
 ```
 
 :::
+
+## Открытие файла
+
+Данный код позволяет открыть необходимый файл во время игры.
+
+```renpy
+init python:
+    import os
+    import sys
+    import subprocess
+    import platform
+
+    def openFile(path):
+        print(config.basedir)
+        file = os.path.abspath(os.path.join(config.basedir, path))
+        if sys.platform == "win32":
+            os.startfile(file)
+        elif platform.mac_ver()[0]:
+            subprocess.Popen(["open", file])
+        else:
+            subprocess.Popen(["xdg-open", file])
+```
+
+### Пример использования
+
+```renpy
+label test_label:
+    "Идёт некий текст."
+    $ openFile("game/mods/myMod/file.txt")
+    "Открывается файл `file.txt` по пути `game/mods/myMod/file.txt`, продолжается игра."
+```
