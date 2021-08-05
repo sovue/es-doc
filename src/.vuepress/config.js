@@ -185,7 +185,6 @@ module.exports = {
     ],
     '@vuepress/plugin-back-to-top',
     'check-md',
-    'img-lazy',
     'fulltext-search',
   ],
   configureWebpack: {
