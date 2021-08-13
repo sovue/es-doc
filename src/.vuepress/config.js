@@ -163,11 +163,13 @@ module.exports = {
    */
   plugins: [
     [
-      '@vuepress/plugin-medium-zoom',
+      'vuepress-plugin-medium-zoom',
       {
+        selector: '.theme-default-content img',
         options: {
           margin: 24,
-          background: '#212121',
+          background: 'rgba(33,33,33,0.9)',
+          scrollOffset: 0,
         },
       },
     ],
@@ -183,7 +185,6 @@ module.exports = {
     ],
     '@vuepress/plugin-back-to-top',
     'check-md',
-    'img-lazy',
     'fulltext-search',
   ],
   configureWebpack: {
