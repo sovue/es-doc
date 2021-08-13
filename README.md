@@ -36,13 +36,13 @@
 Если не настроен SSH, то:
 
 ```bash
-git clone https://github.com/yegorgunko/es-doc.git
+git clone https://github.com/sovue/es-doc.git
 ```
 
 или:
 
 ```bash
-git clone git@github.com:yegorgunko/es-doc.git
+git clone git@github.com:sovue/es-doc.git
 ```
 
 Также можно скачать последнюю версию по [ссылке](https://github.com/yegorgunko/es-doc/archive/refs/heads/master.zip).
@@ -61,4 +61,4 @@ yarn dev # npm run dev
 
 ## Решение проблем
 
-При возникновении проблем любого характера, вы всегда можете сообщить о них в [Вопросах (Issues) (рекомендуется)](https://github.com/yegorgunko/es-doc/issues) и в [ВК](https://vk.com/factoryes).
+При возникновении проблем любого характера, вы всегда можете сообщить о них в [Вопросах (Issues) (рекомендуется)](https://github.com/sovue/es-doc/issues) и в [ВК](https://vk.com/sovue).

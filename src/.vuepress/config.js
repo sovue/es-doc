@@ -61,7 +61,7 @@ module.exports = {
    * ref：https://v1.vuepress.vuejs.org/theme/default-theme-config.html
    */
   themeConfig: {
-    repo: 'yegorgunko/es-doc',
+    repo: 'sovue/es-doc',
     docsDir: 'src',
     docsBranch: 'master',
     lastUpdated: 'Обновлено',
