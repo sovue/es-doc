@@ -224,7 +224,6 @@ init python:
     import platform
 
     def openFile(path):
-        print(config.basedir)
         file = os.path.abspath(os.path.join(config.basedir, path))
         if sys.platform == "win32":
             os.startfile(file)
