@@ -269,10 +269,9 @@ init python:
 Теперь Обьявим нужные нам функции.
 ```renpy
     def screens_map_reset_condition():
-        global screen_map_condition, screen_map_count, screen_map_need_count, screen_map_label
+        global screen_map_condition, screen_map_count, screen_map_need_count
         screen_map_condition = [False,False,False,False,False,False,False]
         screen_map_count = 0
-        screen_map_label = 'screen_map_after_walk'
         screen_map_need_count = 1
 
 
@@ -361,10 +360,9 @@ init python:
     screen_map_need_count = 1
 
     def screens_map_reset_condition():
-        global screen_map_condition, screen_map_count, screen_map_need_count, screen_map_label
+        global screen_map_condition, screen_map_count, screen_map_need_count
         screen_map_condition = [False,False,False,False,False,False,False]
         screen_map_count = 0
-        screen_map_label = 'screen_map_after_walk'
         screen_map_need_count = 1
 
 
