@@ -289,7 +289,7 @@ init python:
 ```renpy
 init:
 
-    screen screen_map(condition={'screen_map_error_place' : [(414,467,200,200), screen_map_condition[0]]}): #ставим аргументы изначальное положение. На случай если забудем вписать аргумент при вызове экрана
+    screen screen_map(condition={'screen_map_error_place' : [(414,467,200,200), screen_map_condition[0]]}): #ставим аргументу изначальное положение. На случай если забудем вписать аргумент при вызове экрана
         modal True
         imagemap:
             #пропишем пути до состояний карты
@@ -376,7 +376,7 @@ init python:
             screen_map_need_count = count
 
 init:
-    screen screen_map(condition={'screen_map_error_place' : [(414,467,200,200), screen_map_condition[0]]}): #ставим аргументы изначальное положение. На случай если забудем вписать аргумент при вызове экрана
+    screen screen_map(condition={'screen_map_error_place' : [(414,467,200,200), screen_map_condition[0]]}): #ставим аргументу изначальное положение. На случай если забудем вписать аргумент при вызове экрана
         modal True
         imagemap:
             #пропишем пути до состояний карты
