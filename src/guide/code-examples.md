@@ -207,7 +207,7 @@ label playing_music:
 Если вы хотите добавить отображение играемой музыки в экран, то можно сделать так:
 
 ```renpy
-    add 'playing_music' # Будет добавлять в экран заранее обьявленый DynamicDisplayable
+    add 'playing_music' # Будет добавлять в экран заранее объявленый DynamicDisplayable
 ```
 
 :::
@@ -240,4 +240,196 @@ label test_label:
     "Идёт некий текст."
     $ openFile("game/mods/myMod/file.txt")
     "Открывается файл `file.txt` по пути `game/mods/myMod/file.txt`, продолжается игра."
+```
+## Создание собственной карты(для начинающих)
+В исходном коде игры и во многих модах можно увидеть похожий код для использования карты внутри игры. Но этот метод достаточно сложен в понимании для новичка. Поэтому далее будет показан пример кода для использовании карты в вашей модификации.
+Перед началом нам нужно будет изображение нашей карты в трёх состояниях:
+- `idle` - Состояние покоя.
+- `hover` - Состояние, когда курсор наведён на локацию
+- `insensitive` - Состояние, с отмеченными пройденными обьектами на карте. При этом состоянии нельзя будет кликнуть на локацию
+```renpy
+init python:
+    screen_map_condition = [False,False,False,False,False,False,False] # можно сделать и словарь
+    screen_map_count = 0
+    screen_map_label = 'screen_map_after_walk'
+    screen_map_need_count = 1
+```
+Сначала объявим нужные нам переменные.
+- `screen_map_condition` : `List` - Список состоящий из False. Кол-во False в списке определяет кол-во обьектов, которые могут быть на карте.
+
+- `screen_map_count` : `Int` - Число пройденных локаций. изначально равно нулю.
+
+- `screen_map_label` : `String` - Название лейбла в который мы будем прыгать после прохождения карты.
+
+- `screen_map_need_count` : `Int` - Число, определяющее сколько локаций нужно пройти. Изначально равно единице.
+
+::: tip
+Стоит напомнить,что название переменных лучше придумывать более уникальными, чтобы избежать конфликтов с другими модификациями.
+:::
+Теперь Обьявим нужные нам функции.
+```renpy
+    def screens_map_reset_condition():
+        global screen_map_condition, screen_map_count, screen_map_need_count, screen_map_label
+        screen_map_condition = [False,False,False,False,False,False,False]
+        screen_map_count = 0
+        screen_map_label = 'screen_map_after_walk'
+        screen_map_need_count = 1
+
+
+    def screens_map_set_condition(label,count):
+        global screen_map_need_count, screen_map_label
+        if label: #проверяем если аргумент label
+            screen_map_label = label
+        if count: #проверяем если аргумент count
+            screen_map_need_count = count
+```
+Функция `screens_map_reset_condition` сбрасывает переменные связанные с работой карты. А `screens_map_set_condition` принимает два аргумента `label` : `String` и `count` : `Int`. устанавливает  лейбл к которому должны перейти после карты и кол-во локаций, которое должны пройти.
+
+Перейдем к написанию самой карты. Она будет представлять собой `screen`, принимающий в качестве аргумента словарь.
+```renpy
+init:
+
+    screen screen_map(condition={'screen_map_error_place' : [(414,467,200,200), screen_map_condition[0]]}): #ставим аргументы изначальное положение. На случай если забудем вписать аргумент при вызове экрана
+        modal True
+        imagemap:
+            #пропишем пути до состояний карты
+            idle 'screens_map/map/old_map_idle.png'
+            hover 'screens_map/map/old_map_hover.png'
+            insensitive 'screens_map/map/old_map_insensitive.png'
+            alpha True
+            for label, lists in condition.items():
+                #циклом проходимся по словарю condition. и устанавливает чувствительные области в изображении
+                hotspot(lists[0][0], lists[0][1], lists[0][2], lists[0][3]) action [SensitiveIf(lists[1] == False), Jump(label)]
+                #SensitiveIf позволяет делать кнопку чувствительной, пока действует какое-то условие
+```
+Аргумент `condition` - словарь. Ключ этого словаря - название лейбла,к которому мы должны прыгнуть. Значение словаря - список. Первый элемент списка кортеж  `(x,y, width, height)` с координатами начала локации на изображении и её размеров по x и y. Второй элемент списка - какой-либо обьект списка `screen_map_condition`.
+
+Далее будет показано приминение этой карты.
+
+```renpy
+
+label screen_map_start:
+    window show dissolve
+    'Сейчас перед нами должна появиться карта'
+    window hide dissolve
+    $ screens_map_set_condition('screen_map_after_walk', 2) # устанавливаем лейбл после прохождения карты и кол-во нужных пройденных локаций для этого.
+    jump screen_map_walk
+
+label screen_map_walk:
+    #проверяем, если кол-во пройденных локаций меньше кол-ва локаций которых нужно пройти
+    if screen_map_count < screen_map_need_count:
+        #если меньше то вызываем наш экран и в него передаем словарь с нужными аргументами
+        call screen screen_map({'screen_map_place1' : [(414,467,200,200), screen_map_condition[0]],'screen_map_place_2' : [(1000,10,200,200), screen_map_condition[1]]})
+    else:
+        #иначе мы сбрасываем переменные связанные с картой и прыгаем на заданный ранее лейбл
+        'сбрасываем счетчик.'
+        $ screens_map_reset_condition()
+        $ renpy.jump(screen_map_label)
+
+#лейбл связанный с локацией на карте
+label screen_map_place1:
+    'Наш текст'
+    $ screen_map_count += 1 #повышаем счётчик пройденных локаций
+    $ screen_map_condition[0] = True #переключаем элемент списка в положение True
+    jump screen_map_walk #прыгаем обратно в лейбл с нашей картой
+#лейбл связанный с локацией на карте
+label screen_map_place_2:
+    'Наш текст 2'
+    $ screen_map_count += 1 #повышаем счётчик пройденных локаций
+    $ screen_map_condition[1] = True
+    #переключаем элемент списка в положение True
+    jump screen_map_walk #прыгаем обратно в лейбл с нашей картой
+#после прохождения карты
+label screen_map_after_walk:
+    'Мы прошли все места.'
+    jump screens_map_after_map
+
+#лейбл в который ведет нас карта, если мы не установили аргумент condition
+label screen_map_error_place:
+    'Я забрел куда-то не туда.'
+
+
+
+```
+Весь код будет выглядеть вот так:
+```renpy
+
+init python:
+    screen_map_condition = [False,False,False,False,False,False,False] # можно сделать и словарь
+    screen_map_count = 0
+    screen_map_label = 'screen_map_after_walk'
+    screen_map_need_count = 1
+
+    def screens_map_reset_condition():
+        global screen_map_condition, screen_map_count, screen_map_need_count, screen_map_label
+        screen_map_condition = [False,False,False,False,False,False,False]
+        screen_map_count = 0
+        screen_map_label = 'screen_map_after_walk'
+        screen_map_need_count = 1
+
+
+    def screens_map_set_condition(label,count):
+        global screen_map_need_count, screen_map_label
+        if label: #проверяем если аргумент label
+            screen_map_label = label
+        if count: #проверяем если аргумент count
+            screen_map_need_count = count
+
+init:
+    screen screen_map(condition={'screen_map_error_place' : [(414,467,200,200), screen_map_condition[0]]}): #ставим аргументы изначальное положение. На случай если забудем вписать аргумент при вызове экрана
+        modal True
+        imagemap:
+            #пропишем пути до состояний карты
+            idle 'screens_map/map/old_map_idle.png'
+            hover 'screens_map/map/old_map_hover.png'
+            insensitive 'screens_map/map/old_map_insensitive.png'
+            alpha True
+            for label, lists in condition.items():
+                #циклом проходимся по словарю condition. и устанавливает чувствительные области в изображении
+                hotspot(lists[0][0], lists[0][1], lists[0][2], lists[0][3]) action [SensitiveIf(lists[1] == False), Jump(label)]
+                #SensitiveIf позволяет делать кнопку чувствительной, пока действует какое-то условие
+
+label screen_map_start:
+    window show dissolve
+    'Сейчас перед нами должна появиться карта'
+    window hide dissolve
+    $ screens_map_set_condition('screen_map_after_walk', 2) # устанавливаем лейбл после прохождения карты и кол-во нужных пройденных локаций для этого.
+    jump screen_map_walk
+
+label screen_map_walk:
+    #проверяем, если кол-во пройденных локаций меньше кол-ва локаций которых нужно пройти
+    if screen_map_count < screen_map_need_count:
+        #если меньше то вызываем наш экран и в него передаем словарь с нужными аргументами
+        call screen screen_map({'screen_map_place1' : [(414,467,200,200), screen_map_condition[0]],'screen_map_place_2' : [(1000,10,200,200), screen_map_condition[1]]})
+    else:
+        #иначе мы сбрасываем переменные связанные с картой и прыгаем на заданный ранее лейбл
+        'сбрасываем счетчик.'
+        $ screens_map_reset_condition()
+        $ renpy.jump(screen_map_label)
+
+#лейбл связанный с локацией на карте
+label screen_map_place1:
+    'Наш текст'
+    $ screen_map_count += 1 #повышаем счётчик пройденных локаций
+    $ screen_map_condition[0] = True #переключаем элемент списка в положение True
+    jump screen_map_walk #прыгаем обратно в лейбл с нашей картой
+#лейбл связанный с локацией на карте
+label screen_map_place_2:
+    'Наш текст 2'
+    $ screen_map_count += 1 #повышаем счётчик пройденных локаций
+    $ screen_map_condition[1] = True
+    #переключаем элемент списка в положение True
+    jump screen_map_walk #прыгаем обратно в лейбл с нашей картой
+#после прохождения карты
+label screen_map_after_walk:
+    'Мы прошли все места.'
+    jump screens_map_after_map
+
+
+#лейбл в который ведет нас карта, если мы не установили аргумент condition
+label screen_map_error_place:
+    'Я забрел куда-то не туда.'
+
+
+
 ```
