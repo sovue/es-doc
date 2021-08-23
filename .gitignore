@@ -23,3 +23,4 @@ basement_dist
 
 # Local Netlify folder
 .netlify
+.idea
