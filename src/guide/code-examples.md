@@ -846,20 +846,20 @@ label screen_map_error_place:
 Для начала нам нужно объявить функции замены наших экранов.
 
 ```renpy
-# Уберите из списка ненужные названия экранов, если не хотите их заменять.
-define SCREENS = [
-    "main_menu",
-    "game_menu_selector",
-    "quit",
-    "say",
-    "preferences",
-    "save",
-    "load",
-    "nvl",
-    "yesno_prompt",
-]
-
 init python:
+    # Уберите из списка ненужные названия экранов, если не хотите их заменять.
+    SCREENS = [
+        "main_menu",
+        "game_menu_selector",
+        "quit",
+        "say",
+        "preferences",
+        "save",
+        "load",
+        "nvl",
+        "yesno_prompt",
+    ]
+
     def my_mod_screen_save():  # Функция сохранения экранов из оригинала.
         for name in SCREENS:
             renpy.display.screen.screens[
