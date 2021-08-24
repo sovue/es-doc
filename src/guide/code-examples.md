@@ -823,3 +823,139 @@ label screen_map_after_walk:
 label screen_map_error_place:
     'Я забрел куда-то не туда.'
 ```
+
+## Замена интерфейсов
+
+Под интерфейсом предполагаются внутриигровое экраны, с которыми взаимодействует пользователь, такие как:
+
+- `say` - Экран, где отображается текст вашей истории.
+- `main_menu` - Экран главного меню вашей модификации.
+- `game_menu_selector` - Экран игрового меню.
+- `quit` - Экран выхода.
+- `preferences` - Экран настроек.
+- `save` - Экран сохранения игры.
+- `load`- Экран загрузки сохранения.
+- `nvl` - NVL экран.
+- `yesno_prompt` - Экран подтверждения действия.
+
+Данные экраны присутствуют в игре и их можно заменить. В этом примере мы не будем создавать экраны, предполагается, что у вас есть уже готовые экраны, которые вы хотели бы заменить.
+
+В данном методе мы будем запускать мод с лейбла, который заменяет часть экранов и главное меню, после чего мы можем заменить их
+обратно, при выходе из меню мода.
+
+Для начала нам нужно объявить функции замены наших экранов.
+
+```renpy
+init python:
+    # Уберите из списка ненужные названия экранов, если не хотите их заменять.
+    SCREENS = [
+        "main_menu",
+        "game_menu_selector",
+        "quit",
+        "say",
+        "preferences",
+        "save",
+        "load",
+        "nvl",
+        "yesno_prompt",
+    ]
+
+    def my_mod_screen_save():  # Функция сохранения экранов из оригинала.
+        for name in SCREENS:
+            renpy.display.screen.screens[
+                ("my_mod_old_" + name, None)
+            ] = renpy.display.screen.screens[(name, None)]
+
+
+    def my_mod_screen_act():  # Функция замены экранов из оригинала на собственные.
+        config.window_title = u"Мой мод"  # Здесь вводите название вашего мода.
+        config.version = "1.0.0"  # Здесь можете изменить версию мода.
+        for (
+            name
+        ) in (
+            SCREENS
+        ):
+            renpy.display.screen.screens[(name, None)] = renpy.display.screen.screens[
+                (my_mod_ + name, None)
+            ]
+        config.mouse = {
+            "default": [("images/misc/mouse/1.png", 0, 0)]
+        }  # Вставте ваш путь до курсора в вашего мода, если его нет - закомментируйте строку.
+        config.main_menu_music = (
+            "mods/my_mod/music/main_menu.mp3"  # Вставте ваш путь до музыки в главном меню.
+        )
+
+
+    def my_mod_screens_diact():  # Функция обратной замены.
+        # Пытаемся заменить экраны.
+        try:
+            config.window_title = u"Бесконечное лето"
+            config.name = "Everlasting_Summer"
+            config.version = "1.2"
+            for name in SCREENS:
+                renpy.display.screen.screens[(name, None)] = renpy.display.screen.screens[
+                    ("my_mod_old_" + name, None)
+                ]
+            layout.LOADING = "Загрузка приведёт к потере несохранённых данных.\nВы уверены, что хотите сделать это?"
+            _main_menu_screen = "main_menu"
+            _game_menu_screen = "game_menu_selector"
+            config.mouse = {"default": [("images/misc/mouse/1.png", 0, 0)]}
+            config.main_menu_music = "sound/music/blow_with_the_fires.ogg"
+            persistent._file_page = 1
+            renpy.music.stop("ambience")
+            renpy.music.stop("music")
+            renpy.music.stop("sound")
+            renpy.play(music_list["blow_with_the_fires"], channel="music")
+        except:  # Если возникают ошибки то мы выходим из игры, чтобы избежать Traceback
+            renpy.quit()
+
+
+    # Объеденяем функцию сохранения экранов и замены в одну.
+    def my_mod_screens_save_act():
+        my_mod_screen_save()
+        my_mod_screen_act()
+
+```
+
+`my_mod` - префикс. Замените его на префикс своего мода, чтобы избежать конфликтов.
+
+::: warning
+В данном случае название ваших экранов должно соответствовать виду: `префикс мода + название экрана в оригинале`.
+
+Например, с main_menu:
+
+- префикс мода - `my_mod`
+- экран должен называться - `my_mod_main_menu`
+  :::
+
+Пример активации и обратной замены интерфейсов с помощью лейблов:
+
+```renpy
+# Лейбл с которого будет запускаться мод.
+label my_mod_index:
+    window hide # Скрываем текстбокс.
+    stop music fadeout 3 # Останавливаем музыку.
+    scene bg black with fade2 # Переходим на сцену с чёрным экраном.
+    $ my_mod_screens_save_act() # Сохраняем экраны из оригинала и заменяем на собственные.
+    return # С помощью return - попадаем в главное меню.
+
+
+# Лейбл выхода из мода.
+label my_mod_true_exit:
+    window hide dissolve # Скрываем текстбокс.
+    stop music fadeout 3 # Останавливаем музыку.
+    scene black with fade # Переходим на сцену с чёрным экраном.
+    $ my_mod_screens_diact() # Делаем обратную замену экранов мода на оригинальные.
+    $ MainMenu(confirm=False)() # Выходим в Главное меню.
+```
+
+В нашем случае с лейбла `my_mod_index` должен запускаться мод. А лейбл `my_mod_true_exit` нужен для обратной замены экранов, поэтому, чтобы выйти из мода, и выполнить обратную замену вы можете просто прыгнуть на этот лейбл.
+
+::: tip
+Можно обойтись и без лейбла `my_mod_true_exit`, вы можете попробовать добавить к вашей кнопке выхода в главном меню следующее действие:
+
+```renpy
+action [(Function(my_mod_screens_diact)), ShowMenu("main_menu")]
+```
+
+:::

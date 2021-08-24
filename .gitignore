@@ -23,3 +23,6 @@ basement_dist
 
 # Local Netlify folder
 .netlify
+
+# NPM lock
+package-lock.json
