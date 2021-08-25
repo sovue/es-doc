@@ -3,7 +3,7 @@ const { writeFileSync } = require('fs')
 const { request } = require('@octokit/request')
 
 const { description } = require('../../package')
-const resources = require('./assets/resources')
+const resources = require('./helpers/resources')
 const resourcesCache = require('../../resources-cache.json')
 
 module.exports = {
