@@ -16,14 +16,14 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@octokit/request": "^5.4.15",
-    "lodash.clonedeep": "^4.5.0"
+    "@octokit/request": "^5.4.15"
   },
   "devDependencies": {
     "@vuepress/plugin-back-to-top": "^1.8.2",
     "@vuepress/plugin-pwa": "^1.8.2",
     "eslint": "^7.23.0",
     "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-vue": "^7.16.0",
     "husky": ">=6",
     "lint-staged": ">=10",
     "netlify-cli": "^3.29.9",
