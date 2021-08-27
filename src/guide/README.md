@@ -17,7 +17,11 @@
 ## Предпосылки
 
 - Установленная игра "Бесконечное Лето".
-- Текстовый редактор. Я рекомендую использовать [Visual Studio Code](https://code.visualstudio.com/) (+ [Ren'Py](https://marketplace.visualstudio.com/items?itemName=LuqueDaniel.languague-renpy)) или [Notepad++](https://notepad-plus-plus.org/), [Atom](https://atom.io/) (+ [Ren'Py](https://atom.io/packages/language-renpyw)), как альтернативу.
+- Текстовый редактор:
+  - [Visual Studio Code](https://code.visualstudio.com/) + [Ren'Py Language](https://marketplace.visualstudio.com/items?itemName=LuqueDaniel.languague-renpy) - **личная рекомендация**;
+  - [Atom](https://atom.io/) + [language-renpy](https://atom.io/packages/language-renpy) - синтаксис [поддерживается официально](https://github.com/renpy/language-renpy) создателем Ren'Py;
+  - [Notepad++](https://notepad-plus-plus.org/);
+  - [Sublime Text](https://www.sublimetext.com/) + [Ren'Py Language](https://packagecontrol.io/packages/Renpy%20Language).
 
 ## Создание мода
 
