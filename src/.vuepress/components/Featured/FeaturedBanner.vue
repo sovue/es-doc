@@ -2,7 +2,9 @@
   <div class='wrapper'>
     <div class='custom-block info'>
       <div class='body'>
-        <img v-if='featured.img' :alt='`${featured.title}-img`' :src='featured.img' />
+        <div class='img-container'>
+          <img v-if='featured.img' :alt='`${featured.title}-img`' :src='featured.img' />
+        </div>
         <div class='content'>
           <div>
             <p class='title'>{{ featured.title }}</p>
@@ -65,14 +67,28 @@ export default {
 
   .body {
     display: flex;
+    flex-direction: row;
     grid-column-gap: 1.5rem;
     grid-row-gap: 1rem;
-    align-items: flex-start;
-    flex-wrap: wrap;
     margin: 1rem 0;
 
-    img {
-      max-width: 150px;
+    @media screen and (max-width: 768px) {
+      flex-direction: column;
+
+      .img-container {
+        display: flex;
+        justify-content: center;
+      }
+    }
+
+    .img-container {
+      img {
+        display: block;
+        max-width: 250px;
+        max-height: 300px;
+        width: auto;
+        height: auto;
+      }
     }
   }
 
