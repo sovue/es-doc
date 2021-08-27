@@ -66,7 +66,9 @@ export default {
   .body {
     display: flex;
     grid-column-gap: 1.5rem;
+    grid-row-gap: 1rem;
     align-items: flex-start;
+    flex-wrap: wrap;
     margin: 1rem 0;
 
     img {
