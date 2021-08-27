@@ -10,7 +10,6 @@
             <p class='title'>{{ featured.title }}</p>
             <p>{{ featured.body }}</p>
           </div>
-          <hr />
           <div v-if='featured.links' class='links'>
             <a v-for='({text, url}) in featured.links' :key='text' :href='url' target='_blank'
                rel='noopener noreferrer'>
