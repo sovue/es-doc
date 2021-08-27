@@ -71,22 +71,27 @@ export default {
     grid-row-gap: 1rem;
     margin: 1rem 0;
 
+    .img-container {
+      img {
+        display: block;
+        max-width: 25vw;
+        max-height: 25vh;
+        width: auto;
+        height: auto;
+      }
+    }
+
     @media screen and (max-width: 768px) {
       flex-direction: column;
 
       .img-container {
         display: flex;
         justify-content: center;
-      }
-    }
 
-    .img-container {
-      img {
-        display: block;
-        max-width: 250px;
-        max-height: 300px;
-        width: auto;
-        height: auto;
+        img {
+          max-height: 40vh;
+          max-width: 40vw;
+        }
       }
     }
   }
