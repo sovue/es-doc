@@ -1,5 +1,5 @@
 <template>
-  <div class='wrapper'>
+  <div v-if='featured' class='wrapper'>
     <div class='custom-block info'>
       <div class='body'>
         <div class='img-container'>
@@ -53,7 +53,7 @@ const getRandomFeatured = () => {
 export default {
   data() {
     return {
-      featured: getRandomFeatured(),
+      featured: null,
 
       isFullDescription: false
     }
@@ -65,6 +65,9 @@ export default {
         this.featured = getRandomFeatured()
       }
     }
+  },
+  beforeMount() {
+    this.featured = getRandomFeatured()
   }
 }
 </script>
