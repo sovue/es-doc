@@ -25,7 +25,24 @@
 <script>
 import { DATA } from './data'
 
-const getRandomFeatured = () => DATA[Math.floor(Math.random() * DATA.length)]
+const getRandomFeatured = () => {
+  // Get last index from localStorage
+  const savedLastIndex = JSON.parse(window.localStorage.getItem('lastBannerIndex'))
+  // Get indexes array
+  let indexes = Object.keys(DATA)
+  // If there is last index in storage
+  if (savedLastIndex) {
+    // Exclude it from the indexes
+    // so it won't appear again
+    indexes.slice(savedLastIndex, 1)
+  }
+  // Select new random index from available
+  const randomIndex = Math.floor(Math.random() * indexes.length)
+  // Save new index to storage
+  window.localStorage.setItem('lastBannerIndex', JSON.stringify(randomIndex))
+
+  return DATA[indexes[randomIndex]]
+}
 
 export default {
   data() {
