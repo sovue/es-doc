@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "vuepress dev src",
     "build": "vuepress build src",
+    "serve": "serve src/.vuepress/dist",
     "prepare": "husky install",
     "netlify": "netlify"
   },
@@ -28,6 +29,7 @@
     "lint-staged": ">=10",
     "netlify-cli": "^3.29.9",
     "prettier": "2.2.1",
+    "serve": "^12.0.0",
     "stylus-supremacy": "^2.15.0",
     "vuepress": "^1.5.3",
     "vuepress-plugin-check-md": "^0.0.2",

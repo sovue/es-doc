@@ -1,6 +1,6 @@
 <template>
-  <div v-if='featured' class='wrapper'>
-    <div class='custom-block info'>
+  <div class='wrapper'>
+    <div v-if='featured' class='custom-block info'>
       <div class='body'>
         <div class='img-container'>
           <img v-if='featured.img' :alt='`${featured.title}-img`' :src='featured.img' />
@@ -37,10 +37,10 @@ const getRandomFeatured = () => {
   // Get indexes array
   let indexes = Object.keys(DATA)
   // If there is last index in storage
-  if (savedLastIndex) {
+  if (!isNaN(savedLastIndex)) {
     // Exclude it from the indexes
     // so it won't appear again
-    indexes.slice(savedLastIndex, 1)
+    indexes.splice(savedLastIndex, 1)
   }
   // Select new random index from available
   const randomIndex = Math.floor(Math.random() * indexes.length)
@@ -66,8 +66,10 @@ export default {
       }
     }
   },
-  beforeMount() {
-    this.featured = getRandomFeatured()
+  mounted() {
+    this.$nextTick(() => {
+      this.featured = getRandomFeatured()
+    })
   }
 }
 </script>
