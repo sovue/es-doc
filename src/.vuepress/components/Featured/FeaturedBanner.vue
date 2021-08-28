@@ -8,7 +8,13 @@
         <div class='content'>
           <div>
             <p class='title'>{{ featured.title }}</p>
-            <p>{{ featured.body }}</p>
+            <p v-if='!isFullDescription'>{{ featured.body.length > 300 ? `${featured.body.slice(0, 297)}...` : featured.body }}</p>
+            <details v-if='featured.body.length > 300' @click='isFullDescription = !isFullDescription'>
+              <summary>Полное описание</summary>
+              <p>
+                {{featured.body}}
+              </p>
+            </details>
           </div>
           <div v-if='featured.links' class='links'>
             <a v-for='({text, url}) in featured.links' :key='text' :href='url' target='_blank'
@@ -47,7 +53,9 @@ const getRandomFeatured = () => {
 export default {
   data() {
     return {
-      featured: getRandomFeatured()
+      featured: getRandomFeatured(),
+
+      isFullDescription: false
     }
   },
   watch: {
@@ -123,6 +131,10 @@ export default {
       font-weight: 600;
       margin: 0 0 -0.4rem 0;
       color: #3b8ba5;
+    }
+
+    details {
+      margin-top: 1rem;
     }
 
     .links {
