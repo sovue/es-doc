@@ -31,29 +31,11 @@
 <script>
 import { DATA } from './data'
 
-const getRandomFeatured = () => {
-  // Get last index from localStorage
-  const savedLastIndex = JSON.parse(window.localStorage.getItem('lastBannerIndex'))
-  // Get indexes array
-  let indexes = Object.keys(DATA)
-  // If there is last index in storage
-  if (!isNaN(savedLastIndex)) {
-    // Exclude it from the indexes
-    // so it won't appear again
-    indexes.splice(savedLastIndex, 1)
-  }
-  // Select new random index from available
-  const randomIndex = Math.floor(Math.random() * indexes.length)
-  // Save new index to storage
-  window.localStorage.setItem('lastBannerIndex', JSON.stringify(randomIndex))
-
-  return DATA[indexes[randomIndex]]
-}
-
 export default {
   data() {
     return {
       featured: null,
+      lastIndex: null,
 
       isFullDescription: false
     }
@@ -62,14 +44,33 @@ export default {
     $route(from, to) {
       // Ignore hash change
       if (from.path !== to.path) {
-        this.featured = getRandomFeatured()
+        this.$nextTick(() => {
+          this.featured = this.getRandomFeatured()
+        })
       }
     }
   },
   mounted() {
     this.$nextTick(() => {
-      this.featured = getRandomFeatured()
+      this.featured = this.getRandomFeatured()
     })
+  },
+  methods: {
+    getRandomFeatured() {
+      // Get indexes array
+      let indexes = Object.keys(DATA)
+      // If there is last index in storage
+      if (!isNaN(this.lastIndex)) {
+        // Exclude it from the indexes
+        // so it won't appear again
+        indexes.splice(this.lastIndex, 1)
+      }
+      // Select new random index from available
+      const randomIndex = Math.floor(Math.random() * indexes.length)
+      this.lastIndex = randomIndex
+
+      return DATA[Number(indexes[randomIndex])]
+    }
   }
 }
 </script>
