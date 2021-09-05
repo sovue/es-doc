@@ -1009,7 +1009,7 @@ init python:
         "ext_aidpost_night",
         "ext_bathhouse_night",
     ]
-
+`qq
     # Создаём кнопки и их изображения, внезависимости от размера исходной картинки, будет масштабирование до 1920x1080
     for cg in gallery_cg:
         modGallery.button(cg)
