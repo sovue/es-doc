@@ -26,5 +26,5 @@ init python:
                             )
                     else:
                         renpy.image(file_name, file)
-                elif file.endswith((".wav", ".mp2", ".mp3", ".ogg", ".opus")):
+                elif file.endswith((".wav", ".mp2", ".mp3", ".ogg", ".opus", ".webm", ".flv", ".vob")):
                     globals()[file_name] = file
