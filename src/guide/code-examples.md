@@ -976,3 +976,166 @@ action [(Function(my_mod_screens_diact)), ShowMenu("main_menu")]
 ```
 
 :::
+
+## Перевод мода
+
+Нижеприведённый код позволит перевести ваш мод на другие языки. В примере показан перевод на английский.
+
+::: tip
+На данный момент существует возможность добавить перевод названия мода и персонажей на:
+
+- **Английский** | `english`
+- **Русский** | `None`
+- **Испанский** | `spanish`
+- **Итальянский** | `italian`
+- **Китайский** | `chinese`
+- **Французский** | `french`
+  :::
+
+### Перевод названия
+
+Для начала переведём название нашего мода. Создаём словарь `translater`, где будет храниться перевод для названия мода (а впоследствии и перевод имён персонажей, о котором расскажем в следующем подразделе)
+
+```renpy
+init python:
+    translation["translater"] = {}
+    translation["translater"]["name"] = {}
+```
+
+Затем создаём внутри значения с нашем именем создаём ещё два: одно для русского перевода, второе — для английского.
+
+```renpy
+    translation["translater"]["name"][None] = u"Переводчик"
+    translation["translater"]["name"]["english"] = "Translater"
+```
+
+Теперь объявляем сам мод, но с именем, что будет брать значение из нашего словаря с переводом в зависимости от установленного языка игры.
+
+```renpy
+    mods["translater_mod"] = translation["translater"]["name"][_preferences.language]
+```
+
+### Перевод персонажа
+
+Теперь переведём персонажа. Для этого создаём в нашем словаре значение для персонажей, а внутри него — ещё одно значение с нашим персонажем.
+
+```renpy
+    translation["translater"]["characters"] = {}
+    translation["translater"]["characters"]["samantha"] = {}
+```
+
+Создаём значения с переводом на русский и английский язык.
+
+```renpy
+    translation["translater"]["characters"]["samantha"]["english"] = "Samantha"
+    translation["translater"]["characters"]["samantha"][None] = "Саманта"
+```
+
+И объявляем нашего персонажа со значением для имени, что будет браться из установленного языка игры.
+
+```renpy
+translater_sam = Character(translation["translater"]["characters"]["samantha"][_preferences.language])
+```
+
+### Перевод текста
+
+Прежде всего делаем проверку на то, имеется ли в списке `store` наша будущая переменная для перевода текста. Если нет, то добавляем и ставим по умолчанию русский язык.
+
+```renpy
+    if not hasattr(store, "persistent.translate_text_lang"):
+        persistent.translate_text_lang = "ru"
+```
+
+Затем создаём сами тэги для перевода с помощью функций, что будут возвращать тот вариант текста, в зависимости от значения переменной `persistent.translate_text_lang`. Если значение `ru`, то показывает русский вариант текста, если `en`, то английский. Внутрь тэгов будем записывать русский и английский вариант текста.
+
+```renpy
+    def translate_en_tag(tag, argument, contents):
+        if persistent.translate_text_lang == "en":
+            return contents
+        else:
+            return [ ]
+
+    def translate_ru_tag(tag, argument, contents):
+        if persistent.translate_text_lang == "ru":
+            return contents
+        else:
+            return [ ]
+```
+
+Добавим функцию для переключения языка отображаемого текста
+
+```renpy
+    def translate_toggle_lang():
+        persistent.translate_text_lang = "ru" if persistent.translate_text_lang != "ru" else "en"
+```
+
+::: tip
+Как вариант, можно создать кнопку в меню мода, что будет переключать язык повествования.
+
+```renpy
+if persistent.translate_text_lang == "ru":
+    textbutton "Язык повествования (Русский)":
+        action Function(translate_toggle_lang())
+else:
+    textbutton "Язык повествования (Английский)":
+        action Function(translate_toggle_lang())
+```
+
+:::
+
+Объявляем нашли тэги.
+
+```renpy
+    config.custom_text_tags["en"] = translate_en_tag
+    config.custom_text_tags["ru"] = translate_ru_tag
+```
+
+Пример написания перевода текста представлен ниже.
+
+```renpy
+label translater_mod:
+    translater_sam "{en}Hello!{/en}{ru}Привет!{/ru}" # Саманта (или Samantha, если установлен английский язык игры) произносит "Привет!", если переменная равна "ru", если же равно "en", то "Hello!"
+```
+
+### Заключение
+
+Полный вариант кода выглядит так:
+
+```renpy
+init python:
+    if not hasattr(store, "persistent.translate_text_lang"):
+        persistent.translate_text_lang = "ru"
+
+    def translate_en_tag(tag, argument, contents):
+        if persistent.translate_text_lang == "en":
+            return contents
+        else:
+            return [ ]
+
+    def translate_ru_tag(tag, argument, contents):
+        if persistent.translate_text_lang == "ru":
+            return contents
+        else:
+            return [ ]
+
+    def translate_toggle_lang():
+        persistent.translate_text_lang = "ru" if persistent.translate_text_lang != "ru" else "en"
+
+    config.custom_text_tags["en"] = translate_en_tag
+    config.custom_text_tags["ru"] = translate_ru_tag
+
+    translation["translater"] = {}
+    translation["translater"]["name"] = {}
+    translation["translater"]["characters"] = {}
+    translation["translater"]["characters"]["samantha"] = {}
+
+    translation["translater"]["name"]["english"] = "Translater"
+    translation["translater"]["name"][None] = u"Переводчик"
+
+    translation["translater"]["characters"]["samantha"]["english"] = "Samantha"
+    translation["translater"]["characters"]["samantha"][None] = "Саманта"
+
+    translater_sam = Character(translation["translater"]["characters"]["samantha"][_preferences.language])
+
+    mods["translater_test"] = translation["translater"]["name"][_preferences.language]
+```
