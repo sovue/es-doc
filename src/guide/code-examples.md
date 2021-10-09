@@ -843,7 +843,7 @@ label screen_map_error_place:
 
 ## Замена интерфейсов
 
-Под интерфейсом предполагаются внутриигровое экраны, с которыми взаимодействует пользователь, такие как:
+Под интерфейсом предполагаются внутриигровые экраны, с которыми взаимодействует пользователь, такие как:
 
 - `say` - Экран, где отображается текст вашей истории.
 - `main_menu` - Экран главного меню вашей модификации.
@@ -854,6 +854,8 @@ label screen_map_error_place:
 - `load`- Экран загрузки сохранения.
 - `nvl` - NVL экран.
 - `yesno_prompt` - Экран подтверждения действия.
+- `choice` - Экран выбора.
+- `text_history_screen` - Экран прочитанного текста.
 
 Данные экраны присутствуют в игре и их можно заменить. В этом примере мы не будем создавать экраны, предполагается, что у вас есть уже готовые экраны, которые вы хотели бы заменить.
 
@@ -875,6 +877,8 @@ init python:
         "load",
         "nvl",
         "yesno_prompt",
+        "text_history_screen",
+        "choice",
     ]
 
     def my_mod_screen_save():  # Функция сохранения экранов из оригинала.
@@ -897,9 +901,9 @@ init python:
             ]
         config.mouse = {
             "default": [("images/misc/mouse/1.png", 0, 0)]
-        }  # Вставте ваш путь до курсора в вашего мода, если его нет - закомментируйте строку.
+        }  # Вставьте ваш путь до курсора в вашего мода, если его нет - закомментируйте строку.
         config.main_menu_music = (
-            "mods/my_mod/music/main_menu.mp3"  # Вставте ваш путь до музыки в главном меню.
+            "mods/my_mod/music/main_menu.mp3"  # Вставьте ваш путь до музыки в главном меню.
         )
 
 
@@ -913,21 +917,14 @@ init python:
                 renpy.display.screen.screens[(name, None)] = renpy.display.screen.screens[
                     ("my_mod_old_" + name, None)
                 ]
-            layout.LOADING = "Загрузка приведёт к потере несохранённых данных.\nВы уверены, что хотите сделать это?"
-            _main_menu_screen = "main_menu"
-            _game_menu_screen = "game_menu_selector"
             config.mouse = {"default": [("images/misc/mouse/1.png", 0, 0)]}
             config.main_menu_music = "sound/music/blow_with_the_fires.ogg"
             persistent._file_page = 1
-            renpy.music.stop("ambience")
-            renpy.music.stop("music")
-            renpy.music.stop("sound")
-            renpy.play(music_list["blow_with_the_fires"], channel="music")
-        except:  # Если возникают ошибки то мы выходим из игры, чтобы избежать Traceback
+        except:  # Если возникают ошибки, то мы выходим из игры, чтобы избежать Traceback
             renpy.quit()
 
 
-    # Объеденяем функцию сохранения экранов и замены в одну.
+    # Объединяем функцию сохранения экранов и замены в одну.
     def my_mod_screens_save_act():
         my_mod_screen_save()
         my_mod_screen_act()
@@ -959,7 +956,7 @@ label my_mod_index:
 
 # Лейбл выхода из мода.
 label my_mod_true_exit:
-    window hide dissolve # Скрываем текстбокс.
+    window hide # Скрываем текстбокс.
     stop music fadeout 3 # Останавливаем музыку.
     scene black with fade # Переходим на сцену с чёрным экраном.
     $ my_mod_screens_diact() # Делаем обратную замену экранов мода на оригинальные.
@@ -972,7 +969,7 @@ label my_mod_true_exit:
 Можно обойтись и без лейбла `my_mod_true_exit`, вы можете попробовать добавить к вашей кнопке выхода в главном меню следующее действие:
 
 ```renpy
-action [(Function(my_mod_screens_diact)), ShowMenu("main_menu")]
+action [(Function(my_mod_screens_diact)), MainMenu(confirm=False)]
 ```
 
 :::
@@ -1138,4 +1135,319 @@ init python:
     translater_sam = Character(translation["translater"]["characters"]["samantha"][_preferences.language])
 
     mods["translater_test"] = translation["translater"]["name"][_preferences.language]
+```
+
+## Создание галереи
+
+Код представляет собой полноценную галерею, поделённую на 2 раздела — иллюстрации (CG) и фоны (BG).
+
+Создаём `init python` блок, а внутри него — экземпляр класса `Gallery()`. Создаём переменные `page` и `gallery_mode`. Первая отвечает за страницы нашей галереи, вторая — за тип нашей галереи, который будет меняться при нажатии на кнопку для смены раздела.
+
+Настраиваем наш экземпляр `modGallery` — изображение заблокированного (ещё не открытого) варианта картинки и отключаем навигацию.
+
+```renpy
+init python:
+    modGallery = Gallery()
+    page = 0
+    gallery_mode = "cg"
+
+    modGallery.locked_button = get_image("gui/gallery/not_opened_idle.png")
+    modGallery.navigation = False
+```
+
+Затем создаём словари, что будут содержать в себе иллюстрации и фоны, потом заполняем с помощью цикла нашу галерею.
+
+```renpy
+    gallery_cg = [ # Заполняем ЦГ словарь
+        "d1_food_normal",
+        "d1_food_skolop",
+        "d1_grasshopper",
+        "d1_rena_sunset",
+    ]
+
+    gallery_bg = [ # Заполняем БГ словарь
+        "bus_stop",
+        "ext_aidpost_day",
+        "ext_aidpost_night",
+        "ext_bathhouse_night",
+    ]
+
+    # Создаём кнопки и их изображения, внезависимости от размера исходной картинки, будет масштабирование до 1920x1080
+    for cg in gallery_cg:
+        modGallery.button(cg)
+        modGallery.image(im.Crop("images/cg/"+cg+".jpg" , (0, 0, 1920, 1080)))
+        modGallery.unlock(cg)
+
+    for bg in gallery_bg:
+        modGallery.button(bg)
+        modGallery.image(im.Crop("images/bg/"+bg+".jpg" , (0, 0, 1920, 1080)))
+        modGallery.unlock(bg)
+    # При нажатии на кнопку с изображением, будет происходить fade переход.
+    modGallery.transition = fade
+```
+
+::: tip Разблокировка всех изображений
+Если необходимо, можно создать специальную функцию, что позволяет нам открыть все изображения из нашей галереи.
+
+```renpy
+def collect_all_ModGallery():
+    s = [i for k in persistent._seen_images for i in k]
+
+    for i in gallery_cg:
+        if i not in s: return
+
+    for i in gallery_bg:
+        if i not in s: return
+```
+
+:::
+
+Теперь создаём сам экран с нашей галереей. Указываем количество ячеек для изображений, создаём список `gallery_table`, который будет заполняться иллюстрациями или фонами в зависимости от значения `gallery_mode`.
+Создаём переменную `len_table`, которая будет ссылаться на длину нашего списка. Создаём функцию, что позволит нам высчитать точное количество страниц галереи. В переменной `pages`, что отвечает за количество страниц галереи, высчитываем.
+
+```renpy
+init:
+    screen ModGallery_screen:
+        modal True
+        tag menu
+        $ rows = 4
+        $ cols = 3
+        $ cells = rows * cols
+        $ gallery_table = []
+        if gallery_mode == "cg":
+            $ gallery_table = gallery_cg
+        else:
+            $ gallery_table = gallery_bg
+        $ len_table = len(gallery_table)
+        python:
+            def abc(n, k):
+                l = float(n)/float(k)
+                if l-int(l) > 0:
+                    return int(l)+1
+                else:
+                    return l
+        $ pages = str(page+1)+"/"+str(int(abc(len_table, cells)))
+```
+
+Создаём `frame` с фоном нашей галереи и кнопки для навигации по типам галереи.
+
+```renpy
+frame background get_image("gui/settings/history_bg.jpg"):
+    if gallery_mode == "cg":
+        textbutton "Фоны":
+            style "log_button"
+            text_style "settings_link"
+            xalign 0.98
+            yalign 0.08
+            action (SetVariable('gallery_mode', "bg"), SetVariable('page', 0), ShowMenu("ModGallery_screen"))
+        hbox xalign 0.5 yalign 0.08:
+            text "Иллюстрации" style "settings_link" yalign 0.5 color "#ffffff"
+    elif gallery_mode == "bg":
+        textbutton "Иллюстрации":
+            style "log_button"
+            text_style "settings_link"
+            xalign 0.02
+            yalign 0.08
+            action (SetVariable('gallery_mode', "cg"), SetVariable('page', 0), ShowMenu("ModGallery_screen"))
+        hbox xalign 0.5 yalign 0.08:
+            text "Фоны":
+                style "settings_link"
+                yalign 0.5
+                color "#ffffff"
+
+    textbutton "Назад":
+        style "log_button"
+        text_style "settings_link"
+        xalign 0.015
+        yalign 0.92
+        action Return()
+```
+
+Создаём grid для отображения изображений в сетке. Производим вычисления, создаём превью-версии картинок для БГ и ЦГ, создаём сами кнопки.
+
+```renpy
+grid rows cols xpos 0.09 ypos 0.18:
+    $ cg_displayed = 0
+    $ next_page = page + 1
+    if next_page > int(len_table/cells):
+        $ next_page = 0
+    for n in range(0, len_table):
+        if n < (page+1)*cells and n>=page*cells:
+            python:
+                if gallery_mode == "cg": # Превью для ЦГ
+                    _t = im.Crop("images/cg/"+gallery_table[n]+".jpg" , (0, 0, 1920, 1080))
+                elif gallery_mode == "bg": # Превью для БГ
+                    _t = im.Crop("images/bg/"+gallery_table[n]+".jpg" , (0, 0, 1920, 1080))
+                th = im.Scale(_t, 320, 180) # Само превью
+                img = im.Composite((336, 196), (8, 8), im.Alpha(th, 0.9), (0, 0), im.Image(get_image("gui/gallery/thumbnail_idle.png"))) # idle-версия превью
+                imgh = im.Composite((336, 196), (8, 8), th, (0, 0), im.Image(get_image("gui/gallery/thumbnail_hover.png"))) # hover-версия превью
+            add g.make_button(gallery_table[n], get_image("gui/gallery/blank.png"), None, imgh, img, style="blank_button", bottom_margin=50, right_margin=50) # создаём кнопки
+            $ cg_displayed += 1
+
+            if n+1 == len_table:
+                $ next_page = 0
+
+    for j in range(0, cells-cg_displayed):
+        null
+```
+
+Финальные штрихи — создаём кнопки для навигации между страницами галереи, также ставим текст, что показывает текущую страницу и общее количество.
+
+```renpy
+if page != 0:
+    imagebutton:
+        auto get_image("gui/dialogue_box/day/backward_%s.png")
+        yalign 0.5
+        xalign 0.01
+        action (SetVariable('page', page-1), ShowMenu("ModGallery_screen"))
+imagebutton:
+    auto get_image("gui/dialogue_box/day/forward_%s.png")
+    yalign 0.5
+    xalign 0.99
+    action (SetVariable('page', next_page), ShowMenu("ModGallery_screen"))
+
+text pages:
+    style "settings_link"
+    xalign 0.985
+    yalign 0.92
+```
+
+Весь код выглядит таким образом:
+
+```renpy
+init python:
+    modGallery = Gallery()
+    page = 0
+    gallery_mode = "cg"
+
+    modGallery.locked_button = get_image("gui/gallery/not_opened_idle.png")
+    modGallery.navigation = False
+
+    gallery_cg = [ # Заполняем ЦГ словарь
+        "d1_food_normal",
+        "d1_food_skolop",
+        "d1_grasshopper",
+        "d1_rena_sunset",
+    ]
+
+    gallery_bg = [ # Заполняем БГ словарь
+        "bus_stop",
+        "ext_aidpost_day",
+        "ext_aidpost_night",
+        "ext_bathhouse_night",
+    ]
+
+    for cg in gallery_cg:
+        modGallery.button(cg)
+        modGallery.image(im.Crop("images/cg/"+cg+".jpg" , (0, 0, 1920, 1080)))
+        modGallery.unlock(cg)
+
+    for bg in gallery_bg:
+        modGallery.button(bg)
+        modGallery.image(im.Crop("images/bg/"+bg+".jpg" , (0, 0, 1920, 1080)))
+        modGallery.unlock(bg)
+    modGallery.transition = fade
+
+    def collect_all_ModGallery():
+        if persistent.collector:
+            s = [i for k in persistent._seen_images for i in k]
+
+            for i in gallery_cg:
+                if i not in s: return
+
+            for i in gallery_bg:
+                if i not in s: return
+
+init:
+    screen ModGallery_screen:
+        modal True
+        tag menu
+        $ rows = 4
+        $ cols = 3
+        $ cells = rows * cols
+        $ gallery_table = []
+        if gallery_mode == "cg":
+            $ gallery_table = gallery_cg
+        else:
+            $ gallery_table = gallery_bg
+        $ len_table = len(gallery_table)
+        python:
+            def abc(n, k):
+                l = float(n)/float(k)
+                if l-int(l) > 0:
+                    return int(l)+1
+                else:
+                    return l
+        $ pages = str(page+1)+"/"+str(int(abc(len_table, cells)))
+
+        frame background get_image("gui/settings/history_bg.jpg"):
+            if gallery_mode == "cg":
+                textbutton "Фоны":
+                    style "log_button"
+                    text_style "settings_link"
+                    xalign 0.98
+                    yalign 0.08
+                    action (SetVariable('gallery_mode', "bg"), SetVariable('page', 0), ShowMenu("ModGallery_screen"))
+                hbox xalign 0.5 yalign 0.08:
+                    text "Иллюстрации" style "settings_link" yalign 0.5 color "#ffffff"
+            elif gallery_mode == "bg":
+                textbutton "Иллюстрации":
+                    style "log_button"
+                    text_style "settings_link"
+                    xalign 0.02
+                    yalign 0.08
+                    action (SetVariable('gallery_mode', "cg"), SetVariable('page', 0), ShowMenu("ModGallery_screen"))
+                hbox xalign 0.5 yalign 0.08:
+                    text "Фоны":
+                        style "settings_link"
+                        yalign 0.5
+                        color "#ffffff"
+
+            textbutton "Назад":
+                style "log_button"
+                text_style "settings_link"
+                xalign 0.015
+                yalign 0.92
+                action Return()
+
+            grid rows cols xpos 0.09 ypos 0.18:
+                $ cg_displayed = 0
+                $ next_page = page + 1
+                if next_page > int(len_table/cells):
+                    $ next_page = 0
+                for n in range(0, len_table):
+                    if n < (page+1)*cells and n>=page*cells:
+                        python:
+                            if gallery_mode == "cg": # Превью для ЦГ
+                                _t = im.Crop("images/cg/"+gallery_table[n]+".jpg" , (0, 0, 1920, 1080))
+                            elif gallery_mode == "bg": # Превью для БГ
+                                _t = im.Crop("images/bg/"+gallery_table[n]+".jpg" , (0, 0, 1920, 1080))
+                            th = im.Scale(_t, 320, 180)
+                            img = im.Composite((336, 196), (8, 8), im.Alpha(th, 0.9), (0, 0), im.Image(get_image("gui/gallery/thumbnail_idle.png")))
+                            imgh = im.Composite((336, 196), (8, 8), th, (0, 0), im.Image(get_image("gui/gallery/thumbnail_hover.png")))
+                        add g.make_button(gallery_table[n], get_image("gui/gallery/blank.png"), None, imgh, img, style="blank_button", bottom_margin=50, right_margin=50)
+                        $ cg_displayed += 1
+
+                        if n+1 == len_table:
+                            $ next_page = 0
+
+                for j in range(0, cells-cg_displayed):
+                    null
+
+            if page != 0:
+                imagebutton:
+                    auto get_image("gui/dialogue_box/day/backward_%s.png")
+                    yalign 0.5
+                    xalign 0.01
+                    action (SetVariable('page', page-1), ShowMenu("ModGallery_screen"))
+            imagebutton:
+                auto get_image("gui/dialogue_box/day/forward_%s.png")
+                yalign 0.5
+                xalign 0.99
+                action (SetVariable('page', next_page), ShowMenu("ModGallery_screen"))
+
+            text pages:
+                style "settings_link"
+                xalign 0.985
+                yalign 0.92
 ```
