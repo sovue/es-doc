@@ -11,8 +11,9 @@
 - [Nikolas Khikkanov](https://vk.com/itsmlg) | [poi](https://steamcommunity.com/id/cringybongy/) - за помощь в создании данного руководства.
 - [Stepan Kupryashin](https://vk.com/banderak) | [СТЕПАН4ик](https://steamcommunity.com/profiles/76561198982465586/) - за помощь в создании данного руководства.
 - Авторам модификации "7 Дней Лета" (позднее - ["7 Дней Лета - Lost Alpha"](https://vk.com/bl_7dl)) - за предоставленные ресурсы. Использование только в рамках лицензии [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ru).
-- Группе [Как создать свой мод для игры Бесконечное Лето](https://vk.com/myesmod) и всем тем, кто наполнял её полезным контентом, часть из которого присуствует в данном руководстве.
-- Команде [GM-Mod](https://vk.com/gm_mod_fh) - за предоставленные ресурсы из модификации ["Свобода или Счастье"](https://steamcommunity.com/sharedfiles/filedetails/?id=2114925951).
+- Группе ["Как создать свой мод для игры Бесконечное Лето"](https://vk.com/myesmod) и всем тем, кто наполнял её полезным контентом, часть из которого присуствует в данном руководстве.
+- Команде ["GM-Mod"](https://vk.com/gm_mod_fh) - за предоставленные ресурсы из модификации ["Свобода или Счастье"](https://steamcommunity.com/sharedfiles/filedetails/?id=2114925951).
+- Группе ["Загрузчик модов для Бесконечного лета"](https://vk.com/esmanager) - за портирование модов на моб. устройства и создание [ESTool](https://vk.com/topic-93304648_35130916).
 
 ## Предпосылки
 
