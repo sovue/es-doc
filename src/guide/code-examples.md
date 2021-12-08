@@ -10,7 +10,7 @@
 - `Shift + O` - консоль
 
 ::: warning
-Для того чтобы игра распознала сочетания клавиш, нужно переключиться на **латинскую раскладку клавиатуры**.
+Для того, чтобы игра распознала сочетания клавиш, нужно переключиться на **латинскую раскладку клавиатуры**.
 :::
 
 ```renpy
@@ -33,7 +33,7 @@ init:
 
 Параметры:
 
-- `mod_folder*: string` - название папки, в которой находится мод;
+- `mod_folder: string` - название папки, в которой находится мод;
 - `sprites_folder: string` - название папки, в которой хранятся спрайты, все спрайты в папке будут автоматически
   окрашены в зависимости от установленного времени суток (`persistent.sprite_time`).
 
@@ -90,7 +90,7 @@ label test:
 - `snow` - `image snow = Snow("images/anim/snow.png")`.
 - `heavy_snow` - `image heavy_snow = Snow("images/anim/snow.png", max_particles=500)`.
 
-Эти два варианта уже объявлены в игре глобально и могут использоваться как [изображение](https://www.renpy.org/doc/html/displaying_images.html#image) объявленное с помощью [`Image Statement`](https://www.renpy.org/doc/html/displaying_images.html#image-statement).
+Эти два варианта уже объявлены в игре глобально и могут использоваться как [изображение](https://www.renpy.org/doc/html/displaying_images.html#image), объявленное с помощью [`Image Statement`](https://www.renpy.org/doc/html/displaying_images.html#image-statement).
 
 Пример использования из игры:
 
@@ -262,9 +262,9 @@ label test_label:
 ## Создание собственной карты
 
 Если вам недостаточно мест в оригинальной карте или вам необходима своя карта для мода, то с помощью этого кода можно её создать.
-В архиве с ресурсами задействуется версия оригинальной карты со всеми зонами.
+В архиве с ресурсами используется версия оригинальной карты со всеми зонами.
 
-<a href="/misc/archives/map.zip" download>Скачать архив с ресурcами карты</a>
+<a href="/misc/archives/map.zip" download>Скачать архив с ресурсами карты</a>
 
 ```renpy
 init python:
@@ -831,7 +831,7 @@ label screen_map_place_2:
     jump screen_map_walk #прыгаем обратно в лейбл с нашей картой
 
 # После прохождения карты.
-# Породолжается история.
+# Продолжается история.
 label screen_map_after_walk:
     'Мы прошли все места.'
     return
@@ -843,21 +843,23 @@ label screen_map_error_place:
 
 ## Замена интерфейсов
 
-Под интерфейсом предполагаются внутриигровое экраны, с которыми взаимодействует пользователь, такие как:
+Под интерфейсом предполагаются внутриигровые экраны, с которыми взаимодействует пользователь, такие как:
 
 - `say` - Экран, где отображается текст вашей истории.
 - `main_menu` - Экран главного меню вашей модификации.
-- `game_menu_selector` - Экран игрового меню.
+- `game_menu_selector` - Экран игрового меню (меню быстрого доступа).
 - `quit` - Экран выхода.
 - `preferences` - Экран настроек.
 - `save` - Экран сохранения игры.
 - `load`- Экран загрузки сохранения.
 - `nvl` - NVL экран.
+- `choice` - Экран выбора.
+- `text_history` - Экран просмотра истории.
 - `yesno_prompt` - Экран подтверждения действия.
 
-Данные экраны присутствуют в игре и их можно заменить. В этом примере мы не будем создавать экраны, предполагается, что у вас есть уже готовые экраны, которые вы хотели бы заменить.
+Данные экраны присутствуют в игре и их можно заменить. В этом примере мы не будем создавать экраны: предполагается, что у вас есть уже готовые экраны, которые вы хотели бы заменить.
 
-В данном методе мы будем запускать мод с лейбла, который заменяет часть экранов и главное меню, после чего мы можем заменить их
+В этом методе мы будем запускать мод с лейбла, который заменяет часть экранов и главное меню, после чего мы можем заменить их
 обратно, при выходе из меню мода.
 
 Для начала нам нужно объявить функции замены наших экранов.
@@ -874,6 +876,8 @@ init python:
         "save",
         "load",
         "nvl",
+        "choice",
+        "text_history_screen",
         "yesno_prompt",
     ]
 
@@ -886,7 +890,6 @@ init python:
 
     def my_mod_screen_act():  # Функция замены экранов из оригинала на собственные.
         config.window_title = u"Мой мод"  # Здесь вводите название вашего мода.
-        config.version = "1.0.0"  # Здесь можете изменить версию мода.
         for (
             name
         ) in (
@@ -895,11 +898,11 @@ init python:
             renpy.display.screen.screens[(name, None)] = renpy.display.screen.screens[
                 (my_mod_ + name, None)
             ]
-        config.mouse = {
-            "default": [("images/misc/mouse/1.png", 0, 0)]
-        }  # Вставте ваш путь до курсора в вашего мода, если его нет - закомментируйте строку.
+        config.mouse["default"] = [ ("images/misc/mouse/1.png", 0, 0) ]
+        default_mouse = "default"
+        # Две строчки сверху - замена курсора
         config.main_menu_music = (
-            "mods/my_mod/music/main_menu.mp3"  # Вставте ваш путь до музыки в главном меню.
+            "mods/my_mod/music/main_menu.mp3"  # Вставьте ваш путь до музыки в главном меню.
         )
 
 
@@ -907,27 +910,17 @@ init python:
         # Пытаемся заменить экраны.
         try:
             config.window_title = u"Бесконечное лето"
-            config.name = "Everlasting_Summer"
-            config.version = "1.2"
             for name in SCREENS:
                 renpy.display.screen.screens[(name, None)] = renpy.display.screen.screens[
                     ("my_mod_old_" + name, None)
                 ]
-            layout.LOADING = "Загрузка приведёт к потере несохранённых данных.\nВы уверены, что хотите сделать это?"
-            _main_menu_screen = "main_menu"
-            _game_menu_screen = "game_menu_selector"
-            config.mouse = {"default": [("images/misc/mouse/1.png", 0, 0)]}
+            config.mouse["default"] = [ ("images/misc/mouse/1.png", 0, 0) ]
+            default_mouse = "default"
             config.main_menu_music = "sound/music/blow_with_the_fires.ogg"
-            persistent._file_page = 1
-            renpy.music.stop("ambience")
-            renpy.music.stop("music")
-            renpy.music.stop("sound")
-            renpy.play(music_list["blow_with_the_fires"], channel="music")
-        except:  # Если возникают ошибки то мы выходим из игры, чтобы избежать Traceback
+        except:  # Если возникают ошибки, то мы выходим из игры, чтобы избежать Traceback
             renpy.quit()
 
-
-    # Объеденяем функцию сохранения экранов и замены в одну.
+    # Объединяем функцию сохранения экранов и замены в одну.
     def my_mod_screens_save_act():
         my_mod_screen_save()
         my_mod_screen_act()
@@ -954,19 +947,19 @@ label my_mod_index:
     stop music fadeout 3 # Останавливаем музыку.
     scene bg black with fade2 # Переходим на сцену с чёрным экраном.
     $ my_mod_screens_save_act() # Сохраняем экраны из оригинала и заменяем на собственные.
-    return # С помощью return - попадаем в главное меню.
+    return # С помощью return - попадаем в главное меню игры.
 
 
 # Лейбл выхода из мода.
 label my_mod_true_exit:
-    window hide dissolve # Скрываем текстбокс.
+    window hide # Скрываем текстбокс.
     stop music fadeout 3 # Останавливаем музыку.
     scene black with fade # Переходим на сцену с чёрным экраном.
     $ my_mod_screens_diact() # Делаем обратную замену экранов мода на оригинальные.
     $ MainMenu(confirm=False)() # Выходим в Главное меню.
 ```
 
-В нашем случае с лейбла `my_mod_index` должен запускаться мод. А лейбл `my_mod_true_exit` нужен для обратной замены экранов, поэтому, чтобы выйти из мода, и выполнить обратную замену вы можете просто прыгнуть на этот лейбл.
+В нашем случае с лейбла `my_mod_index` должен запускаться мод. А лейбл `my_mod_true_exit` нужен для обратной замены экранов поэтому, чтобы выйти из мода, и выполнить обратную замену вы можете просто прыгнуть на этот лейбл.
 
 ::: tip
 Можно обойтись и без лейбла `my_mod_true_exit`, вы можете попробовать добавить к вашей кнопке выхода в главном меню следующее действие:
