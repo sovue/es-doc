@@ -29,7 +29,7 @@ init:
 часть спрайта отдельно, как в БЛ.
 :::
 
-<a href="/src/.vuepress/public/code/scripts/defineAssets.rpy" download>Скачать скрипт</a>
+<a href="/code/scripts/defineAssets.rpy" download>Скачать скрипт</a>
 
 Параметры:
 
