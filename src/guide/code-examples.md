@@ -29,7 +29,7 @@ init:
 часть спрайта отдельно, как в БЛ.
 :::
 
-<a href="/src/.vuepress/public/code/scripts/defineAssets.rpy" download>Скачать скрипт</a>
+<a href="/code/scripts/defineAssets.rpy" download>Скачать скрипт</a>
 
 Параметры:
 
@@ -61,7 +61,7 @@ init:
 
 Данный скрипт позволяет приостановить проигрывание музыки или звука на определённом отрезке, чтобы позже можно было её снова воспроизвести с места остановки.
 
-<a href="/src/.vuepress/public/code/scripts/playerPause.rpy" download>Скачать скрипт</a>
+<a href="/code/scripts/playerPause.rpy" download>Скачать скрипт</a>
 
 <<< @/src/.vuepress/public/code/scripts/playerPause.rpy
 
@@ -127,7 +127,7 @@ define image rain = Snow("<путь к изображению>", max_particles=5
 
 ::: details Реализация функции `Snow` в игре
 
-<a href="/src/.vuepress/public/code/scripts/snow.rpy" download>Скачать скрипт</a>
+<a href="/code/scripts/snow.rpy" download>Скачать скрипт</a>
 
 <<< @/src/.vuepress/public/code/scripts/snow.rpy
 :::
