@@ -15,7 +15,7 @@
 
 ```renpy
 init:
-    $ config.developer = True
+    $ renpy.config.developer = True
 ```
 
 ## Автоматическое объявление файлов
@@ -138,9 +138,9 @@ define image rain = Snow("<путь к изображению>", max_particles=5
 У нас примером выступит Between August and December - Pile.
 
 Объявляем функцию как изображение, делая DynamicDisplayable.
-Теперь, если на канале `music` будет проигрываться какой-либо трек и путь до него будет указан в нашем словаре `music_data`, то появится его название (что мы также указали в словаре).
+Теперь, если на канале `music` будет проигрываться какой-либо трек и путь до него будет указан в нашем словаре `music_data`, то появится его название (которое мы указали в словаре).
 
-1. Объявляем словарь, где ключ - путь до файла, а значение это его название, которое будет выводиться.
+1. Объявляем словарь, где ключ — путь до файла, а значение — его название, которое будет выводиться.
 
 ```renpy
 init python:
@@ -193,7 +193,7 @@ init python:
 init python:
     renpy.image("playing_music", DynamicDisplayable(show_music)) # Объявляем изображение
     # Теперь это изображение является нашей функцией, что будет показывать название трека, который играет в данный момент.
-    # Рекомендуется использование более уникальных имён для словаря с музыкой, названием функции для треков и т.п, ибо возможны конфликты.
+    # Рекомендуется использование более уникальных имён для словаря с музыкой, названий функции для треков и т.п, ибо возможны конфликты.
 ```
 
 ::: tip
@@ -650,7 +650,7 @@ label label_of_house:
 
 - `idle` - Состояние покоя.
 - `hover` - Состояние, когда курсор наведён на локацию.
-- `insensitive` - Состояние, с отмеченными пройденными объектами на карте. При этом состоянии нельзя будет кликнуть на локацию.
+- `insensitive` - Состояние с отмеченными пройденными объектами на карте. При этом состоянии нельзя будет кликнуть на локацию.
 
 ```renpy
 init python:
@@ -660,7 +660,7 @@ init python:
     screen_map_need_count = 1
 ```
 
-Сначала объявим нужные нам переменные.
+Сначала объявим нужные нам переменные:
 
 - `screen_map_condition`<`List`> - Список, состоящий из False. Кол-во False в списке определяет кол-во объектов, которые могут быть на карте.
 - `screen_map_count`<`Int`> - Число пройденных локаций. Изначально равно нулю.
@@ -708,7 +708,7 @@ init:
                 # SensitiveIf позволяет делать кнопку чувствительной, пока действует какое-то условие.
 ```
 
-Аргумент `condition` - словарь. Ключ этого словаря - название лейбла, к которому мы должны прыгнуть. Значение словаря - список. Первый элемент списка - кортеж `(x,y, width, height)` с координатами начала локации на изображении и её размеров по `x` и `y`. Второй элемент списка - какой-либо объект списка `screen_map_condition`.
+Аргумент `condition` - словарь. Ключ этого словаря - название лейбла, к которому мы должны прыгнуть. Значение словаря - список. Первый элемент списка - кортеж `(x, y, width, height)` с координатами начала локации на изображении и её размеров по `x` и `y`. Второй элемент списка - какой-либо объект списка `screen_map_condition`.
 
 Далее будет показано применение этой карты.
 
@@ -723,12 +723,12 @@ label screen_map_start:
     jump screen_map_walk
 
 label screen_map_walk:
-    # Проверяем, если кол-во пройденных локаций меньше кол-ва локаций которых нужно пройти
+    # Проверяем, если кол-во пройденных локаций меньше кол-ва локаций, которых нужно пройти
     if screen_map_count < screen_map_need_count:
         # Если меньше, то вызываем наш экран и в него передаем словарь с нужными аргументами.
         call screen screen_map({'screen_map_place1' : [(414,467,200,200), screen_map_condition[0]],'screen_map_place_2' : [(1000,10,200,200), screen_map_condition[1]]})
     else:
-        # Иначе, сбрасываем переменные связанные с картой и прыгаем на заданный ранее лейбл.
+        # Иначе сбрасываем переменные связанные с картой и прыгаем на заданный ранее лейбл.
         'Сбрасываем счетчик.'
         $ screens_map_reset_condition()
         jump screen_map_label
@@ -740,7 +740,7 @@ label screen_map_place1:
     $ screen_map_condition[0] = True # Переключаем элемент списка в положение True.
     jump screen_map_walk # Прыгаем обратно в лейбл с нашей картой.
 
-# Лейбл связанный с локацией на карте
+# Лейбл, связанный с локацией на карте
 label screen_map_place_2:
     'Наш текст 2.'
     $ screen_map_count += 1 # Повышаем счётчик пройденных локаций.
@@ -815,14 +815,14 @@ label screen_map_walk:
         $ screens_map_reset_condition()
         jump screen_map_label
 
-# Лейбл связанный с локацией на карте
+# Лейбл, связанный с локацией на карте
 label screen_map_place1:
     'Наш текст.'
     $ screen_map_count += 1 # Повышаем счётчик пройденных локаций.
     $ screen_map_condition[0] = True # Переключаем элемент списка в положение True.
     jump screen_map_walk # Прыгаем обратно в лейбл с нашей картой.
 
-# Лейбл связанный с локацией на карте.
+# Лейбл, связанный с локацией на карте.
 label screen_map_place_2:
     'Наш текст 2.'
     $ screen_map_count += 1 #повышаем счётчик пройденных локаций
@@ -860,7 +860,7 @@ label screen_map_error_place:
 Данные экраны присутствуют в игре и их можно заменить. В этом примере мы не будем создавать экраны: предполагается, что у вас есть уже готовые экраны, которые вы хотели бы заменить.
 
 В этом методе мы будем запускать мод с лейбла, который заменяет часть экранов и главное меню, после чего мы можем заменить их
-обратно, при выходе из меню мода.
+обратно при выходе из меню мода.
 
 Для начала нам нужно объявить функции замены наших экранов.
 
@@ -947,7 +947,7 @@ label my_mod_index:
     stop music fadeout 3 # Останавливаем музыку.
     scene bg black with fade2 # Переходим на сцену с чёрным экраном.
     $ my_mod_screens_save_act() # Сохраняем экраны из оригинала и заменяем на собственные.
-    return # С помощью return - попадаем в главное меню игры.
+    return # С помощью return попадаем в главное меню игры.
 
 
 # Лейбл выхода из мода.
@@ -956,13 +956,13 @@ label my_mod_true_exit:
     stop music fadeout 3 # Останавливаем музыку.
     scene black with fade # Переходим на сцену с чёрным экраном.
     $ my_mod_screens_diact() # Делаем обратную замену экранов мода на оригинальные.
-    $ MainMenu(confirm=False)() # Выходим в Главное меню.
+    $ MainMenu(confirm=False)() # Выходим в главное меню.
 ```
 
 В нашем случае с лейбла `my_mod_index` должен запускаться мод. А лейбл `my_mod_true_exit` нужен для обратной замены экранов поэтому, чтобы выйти из мода, и выполнить обратную замену вы можете просто прыгнуть на этот лейбл.
 
 ::: tip
-Можно обойтись и без лейбла `my_mod_true_exit`, вы можете попробовать добавить к вашей кнопке выхода в главном меню следующее действие:
+Можно обойтись и без лейбла `my_mod_true_exit`: вы можете попробовать добавить к вашей кнопке выхода в главном меню следующее действие:
 
 ```renpy
 action [(Function(my_mod_screens_diact)), ShowMenu("main_menu")]
@@ -1302,25 +1302,25 @@ init:
 
 ### Перевод названия
 
-Для начала переведём название нашего мода. Создаём словарь `translater`, где будет храниться перевод для названия мода (а впоследствии и перевод имён персонажей, о котором расскажем в следующем подразделе)
+Для начала переведём название нашего мода. Создаём словарь `translator`, где будет храниться перевод для названия мода (а впоследствии и перевод имён персонажей, о котором расскажем в следующем подразделе)
 
 ```renpy
 init python:
-    translation["translater"] = {}
-    translation["translater"]["name"] = {}
+    translation["translator"] = {}
+    translation["translator"]["name"] = {}
 ```
 
 Затем создаём внутри значения с нашем именем создаём ещё два: одно для русского перевода, второе — для английского.
 
 ```renpy
-    translation["translater"]["name"][None] = u"Переводчик"
-    translation["translater"]["name"]["english"] = "Translater"
+    translation["translator"]["name"][None] = u"Переводчик"
+    translation["translator"]["name"]["english"] = "Translator"
 ```
 
 Теперь объявляем сам мод, но с именем, что будет брать значение из нашего словаря с переводом в зависимости от установленного языка игры.
 
 ```renpy
-    mods["translater_mod"] = translation["translater"]["name"][_preferences.language]
+    mods["translator_mod"] = translation["translator"]["name"][_preferences.language]
 ```
 
 ### Перевод персонажа
@@ -1328,21 +1328,21 @@ init python:
 Теперь переведём персонажа. Для этого создаём в нашем словаре значение для персонажей, а внутри него — ещё одно значение с нашим персонажем.
 
 ```renpy
-    translation["translater"]["characters"] = {}
-    translation["translater"]["characters"]["samantha"] = {}
+    translation["translator"]["characters"] = {}
+    translation["translator"]["characters"]["samantha"] = {}
 ```
 
 Создаём значения с переводом на русский и английский язык.
 
 ```renpy
-    translation["translater"]["characters"]["samantha"]["english"] = "Samantha"
-    translation["translater"]["characters"]["samantha"][None] = "Саманта"
+    translation["translator"]["characters"]["samantha"]["english"] = "Samantha"
+    translation["translator"]["characters"]["samantha"][None] = "Саманта"
 ```
 
 И объявляем нашего персонажа со значением для имени, что будет браться из установленного языка игры.
 
 ```renpy
-translater_sam = Character(translation["translater"]["characters"]["samantha"][_preferences.language])
+translator_sam = Character(translation["translator"]["characters"]["samantha"][_preferences.language])
 ```
 
 ### Перевод текста
@@ -1401,8 +1401,8 @@ else:
 Пример написания перевода текста представлен ниже.
 
 ```renpy
-label translater_mod:
-    translater_sam "{en}Hello!{/en}{ru}Привет!{/ru}" # Саманта (или Samantha, если установлен английский язык игры) произносит "Привет!", если переменная равна "ru", если же равно "en", то "Hello!"
+label translator_mod:
+    translator_sam "{en}Hello!{/en}{ru}Привет!{/ru}" # Саманта (или Samantha, если установлен английский язык игры) произносит "Привет!", если переменная равна "ru", если же равно "en", то "Hello!"
 ```
 
 ### Заключение
@@ -1432,18 +1432,18 @@ init python:
     config.custom_text_tags["en"] = translate_en_tag
     config.custom_text_tags["ru"] = translate_ru_tag
 
-    translation["translater"] = {}
-    translation["translater"]["name"] = {}
-    translation["translater"]["characters"] = {}
-    translation["translater"]["characters"]["samantha"] = {}
+    translation["translator"] = {}
+    translation["translator"]["name"] = {}
+    translation["translator"]["characters"] = {}
+    translation["translator"]["characters"]["samantha"] = {}
 
-    translation["translater"]["name"]["english"] = "Translater"
-    translation["translater"]["name"][None] = u"Переводчик"
+    translation["translator"]["name"]["english"] = "Translator"
+    translation["translator"]["name"][None] = u"Переводчик"
 
-    translation["translater"]["characters"]["samantha"]["english"] = "Samantha"
-    translation["translater"]["characters"]["samantha"][None] = "Саманта"
+    translation["translator"]["characters"]["samantha"]["english"] = "Samantha"
+    translation["translator"]["characters"]["samantha"][None] = "Саманта"
 
-    translater_sam = Character(translation["translater"]["characters"]["samantha"][_preferences.language])
+    translator_sam = Character(translation["translator"]["characters"]["samantha"][_preferences.language])
 
-    mods["translater_test"] = translation["translater"]["name"][_preferences.language]
+    mods["translator_test"] = translation["translator"]["name"][_preferences.language]
 ```
