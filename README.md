@@ -45,8 +45,6 @@ git clone https://github.com/sovue/es-doc.git
 git clone git@github.com:sovue/es-doc.git
 ```
 
-Также можно скачать последнюю версию по [ссылке](https://github.com/yegorgunko/es-doc/archive/refs/heads/master.zip).
-
 ### Установка зависимостей
 
 ```bash

@@ -1,24 +1,42 @@
 <template>
-  <div class='wrapper'>
-    <div v-if='featured' class='custom-block info'>
-      <div class='body'>
-        <div class='img-container'>
-          <img v-if='featured.img' :alt='`${featured.title}-img`' :src='featured.img' />
+  <div class="wrapper">
+    <div v-if="featured" class="custom-block info">
+      <div class="body">
+        <div class="img-container">
+          <img
+            v-if="featured.img"
+            :alt="`${featured.title}-img`"
+            :src="featured.img"
+          />
         </div>
-        <div class='content'>
+        <div class="content">
           <div>
-            <p class='title'>{{ featured.title }}</p>
-            <p v-if='!isFullDescription'>{{ featured.body.length > 300 ? `${featured.body.slice(0, 297)}...` : featured.body }}</p>
-            <details v-if='featured.body.length > 300' @click='isFullDescription = !isFullDescription'>
+            <p class="title">{{ featured.title }}</p>
+            <p v-if="!isFullDescription">
+              {{
+                featured.body.length > 300
+                  ? `${featured.body.slice(0, 297)}...`
+                  : featured.body
+              }}
+            </p>
+            <details
+              v-if="featured.body.length > 300"
+              @click="isFullDescription = !isFullDescription"
+            >
               <summary>Полное описание</summary>
               <p>
-                {{featured.body}}
+                {{ featured.body }}
               </p>
             </details>
           </div>
-          <div v-if='featured.links' class='links'>
-            <a v-for='({text, url}) in featured.links' :key='text' :href='url' target='_blank'
-               rel='noopener noreferrer'>
+          <div v-if="featured.links" class="links">
+            <a
+              v-for="{ text, url } in featured.links"
+              :key="text"
+              :href="url"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {{ text }}
             </a>
           </div>
@@ -37,7 +55,7 @@ export default {
       featured: null,
       lastIndex: null,
 
-      isFullDescription: false
+      isFullDescription: false,
     }
   },
   watch: {
@@ -48,7 +66,7 @@ export default {
           this.featured = this.getRandomFeatured()
         })
       }
-    }
+    },
   },
   mounted() {
     this.$nextTick(() => {
@@ -70,12 +88,12 @@ export default {
       this.lastIndex = randomIndex
 
       return DATA[Number(indexes[randomIndex])]
-    }
-  }
+    },
+  },
 }
 </script>
 
-<style lang='stylus' scoped>
+<style lang="stylus" scoped>
 .wrapper {
   position: relative;
   top: 4.5rem;

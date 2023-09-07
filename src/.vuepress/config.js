@@ -110,7 +110,11 @@ module.exports = {
             {
               title: 'Изображения',
               collapsable: false,
-              children: ['default/images/bgs.md', 'default/images/cgs.md'],
+              children: [
+                'default/images/bgs.md',
+                'default/images/cgs.md',
+                'default/images/sprites.md',
+              ],
             },
             {
               title: 'Звуки',
