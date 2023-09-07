@@ -15,6 +15,9 @@
     "prepare": "husky install",
     "netlify": "netlify"
   },
+  "engines": {
+    "node": "18.x"
+  },
   "license": "MIT",
   "dependencies": {
     "@octokit/request": "^5.4.15"
