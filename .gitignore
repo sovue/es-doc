@@ -26,3 +26,12 @@ basement_dist
 
 # NPM lock
 package-lock.json
+
+# Yarn
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
