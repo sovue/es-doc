@@ -1,7 +1,6 @@
 {
   "editor.tabSize": 2,
   "editor.renderWhitespace": "boundary",
-  "editor.renderIndentGuides": true,
   "editor.wordWrap": "on",
 
   "files.trimFinalNewlines": true,
@@ -23,5 +22,12 @@
   "[stylus]": {
     "editor.defaultFormatter": "thisismanta.stylus-supremacy",
     "gitlens.codeLens.scopes": ["document"]
+  },
+  "editor.guides.indentation": true,
+  "files.exclude": {
+    "**/*.rpyc": true,
+    "**/*.rpa": true,
+    "**/*.rpymc": true,
+    "**/cache/": true
   }
 }
