@@ -63,13 +63,13 @@ export default {
     descriptions: Object,
     codeTemplate: String,
     nsfw: Array,
-    file: String,
+    file: String
   },
   computed: {
     downloadData() {
-      return this.data.map(({ name }) => {
+      return this?.data?.map(({ name }) => {
         const obj = {
-          code: this.codeTemplate.replace('%', name),
+          code: this.codeTemplate.replace('%', name)
         }
         if (this.descriptions && this.descriptions[name]) {
           obj.description = this.descriptions[name]
@@ -77,7 +77,7 @@ export default {
 
         return obj
       })
-    },
+    }
   },
   updated() {
     this.scrollToHash()
@@ -92,8 +92,8 @@ export default {
           window.location.replace(window.location.hash)
         })
       }
-    },
-  },
+    }
+  }
 }
 </script>
 

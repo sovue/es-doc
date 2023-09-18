@@ -9,8 +9,10 @@
     "url": "https://github.com/sovue/es-doc.git"
   },
   "scripts": {
-    "dev": "vuepress dev src",
-    "build": "vuepress build src",
+    "dev": "export NODE_OPTIONS=--openssl-legacy-provider && vuepress dev src",
+    "build": "export NODE_OPTIONS=--openssl-legacy-provider && vuepress build src",
+    "dev-win": "set NODE_OPTIONS=--openssl-legacy-provider && vuepress dev src",
+    "build-win": "set NODE_OPTIONS=--openssl-legacy-provider && vuepress build src",
     "serve": "serve src/.vuepress/dist",
     "prepare": "husky install",
     "netlify": "netlify"
