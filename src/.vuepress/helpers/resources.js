@@ -13,6 +13,7 @@ module.exports = [
     path: 'resources/default/images/bgs',
   },
   { name: 'cgs', path: 'resources/default/images/cgs' },
+  { name: 'sprites', path: 'resources/default/images/sprites' },
   { name: 'music', path: 'resources/default/sounds/music' },
   { name: 'ambiences', path: 'resources/default/sounds/ambiences' },
   { name: 'sfx', path: 'resources/default/sounds/sfx' },

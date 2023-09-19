@@ -4,6 +4,7 @@
 - Изображения
   - [Фоны](./images/bgs.md)
   - [CG](./images/cgs.md)
+  - [Спрайты](./images/sprites.md)
 - Звуки
   - [Музыка](./sounds/music.md)
   - [Окружение](./sounds/ambiences.md)
