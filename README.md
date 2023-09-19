@@ -56,6 +56,12 @@ yarn # npm i
 ### Запуск проекта в режиме разработки
 
 ```bash
+# [WIN]
+yarn dev-win # npm run dev
+```
+
+```bash
+# [LINUX]
 yarn dev # npm run dev
 ```
 

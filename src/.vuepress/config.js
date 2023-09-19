@@ -97,8 +97,8 @@ module.exports = {
         '',
         'videos.md',
         'advanced.md',
-        'errors.md',
         'code-examples.md',
+        'errors.md',
       ],
       '/resources/': [
         {
@@ -110,7 +110,11 @@ module.exports = {
             {
               title: 'Изображения',
               collapsable: false,
-              children: ['default/images/bgs.md', 'default/images/cgs.md'],
+              children: [
+                'default/images/bgs.md',
+                'default/images/cgs.md',
+                'default/images/sprites.md',
+              ],
             },
             {
               title: 'Звуки',
@@ -181,6 +185,17 @@ module.exports = {
           message: 'Доступен новый контент.',
           buttonText: 'Обновить',
         },
+      },
+    ],
+    [
+      'vuepress-plugin-code-copy',
+      {
+        selector: "div[class*='language-'] pre",
+        align: 'top',
+        color: '#f1f1f1',
+        backgroundTransition: false,
+        backgroundColor: '#f1f1f1',
+        successText: 'Скопировано!',
       },
     ],
     '@vuepress/plugin-back-to-top',

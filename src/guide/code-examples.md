@@ -1,4 +1,4 @@
-# Руководства с примерами кода
+# Руководство с примерами кода
 
 [[toc]]
 
@@ -15,21 +15,106 @@
 
 ```renpy
 init:
-    $ renpy.config.developer = True
+    $ config.developer = True
+    $ config.console = True
 ```
 
 ## Автоматическое объявление файлов
 
-Данный отрезок кода автоматически объявляет все изображения и звуки вашего мода.
+Автоматическое объявление всех изображений и звуков мода.
+
+<a href="/code/scripts/autoinitialization.rpy" download>Скачать скрипт</a>
+
+<a href="/misc/archives/autoinit.zip" download>Скачать мод-пример</a>
 
 ::: warning
-На данный момент поддерживается объявление только "цельных" спрайтов.
+Поддерживается объявление как "резаных", так и "цельных" спрайтов.
+
+"Резаным" спрайтом называется спрайт, у которого каждая часть спрайта (тело, одежда, эмоция и прочее) идёт отдельным изображением, как в БЛ.
+
+"Цельным" спрайтом называется спрайт, у которого тело, одежда, эмоция и прочее идёт одним изображением.
+:::
+
+::: danger
+Для работы автообъявления необходимо соблюдать иерархию папок с ресурсами.
+
+Место расположения аудиофайлов может быть любым.
+В корневой папки мода необходимо создать папку `images`, в которой будут храниться все изображения.
+Для изображений внутри `images` создаём ещё одну папку с любым названием (к примеру, `bg`) и в неё закидываем необходимые для объявления изображения. К сожалению, объявление изображений, что находятся в ещё одной папки внутри `bg`, не поддерживается (аудиофайлы поддерживаются).
+
+Для объявления спрайтов внутри `images` создаём папку `sprites`. Затем, для каждой дистанции, создаём ещё по папке: `normal`, `close` и `far` соответственно. Если для объявляемых спрайтов есть лишь одна из дистанций, то ненужные папки просто удаляем. Для каждого спрайта создаём папку c любым названием (к примеру, `ufo`), затем, внутри, для каждой позы по ещё одной папке (цифрой). Если спрайт "резаный", то в папку необходимо поместить изображение с телом, в имени обязательно должно быть указывано `body` (`ufo_1_body.png` или просто `body.png`).
+Для аксессуаров спрайта создаём папку `acc`, для одежды `clothes`, для эмоций `emo`. Название изображений любое.
+
+Пример правильного пути к файлам - `mymod\images\sprites\normal\ufo\1`.
+:::
+
+Параметры:
+
+- `modID: string` - название корневой папки мода. Если мод лежит в "mods", то добавить к modID в начале "mods/": "mods/mymod";
+- `mod_prefix: string, boolean` - Префикс к названиям объявлённых файлов при необходимости;
+
+<<< @/src/.vuepress/public/code/scripts/autoinitialization.rpy
+
+### Пример использования
+
+#### Изображения
+
+```renpy
+show bg ext_square_sunset # Показ изображения ext_square_sunset из папки bg
+```
+
+#### Изображения (с префиксом)
+
+```renpy
+show bg ext_square_sunset_mymod # Показ изображения ext_square_sunset из папки bg с префиксом mymod
+```
+
+#### Спрайты
+
+```renpy
+show ufo dress smile jewelry far # Показ спрайта персонажа ufo в одежде dress, эмоцией smile, аксессуаром jewelry и дистанцией far
+show ufo dress smile jewelry #  Показ спрайта персонажа ufo в одежде dress, эмоцией smile, аксессуаром jewelry и дистанцией normal
+show ufo dress smile jewelry close # Показ спрайта персонажа ufo в одежде dress, эмоцией smile, аксессуаром jewelry и дистанцией close
+show ufo dress smile # Показ спрайта персонажа ufo в одежде dress, эмоцией smile и дистанцией normal
+show ufo dress # Показ спрайта персонажа ufo в одежде dress и дистанцией normal
+show ufo # Показ спрайта персонажа ufo с дистанцией normal
+```
+
+#### Спрайты (с префиксом)
+
+```renpy
+show ufo_mymod dress smile jewelry far # Показ спрайта персонажа ufo в одежде dress, эмоцией smile, аксессуаром jewelry, дистанцией far и префиксом mymod
+show ufo_mymod dress smile jewelry #  Показ спрайта персонажа ufo в одежде dress, эмоцией smile, аксессуаром jewelry, дистанцией normal и префиксом mymod
+show ufo_mymod dress smile jewelry close # Показ спрайта персонажа ufo в одежде dress, эмоцией smile, аксессуаром jewelry, дистанцией close и префиксом mymod
+show ufo_mymod dress smile # Показ спрайта персонажа ufo в одежде dress, эмоцией smile, дистанцией normal и префиксом mymod
+show ufo_mymod dress # Показ спрайта персонажа ufo в одежде dress, дистанцией normal и префиксом mymod
+show ufo_mymod # Показ спрайта персонажа ufo с дистанцией normal и префиксом mymod
+```
+
+#### Аудио
+
+```renpy
+play sound mymusic # Воспроизведение файла mymusic на канале sound
+```
+
+#### Аудио (с префиксом)
+
+```renpy
+play sound mymusic_mymod # Воспроизведение файла mymusic на канале sound и префиксом mymod
+```
+
+## Автоматическое объявление файлов (для начинающих)
+
+Данный отрезок кода автоматически объявляет все изображения и звуки Вашего мода.
+
+<a href="/code/scripts/defineAssets.rpy" download>Скачать скрипт</a>
+
+::: warning
+Поддерживается объявление только "цельных" спрайтов.
 
 "Цельным" спрайтом называется спрайт, у которого тело, одежда, эмоция и прочее идёт одним изображением, а не каждая
 часть спрайта отдельно, как в БЛ.
 :::
-
-<a href="/code/scripts/defineAssets.rpy" download>Скачать скрипт</a>
 
 Параметры:
 
@@ -39,7 +124,9 @@ init:
 
 <<< @/src/.vuepress/public/code/scripts/defineAssets.rpy
 
-Базовое использование:
+### Пример использования
+
+#### Объявление ресурсов
 
 ```renpy
 init:
@@ -48,7 +135,7 @@ init:
     $ define_assets('my_mod')
 ```
 
-С покраской спрайтов:
+#### Объявление ресурсов с покраской спрайтов
 
 ```renpy
 init:
@@ -65,7 +152,7 @@ init:
 
 <<< @/src/.vuepress/public/code/scripts/playerPause.rpy
 
-Пример использования:
+### Пример использования
 
 ```renpy
 label test:
@@ -184,7 +271,6 @@ init python:
                 )  # Возвращаем (показываем) название (или любой другой текст) песни, что сейчас играет
         else:
             return Text(""), 0.1  # Если музыка не играет, то мы возвращаем пустой текст
-
 ```
 
 3. Объявляем изображение как DynamicDisplayable.
@@ -264,334 +350,9 @@ label test_label:
 Если вам недостаточно мест в оригинальной карте или вам необходима своя карта для мода, то с помощью этого кода можно её создать.
 В архиве с ресурсами используется версия оригинальной карты со всеми зонами.
 
+<a href="/code/scripts/map.rpy" download>Скачать скрипт</a>
+
 <a href="/misc/archives/map.zip" download>Скачать архив с ресурсами карты</a>
-
-```renpy
-init python:
-    import pygame
-    import os
-    import os.path
-    import renpy.store as store
-    from renpy.store import *
-    from renpy.display.im import ImageBase, image, cache, Composite
-
-    def bg_tmp_image(bgname):
-        renpy.image(
-            "text " + bgname,
-            LiveComposite(
-                (config.screen_width, config.screen_height),
-                (0, 0),
-                "#ffff7f",
-                (50, 150),
-                Text(u"А здесь будет фон про " + bgname, size=40, color="6A7183"),
-            ),
-        )
-        return "text " + bgname
-
-    store.map_pics_mymod = {
-        "bgpic_mymod": "map/images/map_avaliable_mod.jpg",  # Путь до фона карты
-        "avaliable_mymod": "map/images/map_avaliable_mod.jpg",  # Путь до версии карты с idle-версией
-        "selected_mymod": "map/images/map_selected_mod.jpg",  # Путь до версии карты с hover-версией
-    }
-
-    store.map_zones_mymod = {
-        "house_1": {
-            "position": [766, 267, 803, 316],
-            "default_bg": bg_tmp_image(u"Домик 1"),
-        },
-        "house_2": {
-            "position": [808, 274, 844, 327],
-            "default_bg": bg_tmp_image(u"Домик 2"),
-        },
-        "house_3": {
-            "position": [842, 282, 892, 330],
-            "default_bg": bg_tmp_image(u"Домик 3"),
-        },
-        "house_4": {
-            "position": [888, 288, 928, 340],
-            "default_bg": bg_tmp_image(u"Домик 4"),
-        },
-        "house_5": {
-            "position": [964, 307, 999, 352],
-            "default_bg": bg_tmp_image(u"Домик 5"),
-        },
-        "house_6": {
-            "position": [1000, 303, 1038, 357],
-            "default_bg": bg_tmp_image(u"Домик 6"),
-        },
-        "house_7": {
-            "position": [790, 206, 829, 256],
-            "default_bg": bg_tmp_image(u"Домик 7"),
-        },
-        "house_8": {
-            "position": [835, 210, 873, 263],
-            "default_bg": bg_tmp_image(u"Домик 8"),
-        },
-        "house_9": {
-            "position": [905, 227, 939, 277],
-            "default_bg": bg_tmp_image(u"Домик 9"),
-        },
-        "house_10": {
-            "position": [945, 234, 981, 283],
-            "default_bg": bg_tmp_image(u"Домик 10"),
-        },
-        "house_11": {
-            "position": [988, 241, 1023, 290],
-            "default_bg": bg_tmp_image(u"Домик 11"),
-        },
-        "house_12": {
-            "position": [1024, 242, 1068, 303],
-            "default_bg": bg_tmp_image(u"Домик 12"),
-        },
-        "house_13": {
-            "position": [809, 143, 852, 200],
-            "default_bg": bg_tmp_image(u"Домик 13"),
-        },
-        "house_14": {
-            "position": [852, 150, 886, 205],
-            "default_bg": bg_tmp_image(u"Домик 14"),
-        },
-        "house_15": {
-            "position": [888, 158, 925, 209],
-            "default_bg": bg_tmp_image(u"Домик 15"),
-        },
-        "house_16": {
-            "position": [925, 166, 958, 228],
-            "default_bg": bg_tmp_image(u"Домик 16"),
-        },
-        "house_17": {
-            "position": [958, 168, 1020, 227],
-            "default_bg": bg_tmp_image(u"Домик 17"),
-        },
-        "house_23": {
-            "position": [715, 616, 763, 665],
-            "default_bg": bg_tmp_image(u"Домик 23"),
-        },
-        "scene": {
-            "position": [1062, 54, 1154, 139],
-            "default_bg": bg_tmp_image(u"Эстрада"),
-        },
-        "square": {
-            "position": [887, 360, 1001, 546],
-            "default_bg": bg_tmp_image(u"Площадь"),
-        },
-        "musclub": {
-            "position": [627, 255, 694, 340],
-            "default_bg": bg_tmp_image(u"Музклуб"),
-        },
-        "dinning_hall": {
-            "position": [1010, 456, 1144, 588],
-            "default_bg": bg_tmp_image(u"Столовая"),
-        },
-        "sport_area": {
-            "position": [1219, 376, 1584, 657],
-            "default_bg": bg_tmp_image(u"Спорткомплекс"),
-        },
-        "beach": {"position": [1198, 674, 1490, 833], "default_bg": bg_tmp_image(u"Пляж")},
-        "boathouse": {
-            "position": [832, 801, 957, 855],
-            "default_bg": bg_tmp_image(u"Лодочный причал"),
-        },
-        "booth": {"position": [905, 663, 949, 732], "default_bg": bg_tmp_image(u"Будка")},
-        "clubs": {"position": [435, 437, 650, 605], "default_bg": bg_tmp_image(u"Клубы")},
-        "library": {
-            "position": [1158, 271, 1285, 360],
-            "default_bg": bg_tmp_image(u"Библиотека"),
-        },
-        "infirmary": {
-            "position": [1042, 360, 1188, 444],
-            "default_bg": bg_tmp_image(u"Медпункт"),
-        },
-        "forest": {"position": [558, 58, 691, 194], "default_bg": bg_tmp_image(u"о. Лес")},
-        "bus_stop": {
-            "position": [286, 441, 414, 556],
-            "default_bg": bg_tmp_image(u"Стоянка"),
-        },
-        "admin": {
-            "position": [774, 348, 879, 449],
-            "default_bg": bg_tmp_image(u"Админ. корпус"),
-        },
-        "shower_room": {
-            "position": [695, 433, 791, 530],
-            "default_bg": bg_tmp_image(u"Душевая"),
-        },
-        "old_building": {
-            "position": [230, 1004, 337, 1073],
-            "default_bg": bg_tmp_image(u"Старый корпус"),
-        },
-        "island_far": {
-            "position": [873, 967, 1332, 1080],
-            "default_bg": bg_tmp_image(u"Остров дальний"),
-        },
-        "island_close": {
-            "position": [557, 935, 865, 1071],
-            "default_bg": bg_tmp_image(u"Острова ближний"),
-        },
-        "storage": {
-            "position": [1148, 481, 1215, 583],
-            "default_bg": bg_tmp_image(u"Склад"),
-        },
-        "forest_r_u": {
-            "position": [1757, 81, 1836, 203],
-            "default_bg": bg_tmp_image(u"Лес верхний правый"),
-        },
-        "forest_r_d": {
-            "position": [1777, 879, 1855, 998],
-            "default_bg": bg_tmp_image(u"Лес нижний правый"),
-        },
-        "ws": {"position": [567, 355, 625, 405], "default_bg": bg_tmp_image(u"Туалет")},
-    }
-
-    global_map_result_mymod = "error"
-
-    def init_map_zones_realization_mymod(zones_mymod, default):
-        global global_zones_mymod
-        global_zones_mymod = zones_mymod
-        for i, data in global_zones_mymod.iteritems():
-            data["label"] = default
-            data["avaliable"] = True
-
-    class Map_mymod(renpy.Displayable):
-        def __init__(self, pics, default):
-            renpy.Displayable.__init__(self)
-            self.pics = pics
-            self.default = default
-            config.overlay_functions.append(self.overlay)
-
-        def disable_all_zones(self):
-            global global_zones_mymod
-            for name, data in global_zones_mymod.iteritems():
-                data["label"] = self.default
-                data["avaliable"] = False
-
-        def enable_all_zones(self):
-            global global_zones_mymod
-            for name, data in global_zones_mymod.iteritems():
-                data["label"] = self.default
-                data["avaliable"] = True
-
-        def set_zone(self, name, label):
-            global global_zones_mymod
-            global_zones_mymod[name]["label"] = label
-            global_zones_mymod[name]["avaliable"] = True
-
-        def reset_zone(self, name):
-            global global_zones_mymod
-            global_zones_mymod[name]["label"] = self.default
-            global_zones_mymod[name]["avaliable"] = False
-
-        def enable_empty_zone(self, name):
-            global global_zones_mymod
-            self.set_zone(name, self.default)
-            global_zones_mymod[name]["avaliable"] = True
-
-        def reset_current_zone(self):
-            self.enable_empty_zone(global_map_result_mymod)
-
-        def disable_current_zone(self):
-            global global_zones_mymod
-            global_zones_mymod[global_map_result_mymod]["avaliable"] = False
-
-        def event(self, ev, x, y, st):
-            return
-
-        def render(self, width, height, st, at):
-            return renpy.Render(1, 1)
-
-        def zoneclick(self, name):
-            global global_zones_mymod
-            global global_map_result_mymod
-            store.map_enabled_mymod = False
-            renpy.scene("mapoverlay")
-            global_map_result_mymod = name
-            renpy.hide("widget map_mymod")
-            ui.jumps(global_zones_mymod[name]["label"])()
-
-        def overlay(self):
-            if store.map_enabled_mymod:
-                global global_zones_mymod
-                renpy.scene("mapoverlay")
-                ui.layer("mapoverlay")
-                for name, data in global_zones_mymod.iteritems():
-                    if data["avaliable"]:
-                        pos = data["position"]
-                        print(name)
-                        ui.imagebutton(
-                            im.Crop(
-                                self.pics["avaliable_mymod"],
-                                pos[0],
-                                pos[1],
-                                pos[2] - pos[0],
-                                pos[3] - pos[1],
-                            ),
-                            im.Crop(
-                                self.pics["selected_mymod"],
-                                pos[0],
-                                pos[1],
-                                pos[2] - pos[0],
-                                pos[3] - pos[1],
-                            ),
-                            clicked=renpy.curry(self.zoneclick)(name),
-                            xpos=pos[0],
-                            ypos=pos[1],
-                        )
-                ui.close()
-
-    store.map_mymod = Map_mymod(store.map_pics_mymod, default)
-
-    store.map_enabled_mymod = False
-    store.map_enabled_mymod_tmp = False
-
-    def disable_stuff():
-        store.map_enabled_mymod_tmp = store.map_enabled_mymod_tmp or store.map_enabled_mymod
-        store.map_enabled_mymod = False
-
-    def enable_stuff():
-        store.map_enabled_mymod = store.map_enabled_mymod_tmp
-        store.map_enabled_mymod_tmp = False
-
-    config_session = False
-
-    if not config_session:
-
-        def disable_all_zones_mymod():
-            store.map_mymod.disable_all_zones()
-
-        def enable_all_zones_mymod():
-            store.map_mymod.enable_all_zones()
-
-        def set_zone_mymod(name, label):
-            store.map_mymod.set_zone(name, label)
-
-        def reset_zone_mymod(name):
-            store.map_mymod.reset_zone(name)
-
-        def enable_empty_zone_mymod(name):
-            store.map_mymod.enable_empty_zone(name)
-
-        def reset_current_zone_mymod():
-            store.map_mymod.reset_current_zone()
-
-        def disable_current_zone_mymod():
-            store.map_mymod.disable_current_zone()
-
-        def show_map_mymod():
-            ui.jumps("_show_map_mymod")()
-
-        def init_map_zones_mymod():
-            init_map_zones_realization_mymod(store.map_zones_mymod, "nothing_here")
-
-init:
-    if not config_session:
-        image widget map_mymod = "map/images/map_n_mod.jpg" # Путь до фона карты
-        image bg map_mymod     = "map/images/map_avaliable_mod.jpg" # Путь до версии карты с idle-версией
-
-label _show_map_mymod:
-    show widget map_mymod
-    $ store.map_enabled_mymod = True
-    $ ui.interact()
-    jump _show_map_mymod
-```
 
 `store.map_pics_mymod` содержит в себе пути до `default`, `idle` и `hover` версий вашей карты.
 
@@ -623,6 +384,8 @@ label _show_map_mymod:
 Инициализация карты должна происходить один раз за весь мод.
 :::
 
+<<< @/src/.vuepress/public/code/scripts/map.rpy
+
 ### Пример использования
 
 ```renpy
@@ -645,6 +408,8 @@ label label_of_house:
 ## Создание собственной карты (для начинающих)
 
 В исходном коде игры и во многих модах можно увидеть похожий код для использования карты внутри игры. Но этот метод достаточно сложен в понимании для новичка. Поэтому, далее будет показан пример кода для использования карты в вашей модификации.
+
+<a href="/code/scripts/map_noob.rpy" download>Скачать скрипт</a>
 
 Перед началом, нам нужно будет изображение нашей карты в трёх состояниях:
 
@@ -710,7 +475,9 @@ init:
 
 Аргумент `condition` - словарь. Ключ этого словаря - название лейбла, к которому мы должны прыгнуть. Значение словаря - список. Первый элемент списка - кортеж `(x, y, width, height)` с координатами начала локации на изображении и её размеров по `x` и `y`. Второй элемент списка - какой-либо объект списка `screen_map_condition`.
 
-Далее будет показано применение этой карты.
+<<< @/src/.vuepress/public/code/scripts/map_noob.rpy
+
+### Пример использования
 
 ```renpy
 label screen_map_start:
@@ -759,89 +526,7 @@ label screen_map_error_place:
     'Я забрел куда-то не туда.'
 ```
 
-Весь код будет выглядеть вот так:
-
-```renpy
-init python:
-    screen_map_condition = [False] * 7  # Можно сделать и словарь
-    screen_map_count = 0
-    screen_map_label = "screen_map_after_walk"
-    screen_map_need_count = 1
-
-
-    def screens_map_reset_condition():
-        global screen_map_condition, screen_map_count, screen_map_need_count
-        screen_map_condition = [False] * 7
-        screen_map_count = 0
-        screen_map_need_count = 1
-
-
-    def screens_map_set_condition(label, count):
-        global screen_map_need_count, screen_map_label
-        if label:  # Проверяем, если аргумент label.
-            screen_map_label = label
-        if count:  # Проверяем, если аргумент count.
-            screen_map_need_count = count
-
-init:
-    screen screen_map(condition={'screen_map_error_place' : [(414,467,200,200), screen_map_condition[0]]}): # Ставим аргументу изначальное положение. На случай если забудем вписать аргумент при вызове экрана.
-        modal True
-        imagemap:
-            # Пропишем пути до состояний карты.
-            idle 'screens_map/map/old_map_idle.png'
-            hover 'screens_map/map/old_map_hover.png'
-            insensitive 'screens_map/map/old_map_insensitive.png'
-            alpha True
-            for label, lists in condition.items():
-                # Циклом проходимся по словарю condition. и устанавливает чувствительные области в изображении.
-                hotspot(lists[0][0], lists[0][1], lists[0][2], lists[0][3]) action [SensitiveIf(lists[1] == False), Jump(label)]
-                # SensitiveIf позволяет делать кнопку чувствительной, пока действует какое-то условие.
-
-label screen_map_start:
-    window show dissolve
-    'Сейчас перед нами должна появиться карта'
-    window hide dissolve
-    $ screens_map_set_condition('screen_map_after_walk', 2) # Устанавливаем лейбл после прохождения карты и кол-во нужных пройденных локаций для этого.
-    jump screen_map_walk
-
-label screen_map_walk:
-    # Проверяем, если кол-во пройденных локаций меньше кол-ва локаций которых нужно пройти.
-    if screen_map_count < screen_map_need_count:
-        # Если меньше то вызываем наш экран и в него передаем словарь с нужными аргументами.
-        call screen screen_map({'screen_map_place1' : [(414,467,200,200), screen_map_condition[0]],'screen_map_place_2' : [(1000,10,200,200), screen_map_condition[1]]})
-    else:
-        # Иначе мы сбрасываем переменные связанные с картой и прыгаем на заданный ранее лейбл.
-        'сбрасываем счетчик.'
-        $ screens_map_reset_condition()
-        jump screen_map_label
-
-# Лейбл, связанный с локацией на карте
-label screen_map_place1:
-    'Наш текст.'
-    $ screen_map_count += 1 # Повышаем счётчик пройденных локаций.
-    $ screen_map_condition[0] = True # Переключаем элемент списка в положение True.
-    jump screen_map_walk # Прыгаем обратно в лейбл с нашей картой.
-
-# Лейбл, связанный с локацией на карте.
-label screen_map_place_2:
-    'Наш текст 2.'
-    $ screen_map_count += 1 #повышаем счётчик пройденных локаций
-    $ screen_map_condition[1] = True
-    # Переключаем элемент списка в положение True.
-    jump screen_map_walk #прыгаем обратно в лейбл с нашей картой
-
-# После прохождения карты.
-# Продолжается история.
-label screen_map_after_walk:
-    'Мы прошли все места.'
-    return
-
-# Лейбл в который ведет нас карта, если мы не установили аргумент condition.
-label screen_map_error_place:
-    'Я забрел куда-то не туда.'
-```
-
-## Замена интерфейсов
+## Замена интерфейса
 
 Под интерфейсом предполагаются внутриигровые экраны, с которыми взаимодействует пользователь, такие как:
 
@@ -856,78 +541,19 @@ label screen_map_error_place:
 - `choice` - Экран выбора.
 - `text_history` - Экран просмотра истории.
 - `yesno_prompt` - Экран подтверждения действия.
+- `skip_indicator` - Экран пропуска текста.
+- `history` - Экран прочитанного текста.
 
 Данные экраны присутствуют в игре и их можно заменить. В этом примере мы не будем создавать экраны: предполагается, что у вас есть уже готовые экраны, которые вы хотели бы заменить.
 
 В этом методе мы будем запускать мод с лейбла, который заменяет часть экранов и главное меню, после чего мы можем заменить их
 обратно при выходе из меню мода.
 
-Для начала нам нужно объявить функции замены наших экранов.
+<a href="/code/scripts/interface.rpy" download>Скачать скрипт</a>
 
-```renpy
-init python:
-    # Уберите из списка ненужные названия экранов, если не хотите их заменять.
-    SCREENS = [
-        "main_menu",
-        "game_menu_selector",
-        "quit",
-        "say",
-        "preferences",
-        "save",
-        "load",
-        "nvl",
-        "choice",
-        "text_history_screen",
-        "yesno_prompt",
-    ]
+Параметры:
 
-    def my_mod_screen_save():  # Функция сохранения экранов из оригинала.
-        for name in SCREENS:
-            renpy.display.screen.screens[
-                ("my_mod_old_" + name, None)
-            ] = renpy.display.screen.screens[(name, None)]
-
-
-    def my_mod_screen_act():  # Функция замены экранов из оригинала на собственные.
-        config.window_title = u"Мой мод"  # Здесь вводите название вашего мода.
-        for (
-            name
-        ) in (
-            SCREENS
-        ):
-            renpy.display.screen.screens[(name, None)] = renpy.display.screen.screens[
-                (my_mod_ + name, None)
-            ]
-        config.mouse["default"] = [ ("images/misc/mouse/1.png", 0, 0) ]
-        default_mouse = "default"
-        # Две строчки сверху - замена курсора
-        config.main_menu_music = (
-            "mods/my_mod/music/main_menu.mp3"  # Вставьте ваш путь до музыки в главном меню.
-        )
-
-
-    def my_mod_screens_diact():  # Функция обратной замены.
-        # Пытаемся заменить экраны.
-        try:
-            config.window_title = u"Бесконечное лето"
-            for name in SCREENS:
-                renpy.display.screen.screens[(name, None)] = renpy.display.screen.screens[
-                    ("my_mod_old_" + name, None)
-                ]
-            config.mouse["default"] = [ ("images/misc/mouse/1.png", 0, 0) ]
-            default_mouse = "default"
-            config.main_menu_music = "sound/music/blow_with_the_fires.ogg"
-        except:  # Если возникают ошибки, то мы выходим из игры, чтобы избежать Traceback
-            renpy.quit()
-
-    # Объединяем функцию сохранения экранов и замены в одну.
-    def my_mod_screens_save_act():
-        my_mod_screen_save()
-        my_mod_screen_act()
-
-```
-
-`my_mod` - префикс. Замените его на префикс своего мода, чтобы избежать конфликтов.
+- `my_mod` - префикс. Замените его на префикс своего мода, чтобы избежать конфликтов.
 
 ::: warning
 В данном случае название ваших экранов должно соответствовать виду: `префикс мода + название экрана в оригинале`.
@@ -938,7 +564,9 @@ init python:
 - экран должен называться - `my_mod_main_menu`
   :::
 
-Пример активации и обратной замены интерфейсов с помощью лейблов:
+<<< @/src/.vuepress/public/code/scripts/interface.rpy
+
+### Пример использования
 
 ```renpy
 # Лейбл с которого будет запускаться мод.
@@ -973,6 +601,8 @@ action [(Function(my_mod_screens_diact)), ShowMenu("main_menu")]
 ## Создание галереи
 
 Код представляет собой полноценную галерею, поделённую на 2 раздела — иллюстрации (CG) и фоны (BG).
+
+<a href="/code/scripts/gallery.rpy" download>Скачать скрипт</a>
 
 Создаём `init python` блок, а внутри него — экземпляр класса `Gallery()`. Создаём переменные `page` и `gallery_mode`. Первая отвечает за страницы нашей галереи, вторая — за тип нашей галереи, который будет меняться при нажатии на кнопку для смены раздела.
 
@@ -1145,152 +775,20 @@ text pages:
     yalign 0.92
 ```
 
-Весь код выглядит таким образом:
+### Заключение
 
-```renpy
-init python:
-    modGallery = Gallery()
-    page = 0
-    gallery_mode = "cg"
+Полный вариант кода выглядит так:
 
-    modGallery.locked_button = get_image("gui/gallery/not_opened_idle.png")
-    modGallery.navigation = False
-
-    gallery_cg = [ # Заполняем ЦГ словарь
-        "d1_food_normal",
-        "d1_food_skolop",
-        "d1_grasshopper",
-        "d1_rena_sunset",
-    ]
-
-    gallery_bg = [ # Заполняем БГ словарь
-        "bus_stop",
-        "ext_aidpost_day",
-        "ext_aidpost_night",
-        "ext_bathhouse_night",
-    ]
-
-    for cg in gallery_cg:
-        modGallery.button(cg)
-        modGallery.image(im.Crop("images/cg/"+cg+".jpg" , (0, 0, 1920, 1080)))
-        modGallery.unlock(cg)
-
-    for bg in gallery_bg:
-        modGallery.button(bg)
-        modGallery.image(im.Crop("images/bg/"+bg+".jpg" , (0, 0, 1920, 1080)))
-        modGallery.unlock(bg)
-    modGallery.transition = fade
-
-    def collect_all_ModGallery():
-        if persistent.collector:
-            s = [i for k in persistent._seen_images for i in k]
-
-            for i in gallery_cg:
-                if i not in s: return
-
-            for i in gallery_bg:
-                if i not in s: return
-
-init:
-    screen ModGallery_screen:
-        modal True
-        tag menu
-        $ rows = 4
-        $ cols = 3
-        $ cells = rows * cols
-        $ gallery_table = []
-        if gallery_mode == "cg":
-            $ gallery_table = gallery_cg
-        else:
-            $ gallery_table = gallery_bg
-        $ len_table = len(gallery_table)
-        python:
-            def abc(n, k):
-                l = float(n)/float(k)
-                if l-int(l) > 0:
-                    return int(l)+1
-                else:
-                    return l
-        $ pages = str(page+1)+"/"+str(int(abc(len_table, cells)))
-
-        frame background get_image("gui/settings/history_bg.jpg"):
-            if gallery_mode == "cg":
-                textbutton "Фоны":
-                    style "log_button"
-                    text_style "settings_link"
-                    xalign 0.98
-                    yalign 0.08
-                    action (SetVariable('gallery_mode', "bg"), SetVariable('page', 0), ShowMenu("ModGallery_screen"))
-                hbox xalign 0.5 yalign 0.08:
-                    text "Иллюстрации" style "settings_link" yalign 0.5 color "#ffffff"
-            elif gallery_mode == "bg":
-                textbutton "Иллюстрации":
-                    style "log_button"
-                    text_style "settings_link"
-                    xalign 0.02
-                    yalign 0.08
-                    action (SetVariable('gallery_mode', "cg"), SetVariable('page', 0), ShowMenu("ModGallery_screen"))
-                hbox xalign 0.5 yalign 0.08:
-                    text "Фоны":
-                        style "settings_link"
-                        yalign 0.5
-                        color "#ffffff"
-
-            textbutton "Назад":
-                style "log_button"
-                text_style "settings_link"
-                xalign 0.015
-                yalign 0.92
-                action Return()
-
-            grid rows cols xpos 0.09 ypos 0.18:
-                $ cg_displayed = 0
-                $ next_page = page + 1
-                if next_page > int(len_table/cells):
-                    $ next_page = 0
-                for n in range(0, len_table):
-                    if n < (page+1)*cells and n>=page*cells:
-                        python:
-                            if gallery_mode == "cg": # Превью для ЦГ
-                                _t = im.Crop("images/cg/"+gallery_table[n]+".jpg" , (0, 0, 1920, 1080))
-                            elif gallery_mode == "bg": # Превью для БГ
-                                _t = im.Crop("images/bg/"+gallery_table[n]+".jpg" , (0, 0, 1920, 1080))
-                            th = im.Scale(_t, 320, 180)
-                            img = im.Composite((336, 196), (8, 8), im.Alpha(th, 0.9), (0, 0), im.Image(get_image("gui/gallery/thumbnail_idle.png")))
-                            imgh = im.Composite((336, 196), (8, 8), th, (0, 0), im.Image(get_image("gui/gallery/thumbnail_hover.png")))
-                        add g.make_button(gallery_table[n], get_image("gui/gallery/blank.png"), None, imgh, img, style="blank_button", bottom_margin=50, right_margin=50)
-                        $ cg_displayed += 1
-
-                        if n+1 == len_table:
-                            $ next_page = 0
-
-                for j in range(0, cells-cg_displayed):
-                    null
-
-            if page != 0:
-                imagebutton:
-                    auto get_image("gui/dialogue_box/day/backward_%s.png")
-                    yalign 0.5
-                    xalign 0.01
-                    action (SetVariable('page', page-1), ShowMenu("ModGallery_screen"))
-            imagebutton:
-                auto get_image("gui/dialogue_box/day/forward_%s.png")
-                yalign 0.5
-                xalign 0.99
-                action (SetVariable('page', next_page), ShowMenu("ModGallery_screen"))
-
-            text pages:
-                style "settings_link"
-                xalign 0.985
-                yalign 0.92
-```
+<<< @/src/.vuepress/public/code/scripts/gallery.rpy
 
 ## Перевод мода
 
 Нижеприведённый код позволит перевести ваш мод на другие языки. В примере показан перевод на английский.
 
+<a href="/code/scripts/translate.rpy" download>Скачать скрипт</a>
+
 ::: tip
-На данный момент существует возможность добавить перевод названия мода и персонажей на:
+Существует возможность добавить перевод названия мода и персонажей на:
 
 - **Английский** | `english`
 - **Русский** | `None`
@@ -1298,6 +796,7 @@ init:
 - **Итальянский** | `italian`
 - **Китайский** | `chinese`
 - **Французский** | `french`
+- **Португальский** | `portuguese`
   :::
 
 ### Перевод названия
@@ -1306,21 +805,21 @@ init:
 
 ```renpy
 init python:
-    translation["translator"] = {}
-    translation["translator"]["name"] = {}
+    translation_new["translator"] = {}
+    translation_new["translator"]["name"] = {}
 ```
 
 Затем создаём внутри значения с нашем именем создаём ещё два: одно для русского перевода, второе — для английского.
 
 ```renpy
-    translation["translator"]["name"][None] = u"Переводчик"
-    translation["translator"]["name"]["english"] = "Translator"
+    translation_new["translator"]["name"][None] = u"Переводчик"
+    translation_new["translator"]["name"]["english"] = "Translator"
 ```
 
 Теперь объявляем сам мод, но с именем, что будет брать значение из нашего словаря с переводом в зависимости от установленного языка игры.
 
 ```renpy
-    mods["translator_mod"] = translation["translator"]["name"][_preferences.language]
+    mods["translator_mod"] = translation_new["translator"]["name"][_preferences.language]
 ```
 
 ### Перевод персонажа
@@ -1328,21 +827,21 @@ init python:
 Теперь переведём персонажа. Для этого создаём в нашем словаре значение для персонажей, а внутри него — ещё одно значение с нашим персонажем.
 
 ```renpy
-    translation["translator"]["characters"] = {}
-    translation["translator"]["characters"]["samantha"] = {}
+    translation_new["translator"]["characters"] = {}
+    translation_new["translator"]["characters"]["samantha"] = {}
 ```
 
 Создаём значения с переводом на русский и английский язык.
 
 ```renpy
-    translation["translator"]["characters"]["samantha"]["english"] = "Samantha"
-    translation["translator"]["characters"]["samantha"][None] = "Саманта"
+    translation_new["translator"]["characters"]["samantha"]["english"] = "Samantha"
+    translation_new["translator"]["characters"]["samantha"][None] = "Саманта"
 ```
 
 И объявляем нашего персонажа со значением для имени, что будет браться из установленного языка игры.
 
 ```renpy
-translator_sam = Character(translation["translator"]["characters"]["samantha"][_preferences.language])
+translator_sam = Character(translation_new["translator"]["characters"]["samantha"][_preferences.language])
 ```
 
 ### Перевод текста
@@ -1409,41 +908,102 @@ label translator_mod:
 
 Полный вариант кода выглядит так:
 
+<<< @/src/.vuepress/public/code/scripts/translate.rpy
+
+## Интеграция Live2D
+
+Позволяет интегрировать Live2D в БЛ без необходимости что-либо докачивать. DLL с Live2D автоматически устанавливается в папку `Everlasting Summer/lib/Ваша_ОС`. Поддерживается Windows, Linux, Mac, и, возможно, Android и WEB.
+
+<a href="/code/scripts/live2d.rpy" download>Скачать скрипт</a>
+
+<a href="/misc/archives/live2d.zip" download>Скачать мод-пример</a>
+
+### Объявление Live2D персонажа
+
+```renpy
+image hiyori = Live2D("Resources/Hiyori", base=.6, loop=True)
+```
+
+- `base : float` отвечает за нижнюю часть изображения, для определения размера. Это часть изображения, где 0.0 - верхняя часть, а 1.0 - нижняя. Это также становится значением yanchor по умолчанию.
+
+- `loop : boolean` отвечает за зацикливание анимаций персонажа
+
+Полный список параметров при объявлении персонажа [здесь](https://www.renpy.org/doc/html/live2d.html#Live2D).
+
+### Добавление поддержки устройств без Live2D
+
+Имейте в виду, что устройство пользователя может быть неспособно инициализировать Live2D, в этом случае, необходимо создать функцию, которая будет показывать статичный вариант спрайта или текст-плейсхолдер при невозможности воспроизвести Live2D:
+
 ```renpy
 init python:
-    if not hasattr(store, "persistent.translate_text_lang"):
-        persistent.translate_text_lang = "ru"
-
-    def translate_en_tag(tag, argument, contents):
-        if persistent.translate_text_lang == "en":
-            return contents
+    def MyLive2D(*args, fallback=Placeholder(text="no live2d"), **kwargs):
+        if renpy.has_live2d():
+             return Live2D(*args, **kwargs)
         else:
-            return [ ]
+             return fallback
+```
 
-    def translate_ru_tag(tag, argument, contents):
-        if persistent.translate_text_lang == "ru":
-            return contents
-        else:
-            return [ ]
+#### Пример использования
 
-    def translate_toggle_lang():
-        persistent.translate_text_lang = "ru" if persistent.translate_text_lang != "ru" else "en"
+```renpy
+image eileen moving = MyLive2D("Путь до корневой папки Live2D спрайта", fallback="eileen happy") # При возможности воспроизвести будет использоваться Live2D версия спрайта, если же невозможно, то будет использован статичный спрайт `eileen happy`. Если `fallback` не заполнять, то вместо Live2D спрайта будет выводиться текст о том, что невозможно воспроизвести Live2D.
+```
 
-    config.custom_text_tags["en"] = translate_en_tag
-    config.custom_text_tags["ru"] = translate_ru_tag
+### Использование анимаций
 
-    translation["translator"] = {}
-    translation["translator"]["name"] = {}
-    translation["translator"]["characters"] = {}
-    translation["translator"]["characters"]["samantha"] = {}
+Движения хранятся в папке motions, эмоции в папке expressions.
+Названия движений и эмоций берутся из файлов Live2D, затем вводятся в нижний регистр, и если они начинаются с имени спрайта, за которым следует подчеркивание, то этот префикс удаляется.
 
-    translation["translator"]["name"]["english"] = "Translator"
-    translation["translator"]["name"][None] = u"Переводчик"
+Название файла движения - `Epsilon_idle_01.motion3.json`, следовательно, название движения - `idle_01`
+Название файла эмоции - `Angry.exp3.json`, название эмоции - `angry`
 
-    translation["translator"]["characters"]["samantha"]["english"] = "Samantha"
-    translation["translator"]["characters"]["samantha"][None] = "Саманта"
+#### Движение
 
-    translator_sam = Character(translation["translator"]["characters"]["samantha"][_preferences.language])
+```renpy
+show Epsilon idle_01
+```
 
-    mods["translator_test"] = translation["translator"]["name"][_preferences.language]
+#### Эмоция
+
+```renpy
+show Epsilon angry
+```
+
+#### Движение и эмоция одновременно
+
+```renpy
+show Epsilon idle_01 angry
+```
+
+### Изменение названия анимации
+
+Для удобства при объявлении Live2D персонажа Вы можете с помощью параметра `aliases` изменить название анимации/анимаций на более удобное.
+
+```renpy
+init:
+    image hiyori = Live2D("Resources/Hiyori", base=.6, aliases={"idle" : "m01"})
+
+label mymod:
+    show hiyori idle # эквивалент show hiyori m01
+```
+
+### Плавная смена анимаций
+
+RenPy поддерживает плавную смену анимации при работе с Live2D. Обычно, когда Ren'Py переходит от одной анимации к другой, переход происходит резко - одна анимация останавливается, а другая запускается.
+
+Live2D поддерживает другую модель, в которой старая анимация может плавно переходить в новую, с интерполяцией параметров. Считайте, что персонаж перемещает свои руки в нужное положение перед началом следующей анимации, а не резко переходит из одной анимации в другую.
+
+Затухание движения контролируется с помощью:
+
+- параметра `fade` при объявлении персонажа. Если `True`, используется затухание анимации, а если `False`, то происходит резкая смена анимации.
+
+```renpy
+image hiyori = Live2D("Resources/Hiyori", base=.6, fade=True)
+```
+
+- переменной `_live2d_fade`
+
+```renpy
+init:
+    $ _live2d_fade = True
 ```
