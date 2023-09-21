@@ -12,22 +12,25 @@
         <div class="content">
           <div>
             <p class="title">{{ featured.title }}</p>
-            <p v-if="!isFullDescription">
+            <p>
               {{
-                featured.body.length > 300
+                featured.body.length > 300 && !isFullDescription
                   ? `${featured.body.slice(0, 297)}...`
                   : featured.body
               }}
             </p>
-            <details
+            <a
               v-if="featured.body.length > 300"
-              @click="isFullDescription = !isFullDescription"
+              class="more-btn"
+              @click="
+                () => {
+                  isFullDescription = !isFullDescription
+                }
+              "
+              >{{
+                isFullDescription ? `Скрыть описание` : `Показать описание`
+              }}</a
             >
-              <summary>Полное описание</summary>
-              <p>
-                {{ featured.body }}
-              </p>
-            </details>
           </div>
           <div v-if="featured.links" class="links">
             <a
@@ -56,6 +59,7 @@ export default {
       lastIndex: null,
 
       isFullDescription: false,
+      fullDescriptionShow: false
     }
   },
   watch: {
@@ -66,7 +70,7 @@ export default {
           this.featured = this.getRandomFeatured()
         })
       }
-    },
+    }
   },
   mounted() {
     this.$nextTick(() => {
@@ -88,8 +92,8 @@ export default {
       this.lastIndex = randomIndex
 
       return DATA[Number(indexes[randomIndex])]
-    },
-  },
+    }
+  }
 }
 </script>
 
@@ -167,6 +171,9 @@ export default {
       grid-column-gap: 1rem;
       align-self: flex-end;
     }
+  }
+  .more-btn {
+    cursor: pointer;
   }
 }
 </style>
