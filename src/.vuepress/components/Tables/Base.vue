@@ -7,6 +7,7 @@
           <li v-for="{ name } in data" :key="name">
             <a :href="'#' + name">
               {{ name }} {{ descriptions ? `- ${descriptions[name]}` : '' }}
+              {{ genres ? `(${genres[name]})` : '' }}
             </a>
           </li>
         </ul>
@@ -18,6 +19,7 @@
       <thead>
         <tr>
           <th>Код</th>
+          <th v-if="genres">Жанр</th>
           <th>Предпросмотр</th>
         </tr>
       </thead>
@@ -33,6 +35,11 @@
             <code>{{ codeTemplate.replace('%', name) }}</code>
             <p v-if="descriptions && descriptions[name]">
               {{ descriptions[name] }}
+            </p>
+          </td>
+          <td v-if="genres && genres[name]">
+            <p>
+              {{ genres[name] }}
             </p>
           </td>
           <td>
@@ -61,23 +68,27 @@ export default {
     type: String,
     data: Array,
     descriptions: Object,
+    genres: Object,
     codeTemplate: String,
     nsfw: Array,
-    file: String
+    file: String,
   },
   computed: {
     downloadData() {
       return this?.data?.map(({ name }) => {
         const obj = {
-          code: this.codeTemplate.replace('%', name)
+          code: this.codeTemplate.replace('%', name),
         }
         if (this.descriptions && this.descriptions[name]) {
           obj.description = this.descriptions[name]
         }
+        if (this.genres && this.genres[name]) {
+          obj.genre = this.genres[name]
+        }
 
         return obj
       })
-    }
+    },
   },
   updated() {
     this.scrollToHash()
@@ -92,8 +103,8 @@ export default {
           window.location.replace(window.location.hash)
         })
       }
-    }
-  }
+    },
+  },
 }
 </script>
 
