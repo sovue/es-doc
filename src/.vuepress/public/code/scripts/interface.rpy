@@ -54,7 +54,6 @@ init python:
             config.main_menu_music = "sound/music/blow_with_the_fires.ogg"
         except:  # Если возникают ошибки, то мы выходим из игры, чтобы избежать Traceback
             renpy.quit()
-
     # Функция для автоматического включения кастомного интерфейса при загрузке сохранения с названием Вашего мода
     def my_mod_activate_after_load():
         global save_name
