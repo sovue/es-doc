@@ -54,6 +54,15 @@ init python:
             config.main_menu_music = "sound/music/blow_with_the_fires.ogg"
         except:  # Если возникают ошибки, то мы выходим из игры, чтобы избежать Traceback
             renpy.quit()
+    # Функция для автоматического включения кастомного интерфейса при загрузке сохранения с названием Вашего мода
+    def my_mod_activate_after_load():
+        global save_name
+        if "MyMod" in save_name:
+            my_mod_screen_save()
+            my_mod_screen_act()
+
+    # Добавляем функцию в Callback
+    config.after_load_callbacks.append(my_mod_activate_after_load)
 
     # Объединяем функцию сохранения экранов и замены в одну.
     def my_mod_screens_save_act():
