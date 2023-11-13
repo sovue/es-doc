@@ -31,7 +31,7 @@ init python:
             SCREENS
         ):
             renpy.display.screen.screens[(name, None)] = renpy.display.screen.screens[
-                (my_mod_ + name, None)
+                ("my_mod_" + name, None)
             ]
         config.mouse["default"] = [ ("images/misc/mouse/1.png", 0, 0) ]
         default_mouse = "default"
