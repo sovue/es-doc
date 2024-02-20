@@ -11,15 +11,16 @@
   "editor.formatOnPaste": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {
-    "source.fixAll": "explicit"
+    "source.fixAll": true
   },
   "vetur.validation.template": true,
   "vetur.format.defaultFormatter.html": "prettyhtml",
   "vetur.format.defaultFormatter.js": "prettier-eslint",
-  "vetur.format.defaultFormatter.stylus": "alan.stylus",
   "prettier.requireConfig": true,
   "eslint.lintTask.enable": true,
+  "eslint.packageManager": "yarn",
   "[stylus]": {
+    "editor.defaultFormatter": "thisismanta.stylus-supremacy",
     "gitlens.codeLens.scopes": ["document"]
   },
   "editor.guides.indentation": true,
