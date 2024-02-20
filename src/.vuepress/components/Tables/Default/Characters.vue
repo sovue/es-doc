@@ -365,7 +365,6 @@ export default {
       },
       { id: 'voice', name: 'Голос', color: '#e1dd7d' },
       { id: 'bush', name: 'Голос', color: '#c0c0c0' },
-      { id: 'voices', name: 'Голоса' },
       { id: 'dreamgirl', name: '...', color: '#c0c0c0' },
       { id: 'kids', name: 'Малышня' },
       // { id: 'lk', name: 'Люркмор-кун' },
