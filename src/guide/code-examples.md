@@ -290,32 +290,6 @@ label mymod:
 
 <<< @/src/.vuepress/public/code/scripts/characters.rpy
 
-## Продолжение проигрывания с момента остановки
-
-Данный скрипт позволяет приостановить проигрывание музыки или звука на определённом отрезке, чтобы позже можно было её снова воспроизвести с места остановки.
-
-<a href="/code/scripts/playerPause.rpy" download>Скачать скрипт</a>
-
-<<< @/src/.vuepress/public/code/scripts/playerPause.rpy
-
-### Пример использования
-
-```renpy
-label test:
-    "Запуск проигрывания музыки..."
-    play music music_list["lets_be_friends"]
-    "Создание класса..."
-    $ player = PlayerPause("music") # Присваиваем переменной "player" класс "PlayerPause" для канала "music".
-    "Пауза..."
-    $ player.pause(3) # Приостанавливаем воспроизведение.
-    "Что-то происходит в сценарии..."
-    "Продолжение..."
-    $ player.resume(2) # Возобновляем произведение с места остановки, с входом музыки (fadein) в 2 секунды
-    # $ renpy.music.play("<from {}>{}".format(player.getTime(), player.getFile()), fadein=3)
-    "Аудио будет воспроизведено с момента остановки..."
-    return
-```
-
 ## Эффект падающих частиц
 
 В коде игры уже предусмотрено использование частиц - снега. Имеются два варианта:
@@ -1153,3 +1127,54 @@ image hiyori = Live2D("Resources/Hiyori", base=.6, fade=True)
 init:
     $ _live2d_fade = True
 ```
+
+## Интеграция Python модулей
+
+Позволяет устанавливать сторонние Python модули в Ваш мод.
+
+::: warning
+Не забудьте:
+
+- заменить \_mymod на постфикс своего мода
+- создать папку "python-packages", если используете функцию копирования модуля (copy_module)
+  :::
+
+<a href="/code/scripts/moduleInstaller.rpy" download>Скачать скрипт</a>
+
+<<< @/src/.vuepress/public/code/scripts/moduleInstaller.rpy
+
+### Установка модуля
+
+Для установки модуля (как у Вас, так и у потенциального игрока Вашего мода) должен быть установлен pip (идёт в комплекте с [Python](https://www.python.org/downloads/))
+
+Пример установки модуля:
+
+```renpy
+init python:
+    ModuleInstaller_mymod = ModuleInstaller_mymod("testmod")
+    moduleInstaller_mymod.download_module("pydub") # Модуль pydub скачивается с помощью pip
+```
+
+### Копирование модуля
+
+Так как слишком запарно для пользователя ставить на его систему `Python`, чтобы мод мог докачать нужные ему модули, можно использовать копирование модуля вместо установки: разработчик заранее скачивает нужный ему модуль, закидывает его в созданную в корневой директории мода папку `python-packages` и с помощью метода `copy_module` скрипт автоматически скопирует модуль в директорию `python-packages` самого БЛ, без необходимости читателю что-либо докачивать, чтобы запустить мод.
+
+Пример копирования модуля:
+
+```renpy
+init python:
+   ModuleInstaller_mymod = ModuleInstaller_mymod("testmod")
+   moduleInstaller_mymod.copy_module("pydub") # Модуль pydub копируется из папки python-packages Вашего мода "testmod" в папку "python-packages" самого БЛ
+```
+
+## Показ всех объявленных персонажей
+
+Записывает всех существующих персонажей в БЛ в файл `characters.txt` (который автоматически создаётся в главной директории БЛ) и открывает его.
+
+::: warning
+Если установлены сторонние модификации, то в списке будут и персонажи из модов
+:::
+
+<a href="/code/scripts/characterExport.rpy" download>Скачать скрипт</a>
+
+<<< @/src/.vuepress/public/code/scripts/characterExport.rpy

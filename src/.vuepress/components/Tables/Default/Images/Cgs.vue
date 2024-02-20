@@ -2,7 +2,7 @@
   <Tables-Base
     type="img"
     :data="cgs"
-    codeTemplate="scene %"
+    codeTemplate="scene cg %"
     :nsfw="nsfw"
     file="cgs_list"
   />

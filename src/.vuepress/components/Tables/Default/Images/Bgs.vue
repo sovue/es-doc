@@ -1,5 +1,10 @@
 <template>
-  <Tables-Base type="img" :data="bgs" codeTemplate="scene %" file="bgs_list" />
+  <Tables-Base
+    type="img"
+    :data="bgs"
+    codeTemplate="scene bg %"
+    file="bgs_list"
+  />
 </template>
 
 <script>

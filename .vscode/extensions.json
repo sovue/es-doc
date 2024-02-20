@@ -5,6 +5,7 @@
     "esbenp.prettier-vscode",
     "luquedaniel.languague-renpy",
     "alan.stylus",
-    "octref.vetur"
+    "vue.volar",
+    "gamunu.vscode-yarn"
   ]
 }
