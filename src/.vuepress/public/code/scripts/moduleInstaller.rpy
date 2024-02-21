@@ -33,23 +33,38 @@ init python:
                                 mod_folder = os.path.join(root, x) # Путь до самого мода идёт через workshop
                                 break
                 return mod_folder.replace("\\", "/")
-            except:
-                renpy.error("Can't find mod {} in \"game\" nor \"workshop\" directory!".format(self.mod_name))
+            except Exception as e:
+                renpy.error("Error while finding mod folder: {}".format(e))
 
         def find_mod_python_packages_folder_path(self):
             try:
                 module_source_folder = self.mod_folder + "/python-packages/"
                 return module_source_folder.replace("\\", "/")
-            except:
-                renpy.error("Can't find \"python-packages\" folder inside mod's root directory")
+            except Exception as e:
+                renpy.error("Error while finding mod python-packages folder path: {}".format(e))
 
         def download_module(self, module_name):
             try:
                 module_destination_folder = self.renpy_python_packages_folder_path + "/" + module_name + "/"
                 if not os.path.exists(module_destination_folder):
                     os.system("pip install --target game/python-packages {}".format(module_name))
-            except:
-                renpy.error("Can't install module {}. Make sure that you have Python and pip installed!".format(module_name))
+            except Exception as e:
+                renpy.error("Error while downloading module: {}".format(e))
+
+        def copy_folder(self, src, dst):
+            if not os.path.exists(dst):
+                os.makedirs(dst)
+
+            for item in os.listdir(src):
+                s = os.path.join(src, item)
+                d = os.path.join(dst, item)
+
+                if os.path.isdir(s):
+                    self.copy_folder(s, d)
+                else:
+                    with open(s, 'rb') as f_in:
+                        with open(d, 'wb') as f_out:
+                            f_out.write(f_in.read())
 
         def copy_module(self, module_name):
             try:
@@ -64,13 +79,10 @@ init python:
                     d = os.path.join(module_destination_folder, item)
 
                     if os.path.isdir(s):
-                        copy_folder(s, d)
+                        self.copy_folder(s, d)
                     else:
                         with open(s, 'rb') as f_in:
                             with open(d, 'wb') as f_out:
                                 f_out.write(f_in.read())
-            except:
-                renpy.error("Can't find module named {} inside \"python-packages\" folder".format(module_name))
-
-    moduleInstaller_mymod = moduleInstaller_mymod("pioneriada")
-    moduleInstaller_mymod.copy_module("pydub")
+            except Exception as e:
+                renpy.error("Error while copying module: {}".format(e))
