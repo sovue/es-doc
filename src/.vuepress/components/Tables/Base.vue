@@ -54,6 +54,7 @@
               :src="path"
               preload="auto"
               controls
+              @volumechange="changeVolume($event.target.volume)"
             />
           </td>
         </tr>
@@ -72,6 +73,10 @@ export default {
     codeTemplate: String,
     nsfw: Array,
     file: String,
+    volume: {
+      type: Number,
+      default: 0.5,
+    },
   },
   computed: {
     downloadData() {
@@ -102,6 +107,13 @@ export default {
         this.$nextTick(() => {
           window.location.replace(window.location.hash)
         })
+      }
+    },
+    changeVolume(newVolume) {
+      this.volume = newVolume
+      const audioElements = document.getElementsByTagName('audio')
+      for (const audioElement of audioElements) {
+        audioElement.volume = newVolume
       }
     },
   },
