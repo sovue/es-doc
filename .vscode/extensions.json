@@ -4,7 +4,8 @@
     "eamodio.gitlens",
     "esbenp.prettier-vscode",
     "luquedaniel.languague-renpy",
-    "alan.stylus",
+    "sysoev.language-stylus",
+    "thisismanta.stylus-supremacy",
     "octref.vetur"
   ]
 }

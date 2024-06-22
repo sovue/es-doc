@@ -18,7 +18,6 @@
   "vetur.format.defaultFormatter.js": "prettier-eslint",
   "prettier.requireConfig": true,
   "eslint.lintTask.enable": true,
-  "eslint.packageManager": "yarn",
   "[stylus]": {
     "editor.defaultFormatter": "thisismanta.stylus-supremacy",
     "gitlens.codeLens.scopes": ["document"]
