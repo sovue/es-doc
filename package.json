@@ -21,6 +21,7 @@
   "dependencies": {
     "@octokit/request": "^5.4.15",
     "@vue/runtime-dom": "^3.4.27",
+    "vue-aplayer": "^1.6.1",
     "vuepress-plugin-code-copy": "^1.0.6"
   },
   "devDependencies": {

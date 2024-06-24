@@ -19,7 +19,6 @@
       <thead>
         <tr>
           <th>Код</th>
-          <th v-if="genres">Жанр</th>
           <th>Предпросмотр</th>
         </tr>
       </thead>
@@ -33,14 +32,6 @@
           <td>
             <a :href="'#' + name">#</a>
             <code>{{ codeTemplate.replace('%', name) }}</code>
-            <p v-if="descriptions && descriptions[name]">
-              {{ descriptions[name] }}
-            </p>
-          </td>
-          <td v-if="genres && genres[name]">
-            <p>
-              {{ genres[name] }}
-            </p>
           </td>
           <td>
             <img
@@ -49,11 +40,14 @@
               :src="path"
               :class="{ nsfw: nsfw && nsfw.includes(name) }"
             />
-            <audio
+            <aplayer
               v-else-if="type === 'audio'"
-              :src="path"
+              :music="{
+                title: descriptions[name],
+                artist: genres ? `${genres[name]}` : ' ',
+                src: path,
+              }"
               preload="auto"
-              controls
               @volumechange="changeVolume($event.target.volume)"
             />
           </td>
@@ -64,6 +58,8 @@
 </template>
 
 <script>
+import Aplayer from 'vue-aplayer'
+
 export default {
   props: {
     type: String,
@@ -77,6 +73,9 @@ export default {
       type: Number,
       default: 0.5,
     },
+  },
+  components: {
+    Aplayer,
   },
   computed: {
     downloadData() {
@@ -123,5 +122,31 @@ export default {
 <style scoped>
 .scroll-margin {
   scroll-margin-top: 5rem;
+}
+table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+th,
+td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal; /* changed from nowrap to normal */
+  word-break: break-all; /* added to allow word breaks */
+}
+
+td:first-child {
+  width: 40%; /* adjust the width to fit your needs */
+}
+
+td:last-child {
+  width: 60%; /* adjust the width to fit your needs */
+}
+
+aplayer {
+  width: 100%;
+  height: 30px; /* adjust the height to fit your needs */
+  overflow: hidden; /* added to prevent overflow */
 }
 </style>
