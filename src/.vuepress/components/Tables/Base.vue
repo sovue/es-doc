@@ -49,13 +49,15 @@
               :src="path"
               :class="{ nsfw: nsfw && nsfw.includes(name) }"
             />
-            <audio
-              v-else-if="type === 'audio'"
-              :src="path"
-              preload="auto"
-              controls
-              @volumechange="changeVolume($event.target.volume)"
-            />
+            <div v-else-if="type === 'audio'" class="audio-container">
+              <audio
+                :src="path"
+                preload="auto"
+                controls
+                @play="stopOtherAudio($event)"
+                @volumechange="changeVolume($event.target.volume)"
+              />
+            </div>
           </td>
         </tr>
       </tbody>
@@ -116,6 +118,15 @@ export default {
         audioElement.volume = newVolume
       }
     },
+    stopOtherAudio(event) {
+      const currentAudio = event.target
+      const audioElements = document.getElementsByTagName('audio')
+      for (const audioElement of audioElements) {
+        if (audioElement !== currentAudio) {
+          audioElement.pause()
+        }
+      }
+    },
   },
 }
 </script>
@@ -123,5 +134,16 @@ export default {
 <style scoped>
 .scroll-margin {
   scroll-margin-top: 5rem;
+}
+
+.audio-container {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 10px;
+  background-color: #f5f5f5;
+}
+
+.audio-container audio {
+  height: 30px;
 }
 </style>
