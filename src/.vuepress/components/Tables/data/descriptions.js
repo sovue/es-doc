@@ -7,7 +7,7 @@ module.exports = {
     always_ready: 'Always Ready',
     awakeking_power: 'Awakening Power',
     blow_with_the_fires: 'Blow With The Fires',
-    confession: 'Confession',
+    confession_oboe: 'Confession',
     dance_of_fireflies: 'Dance Of Fireflies',
     doomed_to_be_defeated: 'Doomed To Be Defeated',
     door_to_nightmare: 'Doom To Nightmare',
