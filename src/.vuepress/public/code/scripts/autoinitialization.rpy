@@ -72,7 +72,7 @@ init python early:
         def process_distances(self):
             """
             Находит путь до папки sprites, строит названия дистанций по именам внутри (для normal дистанции имя будет "", как в самом БЛ), ищет изображение в каждой из папок с дистанциями, получает размер изображения и добавляет в словарь
-            
+
             :return: dict
 
             Пример возврата функции:
@@ -114,7 +114,7 @@ init python early:
                     file_name = os.path.splitext(os.path.basename(file))[0] + self.modPostfix
                     if file.endswith(tuple(audio_extensions)):
                         self.count_file("sound", file_name, file)
-    
+
         def process_images(self):
             """
             Обрабатывает изображения. Поддерживает изображения в подпапках.
@@ -132,7 +132,7 @@ init python early:
             for folder in os.listdir(mod_imgs_path):
                 path = os.path.join(mod_imgs_path, folder).replace("\\", "/")
                 if os.path.isfile(path):
-                    image_name = os.path.splitext(os.path.basename(path))[0]
+                    image_name = os.path.splitext(os.path.basename(path))[0] + self.modPostfix
                     self.count_file("image", image_name, path)
                 else:
                     if folder != 'sprites':
@@ -389,7 +389,7 @@ init python early:
 
         def process_sprites(self, path):
             """Обрабатывает спрайты и все их комбинации
-            
+
             Имя спрайта для вызова будет в формате:
             [название спрайта][_постфикс]
             [название спрайта][_постфикс] [эмоция]
