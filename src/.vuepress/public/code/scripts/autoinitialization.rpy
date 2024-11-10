@@ -1,5 +1,5 @@
 init python early:
-    class autoInitialization:
+    class autoInitialization_mymod:
         """
         Класс для автоматической инициализации файлов мода.
         Инициализирует аудио и изображения (включая спрайты).
@@ -128,22 +128,27 @@ init python early:
             bg subfolder subsubfolder background
             """
             mod_imgs_path = self.process_images_path()
+
             for folder in os.listdir(mod_imgs_path):
                 path = os.path.join(mod_imgs_path, folder).replace("\\", "/")
-                if folder != 'sprites':
-                    for root, dirs, files in os.walk(path):
-                        for file in files:
-                            image_path = os.path.join(root, file).replace("\\", "/")
-                            image_name = os.path.splitext(file)[0]
-                            relative_path = os.path.relpath(root, mod_imgs_path) # Получаем полный путь к изображению и удаляем путь к корню
-                            folder_structure = relative_path.split(os.sep) # Разделяем путь на компоненты и объединяем их в имя изображения
-                            folder_index = folder_structure.index(folder)
-                            folder_structure = folder_structure[folder_index:] + [image_name] # Оставляем только элементы после папки folder
-                            image_name_with_folder = ' '.join(folder_structure).replace('/', '').replace('\\', '') + self.modPostfix
-                            image_path = os.path.relpath(image_path, renpy.loader.listdirfiles(False)[0][0]).replace(os.sep, "/")
-                            self.count_file("image", image_name_with_folder, image_path)
+                if os.path.isfile(path):
+                    image_name = os.path.splitext(os.path.basename(path))[0]
+                    self.count_file("image", image_name, path)
                 else:
-                    self.process_sprites(path)
+                    if folder != 'sprites':
+                        for root, dirs, files in os.walk(path):
+                            for file in files:
+                                image_path = os.path.join(root, file).replace("\\", "/")
+                                image_name = os.path.splitext(file)[0]
+                                relative_path = os.path.relpath(root, mod_imgs_path) # Получаем полный путь к изображению и удаляем путь к корню
+                                folder_structure = relative_path.split(os.sep) # Разделяем путь на компоненты и объединяем их в имя изображения
+                                folder_index = folder_structure.index(folder)
+                                folder_structure = folder_structure[folder_index:] + [image_name] # Оставляем только элементы после папки folder
+                                image_name_with_folder = ' '.join(folder_structure).replace('/', '').replace('\\', '') + self.modPostfix
+                                image_path = os.path.relpath(image_path, renpy.loader.listdirfiles(False)[0][0]).replace(os.sep, "/")
+                                self.count_file("image", image_name_with_folder, image_path)
+                    else:
+                        self.process_sprites(path)
 
         def process_sprite_clothes_emo_acc(self, emo_l, clothes_l, acc_l, who, file_body, dist):
             """Обрабатывает спрайт [тело] [эмоция] [одежда] [аксессуар]"""
