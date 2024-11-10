@@ -21,6 +21,7 @@
   "dependencies": {
     "@octokit/request": "^5.4.15",
     "@vue/runtime-dom": "^3.4.27",
+    "husky": "^9.1.6",
     "vuepress-plugin-code-copy": "^1.0.6"
   },
   "devDependencies": {
@@ -29,7 +30,6 @@
     "eslint": "^7.23.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-vue": "^7.16.0",
-    "husky": ">=6",
     "lint-staged": ">=10",
     "netlify-cli": "^3.29.9",
     "prettier": "2.2.1",
