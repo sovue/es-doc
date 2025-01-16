@@ -18,7 +18,7 @@
 
 ## Предпосылки
 
-- Установленная игра "Бесконечное Лето".
+- Установленная игра "Бесконечное Лето" без включённой бета-версии (т.к в бета-версии игры переехали на новую версию Ren'Py). На сегодня ES Doc поддерживает только основную версию игры из Steam (Ren'Py 7.4.11).
 - Текстовый редактор:
   - [Visual Studio Code](https://code.visualstudio.com/) + [Ren'Py Language](https://marketplace.visualstudio.com/items?itemName=LuqueDaniel.languague-renpy) - **личная рекомендация**;
   - [Atom](https://atom.io/) + [language-renpy](https://atom.io/packages/language-renpy) - синтаксис [поддерживается официально](https://github.com/renpy/language-renpy) создателем Ren'Py;
