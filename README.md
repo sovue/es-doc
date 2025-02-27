@@ -2,12 +2,6 @@
 
 ![Главная страница](.github/preview.jpg)
 
-<p align="center">
-  <a href="https://vercel.com/?utm_source=sovue&utm_campaign=oss">
-    <img alt="Powered by Vercel" src="https://www.datocms-assets.com/31049/1618983297-powered-by-vercel.svg" />
-  </a>
-</p>
-
 Документация по созданию модов для БЛ.
 
 [![GitHub last commit](https://img.shields.io/github/last-commit/sovue/es-doc?label=%D0%BF%D0%BE%D1%81%D0%BB%D0%B5%D0%B4%D0%BD%D0%B5%D0%B5%20%D0%B8%D0%B7%D0%BC%D0%B5%D0%BD%D0%B5%D0%BD%D0%B8%D0%B5&style=for-the-badge)](https://github.com/sovue/es-doc/commits/master)
