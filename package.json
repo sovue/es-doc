@@ -14,7 +14,7 @@
     "dev-win": "set NODE_OPTIONS=--openssl-legacy-provider && vuepress dev src",
     "build-win": "set NODE_OPTIONS=--openssl-legacy-provider && vuepress build src",
     "serve": "serve src/.vuepress/dist",
-    "prepare": "husky install",
+    "prepare": "husky",
     "netlify": "netlify"
   },
   "license": "MIT",
