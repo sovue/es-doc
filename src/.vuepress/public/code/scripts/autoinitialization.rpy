@@ -89,8 +89,8 @@ init python early:
                 if os.path.isdir(full_path):
                     for root, dirs, files in os.walk(full_path):
                         for file in files:
-                            image_path = os.path.join(root, file).replace("\\", "/")
-                            image_size = renpy.image_size(image_path)
+                            relative_path = os.path.relpath(os.path.join(root, file), renpy.loader.listdirfiles(False)[0][0]).replace("\\", "/")
+                            image_size = renpy.image_size(relative_path)
                             folder_names[name] = (name if name != "normal" else "", image_size)
                             break
                         else:
