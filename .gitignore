@@ -1,0 +1,17 @@
+# VS Code workspace file
+*.code-workspace
+
+# Envionments
+.venv
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class
+
+# pdm
+.pdm-python
+.pdm-build/
+
+# PEP 582
+__pypackages__/
