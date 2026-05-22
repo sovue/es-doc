@@ -5,10 +5,14 @@ description = "Everlasting Summer modding Wiki"
 authors = [
     {name = "Sovue", email = ""},
 ]
-dependencies = ["fastapi>=0.136.1"]
+dependencies = ["fastapi>=0.136.1", "uvicorn>=0.47.0", "markdown-it-py>=4.2.0"]
 requires-python = "==3.14.*"
 readme = "README.md"
 license = {text = "GPL 3.0"}
 
 [tool.pdm]
 distribution = false
+
+[tool.pdm.scripts]
+start = "python main.py"
+dev = "python main.py --debug"

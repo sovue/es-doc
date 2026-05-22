@@ -1,0 +1,46 @@
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: #322;
+    color: #FFF;
+}
+
+.container {
+    max-width: 700px;
+    margin: 60px auto;
+    padding: 30px;
+    background: #433;
+    border-radius: 12px;
+    box-shadow: 0 0 20px #211;
+}
+
+h1 {
+    margin-top: 0;
+    text-align: center;
+    color: #FC9;
+}
+
+.authors {
+    margin-top: 25px;
+}
+
+.author {
+    padding: 15px;
+    margin-bottom: 12px;
+    background: #544;
+    border-left: 5px solid #FA6;
+    border-radius: 8px;
+}
+
+.author-name {
+    font-size: 20px;
+    font-weight: bold;
+    color: #FFF;
+}
+
+.author-role {
+    margin-top: 5px;
+    color: #DCC;
+}
