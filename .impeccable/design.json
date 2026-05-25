@@ -1,0 +1,163 @@
+{
+  "version": 2,
+  "generated": "2026-05-25",
+  "register": "product",
+
+  "colors": {
+    "bg":            { "value": "#111",        "role": "Page background" },
+    "bg-light":      { "value": "#221911",     "role": "Gradient terminus, blockquote fill" },
+    "bg-surface":    { "value": "#1B1B1B",     "role": "Alias for code/input surfaces (prefer --code-bg or --input-bg in code)" },
+    "bg-sidebar":    { "value": "#181818",     "role": "Docs sidebar background" },
+    "bg-table-head": { "value": "#1d1d1d",     "role": "Table header fill" },
+    "text":          { "value": "#EEE",        "role": "Primary body text" },
+    "text-soft":     { "value": "#BBB",        "role": "Secondary text, labels" },
+    "accent":        { "value": "#DD7F22",     "role": "Primary interactive, headings in docs" },
+    "accent-hover":  { "value": "#F93",        "role": "Hover state for accent elements" },
+    "border":        { "value": "#333",        "role": "All dividers and borders" },
+    "target-bg":     { "value": "#DD7F2233",   "role": "Anchor :target flash (20% accent)" },
+    "code-inline":   { "value": "#ff8080",     "role": "Inline code text" },
+    "selection-bg":  { "value": "#DD7F22",     "role": "Text selection background" },
+    "selection-text":{ "value": "#EEE",        "role": "Text selection foreground (--text, not #fff)" }
+  },
+
+  "typography": {
+    "families": {
+      "body": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
+      "mono": "Consolas, \"Courier New\", monospace"
+    },
+    "scale": {
+      "hero":  { "size": "clamp(1.85rem, 4.5vw, 2.8rem)", "weight": 700, "use": "Homepage H1" },
+      "h1":    { "size": "2.4rem",   "weight": 700, "use": "Doc page H1, border-bottom 2px" },
+      "h2":    { "size": "1.8rem",   "weight": 700, "use": "Doc page H2, border-bottom 1px" },
+      "base":  { "size": "1rem",     "weight": "400/600", "use": "Body, section names" },
+      "sm":    { "size": "0.875rem", "weight": 400, "use": "Nav links, descriptions, footer" },
+      "xs":    { "size": "0.75rem",  "weight": 600, "use": "Mono labels, WIP badges" }
+    },
+    "lineHeight": {
+      "body": 1.7,
+      "heading": "1.15–1.2"
+    },
+    "maxWidth": {
+      "heroParagraph": "55ch",
+      "bodyContent": "65–75ch recommended"
+    }
+  },
+
+  "spacing": {
+    "1": "8px",
+    "2": "16px",
+    "3": "20px",
+    "4": "24px",
+    "5": "32px",
+    "6": "40px",
+    "7": "48px",
+    "8": "56px",
+    "9": "64px",
+    "10": "72px"
+  },
+
+  "rounded": {
+    "none": "0",
+    "xs": "2px",
+    "sm": "3px",
+    "md": "6px",
+    "lg": "12px"
+  },
+
+  "shadows": "none — zero box-shadow in this system; depth via border + background tint only",
+
+  "motion": {
+    "duration": "0.15s",
+    "easing": "ease",
+    "properties": ["color", "background", "opacity", "border-color"],
+    "syntax": "Always explicit: `transition: color 0.15s ease` — never bare `transition: 0.15s`",
+    "reducedMotion": "transitions → none; keyframe animations → none (both must be covered)"
+  },
+
+  "breakpoints": {
+    "tablet": "768px (doc sidebar collapses to horizontal nav strip)",
+    "mobile": "640px (padding reduction, min-width adjustments)",
+    "narrow": "400px (GitHub nav hidden, section descriptions hidden)"
+  },
+
+  "elevation": {
+    "skip-link":   { "z-index": 100 },
+    "site-header": { "z-index": 10, "position": "sticky", "top": 0 },
+    "content":     { "z-index": 0 }
+  },
+
+  "architecture": {
+    "shared": "main.css — skip-link, sr-only, site-header, site-nav, site-footer; used on every page",
+    "pageSpecific": "home.css, doc.css, authors.css",
+    "tokens": "vars.css — imported once by main.css; never re-import in page files"
+  },
+
+  "components": {
+    "nav": {
+      "file": "main.css",
+      "height": "52px min",
+      "approach": "align-items: stretch cascade — nav > ul > li > a all stretch to full height",
+      "tapTarget": "52px (exceeds WCAG 2.5.5 AAA 44px)",
+      "activeState": "aria-current=\"page\" on the active link — drives CSS and AT"
+    },
+    "siteFooter": {
+      "file": "main.css",
+      "class": ".site-footer",
+      "tapTarget": "~29px via display:inline-block + padding-block:6px (meets WCAG 2.5.8 24px)"
+    },
+    "searchGroup": {
+      "structure": "flex row: input + button, wrapped in border",
+      "focusBehavior": "focus-within on wrapper changes border-color to --accent",
+      "buttonHeight": "44px via padding: 14px"
+    },
+    "sectionRow": {
+      "layout": "flex, align-items: baseline, gap: 20px",
+      "interactiveVariant": "<a> — shows arrow on hover via opacity",
+      "wipVariant": "<span> — cursor: default, name in text-soft, no arrow"
+    },
+    "sidebar": {
+      "width": "260px",
+      "position": "sticky, top: 52px (below site-header), height: calc(100vh - 52px)",
+      "tokens": "background: var(--bg-sidebar); border-right: 1px solid var(--border)",
+      "nestedIndent": "padding-left: 18px + border-left: 1px solid var(--border) (structural, not decorative)",
+      "mobile": "stacks above content at ≤768px; horizontal scroll; nested lists hidden"
+    },
+    "blockquote": {
+      "border": "1px solid var(--border) — full border, NOT an accent side-stripe",
+      "background": "var(--bg-light)",
+      "color": "var(--text-soft)"
+    },
+    "anchorLinks": {
+      "defaultOpacity": 0.3,
+      "revealOn": ["parent :hover", ":focus-visible"],
+      "note": "Must be visible at focus-visible — keyboard users tab to these links",
+      "scrollMarginTop": "76px (52px nav + 24px clearance)"
+    },
+    "anchorFlash": {
+      "trigger": ":target pseudo-class",
+      "animation": "flash 1s ease — background fades from target-bg to transparent",
+      "reducedMotion": "animation disabled entirely"
+    }
+  },
+
+  "focusStyle": {
+    "outline": "2px solid var(--accent)",
+    "offsets": {
+      "contained": "-2px to -3px (nav links, search button)",
+      "outside": "2–3px (logo, section rows, footer links)"
+    },
+    "pseudo": "focus-visible only"
+  },
+
+  "accessibility": {
+    "target": "WCAG 2.1 AA",
+    "touchTargets": {
+      "navLinks": "52px full-height via stretch",
+      "searchButton": "44px",
+      "footerLinks": "~29px via display:inline-block + padding-block:6px"
+    },
+    "landmarks": ["banner (site-header)", "navigation (site-nav)", "main", "contentinfo (site-footer)", "complementary (sidebar, doc pages)"],
+    "skipLink": "First focusable element on every page; position: absolute top: -100% → top: 0 on :focus",
+    "lang": "lang=\"ru\" required on every <html> element"
+  }
+}
