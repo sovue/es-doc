@@ -22,6 +22,7 @@ def _thanks_section():
 async def page():
     return HTMLResponse(read_template('home.html',
         authors_core=_authors_core(),
+        gh_section='',
         thanks_section=_thanks_section()))
 
 @router.get('/authors')
