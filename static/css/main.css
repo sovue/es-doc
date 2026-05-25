@@ -22,4 +22,198 @@ body {
         sans-serif;
 
     line-height: 1.7;
+    font-kerning: normal;
+}
+
+/* ── Screen-reader only ──────────────────────────────────── */
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ── Skip link ───────────────────────────────────────────── */
+
+.skip-link {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    padding: 10px 16px;
+    background: var(--accent);
+    color: var(--bg);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    z-index: 100;
+    border-radius: 0 0 3px 0;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* ── Site header (banner landmark) ──────────────────────── */
+
+.site-header {
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+}
+
+/* ── Site navigation ─────────────────────────────────────── */
+
+/* align-items: stretch so child links fill the full 52px tap height */
+.site-nav {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    padding: 0 48px;
+    min-height: 52px;
+}
+
+.nav-logo {
+    display: flex;
+    align-items: center;
+    font-family: Consolas, "Courier New", monospace;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    color: var(--accent);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.nav-logo:hover {
+    color: var(--accent-hover);
+}
+
+.nav-logo:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+    color: var(--accent-hover);
+}
+
+/* stretch ul and li so each <a> fills the full nav height */
+.nav-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: stretch;
+}
+
+.nav-links li {
+    display: flex;
+}
+
+/* padding-inline replaces gap — gives tap width while keeping visual spacing */
+.nav-links a {
+    display: flex;
+    align-items: center;
+    padding-inline: 16px;
+    font-size: 0.875rem;
+    color: var(--text-soft);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.15s ease;
+}
+
+.nav-links a:hover,
+.nav-links a[aria-current="page"] {
+    color: var(--text);
+    text-decoration: none;
+}
+
+.nav-links a:focus-visible {
+    color: var(--text);
+    outline: 2px solid var(--accent);
+    outline-offset: -3px;
+    border-radius: 2px;
+}
+
+/* ── Site footer ─────────────────────────────────────────── */
+
+.site-footer {
+    padding: 20px 48px;
+    border-top: 1px solid var(--border);
+    font-size: 0.875rem;
+    color: var(--text-soft);
+}
+
+.site-footer p {
+    margin: 0;
+    display: flex;
+    gap: 20px;
+}
+
+/* display: inline-block + padding-block raises touch target from ~22px to ~29px */
+.site-footer a {
+    display: inline-block;
+    padding-block: 6px;
+    color: var(--text-soft);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.site-footer a:hover {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.site-footer a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* ── Responsive (shared nav + footer) ────────────────────── */
+
+@media (max-width: 640px) {
+    .site-nav {
+        padding: 0 20px;
+    }
+
+    .nav-links a {
+        padding-inline: 12px;
+    }
+
+    .site-footer {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 400px) {
+    .site-nav {
+        padding: 0 16px;
+    }
+
+    .nav-links a {
+        padding-inline: 10px;
+    }
+
+    /* hide GitHub link at narrowest widths to prevent nav overflow */
+    .nav-links li:last-child {
+        display: none;
+    }
+}
+
+/* ── Reduced motion (shared nav + footer) ────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+    .nav-logo,
+    .nav-links a,
+    .skip-link,
+    .site-footer a {
+        transition: none;
+    }
 }
