@@ -1,3 +1,4 @@
+/* Dark-only theme. Light mode is not planned. No prefers-color-scheme media query is intentional. */
 :root {
     --bg: #111;
     --bg-light: #221911;
@@ -13,4 +14,9 @@
     --border: #333;
 
     --code-bg: #1B1B1B;
+    --input-bg: #1B1B1B;
+
+    --code-inline: #ff8080;
+    --bg-sidebar: #181818;
+    --bg-table-head: #1d1d1d;
 }

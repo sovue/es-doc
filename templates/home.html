@@ -1,0 +1,120 @@
+<html lang="ru">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>ES Doc — Документация по моддингу Бесконечного Лета</title>
+        <link rel="stylesheet" href="/resources/css/main.css">
+        <link rel="stylesheet" href="/resources/css/home.css">
+        <link rel="icon" href="/favicon.webp">
+    </head>
+
+    <body>
+
+        <!-- Skip link: first focusable element, moves keyboard users past nav -->
+        <a href="#main-content" class="skip-link">Перейти к содержимому</a>
+
+        <!-- site-header is a direct child of body, so it maps to the banner landmark -->
+        <header class="site-header">
+            <nav class="site-nav" aria-label="Основная навигация">
+                <a class="nav-logo" href="/">ES Doc</a>
+                <ul class="nav-links">
+                    <li><a href="/docs/">Документация</a></li>
+                    <li><a href="/authors">Авторы</a></li>
+                    <li>
+                        <a href="https://github.com/sovue/es-doc"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           aria-label="Репозиторий на GitHub">GitHub</a>
+                    </li>
+                </ul>
+            </nav>
+        </header>
+
+        <div class="home">
+
+            <!-- div not header: the banner landmark is now site-header above -->
+            <div class="hero">
+                <div class="hero-inner">
+
+                    <h1 class="hero-title">Документация<br>по моддингу БЛ</h1>
+
+                    <p class="hero-desc">
+                        Справочник терминов, примеры кода и ресурсы игры
+                        для создания модов к «Бесконечному Лету».
+                    </p>
+
+                    <!-- Search backend pending; form submits to glossary as interim target -->
+                    <form class="hero-search" action="/docs/glossary" method="get" role="search">
+                        <label for="search-input" class="sr-only">Поиск по документации</label>
+                        <input
+                            id="search-input"
+                            type="search"
+                            name="q"
+                            placeholder="Найти термин или раздел..."
+                            autocomplete="off"
+                            spellcheck="false"
+                        >
+                        <button type="submit" aria-label="Найти">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+
+            <main class="home-main" id="main-content">
+
+                <section class="doc-sections" aria-labelledby="sections-heading">
+                    <h2 id="sections-heading" class="sections-heading">Разделы</h2>
+
+                    <ul class="sections-list" role="list">
+
+                        <li>
+                            <a href="/docs/glossary" class="section-row">
+                                <span class="section-name">Глоссарий</span>
+                                <span class="section-desc">Термины движка RenPy и модов БЛ</span>
+                                <span class="section-arrow" aria-hidden="true">→</span>
+                            </a>
+                        </li>
+
+                        <!-- aria-label removed: non-interactive spans don't benefit from it;
+                             visible text (name + "скоро" badge) is sufficient for AT -->
+                        <li>
+                            <span class="section-row section-wip">
+                                <span class="section-name">Примеры кода</span>
+                                <span class="section-desc">в разработке</span>
+                                <span class="section-wip-badge">скоро</span>
+                            </span>
+                        </li>
+
+                        <li>
+                            <span class="section-row section-wip">
+                                <span class="section-name">Ресурсы игры</span>
+                                <span class="section-desc">в разработке</span>
+                                <span class="section-wip-badge">скоро</span>
+                            </span>
+                        </li>
+
+                    </ul>
+                </section>
+
+            </main>
+
+            <footer class="site-footer">
+                <p>
+                    <a href="/authors">Авторы</a>
+                    <a href="https://github.com/sovue/es-doc/issues"
+                       target="_blank"
+                       rel="noopener noreferrer">Нашли ошибку?</a>
+                </p>
+            </footer>
+
+        </div>
+
+    </body>
+
+</html>

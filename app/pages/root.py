@@ -7,4 +7,8 @@ router = APIRouter()
 
 @router.get('/')
 async def page():
+    return HTMLResponse(read_template('home.html'))
+
+@router.get('/authors')
+async def authors():
     return HTMLResponse(read_template('authors.html', title='Авторы'))
