@@ -23,26 +23,6 @@ body {
     max-width: 640px;
 }
 
-.hero-badge {
-    margin: 0 0 28px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.875rem;
-    font-weight: 400;
-    color: var(--text-soft);
-    letter-spacing: 0.01em;
-}
-
-.badge-dot {
-    display: inline-block;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--accent);
-    flex-shrink: 0;
-}
-
 /* clamp() replaces the hard 640px breakpoint jump */
 .hero-title {
     margin: 0 0 18px;
@@ -128,16 +108,6 @@ body {
 }
 
 /* ── Sections directory ──────────────────────────────────── */
-
-.sections-heading {
-    margin: 0 0 20px;
-    font-family: Consolas, "Courier New", monospace;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-soft);
-}
 
 .sections-list {
     list-style: none;
@@ -226,6 +196,14 @@ a.section-row:focus-visible .section-arrow {
     flex-shrink: 0;
 }
 
+/* ── Authors strip ───────────────────────────────────────── */
+
+.home-contributors {
+    padding: 40px 48px 48px;
+    max-width: 760px;
+    border-top: 1px solid var(--border);
+}
+
 /* ── Reduced motion ──────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
@@ -246,6 +224,10 @@ a.section-row:focus-visible .section-arrow {
 
     .home-main {
         padding: 40px 20px;
+    }
+
+    .home-contributors {
+        padding: 32px 20px 40px;
     }
 
     .section-name {

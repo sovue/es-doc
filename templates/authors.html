@@ -11,7 +11,6 @@
 
     <body>
 
-        <!-- Skip link: first focusable element, moves keyboard users past nav -->
         <a href="#main-content" class="skip-link">Перейти к содержимому</a>
 
         <header class="site-header">
@@ -33,30 +32,22 @@
         <div class="authors-page">
 
             <div class="authors-header">
-                <h1 class="authors-title">Команда проекта</h1>
+                <h1 class="authors-title">Авторы</h1>
             </div>
 
             <main class="authors-main" id="main-content">
 
-                <h2 class="authors-list-label">Участники</h2>
+                <!-- Основные контрибуторы -->
+                <section class="contributors-section" aria-labelledby="core-label">
+                    <h2 class="authors-list-label" id="core-label">Авторы</h2>
+                    {authors_core}
+                </section>
 
-                <ul class="authors-list" role="list">
+                <!-- Контрибуторы GitHub — бэкэнд инжектит секцию целиком -->
+                {gh_section}
 
-                    <li>
-                        <div class="author-row">
-                            <span class="author-name">poi</span>
-                            <span class="author-role">Что-то делал</span>
-                        </div>
-                    </li>
-
-                    <li>
-                        <div class="author-row">
-                            <span class="author-name">140 kilograms of sex</span>
-                            <span class="author-role">Купил себе крутые кроссы</span>
-                        </div>
-                    </li>
-
-                </ul>
+                <!-- Особые благодарности — бэкэнд парсит из MD файла и инжектит секцию целиком -->
+                {thanks_section}
 
             </main>
 
@@ -65,7 +56,7 @@
                     <a href="/authors">Авторы</a>
                     <a href="https://github.com/sovue/es-doc/issues"
                        target="_blank"
-                       rel="noopener noreferrer">Нашли ошибку?</a>
+                       rel="noopener noreferrer">Нашли ошибку?<span class="sr-only"> (открывается в новой вкладке)</span></a>
                 </p>
             </footer>
 

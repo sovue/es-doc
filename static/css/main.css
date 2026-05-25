@@ -4,8 +4,10 @@
     box-sizing: border-box;
 }
 
-html {
-    scroll-behavior: smooth;
+@media (prefers-reduced-motion: no-preference) {
+    html {
+        scroll-behavior: smooth;
+    }
 }
 
 body {
@@ -207,13 +209,125 @@ body {
     }
 }
 
-/* ── Reduced motion (shared nav + footer) ────────────────── */
+/* ── Section label (shared) ──────────────────────────────── */
+
+.authors-list-label {
+    margin: 0 0 20px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+}
+
+/* ── Section spacing (shared) ────────────────────────────── */
+
+.contributors-section + .contributors-section {
+    margin-top: 48px;
+}
+
+/* ── Authors list (shared partial) ──────────────────────── */
+
+.authors-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+}
+
+.authors-list li {
+    border-bottom: 1px solid var(--border);
+}
+
+.author-row {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    padding: 16px 0;
+}
+
+.author-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    min-width: 200px;
+    flex-shrink: 0;
+}
+
+.author-role {
+    font-size: 0.875rem;
+    color: var(--text-soft);
+    flex: 1;
+}
+
+/* ── Special thanks (shared, rendered from markdown) ─────── */
+
+.thanks-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+}
+
+.thanks-list > li {
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0;
+    font-size: 0.875rem;
+    color: var(--text-soft);
+    line-height: 1.6;
+}
+
+.thanks-list a {
+    color: var(--text);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.thanks-list a:hover {
+    color: var(--accent);
+}
+
+.thanks-list a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+.thanks-list ul {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+}
+
+.thanks-list ul li {
+    padding: 3px 0 3px 16px;
+    position: relative;
+}
+
+.thanks-list ul li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--border);
+}
+
+/* ── Responsive (shared contributors) ───────────────────── */
+
+@media (max-width: 640px) {
+    .contributors-section + .contributors-section {
+        margin-top: 36px;
+    }
+}
+
+/* ── Reduced motion ──────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
     .nav-logo,
     .nav-links a,
     .skip-link,
-    .site-footer a {
+    .site-footer a,
+    .thanks-list a {
         transition: none;
     }
 }

@@ -36,54 +36,47 @@ body {
     max-width: 640px;
 }
 
-/* ── Authors list ────────────────────────────────────────── */
+/* ── GitHub contributors ─────────────────────────────────── */
 
-.authors-list-label {
-    margin: 0 0 20px;
-    font-family: Consolas, "Courier New", monospace;
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-soft);
-}
-
-.authors-list {
+.gh-list {
     list-style: none;
     margin: 0;
-    padding: 0;
+    padding: 16px 0 0;
     border-top: 1px solid var(--border);
-}
-
-.authors-list li {
-    border-bottom: 1px solid var(--border);
-}
-
-.author-row {
     display: flex;
-    align-items: baseline;
-    gap: 20px;
-    padding: 16px 0;
+    flex-wrap: wrap;
+    gap: 4px 20px;
 }
 
-.author-name {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text);
-    min-width: 200px;
-    flex-shrink: 0;
+.gh-list li {
+    line-height: 2;
 }
 
-.author-role {
+.gh-handle {
+    font-family: Consolas, "Courier New", monospace;
     font-size: 0.875rem;
     color: var(--text-soft);
-    flex: 1;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.gh-handle:hover {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.gh-handle:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
 }
 
 /* ── Reduced motion ──────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
-    /* No transitions on this page */
+    .gh-handle {
+        transition: none;
+    }
 }
 
 /* ── Responsive ──────────────────────────────────────────── */
@@ -100,6 +93,8 @@ body {
     .author-name {
         min-width: 140px;
     }
+
+
 }
 
 @media (max-width: 400px) {
@@ -112,4 +107,6 @@ body {
     .author-name {
         min-width: 0;
     }
+
+
 }

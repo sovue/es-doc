@@ -69,7 +69,7 @@
             <main class="home-main" id="main-content">
 
                 <section class="doc-sections" aria-labelledby="sections-heading">
-                    <h2 id="sections-heading" class="sections-heading">Разделы</h2>
+                    <h2 id="sections-heading" class="authors-list-label">Разделы</h2>
 
                     <ul class="sections-list" role="list">
 
@@ -104,12 +104,20 @@
 
             </main>
 
+            <div class="home-contributors">
+                <section class="contributors-section" aria-labelledby="home-authors-label">
+                    <h2 class="authors-list-label" id="home-authors-label">Авторы</h2>
+                    {authors_core}
+                </section>
+                {thanks_section}
+            </div>
+
             <footer class="site-footer">
                 <p>
                     <a href="/authors">Авторы</a>
                     <a href="https://github.com/sovue/es-doc/issues"
                        target="_blank"
-                       rel="noopener noreferrer">Нашли ошибку?</a>
+                       rel="noopener noreferrer">Нашли ошибку?<span class="sr-only"> (открывается в новой вкладке)</span></a>
                 </p>
             </footer>
 

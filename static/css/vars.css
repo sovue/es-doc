@@ -19,4 +19,7 @@
     --code-inline: #ff8080;
     --bg-sidebar: #181818;
     --bg-table-head: #1d1d1d;
+
+    --selection-bg: var(--accent);
+    --selection-text: var(--text);
 }

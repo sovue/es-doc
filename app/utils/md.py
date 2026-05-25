@@ -23,6 +23,13 @@ def render_heading_open(self, tokens, idx, options, env):
 
 MD.add_render_rule('heading_open', render_heading_open)
 
+def render_thanks(src):
+    html = MD.render(src)
+    html = re.sub(r'<h1[^>]*>.*?</h1>\n?', '', html, flags=re.DOTALL).strip()
+    if html.startswith('<ul>'):
+        html = '<ul class="thanks-list">' + html[4:]
+    return html
+
 def render(src):
 
     title = 'err'
