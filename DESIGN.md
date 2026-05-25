@@ -64,7 +64,7 @@ ES Doc is a dark-themed code-reference tool for Russian-speaking modders of the 
 
 **Anti-references:** ReadTheDocs clutter; Confluence corporate gray; neon/cyberpunk gaming aesthetics; SaaS landing page templates.
 
-**CSS architecture:** Shared components (skip link, sr-only, site header/nav, site footer) live in `main.css` and are available on every page. Page-specific styles live in `home.css`, `doc.css`, and `authors.css`. Never import `vars.css` in page-specific files — `main.css` already does it.
+**CSS architecture:** Shared components live in `main.css` and are available on every page: skip link, sr-only, site header/nav, site footer, `.authors-list-label` (monospace section heading), `.contributors-section` spacing, `.authors-list`/`.author-row` (core authors partial), and `.thanks-list` (markdown-rendered special thanks). Page-specific styles live in `home.css`, `doc.css`, and `authors.css`. Never import `vars.css` in page-specific files — `main.css` already does it.
 
 **Breakpoints:**
 - Tablet: ≤768px (doc sidebar collapses to horizontal nav strip; layout stacks)
@@ -91,10 +91,12 @@ Dark-only theme. No `prefers-color-scheme` query is intentional — this surface
 | `--border` | `#333` | All borders and dividers |
 | `--target-bg` | `#DD7F2233` | Anchor-target flash background (20% accent) |
 | `--code-inline` | `#ff8080` | Inline `<code>` text color |
+| `--selection-bg` | `var(--accent)` | Text selection background |
+| `--selection-text` | `var(--text)` | Text selection foreground |
 
 **Color strategy:** Restrained. Amber accent at ≤10% of any surface on the homepage. Docs pages are more accent-heavy (all headings use `--accent`) — but content rules there, not chrome.
 
-**Selection:** Amber background (`--accent`), body text color (`--text: #EEE`) — not pure white.
+**Selection:** Use `var(--selection-bg)` and `var(--selection-text)` in `::selection` rules — never `var(--accent)` directly. Amber background, body text foreground; not pure white.
 
 ---
 
@@ -122,9 +124,9 @@ Two families: the system sans-serif for all body/UI copy, and Consolas monospace
 **Line heights:**
 - Body: `1.7` — long-form reading comfort
 - Headings: `1.15–1.2` — tight, editorial
-- Body max-width: `55ch` (hero desc); `65–75ch` recommended for doc content
+- Body max-width: `55ch` (hero desc); `72ch` enforced on doc prose via `.content p, .content blockquote, .content > ul, .content > ol { max-width: 72ch }` — tables, `pre`, and images remain full-width
 
-**Monospace identity:** `Consolas, "Courier New", monospace` on `.nav-logo` (wordmark) and `.sections-heading` (directory label). No letter-spacing on body. Monospace labels use `letter-spacing: 0.1em; text-transform: uppercase` to signal meta/structural information.
+**Monospace identity:** `Consolas, "Courier New", monospace` on `.nav-logo` (wordmark) and `.authors-list-label` (all section directory headings). No letter-spacing on body. Monospace labels use `letter-spacing: 0.1em; text-transform: uppercase` to signal meta/structural information.
 
 ---
 
@@ -229,6 +231,45 @@ Hidden by default at `opacity: 0.3`. Reveals on parent hover and on `:focus-visi
 .heading { scroll-margin-top: 76px; }
 ```
 
+### Authors List (shared partial)
+Core authors list injected into both `/` and `/authors` via `templates/partials/authors_core.html`. Styles live in `main.css`. Name column is fixed-width, role column is fluid. At ≤400px, collapses to stacked layout.
+
+```css
+.authors-list { list-style: none; border-top: 1px solid var(--border); }
+.authors-list li { border-bottom: 1px solid var(--border); }
+.author-row { display: flex; align-items: baseline; gap: 20px; padding: 16px 0; }
+.author-name { font-size: 1rem; font-weight: 600; min-width: 200px; flex-shrink: 0; }
+.author-role { font-size: 0.875rem; color: var(--text-soft); flex: 1; }
+```
+
+### Thanks List (markdown-rendered)
+Special thanks section parsed from `content/main/thanks.md` and injected as `{thanks_section}`. Styles live in `main.css`. Top-level list items get bordered rows; nested sub-lists use a `—` CSS-generated marker. Links use `--text` at rest, `--accent` on hover.
+
+```css
+.thanks-list { list-style: none; border-top: 1px solid var(--border); }
+.thanks-list > li { border-bottom: 1px solid var(--border); padding: 12px 0; font-size: 0.875rem; color: var(--text-soft); }
+.thanks-list ul { list-style: none; margin: 6px 0 0; padding: 0; }
+.thanks-list ul li { padding: 3px 0 3px 16px; position: relative; }
+.thanks-list ul li::before { content: '—'; position: absolute; left: 0; color: var(--border); }
+.thanks-list a { color: var(--text); }
+.thanks-list a:hover { color: var(--accent); }
+```
+
+### Section Heading Label (`.authors-list-label`)
+Shared monospace label used for all section headings: "Авторы", "Разделы", "Особые благодарности". Lives in `main.css`. Identical visual treatment to `h2` labels in the docs sidebar — signals meta/structural, not content hierarchy.
+
+```css
+.authors-list-label { font-family: Consolas, "Courier New", monospace; font-size: 0.75rem;
+  font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-soft); }
+```
+
+### Contributors Section Spacing
+`.contributors-section` is the wrapper for each thematic group on the authors page and home page contributors block. Adjacent sections get `margin-top: 48px` (36px on mobile). Defined in `main.css`.
+
+```css
+.contributors-section + .contributors-section { margin-top: 48px; }
+```
+
 ### Focus States
 Consistent `2px solid var(--accent)` outline across all interactive elements. `outline-offset` varies:
 - Nav links: `-3px` (contained within the element bounds)
@@ -250,7 +291,11 @@ Consistent `2px solid var(--accent)` outline across all interactive elements. `o
 - Write `transition` with an explicit property and easing: `transition: color 0.15s ease`, never bare `transition: 0.15s` (which animates all properties, including layout ones)
 - Reveal elements hidden by `opacity` at `:focus-visible` — anything a keyboard user can tab to must be visible when focused
 - Add `aria-current="page"` to the active nav link on every page template — it signals current location to AT and drives the active-state CSS
-- Use the shared component classes from `main.css` (`site-header`, `site-nav`, `skip-link`, `site-footer`, `sr-only`) on every page template without reimplementing them
+- Use the shared component classes from `main.css` (`site-header`, `site-nav`, `skip-link`, `site-footer`, `sr-only`, `authors-list-label`, `authors-list`, `thanks-list`, `contributors-section`) on every page template without reimplementing them
+- Use `var(--selection-bg)` and `var(--selection-text)` in `::selection` rules — never the raw `var(--accent)` or `var(--text)` directly
+- Wrap `scroll-behavior: smooth` in `@media (prefers-reduced-motion: no-preference)` — not in the bare `html {}` block
+- Merge all `prefers-reduced-motion: reduce` transition/animation rules into a single block at the end of each stylesheet
+- Add `<span class="sr-only"> (открывается в новой вкладке)</span>` inside any `target="_blank"` link where the link text alone doesn't indicate new-tab behaviour
 
 **Don't:**
 - Add drop shadows. This system uses zero `box-shadow`. Depth is borders + background tint only.
