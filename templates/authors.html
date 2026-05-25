@@ -1,35 +1,76 @@
-<html>
+<html lang="ru">
 
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{title} — ES Doc</title>
+        <title>Авторы — ES Doc</title>
         <link rel="stylesheet" href="/resources/css/main.css">
+        <link rel="stylesheet" href="/resources/css/authors.css">
         <link rel="icon" href="/favicon.webp">
     </head>
 
     <body>
-        <div class="container">
-            <h1>Авторы проекта</h1>
 
-            <div class="authors">
+        <!-- Skip link: first focusable element, moves keyboard users past nav -->
+        <a href="#main-content" class="skip-link">Перейти к содержимому</a>
 
-                <div class="author">
-                    <div class="author-name">poi</div>
-                    <div class="author-role">Что-то делал</div>
-                </div>
+        <header class="site-header">
+            <nav class="site-nav" aria-label="Основная навигация">
+                <a class="nav-logo" href="/">ES Doc</a>
+                <ul class="nav-links">
+                    <li><a href="/docs/">Документация</a></li>
+                    <li><a href="/authors" aria-current="page">Авторы</a></li>
+                    <li>
+                        <a href="https://github.com/sovue/es-doc"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           aria-label="Репозиторий на GitHub">GitHub</a>
+                    </li>
+                </ul>
+            </nav>
+        </header>
 
-                <div class="author">
-                    <div class="author-name">140 kilograms of sex</div>
-                    <div class="author-role">Купил себе крутые кроссы</div>
-                </div>
+        <div class="authors-page">
 
-                <div class="author">
-                    <div class="author-name">Автор</div>
-                    <div class="author-role">Роль</div>
-                </div>
-
+            <div class="authors-header">
+                <h1 class="authors-title">Команда проекта</h1>
             </div>
+
+            <main class="authors-main" id="main-content">
+
+                <h2 class="authors-list-label">Участники</h2>
+
+                <ul class="authors-list" role="list">
+
+                    <li>
+                        <div class="author-row">
+                            <span class="author-name">poi</span>
+                            <span class="author-role">Что-то делал</span>
+                        </div>
+                    </li>
+
+                    <li>
+                        <div class="author-row">
+                            <span class="author-name">140 kilograms of sex</span>
+                            <span class="author-role">Купил себе крутые кроссы</span>
+                        </div>
+                    </li>
+
+                </ul>
+
+            </main>
+
+            <footer class="site-footer">
+                <p>
+                    <a href="/authors">Авторы</a>
+                    <a href="https://github.com/sovue/es-doc/issues"
+                       target="_blank"
+                       rel="noopener noreferrer">Нашли ошибку?</a>
+                </p>
+            </footer>
+
         </div>
+
     </body>
+
 </html>

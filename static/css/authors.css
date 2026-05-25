@@ -1,0 +1,115 @@
+/* ── Override gradient from main.css ─────────────────────── */
+
+body {
+    background: var(--bg);
+}
+
+/* ── Page shell ──────────────────────────────────────────── */
+
+.authors-page {
+    min-height: calc(100vh - 52px);
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Page header ─────────────────────────────────────────── */
+
+.authors-header {
+    padding: 56px 48px 48px;
+    border-bottom: 1px solid var(--border);
+}
+
+.authors-title {
+    margin: 0;
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text);
+    letter-spacing: -0.01em;
+}
+
+/* ── Main content ────────────────────────────────────────── */
+
+.authors-main {
+    flex: 1;
+    padding: 48px 48px 56px;
+    max-width: 640px;
+}
+
+/* ── Authors list ────────────────────────────────────────── */
+
+.authors-list-label {
+    margin: 0 0 20px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+}
+
+.authors-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+}
+
+.authors-list li {
+    border-bottom: 1px solid var(--border);
+}
+
+.author-row {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    padding: 16px 0;
+}
+
+.author-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    min-width: 200px;
+    flex-shrink: 0;
+}
+
+.author-role {
+    font-size: 0.875rem;
+    color: var(--text-soft);
+    flex: 1;
+}
+
+/* ── Reduced motion ──────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+    /* No transitions on this page */
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+    .authors-header {
+        padding: 40px 20px 32px;
+    }
+
+    .authors-main {
+        padding: 32px 20px 40px;
+    }
+
+    .author-name {
+        min-width: 140px;
+    }
+}
+
+@media (max-width: 400px) {
+    .author-row {
+        flex-direction: column;
+        gap: 4px;
+        padding: 14px 0;
+    }
+
+    .author-name {
+        min-width: 0;
+    }
+}
