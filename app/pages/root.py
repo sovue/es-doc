@@ -1,6 +1,7 @@
-from ..utils.file import read_template
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
+
+from ..utils.file import read_template
 
 router = APIRouter()
 

@@ -1,9 +1,14 @@
-from ..utils.file import read_text
 from fastapi import APIRouter
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import FileResponse, PlainTextResponse
 
-router = APIRouter(prefix='/resources')
+from ..utils.file import ROOT, read_text
 
-@router.get('/css/{name}')
-async def page(name):
+router = APIRouter()
+
+@router.get('/favicon.webp')
+async def favicon():
+    return FileResponse(str(ROOT / 'static' / 'favicon.webp'))
+
+@router.get('/resources/css/{name}')
+async def css(name):
     return PlainTextResponse(read_text(f'static/css/{name}'))
