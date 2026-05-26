@@ -2,7 +2,7 @@
 
 - [Егору Гунько](https://github.com/yhunko) — за помощь в разработке оригинального проекта ES Doc.
 - [Стасу Кударенко](https://t.me/shkiper8591) — за помощь в разработке второй итерации проекта.
-- [Андрею Варфоломееву](https://vk.com/a_varfolomeev) — за помощь в написании статей для проекта.
+- [Андрею Northcoreshun](https://t.me/coreshunnest) — за помощь в написании статей для проекта.
 - Создателям [руководства "Уроки моддинга"](https://steamcommunity.com/sharedfiles/filedetails/?id=690911411):
   - [HenсoDesu](https://steamcommunity.com/id/hencodesu) — за создание гайда в Steam.
   - [Владе](https://steamcommunity.com/id/nyashniyvladya) — за создание интересных модов и за помощь в дополнении руководства в Steam.
