@@ -192,7 +192,7 @@ img {
 .content blockquote,
 .content > ul,
 .content > ol {
-    max-width: 72ch;
+    max-width: 100%;
 }
 
 .heading {
