@@ -242,9 +242,17 @@ body {
 
 .author-row {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 20px;
     padding: 16px 0;
+}
+
+.author-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
 }
 
 .author-name {
@@ -259,6 +267,22 @@ body {
     font-size: 0.875rem;
     color: var(--text-soft);
     flex: 1;
+}
+
+.author-links {
+    font-size: 0.875rem;
+    color: var(--text-soft);
+    flex: 1;
+}
+
+.author-links a {
+    color: var(--text);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.author-links a:hover {
+    color: var(--accent);
 }
 
 /* ── Special thanks (shared, rendered from markdown) ─────── */
