@@ -107,10 +107,20 @@
             <div class="home-contributors">
                 <section class="contributors-section" aria-labelledby="home-authors-label">
                     <h2 class="authors-list-label" id="home-authors-label">Авторы</h2>
-                    {authors_core}
+                    {{ authors_core|safe }}
                 </section>
-                {gh_section}
-                {thanks_section}
+                <section class="contributors-section" aria-labelledby="core-label">
+                    <h2 class="authors-list-label" id="core-label">Наши контрибьюторы</h2>
+                    <div class="ghcontributors-row" id="contributors"></div>
+                </section>
+                <script>
+                    fetch("/api/contributors")
+                        .then(r => r.text())
+                        .then(html => {
+                            document.getElementById("contributors").innerHTML = html;
+                        });
+                </script>
+                {{ thanks_section|safe }}
             </div>
 
             <footer class="site-footer">

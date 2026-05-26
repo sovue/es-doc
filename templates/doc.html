@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{title} — ES Doc</title>
+        <title>{{ title }} — ES Doc</title>
         <link rel="stylesheet" href="/static/css/main.css">
         <link rel="stylesheet" href="/static/css/doc.css">
         <link rel="icon" href="/favicon.webp">
@@ -32,14 +32,14 @@
         <div class="layout">
 
             <aside class="sidebar">
-                <h2>{title}</h2>
+                <h2>{{ title }}</h2>
                 <nav aria-label="Содержание"><ul>
-                    {nav}
+                    {{ nav|safe }}
                 </ul></nav>
             </aside>
 
             <main class="content" id="main-content">
-                {body}
+                {{ body|safe }}
             </main>
 
         </div>

@@ -1,8 +1,8 @@
-from fastapi import APIRouter
+from fastapi import Request
 from fastapi.responses import HTMLResponse
 
 from . import main_router
-from ..utils.file import read_template, read_text
+from ..utils.file import templates, read_text
 from ..utils.md import render_thanks
 
 router = main_router
@@ -20,15 +20,9 @@ def _thanks_section():
     )
 
 @router.get('/')
-async def page():
-    return HTMLResponse(read_template('home.html',
-        authors_core=_authors_core(),
-        gh_section='',
-        thanks_section=_thanks_section()))
+async def page(request: Request):
+    return templates.TemplateResponse(request, 'home.html', {'authors_core': _authors_core(), "thanks_section": _thanks_section()})
 
 @router.get('/authors')
-async def authors():
-    return HTMLResponse(read_template('authors.html',
-        authors_core=_authors_core(),
-        gh_section='',
-        thanks_section=_thanks_section()))
+async def authors(request: Request):
+    return templates.TemplateResponse(request, 'authors.html', {'authors_core': _authors_core(), "thanks_section": _thanks_section()})

@@ -285,6 +285,23 @@ body {
     color: var(--accent);
 }
 
+/* ── GitHub contributors (parsed dynamically) ─────── */
+
+.ghcontributors-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 0;
+}
+
+.ghcontributor-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
 /* ── Special thanks (shared, rendered from markdown) ─────── */
 
 .thanks-list {
