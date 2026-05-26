@@ -1,10 +1,11 @@
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 
+from . import main_router
 from ..utils.file import read_template, read_text
 from ..utils.md import render_thanks
 
-router = APIRouter()
+router = main_router
 
 def _authors_core():
     return read_text('templates/partials/authors_core.html')

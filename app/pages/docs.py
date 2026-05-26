@@ -3,10 +3,12 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from markdown_it import MarkdownIt
 from pathlib import Path
 
+from . import main_router
 from ..utils.file import read_template, read_text
 from ..utils.md import render
 
 router = APIRouter(prefix='/docs')
+main_router.include_router(router)
 
 @router.get('/root')
 async def root():
