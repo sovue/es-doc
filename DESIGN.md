@@ -64,7 +64,9 @@ ES Doc is a dark-themed code-reference tool for Russian-speaking modders of the 
 
 **Anti-references:** ReadTheDocs clutter; Confluence corporate gray; neon/cyberpunk gaming aesthetics; SaaS landing page templates.
 
-**CSS architecture:** Shared components live in `main.css` and are available on every page: skip link, sr-only, site header/nav, site footer, `.authors-list-label` (monospace section heading), `.contributors-section` spacing, `.authors-list`/`.author-row` (core authors partial), and `.thanks-list` (markdown-rendered special thanks). Page-specific styles live in `home.css`, `doc.css`, and `authors.css`. Never import `vars.css` in page-specific files — `main.css` already does it.
+**CSS architecture:** Shared components live in `main.css` and are available on every page: skip link, sr-only, site header/nav, site footer, `.authors-list-label` (monospace section heading), `.contributors-section` spacing, `.authors-list`/`.author-row`/`.author-meta`/`.author-avatar`/`.author-socials` (core authors partial), `.gh-contributors`/`.gh-contributor`/`.ghcontributor-avatar`/`.gh-contributors-status` (dynamic GitHub gallery), and `.thanks-list` (markdown-rendered special thanks). Page-specific styles live in `home.css`, `doc.css`, and `authors.css`. Never import `vars.css` in page-specific files — `main.css` already does it.
+
+**JS architecture:** A single shared script, `static/js/contributors.js`, loaded `defer` from `<head>` on `/` and `/authors`. It populates `#contributors-status` with one line at a time and toggles `#contributors[data-state]`. No bundler, no framework. New shared behaviour goes in `static/js/<name>.js` and is served via the `/static/js/{name}` route.
 
 **Breakpoints:**
 - Tablet: ≤768px (doc sidebar collapses to horizontal nav strip; layout stacks)
@@ -232,14 +234,57 @@ Hidden by default at `opacity: 0.3`. Reveals on parent hover and on `:focus-visi
 ```
 
 ### Authors List (shared partial)
-Core authors list injected into both `/` and `/authors` via `templates/partials/authors_core.html`. Styles live in `main.css`. Name column is fixed-width, role column is fluid. At ≤400px, collapses to stacked layout.
+Core authors list injected into both `/` and `/authors` via `templates/partials/authors_core.html`. Styles live in `main.css`. Two-tier layout: 56px circular avatar on the left, name / role / socials stacked on the right inside `.author-meta`. This replaces the earlier 4-column flex (avatar | name | role | links) where two `flex: 1` siblings fought for the same space and broke at narrow widths. Avatars carry a 1px `--border` ring on `--bg-surface` to ground the photo on the dark page; at ≤400px the avatar drops to 48px while the meta block keeps the full remaining width. The `<img>` uses `alt=""` — `.author-name` next to it is the accessible label.
 
 ```css
 .authors-list { list-style: none; border-top: 1px solid var(--border); }
 .authors-list li { border-bottom: 1px solid var(--border); }
-.author-row { display: flex; align-items: baseline; gap: 20px; padding: 16px 0; }
-.author-name { font-size: 1rem; font-weight: 600; min-width: 200px; flex-shrink: 0; }
-.author-role { font-size: 0.875rem; color: var(--text-soft); flex: 1; }
+.author-row { display: flex; align-items: center; gap: 18px; padding: 16px 0; }
+.author-avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover;
+  flex-shrink: 0; border: 1px solid var(--border); background: var(--bg-surface); }
+.author-meta { display: grid; grid-template-columns: minmax(0, 1fr); row-gap: 2px; min-width: 0; flex: 1; }
+.author-name { font-size: 1rem; font-weight: 600; color: var(--text); line-height: 1.3; }
+.author-role { font-size: 0.875rem; color: var(--text-soft); line-height: 1.4; }
+```
+
+### Author Socials (inline list)
+Inline list of external profile links (VK, Telegram, GitHub) under the author role. Monospace identity, uppercase, narrow tracking — matches `.authors-list-label` so the links read as meta, not as primary content. Items separated by a CSS-generated middle dot (`·`) in `--border` color via `li + li::before` — no markup commas, no fragile text separators. Every link gets `target="_blank" rel="noopener noreferrer"` and a Russian `aria-label` (e.g. *"poi во ВКонтакте"*).
+
+Hit targets: each `<a>` is `inline-flex` with `padding-block: 6px` and `min-height: 24px`. Combined with `line-height: 1` on the parent `ul`, this lifts the touch target to WCAG 2.5.8 (24×24) without changing the visual baseline rhythm — labels still sit on the same line as the role above them.
+
+```css
+.author-socials { list-style: none; display: flex; flex-wrap: wrap; gap: 0 14px;
+  font-family: Consolas, "Courier New", monospace; font-size: 0.75rem;
+  letter-spacing: 0.06em; text-transform: uppercase; line-height: 1; }
+.author-socials li { position: relative; display: flex; align-items: center; }
+.author-socials li + li::before { content: '·'; position: absolute; left: -9px;
+  top: 50%; transform: translateY(-50%); color: var(--border); }
+.author-socials a { display: inline-flex; align-items: center;
+  padding-block: 6px; min-height: 24px;
+  color: var(--text-soft); transition: color 0.15s ease; }
+.author-socials a:hover { color: var(--accent); }
+.author-socials a:focus-visible { color: var(--text); outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+```
+
+### GitHub Contributors Gallery
+Avatar wall fetched at runtime from `/api/contributors` (server escapes every interpolation, sets a User-Agent, appends `s=96` to GitHub avatar URLs so the wire payload matches the 44px@2x render instead of GitHub's 460px default, caches the response for 5 minutes to stay under the 60/hr unauthenticated limit, and falls back to the last cached payload on failure). On hard upstream failure the server returns `502` with an empty body, letting the client render the recovery copy with a working GitHub link instead of duplicating that message in two places. Rendered on both `/` and `/authors`. Layout is a wrap-aware flex row of 44px circular avatar-links — deliberately smaller than the 56px core author avatars so the hierarchy reads at a glance. The link wrapper `.gh-contributor` owns the hover/focus affordance; the inner `<img>` is `alt=""` because the link's `aria-label="{login} на GitHub"` is the accessible name.
+
+Structure: a sibling status paragraph `#contributors-status` (with `role="status" aria-live="polite"`) sits above the gallery container `#contributors`. The loader (`/static/js/contributors.js`, loaded `defer` from `<head>` and shared by both pages) writes one line at a time into the status (*"Загружаем список с GitHub…"* → empty on success → recovery copy with link on failure). The gallery container carries `data-state="loading|ready|error"` and is hidden while empty or errored so status text isn't visually competing with an empty box. A `<noscript>` inside the status paragraph links to GitHub's contributors graph for the JS-disabled case — the status text is empty by default so nothing stale is shown.
+
+Hover/focus: outline ring transitions from `--border` to `--accent`. Not a scale or shadow — flat system rule (no `box-shadow`, no layout-property animation).
+
+```css
+.gh-contributors-status { margin: 0 0 12px; font-size: 0.875rem; color: var(--text-soft); }
+.gh-contributors-status:empty { display: none; }
+.gh-contributors[data-state="loading"]:empty,
+.gh-contributors[data-state="error"] { display: none; }
+.gh-contributors[data-state="ready"] { display: flex; flex-wrap: wrap; gap: 10px; padding-bottom: 4px; }
+.gh-contributor { display: inline-flex; border-radius: 50%;
+  outline: 1px solid var(--border); outline-offset: -1px;
+  transition: outline-color 0.15s ease; }
+.gh-contributor:hover { outline-color: var(--accent); }
+.gh-contributor:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ghcontributor-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; display: block; }
 ```
 
 ### Thanks List (markdown-rendered)
