@@ -240,66 +240,159 @@ body {
     border-bottom: 1px solid var(--border);
 }
 
+/* avatar on the left, name + role + socials stacked on the right —
+   eliminates the previous flex:1 vs flex:1 column collision */
 .author-row {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 18px;
     padding: 16px 0;
 }
 
 .author-avatar {
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+}
+
+.author-meta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 2px;
+    min-width: 0;
+    flex: 1;
 }
 
 .author-name {
     font-size: 1rem;
     font-weight: 600;
     color: var(--text);
-    min-width: 200px;
-    flex-shrink: 0;
+    line-height: 1.3;
 }
 
 .author-role {
     font-size: 0.875rem;
     color: var(--text-soft);
-    flex: 1;
+    line-height: 1.4;
 }
 
-.author-links {
-    font-size: 0.875rem;
+.author-socials {
+    list-style: none;
+    margin: 4px 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 14px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.author-socials li {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* dot sits centered in the 14px column gap between items */
+.author-socials li + li::before {
+    content: '·';
+    position: absolute;
+    left: -9px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--border);
+}
+
+/* inline-flex + padding-block lifts the hit target to ≥24px (WCAG 2.5.8)
+   without changing the visual baseline because line-height is 1 */
+.author-socials a {
+    display: inline-flex;
+    align-items: center;
+    padding-block: 6px;
+    min-height: 24px;
     color: var(--text-soft);
-    flex: 1;
-}
-
-.author-links a {
-    color: var(--text);
     text-decoration: none;
     transition: color 0.15s ease;
 }
 
-.author-links a:hover {
+.author-socials a:hover {
     color: var(--accent);
 }
 
-/* ── GitHub contributors (parsed dynamically) ─────── */
+.author-socials a:focus-visible {
+    color: var(--text);
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
 
-.ghcontributors-row {
+/* ── GitHub contributors (parsed dynamically) ────────────── */
+
+.gh-contributors-status {
+    margin: 0 0 12px;
+    font-size: 0.875rem;
+    color: var(--text-soft);
+}
+
+.gh-contributors-status:empty {
+    display: none;
+}
+
+.gh-contributors[data-state="loading"]:empty,
+.gh-contributors[data-state="error"] {
+    display: none;
+}
+
+.gh-contributors[data-state="ready"] {
     display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 16px 0;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-bottom: 4px;
+}
+
+.gh-contributors-status a {
+    color: var(--text);
+    text-decoration: underline;
+    text-decoration-color: var(--border);
+    text-underline-offset: 2px;
+    transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.gh-contributors-status a:hover {
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+}
+
+.gh-contributor {
+    display: inline-flex;
+    border-radius: 50%;
+    outline: 1px solid var(--border);
+    outline-offset: -1px;
+    transition: outline-color 0.15s ease;
+}
+
+.gh-contributor:hover {
+    outline-color: var(--accent);
+}
+
+.gh-contributor:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 
 .ghcontributor-avatar {
-    width: 64px;
-    height: 64px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     object-fit: cover;
-    flex-shrink: 0;
+    display: block;
 }
 
 /* ── Special thanks (shared, rendered from markdown) ─────── */
@@ -368,7 +461,10 @@ body {
     .nav-links a,
     .skip-link,
     .site-footer a,
-    .thanks-list a {
+    .thanks-list a,
+    .author-socials a,
+    .gh-contributor,
+    .gh-contributors-status a {
         transition: none;
     }
 }

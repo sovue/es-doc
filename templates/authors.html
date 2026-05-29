@@ -7,6 +7,7 @@
         <link rel="stylesheet" href="/static/css/main.css">
         <link rel="stylesheet" href="/static/css/authors.css">
         <link rel="icon" href="/favicon.webp">
+        <script src="/static/js/contributors.js" defer></script>
     </head>
 
     <body>
@@ -44,18 +45,13 @@
                 </section>
 
                 <!-- Контрибуторы GitHub — фронтэнд инжектит секцию скриптом -->
-                <section class="contributors-section" aria-labelledby="core-label">
-                    <h2 class="authors-list-label" id="core-label">Наши контрибьюторы</h2>
-                    <div class="ghcontributors-row" id="contributors"></div>
+                <section class="contributors-section" aria-labelledby="gh-label">
+                    <h2 class="authors-list-label" id="gh-label">Наши контрибьюторы</h2>
+                    <p class="gh-contributors-status" id="contributors-status" role="status" aria-live="polite">
+                        <noscript>Откройте <a href="https://github.com/sovue/es-doc/graphs/contributors" target="_blank" rel="noopener noreferrer">список контрибьюторов на GitHub</a>.</noscript>
+                    </p>
+                    <div class="gh-contributors" id="contributors" data-state="loading"></div>
                 </section>
-
-                <script>
-                    fetch("/api/contributors")
-                        .then(r => r.text())
-                        .then(html => {
-                            document.getElementById("contributors").innerHTML = html;
-                        });
-                </script>
 
                 <!-- Особые благодарности — бэкэнд парсит из MD файла и инжектит секцию целиком -->
                 {{ thanks_section|safe }}

@@ -36,49 +36,6 @@ body {
     max-width: 640px;
 }
 
-/* ── GitHub contributors ─────────────────────────────────── */
-
-.gh-list {
-    list-style: none;
-    margin: 0;
-    padding: 16px 0 0;
-    border-top: 1px solid var(--border);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 20px;
-}
-
-.gh-list li {
-    line-height: 2;
-}
-
-.gh-handle {
-    font-family: Consolas, "Courier New", monospace;
-    font-size: 0.875rem;
-    color: var(--text-soft);
-    text-decoration: none;
-    transition: color 0.15s ease;
-}
-
-.gh-handle:hover {
-    color: var(--accent);
-    text-decoration: none;
-}
-
-.gh-handle:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-    border-radius: 2px;
-}
-
-/* ── Reduced motion ──────────────────────────────────────── */
-
-@media (prefers-reduced-motion: reduce) {
-    .gh-handle {
-        transition: none;
-    }
-}
-
 /* ── Responsive ──────────────────────────────────────────── */
 
 @media (max-width: 640px) {
@@ -89,24 +46,16 @@ body {
     .authors-main {
         padding: 32px 20px 40px;
     }
-
-    .author-name {
-        min-width: 140px;
-    }
-
-
 }
 
 @media (max-width: 400px) {
     .author-row {
-        flex-direction: column;
-        gap: 4px;
+        gap: 14px;
         padding: 14px 0;
     }
 
-    .author-name {
-        min-width: 0;
+    .author-avatar {
+        width: 48px;
+        height: 48px;
     }
-
-
 }
