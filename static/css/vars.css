@@ -1,5 +1,7 @@
 /* Dark-only theme. Light mode is not planned. No prefers-color-scheme media query is intentional. */
 :root {
+    color-scheme: dark;
+
     --bg: #111;
     --bg-light: #221911;
 
@@ -20,6 +22,12 @@
     --bg-sidebar: #181818;
     --bg-table-head: #1d1d1d;
 
+    /* Warm-tinted white wash for interactive surface hovers (~4% over dark surface). */
+    --surface-hover: rgb(255 245 230 / 0.04);
+
     --selection-bg: var(--accent);
     --selection-text: var(--text);
+
+    /* Ease-out-quart — interactive transitions leave fast, settle soft. */
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }

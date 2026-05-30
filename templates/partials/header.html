@@ -1,0 +1,15 @@
+<header class="site-header">
+    <nav class="site-nav" aria-label="Основная навигация">
+        <a class="nav-logo" href="/">ES Doc</a>
+        <ul class="nav-links">
+            <li><a href="/docs/"{% if active == 'docs' %} aria-current="page"{% endif %}>Документация</a></li>
+            <li><a href="/authors"{% if active == 'authors' %} aria-current="page"{% endif %}>Авторы</a></li>
+            <li>
+                <a href="https://github.com/sovue/es-doc"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   aria-label="Репозиторий на GitHub">GitHub</a>
+            </li>
+        </ul>
+    </nav>
+</header>

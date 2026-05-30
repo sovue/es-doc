@@ -1,74 +1,46 @@
-<html lang="ru">
+{% extends "base.html" %}
 
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Авторы — ES Doc</title>
-        <link rel="stylesheet" href="/static/css/main.css">
-        <link rel="stylesheet" href="/static/css/authors.css">
-        <link rel="icon" href="/favicon.webp">
-        <script src="/static/js/contributors.js" defer></script>
-    </head>
+{% set page_title = 'Авторы — ES Doc' %}
+{% set with_contributors_js = true %}
+{% set body_class = 'bg-solid' %}
+{% set active = 'authors' %}
 
-    <body>
+{% block content %}
+<div class="page">
 
-        <a href="#main-content" class="skip-link">Перейти к содержимому</a>
+    <main id="main-content">
 
-        <header class="site-header">
-            <nav class="site-nav" aria-label="Основная навигация">
-                <a class="nav-logo" href="/">ES Doc</a>
-                <ul class="nav-links">
-                    <li><a href="/docs/">Документация</a></li>
-                    <li><a href="/authors" aria-current="page">Авторы</a></li>
-                    <li>
-                        <a href="https://github.com/sovue/es-doc"
-                           target="_blank"
-                           rel="noopener noreferrer"
-                           aria-label="Репозиторий на GitHub">GitHub</a>
-                    </li>
-                </ul>
-            </nav>
-        </header>
-
-        <div class="authors-page">
-
-            <div class="authors-header">
-                <h1 class="authors-title">Авторы</h1>
+        <section class="page-hero">
+            <div class="page-hero-inner">
+                <h1 class="page-title">Авторы</h1>
             </div>
+        </section>
 
-            <main class="authors-main" id="main-content">
+        <div class="page-main">
 
-                <!-- Основные контрибуторы -->
-                <section class="contributors-section" aria-labelledby="core-label">
-                    <h2 class="authors-list-label" id="core-label">Авторы</h2>
-                    {{ authors_core|safe }}
-                </section>
+            <!-- Основные контрибуторы — partial-injected, классы не трогаем -->
+            <section class="contributors-section" aria-labelledby="core-label">
+                <h2 class="authors-list-label" id="core-label">Авторы</h2>
+                {{ authors_core|safe }}
+            </section>
 
-                <!-- Контрибуторы GitHub — фронтэнд инжектит секцию скриптом -->
-                <section class="contributors-section" aria-labelledby="gh-label">
-                    <h2 class="authors-list-label" id="gh-label">Наши контрибьюторы</h2>
-                    <p class="gh-contributors-status" id="contributors-status" role="status" aria-live="polite">
-                        <noscript>Откройте <a href="https://github.com/sovue/es-doc/graphs/contributors" target="_blank" rel="noopener noreferrer">список контрибьюторов на GitHub</a>.</noscript>
-                    </p>
-                    <div class="gh-contributors" id="contributors" data-state="loading"></div>
-                </section>
-
-                <!-- Особые благодарности — бэкэнд парсит из MD файла и инжектит секцию целиком -->
-                {{ thanks_section|safe }}
-
-            </main>
-
-            <footer class="site-footer">
-                <p>
-                    <a href="/authors">Авторы</a>
-                    <a href="https://github.com/sovue/es-doc/issues"
-                       target="_blank"
-                       rel="noopener noreferrer">Нашли ошибку?<span class="sr-only"> (открывается в новой вкладке)</span></a>
+            <!-- GitHub-контрибуторы — фронт подмешивает скриптом -->
+            <section class="contributors-section" aria-labelledby="gh-label">
+                <h2 class="authors-list-label" id="gh-label">Наши контрибьюторы</h2>
+                <p class="gh-contributors-status" id="contributors-status" role="status" aria-live="polite">
+                    <noscript>Откройте <a href="https://github.com/sovue/es-doc/graphs/contributors" target="_blank" rel="noopener noreferrer">список контрибьюторов на GitHub</a>.</noscript>
                 </p>
-            </footer>
+                <div class="gh-contributors" id="contributors" data-state="loading"></div>
+            </section>
+
+            <!-- Особые благодарности — бэкэнд парсит из MD и инжектит секцию -->
+            {{ thanks_section|safe }}
 
         </div>
 
-    </body>
+    </main>
 
-</html>
+    {% include "partials/footer.html" %}
+
+</div>
+{% endblock %}

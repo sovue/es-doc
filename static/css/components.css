@@ -1,0 +1,600 @@
+/* =====================================================================
+   Reusable components — shared across pages.
+   Linked from templates/partials/head.html after vars.css and main.css,
+   so the browser fetches all three stylesheets in parallel.
+   ===================================================================== */
+
+/* ── Page shell ──────────────────────────────────────────── */
+
+/* Flex-column shell so the footer floors to the viewport bottom on short pages.
+   The page's <main> (or <div class="layout"> on doc pages) is the flexible
+   child that absorbs the free space; the footer is the rigid child after it. */
+.page {
+    min-height: calc(100vh - 52px);
+    display: flex;
+    flex-direction: column;
+}
+
+.page > main,
+.page > .layout {
+    flex: 1;
+    min-height: 0;
+}
+
+/* Once <main> wraps both the hero and the content column, it becomes
+   the flex-column itself so its own children stack the same way. */
+.page > main {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Page hero / page header ─────────────────────────────── */
+
+.page-hero {
+    padding: 56px 48px 48px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Larger variant for landing-style pages (home, error) */
+.page-hero--lg {
+    padding: 72px 48px 64px;
+}
+
+.page-hero-inner {
+    max-width: 640px;
+}
+
+.page-eyebrow {
+    margin: 0 0 14px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+.page-title {
+    margin: 0;
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text);
+    letter-spacing: -0.01em;
+}
+
+.page-title--lg {
+    font-size: clamp(1.85rem, 4.5vw, 2.8rem);
+}
+
+.page-lead {
+    margin: 18px 0 0;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--text-soft);
+    max-width: 55ch;
+}
+
+.page-main {
+    padding: 56px 48px;
+    max-width: 760px;
+}
+
+/* ── Site header / nav ───────────────────────────────────── */
+
+.site-header {
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+}
+
+/* align-items: stretch so child links fill the full 52px tap height */
+.site-nav {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    padding: 0 48px;
+    min-height: 52px;
+}
+
+.nav-logo {
+    display: flex;
+    align-items: center;
+    font-family: Consolas, "Courier New", monospace;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    color: var(--accent);
+    text-decoration: none;
+    transition: color 0.15s var(--ease-out);
+}
+
+.nav-logo:hover {
+    color: var(--accent-hover);
+}
+
+.nav-logo:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+    color: var(--accent-hover);
+}
+
+.nav-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: stretch;
+}
+
+.nav-links li {
+    display: flex;
+}
+
+.nav-links a {
+    display: flex;
+    align-items: center;
+    padding-inline: 16px;
+    font-size: 0.875rem;
+    color: var(--text-soft);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.15s var(--ease-out);
+}
+
+.nav-links a:hover {
+    color: var(--text);
+    text-decoration: none;
+}
+
+/* aria-current uses an inset accent underline so the active page stays
+   distinct even when a sibling link is hovered. No layout shift —
+   box-shadow doesn't take part in flow. */
+.nav-links a[aria-current="page"] {
+    color: var(--text);
+    box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.nav-links a:focus-visible {
+    color: var(--text);
+    outline: 2px solid var(--accent);
+    outline-offset: -3px;
+    border-radius: 2px;
+}
+
+/* ── Site footer ─────────────────────────────────────────── */
+
+.site-footer {
+    padding: 20px 48px;
+    border-top: 1px solid var(--border);
+    font-size: 0.875rem;
+    color: var(--text-soft);
+}
+
+.site-footer p {
+    margin: 0;
+    display: flex;
+    gap: 20px;
+}
+
+.site-footer a {
+    display: inline-block;
+    padding-block: 10px;
+    color: var(--text-soft);
+    text-decoration: none;
+    transition: color 0.15s var(--ease-out);
+}
+
+.site-footer a:hover {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.site-footer a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* ── Sections directory (list of links/rows) ─────────────── */
+
+.sections-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+}
+
+.sections-list li {
+    border-bottom: 1px solid var(--border);
+}
+
+.section-row {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    padding: 16px 0;
+    text-decoration: none;
+    color: inherit;
+}
+
+a.section-row:hover .section-name,
+a.section-row:focus-visible .section-name {
+    color: var(--accent);
+}
+
+a.section-row:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+.section-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    min-width: 160px;
+    flex-shrink: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color 0.15s var(--ease-out);
+}
+
+.section-desc {
+    font-size: 0.875rem;
+    color: var(--text-soft);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.section-arrow {
+    font-size: 0.875rem;
+    color: var(--accent);
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s var(--ease-out);
+}
+
+a.section-row:hover .section-arrow,
+a.section-row:focus-visible .section-arrow {
+    opacity: 1;
+}
+
+.section-wip {
+    cursor: default;
+}
+
+.section-wip .section-name {
+    color: var(--text-soft);
+}
+
+.section-wip-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 2px 6px;
+    flex-shrink: 0;
+}
+
+/* ── Section heading label (monospace meta) ──────────────── */
+
+.authors-list-label {
+    margin: 0 0 20px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+}
+
+/* Contributors-section spacing — used by home, authors, and any page that
+   stacks .contributors-section blocks. */
+.contributors-section + .contributors-section {
+    margin-top: 48px;
+}
+
+/* ── Authors list (shared partial — left intact per task) ─ */
+
+.authors-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+}
+
+.authors-list li {
+    border-bottom: 1px solid var(--border);
+}
+
+.author-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 16px 0;
+}
+
+.author-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+}
+
+.author-meta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.author-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+}
+
+.author-role {
+    font-size: 0.875rem;
+    color: var(--text-soft);
+    line-height: 1.4;
+}
+
+.author-socials {
+    list-style: none;
+    margin: 4px 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 14px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.author-socials li {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.author-socials li + li::before {
+    content: '·';
+    position: absolute;
+    left: -9px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--border);
+}
+
+.author-socials a {
+    display: inline-flex;
+    align-items: center;
+    padding-block: 6px;
+    min-height: 24px;
+    color: var(--text-soft);
+    text-decoration: none;
+    transition: color 0.15s var(--ease-out);
+}
+
+.author-socials a:hover {
+    color: var(--accent);
+}
+
+.author-socials a:focus-visible {
+    color: var(--text);
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* ── GitHub contributors gallery ─────────────────────────── */
+
+.gh-contributors-status {
+    margin: 0 0 12px;
+    font-size: 0.875rem;
+    color: var(--text-soft);
+}
+
+.gh-contributors-status:empty {
+    display: none;
+}
+
+.gh-contributors[data-state="loading"]:empty,
+.gh-contributors[data-state="error"] {
+    display: none;
+}
+
+.gh-contributors[data-state="ready"] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-bottom: 4px;
+}
+
+.gh-contributors-status a {
+    color: var(--text);
+    text-decoration: underline;
+    text-decoration-color: var(--border);
+    text-underline-offset: 2px;
+    transition: color 0.15s var(--ease-out), text-decoration-color 0.15s var(--ease-out);
+}
+
+.gh-contributors-status a:hover {
+    color: var(--accent);
+    text-decoration-color: var(--accent);
+}
+
+.gh-contributor {
+    display: inline-flex;
+    border-radius: 50%;
+    outline: 1px solid var(--border);
+    outline-offset: -1px;
+    transition: outline-color 0.15s var(--ease-out);
+}
+
+.gh-contributor:hover {
+    outline-color: var(--accent);
+}
+
+.gh-contributor:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.ghcontributor-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+/* ── Special thanks (markdown-rendered, reusable) ────────── */
+
+.thanks-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+}
+
+.thanks-list > li {
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0;
+    font-size: 0.875rem;
+    color: var(--text-soft);
+    line-height: 1.6;
+}
+
+.thanks-list a {
+    color: var(--text);
+    text-decoration: none;
+    transition: color 0.15s var(--ease-out);
+}
+
+.thanks-list a:hover {
+    color: var(--accent);
+}
+
+.thanks-list a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+.thanks-list ul {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+}
+
+.thanks-list ul li {
+    padding: 3px 0 3px 16px;
+    position: relative;
+}
+
+.thanks-list ul li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--border);
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+    .site-nav {
+        padding: 0 20px;
+    }
+
+    .nav-links a {
+        padding-inline: 12px;
+    }
+
+    .site-footer {
+        padding: 20px;
+    }
+
+    .page-hero {
+        padding: 40px 20px 32px;
+    }
+
+    .page-hero--lg {
+        padding: 48px 20px 40px;
+    }
+
+    .page-main {
+        padding: 40px 20px;
+    }
+
+    .section-name {
+        min-width: 120px;
+    }
+
+    .contributors-section + .contributors-section {
+        margin-top: 36px;
+    }
+}
+
+@media (max-width: 400px) {
+    .site-nav {
+        padding: 0 16px;
+    }
+
+    .nav-links a {
+        padding-inline: 10px;
+    }
+
+    /* hide GitHub link at narrowest widths to prevent nav overflow */
+    .nav-links li:last-child {
+        display: none;
+    }
+
+    .section-desc {
+        display: none;
+    }
+
+    .author-row {
+        gap: 14px;
+        padding: 14px 0;
+    }
+
+    .author-avatar {
+        width: 48px;
+        height: 48px;
+    }
+}
+
+/* ── Reduced motion ──────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+    .nav-logo,
+    .nav-links a,
+    .site-footer a,
+    .thanks-list a,
+    .author-socials a,
+    .gh-contributor,
+    .gh-contributors-status a,
+    .section-name,
+    .section-arrow {
+        transition: none;
+    }
+}

@@ -1,58 +1,28 @@
-<html lang="ru">
+{% extends "base.html" %}
 
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{{ title }} — ES Doc</title>
-        <link rel="stylesheet" href="/static/css/main.css">
-        <link rel="stylesheet" href="/static/css/doc.css">
-        <link rel="icon" href="/favicon.webp">
-    </head>
+{% set page_title = title ~ ' — ES Doc' %}
+{% set extra_css = ['/static/css/doc.css'] %}
+{% set active = 'docs' %}
 
-    <body>
+{% block content %}
+<div class="page">
 
-        <a href="#main-content" class="skip-link">Перейти к содержимому</a>
+    <div class="layout">
 
-        <header class="site-header">
-            <nav class="site-nav" aria-label="Основная навигация">
-                <a class="nav-logo" href="/">ES Doc</a>
-                <ul class="nav-links">
-                    <li><a href="/docs/" aria-current="page">Документация</a></li>
-                    <li><a href="/authors">Авторы</a></li>
-                    <li>
-                        <a href="https://github.com/sovue/es-doc"
-                           target="_blank"
-                           rel="noopener noreferrer"
-                           aria-label="Репозиторий на GitHub">GitHub</a>
-                    </li>
-                </ul>
-            </nav>
-        </header>
+        <aside class="sidebar">
+            <p class="sidebar-title">{{ title }}</p>
+            <nav aria-label="Содержание"><ul>
+                {{ nav|safe }}
+            </ul></nav>
+        </aside>
 
-        <div class="layout">
+        <main class="content" id="main-content">
+            {{ body|safe }}
+        </main>
 
-            <aside class="sidebar">
-                <h2>{{ title }}</h2>
-                <nav aria-label="Содержание"><ul>
-                    {{ nav|safe }}
-                </ul></nav>
-            </aside>
+    </div>
 
-            <main class="content" id="main-content">
-                {{ body|safe }}
-            </main>
+    {% include "partials/footer.html" %}
 
-        </div>
-
-        <footer class="site-footer">
-            <p>
-                <a href="/authors">Авторы</a>
-                <a href="https://github.com/sovue/es-doc/issues"
-                   target="_blank"
-                   rel="noopener noreferrer">Нашли ошибку?<span class="sr-only"> (открывается в новой вкладке)</span></a>
-            </p>
-        </footer>
-
-    </body>
-
-</html>
+</div>
+{% endblock %}

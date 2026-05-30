@@ -1,55 +1,63 @@
-<html lang="ru">
+{% extends "base.html" %}
 
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Ошибка {{ errno }} — ES Doc</title>
-        <link rel="stylesheet" href="/static/css/main.css">
-        <link rel="stylesheet" href="/static/css/home.css">
-        <link rel="icon" href="/favicon.webp">
-    </head>
+{% set page_title = 'Ошибка ' ~ errno ~ ' — ES Doc' %}
+{% set body_class = 'bg-solid' %}
 
-    <body>
-        <a href="#main-content" class="skip-link">Перейти к содержимому</a>
+{% block content %}
+<div class="page">
 
-        <header class="site-header">
-            <nav class="site-nav" aria-label="Основная навигация">
-                <a class="nav-logo" href="/">ES Doc</a>
-                <ul class="nav-links">
-                    <li><a href="/docs/">Документация</a></li>
-                    <li><a href="/authors">Авторы</a></li>
+    <main id="main-content">
+
+        <section class="page-hero page-hero--lg">
+            <div class="page-hero-inner">
+                <p class="page-eyebrow">Ошибка {{ errno }}</p>
+                <h1 class="page-title page-title--lg">{{ detail }}</h1>
+                <p class="page-lead">{{ description }}</p>
+            </div>
+        </section>
+
+        <div class="page-main">
+
+            <section aria-labelledby="error-actions-label">
+                <h2 id="error-actions-label" class="authors-list-label">Куда дальше</h2>
+
+                <ul class="sections-list" role="list">
+
                     <li>
-                        <a href="https://github.com/sovue/es-doc"
+                        <a href="/" class="section-row">
+                            <span class="section-name">На главную</span>
+                            <span class="section-desc">Документация и поиск по разделам</span>
+                            <span class="section-arrow" aria-hidden="true">→</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="/docs/" class="section-row">
+                            <span class="section-name">К документации</span>
+                            <span class="section-desc">Глоссарий и справочник по моддингу</span>
+                            <span class="section-arrow" aria-hidden="true">→</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="https://github.com/sovue/es-doc/issues"
                            target="_blank"
                            rel="noopener noreferrer"
-                           aria-label="Репозиторий на GitHub">GitHub</a>
+                           class="section-row">
+                            <span class="section-name">Сообщить об ошибке<span class="sr-only"> (открывается в новой вкладке)</span></span>
+                            <span class="section-desc">Открыть issue на GitHub</span>
+                            <span class="section-arrow" aria-hidden="true">→</span>
+                        </a>
                     </li>
+
                 </ul>
-            </nav>
-        </header>
-
-        <div class="home">
-            <div class="hero">
-                <div class="hero-inner">
-
-                    <h1 class="hero-title">Ошибка {{ errno }}</h1>
-                    <h2>{{ detail }}</h2>
-                    <p class="hero-desc">{{ description }}</p>
-
-                </div>
-            </div>
-
-            <footer class="site-footer">
-                <p>
-                    <a href="/authors">Авторы</a>
-                    <a href="https://github.com/sovue/es-doc/issues"
-                       target="_blank"
-                       rel="noopener noreferrer">Нашли ошибку?<span class="sr-only"> (открывается в новой вкладке)</span></a>
-                </p>
-            </footer>
+            </section>
 
         </div>
 
-    </body>
+    </main>
 
-</html>
+    {% include "partials/footer.html" %}
+
+</div>
+{% endblock %}
