@@ -15,3 +15,6 @@ __pycache__/
 
 # PEP 582
 __pypackages__/
+
+# Logs
+logs/
