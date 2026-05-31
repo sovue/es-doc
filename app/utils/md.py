@@ -1,6 +1,7 @@
 from markdown_it import MarkdownIt
-from markdown_it.rules_block import StateBlock
 import base64, re
+
+from .config import CONFIG
 
 MD = MarkdownIt()
 
@@ -43,7 +44,6 @@ def render(src):
             if int(token.tag[1]) == 1:
                 title = tokens[idx + 1].content
             else:
-                # TODO: ВЫПИСАТЬ ВОЛШЕБНЫЕ ЧИСЛА В ОТДЕЛЬНЫЕ СТИЛИ
-                nav += f'<li style="padding-left:{(int(token.tag[1])-2)*24}px"><a href="#{slugify(tokens[idx + 1].content, tokens[idx].map)}">{tokens[idx + 1].content}</a></li>'
+                nav += f'<li style="padding-left:{(int(token.tag[1])-2)*CONFIG.config['docs']['navigation-headers-padding']}px"><a href="#{slugify(tokens[idx + 1].content, tokens[idx].map)}">{tokens[idx + 1].content}</a></li>'
 
     return title, nav, MD.render(src)
