@@ -2,11 +2,21 @@ from markdown_it import MarkdownIt
 import base64, re
 
 from .slugs import slugify, render_heading_open
-from ..config import CONFIG
+from .table import table_block
+
+dummy_rule = lambda s: lambda self, tokens, idx, options, env: s
 
 MD = MarkdownIt()
 
+MD.block.ruler.before(
+    "fence",
+    "table",
+    table_block
+)
+
 MD.add_render_rule('heading_open', render_heading_open)
+MD.add_render_rule('table_open', dummy_rule('<table class="table">') )
+MD.add_render_rule('table_close', dummy_rule('</table>'))
 
 def render_thanks(src):
     html = MD.render(src)
