@@ -9,4 +9,4 @@ logger = root_logger.getChild('routes')
 
 for _, name, _ in pkgutil.iter_modules(__path__):
     importlib.import_module(f'{__name__}.{name}')
-    logger.info(f'Pages from {__name__}.{name} imported.')
+    logger.info(f'Routes from {__name__}.{name} imported.')
