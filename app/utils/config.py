@@ -3,12 +3,11 @@ import yaml
 from .file import ROOT
 from .logging import root_logger
 
-class ConfigContainer():
+class _ConfigContainer():
 
-    DEFAULT_CONFIG = {
+    _DEFAULT_CONFIG = {
         'docs': {
-            'path': 'content/docs',
-            'navigation-headers-padding': 24
+            'path': 'content/docs'
         },
         'http-errors': {
             'default': 'Во время загрузки страницы произошла ошибка. Попробуйте повторить запрос позже. Если проблема сохраняется — сообщите администрации.',
@@ -55,8 +54,8 @@ class ConfigContainer():
         else:
 
             self.logger.info('Configuration file doesn\'t exist! Creating...')
-            self.config = ConfigContainer.DEFAULT_CONFIG
+            self.config = self.__class__._DEFAULT_CONFIG
             path.write_text(yaml.dump(self.config, Dumper=yaml.SafeDumper, allow_unicode=True, width=float('inf'), indent=4), encoding='utf-8')
             self.logger.info('Configuration file created.')
 
-CONFIG = ConfigContainer()
+CONFIG = _ConfigContainer()

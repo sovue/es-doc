@@ -8,9 +8,10 @@ templates = Jinja2Templates(ROOT / 'templates')
 
 def read_text(path):
 
-    path = ROOT / path
+    if not Path(path).is_absolute():
+        path = ROOT / path
 
     if not path.exists():
-        raise Exception(f'File "{path}" does not exist.')
+        raise HTTPException(404, f'Файл "{path}" не существует.')
 
     return path.read_text('utf-8')

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Request, Query
+from fastapi.responses import HTMLResponse, RedirectResponse, PlainTextResponse
 from pathlib import Path
 
 from . import main_router
+from ..utils.config import CONFIG
 from ..utils.file import templates, read_text
 from ..utils.md import render
 
@@ -20,11 +21,17 @@ async def root():
 async def page(doc, request: Request):
 
     try:
-        text = read_text(Path('content/docs') / f'{doc}.md')
+        text = read_text(Path(CONFIG.config['docs']['path']) / f'{doc}.md')
     except:
         return RedirectResponse('/docs/root', 302)
 
     title, nav, body = render(text)
+
+    if any(i in request.query_params for i in ['md', 'markdown']):
+        return PlainTextResponse(text)
+
+    if any(i in request.query_params for i in ['r', 'raw']):
+        return PlainTextResponse(body)
 
     return templates.TemplateResponse(request, 'doc.html', {'title': title, 'body': body, 'nav': nav})
 
