@@ -1,7 +1,7 @@
 import base64, re
 
 def slugify(s, tokenmap):
-    return re.sub(r"[^\wа-яёa-z]+", "-", f'{s.lower()}-{tokenmap[0]+tokenmap[1]}')
+    return re.sub(r"[^\wа-яёa-z]+", "-", f'{s.lower()}-{tokenmap[0]+tokenmap[1]}').strip('-')
 
 def render_heading_open(self, tokens, idx, options, env):
     inline = tokens[idx + 1]
