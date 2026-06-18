@@ -15,6 +15,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 h1 {
+    margin-top: 0px;
     font-size: 2.4rem;
     border-bottom: 2px solid var(--border);
     padding-bottom: 0.3em;
@@ -174,6 +175,14 @@ img {
     margin: 8px 0;
 }
 
+.sidebar li.h2 {
+    margin-left: 0px;
+}
+
+.sidebar li.h3 {
+    margin-left: 24px;
+}
+
 .sidebar ul ul {
     padding-left: 18px;
     margin-top: 6px;
@@ -206,7 +215,7 @@ img {
 .content blockquote,
 .content > ul,
 .content > ol {
-    max-width: 72ch;
+    max-width: 128ch;
 }
 
 /* ── Heading anchors ─────────────────────────────────────── */

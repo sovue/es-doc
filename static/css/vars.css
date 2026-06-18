@@ -18,7 +18,7 @@
     --code-bg: #1B1B1B;
     --input-bg: #1B1B1B;
 
-    --code-inline: #ff8080;
+    --code-inline: var(--accent);
     --bg-sidebar: #181818;
     --bg-table-head: #1d1d1d;
 
