@@ -7,7 +7,7 @@ def table_block(state: StateBlock, startLine: int, endLine: int, silent: bool):
 
     line = state.src[pos:maximum]
 
-    if line != ":::table":
+    if line != ':::table':
         return False
 
     nextLine = startLine + 1
@@ -16,7 +16,7 @@ def table_block(state: StateBlock, startLine: int, endLine: int, silent: bool):
         pos = state.bMarks[nextLine] + state.tShift[nextLine]
         maximum = state.eMarks[nextLine]
 
-        if state.src[pos:maximum] == ":::":
+        if state.src[pos:maximum] == ':::':
             break
 
         nextLine += 1
@@ -24,8 +24,8 @@ def table_block(state: StateBlock, startLine: int, endLine: int, silent: bool):
     if nextLine >= endLine:
         return False
 
-    token = state.push("table_open", "table", 1)
-    token.attrs = {"class": "table"}
+    token = state.push('table_open', 'table', 1)
+    token.attrs = {'class': 'table'}
 
     content = '<tbody>'
     for row in state.getLines(startLine + 1, nextLine, 0, False).split('\n'):
@@ -38,7 +38,7 @@ def table_block(state: StateBlock, startLine: int, endLine: int, silent: bool):
     content.replace('<tr>\n', '<thead>\n<tr>\n', 1)
     content.replace('</tr>\n', '</tr>\n</thead>\n', 1)
 
-    token = state.push("inline", "", 0)
+    token = state.push('inline', '', 0)
     token.content = content
     token.children = []
 

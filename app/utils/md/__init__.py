@@ -1,22 +1,37 @@
 from markdown_it import MarkdownIt
-import base64, re
+from pygments import highlight
+from pygments.lexers import get_lexer_by_name
+from pygments.formatters import HtmlFormatter
+import re
 
 from .slugs import slugify, render_heading_open
 from .table import table_block
+from .template import template
+from ..svg import SVG
+from ..renpy_lexer import RenPyLexer
 
 dummy_rule = lambda s: lambda self, tokens, idx, options, env: s
 
-MD = MarkdownIt()
+def highlight_code(code, lang, attrs):
+    try:
+        lexer = RenPyLexer() if lang == 'renpy' else get_lexer_by_name(lang)
+    except Exception:
+        return ''
 
-MD.block.ruler.before(
-    "fence",
-    "table",
-    table_block
-)
+    return highlight(code, lexer, HtmlFormatter(nowrap=True))
+
+MD = MarkdownIt('commonmark', {'highlight': highlight_code})
+
+MD.block.ruler.before('fence', 'table', table_block)
+MD.block.ruler.before('fence', 'warning', template('warning'))
 
 MD.add_render_rule('heading_open', render_heading_open)
+
 MD.add_render_rule('table_open', dummy_rule('<table class="table">') )
 MD.add_render_rule('table_close', dummy_rule('</table>'))
+
+MD.add_render_rule('warning_open', dummy_rule(f'<div class="warning">{SVG["warning"]}<div class="warning-content">'))
+MD.add_render_rule('warning_close', dummy_rule('</div></div>'))
 
 def render_thanks(src):
     html = MD.render(src)

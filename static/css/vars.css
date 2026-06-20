@@ -30,4 +30,8 @@
 
     /* Ease-out-quart — interactive transitions leave fast, settle soft. */
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+    --warning: #F00;
+    --warning-bg: #F006;
+    --warning-bg1: #F003;
 }

@@ -1,5 +1,4 @@
-from fastapi import APIRouter
-from fastapi.responses import FileResponse, PlainTextResponse, Response
+from fastapi.responses import FileResponse, Response
 
 from . import main_router
 from ..utils.file import ROOT, read_text
