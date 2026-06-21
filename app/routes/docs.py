@@ -6,16 +6,16 @@ from . import main_router
 from ..utils.config import CONFIG
 from ..utils.file import templates, read_text
 from ..utils.md import render
-from ..utils.docs import build_index
+from ..utils.docs import build_tree
 
 router = APIRouter(prefix='/docs')
 
 @router.get('/')
 async def index(request: Request):
-    # The "Документация" nav destination: every doc as a browsable list,
-    # sharing the search corpus so the two never drift.
-    docs = [{'slug': d['slug'], 'title': d['title']} for d in build_index()]
-    return templates.TemplateResponse(request, 'docs_index.html', {'docs': docs})
+    # The "Документация" nav destination: docs as a nested tree (tree.yaml),
+    # with anything unplaced under "Прочее". Shares the search corpus.
+    data = build_tree()
+    return templates.TemplateResponse(request, 'docs_index.html', data)
 
 @router.get('/{doc}')
 async def page(doc, request: Request):

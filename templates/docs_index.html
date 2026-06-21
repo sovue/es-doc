@@ -4,6 +4,20 @@
 {% set body_class = 'bg-solid' %}
 {% set active = 'docs' %}
 
+{% macro tree_node(node) %}
+<li>
+    <a href="/docs/{{ node.slug|urlencode }}" class="doc-tree-row">
+        <span class="section-name">{{ node.title }}</span>
+        <span class="section-arrow" aria-hidden="true">→</span>
+    </a>
+    {% if node.children %}
+    <ul class="doc-tree-nest" role="list">
+        {% for child in node.children %}{{ tree_node(child) }}{% endfor %}
+    </ul>
+    {% endif %}
+</li>
+{% endmacro %}
+
 {% block content %}
 <div class="page">
 
@@ -13,8 +27,8 @@
             <div class="page-hero-inner">
                 <h1 class="page-title page-title--lg">Документация</h1>
                 <p class="page-lead">
-                    {% if docs %}
-                    Все материалы по созданию модов для «Бесконечного Лета».
+                    {% if tree or rest %}
+                    Все материалы по созданию модов для «Бесконечному Лету».
                     Выберите раздел ниже или воспользуйтесь поиском.
                     {% else %}
                     Документация ещё наполняется. Загляните позже.
@@ -23,13 +37,21 @@
             </div>
         </section>
 
-        {% if docs %}
         <div class="page-main">
-            <section aria-labelledby="docs-list-label">
-                <h2 id="docs-list-label" class="authors-list-label">Все разделы · {{ docs|length }}</h2>
 
+            {% if tree %}
+            <nav aria-label="Дерево документации">
+                <ul class="doc-tree" role="list">
+                    {% for node in tree %}{{ tree_node(node) }}{% endfor %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% if rest %}
+            <section class="docs-rest" aria-labelledby="docs-rest-label">
+                <h2 id="docs-rest-label" class="authors-list-label">Прочее · {{ rest|length }}</h2>
                 <ul class="sections-list doc-index" role="list">
-                    {% for d in docs %}
+                    {% for d in rest %}
                     <li>
                         <a href="/docs/{{ d.slug|urlencode }}" class="section-row">
                             <span class="section-name">{{ d.title }}</span>
@@ -39,8 +61,9 @@
                     {% endfor %}
                 </ul>
             </section>
+            {% endif %}
+
         </div>
-        {% endif %}
 
     </main>
 

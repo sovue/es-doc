@@ -417,6 +417,65 @@ a.section-row:focus-visible {
     flex: 1;
 }
 
+/* ── Docs index tree (nested doc hierarchy) ──────────────── */
+
+.doc-tree,
+.doc-tree-nest {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* Indent guide for nested sub-articles — same affordance as the doc sidebar. */
+.doc-tree-nest {
+    margin-left: 7px;
+    padding-left: 17px;
+    border-left: 1px solid var(--border);
+}
+
+.doc-tree-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 8px 0;
+    text-decoration: none;
+    color: var(--text);
+}
+
+.doc-tree-row .section-name {
+    flex: 1;
+}
+
+/* Top-level articles read a touch heavier than their sub-articles. */
+.doc-tree > li > .doc-tree-row .section-name {
+    font-weight: 600;
+}
+
+.doc-tree-row:hover .section-name,
+.doc-tree-row:focus-visible .section-name {
+    color: var(--accent);
+}
+
+.doc-tree-row:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+.doc-tree-row .section-arrow {
+    opacity: 0;
+}
+
+.doc-tree-row:hover .section-arrow,
+.doc-tree-row:focus-visible .section-arrow {
+    opacity: 1;
+}
+
+/* Space the "Прочее" bucket off the tree above it. */
+.docs-rest {
+    margin-top: 40px;
+}
+
 .section-arrow {
     font-size: 0.875rem;
     color: var(--accent);
