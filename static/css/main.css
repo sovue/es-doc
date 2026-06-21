@@ -22,12 +22,7 @@ body {
     background: linear-gradient(to right, var(--bg), var(--bg-light));
     color: var(--text);
 
-    font-family:
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
+    font-family: var(--font-sans);
 
     line-height: 1.7;
     font-kerning: normal;

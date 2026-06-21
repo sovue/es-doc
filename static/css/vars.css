@@ -1,37 +1,137 @@
-/* Dark-only theme. Light mode is not planned. No prefers-color-scheme media query is intentional. */
+/* =====================================================================
+   Everlasting Summer — "The Endless Golden Hour" palette.
+   Mapped from DESIGN.md (brand book v1.0) onto this project's existing
+   token names, so component/page CSS picks up the new look unchanged.
+
+   Light is the default (Day at camp); dark is the night scene by the
+   lake, served via prefers-color-scheme. Brand relief colors (--sunset,
+   --sky, --pine) are exposed for future components.
+
+   Code panels stay warm-dark in BOTH modes on purpose: it keeps the
+   hardcoded syntax-highlight palette in doc.css legible and reads as
+   "film, not glass" against warm paper.
+   ===================================================================== */
 :root {
-    color-scheme: dark;
+    color-scheme: light dark;
 
-    --bg: #111;
-    --bg-light: #221911;
+    /* ── Surfaces (Light · sand path → cream paper) ───────── */
+    --bg: #F4EAD6;          /* sand path — page background */
+    --bg-light: #FBF6E9;    /* cream paper — body gradient end, blockquotes */
+    --bg-surface: #FBF6E9;  /* cards, panels */
+    --bg-elevated: #FFFCF5; /* modals, popovers */
 
-    --text: #EEE;
-    --text-soft: #BBB;
+    /* ── Ink (warm near-black, never pure) ────────────────── */
+    --text: #2B1F16;        /* primary text */
+    --text-soft: #6B5847;   /* secondary, captions */
 
-    --accent: #DD7F22;
-    --accent-hover: #F93;
+    /* ── Accent (pioneer red — the galstuk, used sparingly) ─ */
+    --accent: #C8202E;
+    --accent-hover: #A81824;
+    --accent-muted: #E8B5BA;
 
-    --target-bg: #DD7F2233;
+    --target-bg: #C8202E22;
 
-    --border: #333;
+    /* ── Relief colors (use when red would be too loud) ───── */
+    --sunset: #E89460;      /* warm orange, secondary accent */
+    --sky: #8FB2C8;         /* faded daytime sky */
+    --pine: #4F6B3E;        /* forest green, success/nature */
 
-    --code-bg: #1B1B1B;
-    --input-bg: #1B1B1B;
+    /* ── Lines ────────────────────────────────────────────── */
+    --border: #D9C7A4;
 
-    --code-inline: var(--accent);
-    --bg-sidebar: #181818;
-    --bg-table-head: #1d1d1d;
+    /* ── Code (warm-dark panel in both modes — see header) ── */
+    --code-bg: #241B12;
+    --input-bg: #FBF6E9;
+    --code-inline: var(--sunset);
 
-    /* Warm-tinted white wash for interactive surface hovers (~4% over dark surface). */
-    --surface-hover: rgb(255 245 230 / 0.04);
+    /* Syntax highlighting — tuned for the always-dark code panel, so a single
+       set serves both themes (no dark override). All verified ≥4.5:1 on the
+       panel backgrounds (#241B12 light / #12161E dark). */
+    --code-keyword: #FF9933;
+    --code-type: #66CCFF;
+    --code-string: #D8A0FF;
+    --code-comment: #8B949E;
+    --code-name: #E6EDF3;
+    --code-func: #9AA0A8;
+    --code-class: #FFB86C;
+    --code-number: #FF6B9D;
+    --code-operator: #D7796B;
+    --code-whitespace: #FFF2;
 
-    --selection-bg: var(--accent);
+    --bg-sidebar: #FBF6E9;
+    --bg-table-head: #F0E5CF;
+
+    /* Warm brown wash for interactive surface hovers on light paper. */
+    --surface-hover: rgb(43 31 22 / 0.05);
+
+    /* Tinted accent surface + ink text — gentler than full red. */
+    --selection-bg: var(--accent-muted);
     --selection-text: var(--text);
+
+    /* ── Elevation (DESIGN.md §04) — flat by default, warm-tinted lift ── */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 16px;
+    --radius-full: 999px;
+    --shadow-soft: 0 2px 12px rgba(43, 31, 22, 0.06);
+    --shadow-modal: 0 16px 48px rgba(43, 31, 22, 0.14);
+
+    /* ── Type families (DESIGN.md §03) ────────────────────── */
+    --font-serif: "PT Serif", Georgia, "Times New Roman", serif;
+    --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: Consolas, "Courier New", monospace;
 
     /* Ease-out-quart — interactive transitions leave fast, settle soft. */
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
-    --warning: #F00;
-    --warning-bg: #F006;
-    --warning-bg1: #F003;
+    /* Warning leans on a deeper red so it reads as caution, distinct
+       from the inline accent red of links and headings. */
+    --warning: #A81824;
+    --warning-bg: #C8202E2A;
+    --warning-bg1: #C8202E14;
+}
+
+/* ── Dark (Night at camp — by the lake) ───────────────────── */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #161B26;          /* deep night blue, not black */
+        --bg-light: #1F2532;
+        --bg-surface: #1F2532;
+        --bg-elevated: #2A3142;
+
+        --text: #ECE2C9;        /* warm cream, not white */
+        --text-soft: #B5A88E;
+
+        --accent: #F2606C;      /* pioneer red, lifted for night — passes AA as link text */
+        --accent-hover: #FF7A85;
+        --accent-muted: #5A3338;
+
+        --target-bg: #F2606C2E;
+
+        --sunset: #F5A878;
+        --sky: #6F8EA3;
+        --pine: #6E8B5C;
+
+        --border: #3A4254;
+
+        --code-bg: #12161E;
+        --input-bg: #1F2532;
+        --code-inline: var(--sunset);
+
+        --bg-sidebar: #1A2030;
+        --bg-table-head: #222A3A;
+
+        --surface-hover: rgb(236 226 201 / 0.05);
+
+        /* Warm-tint shadows collapse to near-black depth at night. */
+        --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.35);
+        --shadow-modal: 0 16px 48px rgba(0, 0, 0, 0.5);
+
+        --selection-bg: var(--accent);
+        --selection-text: var(--bg);
+
+        --warning: #F46974;     /* clears AA on the gradient's strongest band */
+        --warning-bg: #E8404E33;
+        --warning-bg1: #E8404E1A;
+    }
 }

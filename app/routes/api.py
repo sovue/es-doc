@@ -1,12 +1,22 @@
 from html import escape
+from pathlib import Path
 from time import monotonic
 
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 import httpx
 
 from . import main_router
+from ..utils.docs import build_index
 
 router = main_router
+
+
+@router.get('/api/search-index')
+async def search_index():
+    """Client-side search corpus: one entry per doc with its title and h2/h3
+    headings (+ anchors). Rebuilt per request — the doc set is small (~tens of
+    files, ~60ms) and may change between requests, so freshness beats caching."""
+    return JSONResponse(build_index())
 
 _GH_URL = 'https://api.github.com/repos/sovue/es-doc/contributors'
 _UA = 'es-doc/contributors-widget (+https://github.com/sovue/es-doc)'

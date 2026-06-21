@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% set page_title = 'Документация — ES Doc' %}
+{% set body_class = 'bg-solid' %}
+{% set active = 'docs' %}
+
+{% block content %}
+<div class="page">
+
+    <main id="main-content">
+
+        <section class="page-hero page-hero--lg">
+            <div class="page-hero-inner">
+                <h1 class="page-title page-title--lg">Документация</h1>
+                <p class="page-lead">
+                    {% if docs %}
+                    Все материалы по созданию модов для «Бесконечного Лета».
+                    Выберите раздел ниже или воспользуйтесь поиском.
+                    {% else %}
+                    Документация ещё наполняется. Загляните позже.
+                    {% endif %}
+                </p>
+            </div>
+        </section>
+
+        {% if docs %}
+        <div class="page-main">
+            <section aria-labelledby="docs-list-label">
+                <h2 id="docs-list-label" class="authors-list-label">Все разделы · {{ docs|length }}</h2>
+
+                <ul class="sections-list doc-index" role="list">
+                    {% for d in docs %}
+                    <li>
+                        <a href="/docs/{{ d.slug|urlencode }}" class="section-row">
+                            <span class="section-name">{{ d.title }}</span>
+                            <span class="section-arrow" aria-hidden="true">→</span>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        </div>
+        {% endif %}
+
+    </main>
+
+    {% include "partials/footer.html" %}
+
+</div>
+{% endblock %}

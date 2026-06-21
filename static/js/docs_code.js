@@ -23,3 +23,34 @@ document.addEventListener('copy', e => {
 
     e.clipboardData.setData('text/plain', text);
 });
+
+/* ── Scroll-spy: highlight the TOC entry for the heading you're reading ── */
+(function () {
+    const links = {};
+    document.querySelectorAll('.sidebar nav a').forEach(a => {
+        let id = a.hash.slice(1);
+        try { id = decodeURIComponent(id); } catch (e) {}
+        if (id) links[id] = a;
+    });
+
+    const headings = [...document.querySelectorAll('.content .heading')].filter(h => links[h.id]);
+    if (headings.length < 2) return;
+
+    let current = null;
+    const setActive = a => {
+        if (current === a) return;
+        if (current) { current.classList.remove('active'); current.removeAttribute('aria-current'); }
+        current = a;
+        if (a) { a.classList.add('active'); a.setAttribute('aria-current', 'location'); }
+    };
+
+    const visible = new Set();
+    const io = new IntersectionObserver(entries => {
+        entries.forEach(e => e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id));
+        // Topmost heading inside the active band wins; if none, keep the last one above.
+        const top = headings.find(h => visible.has(h.id));
+        if (top) setActive(links[top.id]);
+    }, { rootMargin: '-76px 0px -65% 0px' });
+
+    headings.forEach(h => io.observe(h));
+})();

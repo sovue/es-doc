@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from starlette.exceptions import HTTPException
+from starlette.middleware.gzip import GZipMiddleware
 import time
 
 from .routes import main_router
@@ -10,6 +11,9 @@ from .utils.logging import root_logger
 CONFIG.setup('config.yaml')
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+# Compress text responses (HTML/CSS/JS). Skips already-compressed woff2 and
+# small payloads; GZipMiddleware leaves the binary font route untouched.
+app.add_middleware(GZipMiddleware, minimum_size=500)
 app.include_router(main_router)
 
 @app.exception_handler(HTTPException)

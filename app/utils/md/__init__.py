@@ -40,9 +40,36 @@ def render_thanks(src):
         html = '<ul class="thanks-list">' + html[4:]
     return html
 
+def outline(src):
+    """Structured headings for the search index: the doc title (h1) plus every
+    h2/h3 with the same slug the renderer assigns, so anchors line up."""
+    title = ''
+    headings = []
+
+    tokens = MD.parse(src)
+
+    for idx, token in enumerate(tokens):
+        if token.type != 'heading_open':
+            continue
+        text = tokens[idx + 1].content
+        level = int(token.tag[1])
+        if level == 1:
+            title = text
+        elif level in (2, 3):
+            headings.append({
+                'text': re.sub(r'[`]', '', text),
+                'slug': slugify(text, tokens[idx].map),
+                'level': level,
+            })
+
+    return {'title': title, 'headings': headings}
+
+
 def render(src):
 
-    title = 'err'
+    # Empty when the doc has no H1; the caller substitutes the filename so the
+    # page never shows a placeholder. Most community docs open with an H2.
+    title = ''
 
     nav = ''
 

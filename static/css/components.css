@@ -46,7 +46,7 @@
 
 .page-eyebrow {
     margin: 0 0 14px;
-    font-family: Consolas, "Courier New", monospace;
+    font-family: var(--font-mono);
     font-size: 0.875rem;
     font-weight: 600;
     letter-spacing: 0.1em;
@@ -56,6 +56,7 @@
 
 .page-title {
     margin: 0;
+    font-family: var(--font-serif);
     font-size: clamp(1.6rem, 3.5vw, 2.2rem);
     font-weight: 700;
     line-height: 1.15;
@@ -102,7 +103,7 @@
 .nav-logo {
     display: flex;
     align-items: center;
-    font-family: Consolas, "Courier New", monospace;
+    font-family: var(--font-mono);
     font-weight: 700;
     font-size: 0.95rem;
     letter-spacing: 0.02em;
@@ -165,6 +166,163 @@
     border-radius: 2px;
 }
 
+/* ── Header search (combobox + listbox) ──────────────────── */
+
+.nav-search {
+    position: relative;
+    flex: 1 1 auto;
+    max-width: 360px;
+    margin: 0 24px;
+    display: flex;
+    align-items: center;
+}
+
+.nav-search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    height: 34px;
+    padding: 0 10px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s var(--ease-out);
+}
+
+.nav-search-box:focus-within {
+    border-color: var(--accent);
+}
+
+.nav-search-icon {
+    flex-shrink: 0;
+    color: var(--text-soft);
+}
+
+.nav-search-input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.875rem;
+    outline: none;
+}
+
+.nav-search-input::placeholder {
+    color: var(--text-soft);
+    opacity: 1;
+}
+
+/* Drop the native clear affordance — the listbox + Esc cover it. */
+.nav-search-input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* "/" focus hint — hidden once the field is in use. */
+.nav-search-kbd {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    line-height: 1;
+    color: var(--text-soft);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 5px;
+}
+
+.nav-search-box:focus-within .nav-search-kbd {
+    display: none;
+}
+
+.nav-search-results {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-modal);
+    max-height: 60vh;
+    overflow-y: auto;
+    z-index: 20;
+}
+
+.nav-search-option {
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Active row warms with the muted-accent tint — emphasis without a side stripe. */
+.nav-search-option[aria-selected="true"],
+.nav-search-option:hover {
+    background: var(--accent-muted);
+}
+
+.nav-search-ctx {
+    color: var(--text-soft);
+}
+
+/* Matched substring leans on weight, keeping pioneer red a once-per-screen spotlight. */
+.nav-search-option .match {
+    font-weight: 700;
+}
+
+.nav-search-empty {
+    padding: 10px;
+    font-size: 0.875rem;
+    color: var(--text-soft);
+}
+
+.nav-search-empty-link {
+    color: var(--accent);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.nav-search-empty-link:hover {
+    text-decoration: underline;
+}
+
+/* Mobile-only toggle; the inline field is the desktop affordance. */
+.nav-search-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin-left: auto;
+    padding: 0;
+    background: none;
+    border: 0;
+    color: var(--text-soft);
+    cursor: pointer;
+    transition: color 0.15s var(--ease-out);
+}
+
+.nav-search-toggle:hover {
+    color: var(--accent);
+}
+
+.nav-search-toggle:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -4px;
+    border-radius: var(--radius-sm);
+    color: var(--accent);
+}
+
 /* ── Site footer ─────────────────────────────────────────── */
 
 .site-footer {
@@ -182,7 +340,7 @@
 
 .site-footer a {
     display: inline-block;
-    padding-block: 10px;
+    padding-block: 12px;
     color: var(--text-soft);
     text-decoration: none;
     transition: color 0.15s var(--ease-out);
@@ -253,6 +411,12 @@ a.section-row:focus-visible {
     white-space: nowrap;
 }
 
+/* Docs index has no description column, so the name grows to push the arrow
+   to the right edge (on the home/error lists the flexible desc does that). */
+.doc-index .section-name {
+    flex: 1;
+}
+
 .section-arrow {
     font-size: 0.875rem;
     color: var(--accent);
@@ -270,8 +434,12 @@ a.section-row:focus-visible .section-arrow {
     cursor: default;
 }
 
+/* Italic + muted name reads as "pending/placeholder" — distinct from the live
+   rows' upright, darker names, without dropping text below AA (opacity would). */
 .section-wip .section-name {
     color: var(--text-soft);
+    font-style: italic;
+    font-weight: 400;
 }
 
 .section-wip-badge {
@@ -290,7 +458,7 @@ a.section-row:focus-visible .section-arrow {
 
 .authors-list-label {
     margin: 0 0 20px;
-    font-family: Consolas, "Courier New", monospace;
+    font-family: var(--font-mono);
     font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.1em;
@@ -362,7 +530,7 @@ a.section-row:focus-visible .section-arrow {
     display: flex;
     flex-wrap: wrap;
     gap: 0 14px;
-    font-family: Consolas, "Courier New", monospace;
+    font-family: var(--font-mono);
     font-size: 0.75rem;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -387,8 +555,8 @@ a.section-row:focus-visible .section-arrow {
 .author-socials a {
     display: inline-flex;
     align-items: center;
-    padding-block: 6px;
-    min-height: 24px;
+    padding-block: 12px;
+    min-height: 44px;
     color: var(--text-soft);
     text-decoration: none;
     transition: color 0.15s var(--ease-out);
@@ -527,6 +695,33 @@ a.section-row:focus-visible .section-arrow {
 
     .nav-links a {
         padding-inline: 12px;
+    }
+
+    /* Search collapses to an icon that drops a full-width sheet under the bar,
+       keeping the 52px header uncluttered. */
+    .nav-search-toggle {
+        display: inline-flex;
+    }
+
+    .nav-search {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-width: none;
+        margin: 0;
+        padding: 10px 20px;
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+    }
+
+    body.search-open .nav-search {
+        display: flex;
+    }
+
+    .nav-search-kbd {
+        display: none;
     }
 
     .site-footer {
