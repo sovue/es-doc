@@ -243,16 +243,6 @@ img {
     padding: 32px 48px;
 }
 
-/* Cap prose at 68ch (DESIGN.md reading width) for comfort while letting
-   tables, pre, and images keep the full column. Russian averages longer
-   words than English, so the cap matters more here. */
-.content p,
-.content blockquote,
-.content > ul,
-.content > ol {
-    max-width: 68ch;
-}
-
 /* ── Heading anchors ─────────────────────────────────────── */
 
 .heading {
