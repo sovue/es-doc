@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, Query
 from fastapi.responses import PlainTextResponse
 from pathlib import Path
+import re
 
 from . import main_router
 from ..utils.config import CONFIG
@@ -24,17 +25,17 @@ async def page(doc, request: Request):
     # handler renders as the styled error page.
     text = read_text(Path(CONFIG.config['docs']['path']) / f'{doc}.md')
 
-    title, nav, body = render(text)
-    # Most docs open with an H2, so fall back to the filename for the page
-    # title rather than leaking the empty-H1 placeholder.
-    title = title or doc
-
     if any(i in request.query_params for i in ['md', 'markdown']):
         return PlainTextResponse(text)
+
+    if any(i in request.query_params for i in ['s', 'search']):
+        return PlainTextResponse(re.sub(r'^(#+ )|(- )|(> )|(```\w*)|(:::\w*)|(---)$', '', text, flags=re.MULTILINE).replace('\n\n', '\n'))
+
+    title, nav, body = render(text)
 
     if any(i in request.query_params for i in ['r', 'raw']):
         return PlainTextResponse(body)
 
-    return templates.TemplateResponse(request, 'doc.html', {'title': title, 'body': body, 'nav': nav})
+    return templates.TemplateResponse(request, 'doc.html', {'title': title or doc, 'body': body, 'nav': nav})
 
 main_router.include_router(router)
