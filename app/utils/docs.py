@@ -1,3 +1,4 @@
+import re
 import yaml
 
 from .config import CONFIG
@@ -5,13 +6,17 @@ from .file import ROOT
 from .md import outline
 
 
+def _docs_dir():
+    return ROOT / CONFIG.config['docs']['path']
+
+
 def build_index():
     """Scan the docs directory into a list of {slug, title, headings}, ordered
-    by filename. Shared by the search API (/api/search-index) and the docs
-    index page (/docs/) so both stay in sync. Title falls back to the filename
-    when a doc has no H1, matching how the doc page itself titles untitled docs.
+    by filename. Title falls back to the filename when a doc has no H1, matching
+    how the doc page itself titles untitled docs. Built once per cache refresh
+    (see app/utils/lifespan.py), not per request.
     """
-    docs_dir = ROOT / CONFIG.config['docs']['path']
+    docs_dir = _docs_dir()
     index = []
 
     if docs_dir.is_dir():
@@ -29,18 +34,36 @@ def build_index():
     return index
 
 
-def build_tree():
-    """Resolve `tree.yaml` (in the docs dir) into a nested {slug, title,
-    children} structure for the docs index. A node is a filename (string) or
-    {doc: filename, children: [...]}, nested to any depth — every node is a
-    real doc. Docs not placed in the tree, plus everything when there's no
-    tree.yaml, are returned flat in `rest` (the "Прочее" bucket), so nothing
-    ever disappears. Unknown/typo'd slugs are skipped rather than crashing.
+def build_items(index):
+    """Flatten the index into the flat corpus the ranking scores over: one row
+    per doc title, plus one per h2/h3 heading (carrying its doc's title as
+    context and the heading's own anchor). This is what the search endpoint
+    matches against."""
+    items = []
+    for d in index:
+        items.append({'label': d['title'], 'doc': d['slug'], 'anchor': '', 'context': ''})
+        for h in d['headings']:
+            items.append({
+                'label': h['text'],
+                'doc': d['slug'],
+                'anchor': h['slug'],
+                'context': d['title'],
+            })
+    return items
+
+
+def build_tree(index=None):
+    """Resolve `tree.yaml` (in the docs dir) into a nested [{slug, title,
+    children}] structure for the docs index. A node is a filename (string) or
+    {doc: filename, children: [...]}, nested to any depth — every node is a real
+    doc. Only docs named in the tree are returned; unplaced files and
+    unknown/typo'd slugs are simply omitted, so /docs/ lists exactly what
+    tree.yaml declares. Pass a prebuilt `index` to reuse a cache refresh's scan.
     """
-    index = build_index()
+    if index is None:
+        index = build_index()
     titles = {d['slug']: d['title'] for d in index}
-    tree_path = ROOT / CONFIG.config['docs']['path'] / 'tree.yaml'
-    used = set()
+    tree_path = _docs_dir() / 'tree.yaml'
 
     def walk(nodes):
         out = []
@@ -53,17 +76,48 @@ def build_tree():
                 continue
             if not slug or slug not in titles:
                 continue
-            used.add(slug)
             out.append({'slug': slug, 'title': titles[slug], 'children': walk(children)})
         return out
 
-    tree = []
-    if tree_path.exists():
-        try:
-            data = yaml.safe_load(tree_path.read_text('utf-8')) or {}
-            tree = walk(data.get('tree', []))
-        except Exception:
-            tree = []
+    if not tree_path.exists():
+        return []
+    try:
+        data = yaml.safe_load(tree_path.read_text('utf-8')) or {}
+        return walk(data.get('tree', []))
+    except Exception:
+        return []
 
-    rest = sorted((d for d in index if d['slug'] not in used), key=lambda d: d['title'].lower())
-    return {'tree': tree, 'rest': rest}
+
+def _score(label, q):
+    """Rank a candidate label against the lowercased query `q`: 0 = prefix,
+    1 = word-start, 2 = mid-word substring, -1 = no match — so prefix and
+    word-start hits sort above mid-word ones. This is the ranking that used to
+    run in the browser."""
+    low = label.lower()
+    i = low.find(q)
+    if i == -1:
+        return -1
+    if i == 0:
+        return 0
+    if re.match(r'[\s(\[«]', low[i - 1]):
+        return 1
+    return 2
+
+
+def search(query, limit=8):
+    """Rank the cached corpus against `query`, returning the top matches as
+    [{label, doc, anchor, context}]. Ties break on original corpus order so
+    doc titles precede their headings. Runs over CONFIG.search_items, which the
+    lifespan cache refresh keeps in memory — no disk access per query."""
+    q = (query or '').strip().lower()
+    if not q:
+        return []
+
+    scored = []
+    for pos, item in enumerate(CONFIG.search_items):
+        s = _score(item['label'], q)
+        if s != -1:
+            scored.append((s, pos, item))
+
+    scored.sort(key=lambda t: (t[0], t[1]))
+    return [item for _, _, item in scored[:limit]]

@@ -1,22 +1,23 @@
 from html import escape
-from pathlib import Path
 from time import monotonic
 
 from fastapi.responses import HTMLResponse, JSONResponse
 import httpx
 
 from . import main_router
-from ..utils.docs import build_index
+from ..utils.docs import search
 
 router = main_router
 
 
-@router.get('/api/search-index')
-async def search_index():
-    """Client-side search corpus: one entry per doc with its title and h2/h3
-    headings (+ anchors). Rebuilt per request — the doc set is small (~tens of
-    files, ~60ms) and may change between requests, so freshness beats caching."""
-    return JSONResponse(build_index())
+@router.get('/api/search')
+async def search_api(q: str = '', limit: int = 8):
+    """Server-side type-ahead: rank the cached search corpus against `q` and
+    return the top matches ([{label, doc, anchor, context}]). The matching,
+    scoring and ranking that used to run in the browser now run here; the
+    corpus itself is kept warm by the lifespan cache refresh."""
+    limit = max(1, min(limit, 25))
+    return JSONResponse(search(q, limit))
 
 _GH_URL = 'https://api.github.com/repos/sovue/es-doc/contributors'
 _UA = 'es-doc/contributors-widget (+https://github.com/sovue/es-doc)'
@@ -42,8 +43,8 @@ def _render(users: list[dict]) -> str:
         url = escape(url_raw, quote=True)
         avatar = escape(_sized_avatar(avatar_raw), quote=True)
         parts.append(
-            f'<a class="gh-contributor" href="{url}" target="_blank" '
-            f'rel="noopener noreferrer" aria-label="{login} на GitHub" title="{login}">'
+            f'<a class="gh-contributor" href="{url}" '
+            f'aria-label="{login} на GitHub" title="{login}">'
             f'<img class="ghcontributor-avatar" src="{avatar}" '
             f'alt="" loading="lazy" width="44" height="44"></a>'
         )

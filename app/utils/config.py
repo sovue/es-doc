@@ -44,6 +44,12 @@ class _ConfigContainer():
         self.logger = root_logger.getChild('config')
         self.page_cache = {}
         self.page_last_edited = 0
+        # Derived caches refreshed alongside page_cache (see utils/lifespan.py):
+        # search_index feeds tooling, search_items is the flat search corpus the
+        # ranking scores over, docs_tree is the resolved /docs/ tree.
+        self.search_index = []
+        self.search_items = []
+        self.docs_tree = []
 
     def setup(self, path):
 

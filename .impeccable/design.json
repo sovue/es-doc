@@ -1,163 +1,170 @@
 {
-  "version": 2,
-  "generated": "2026-05-25",
-  "register": "product",
-
-  "colors": {
-    "bg":            { "value": "#111",        "role": "Page background" },
-    "bg-light":      { "value": "#221911",     "role": "Gradient terminus, blockquote fill" },
-    "bg-surface":    { "value": "#1B1B1B",     "role": "Alias for code/input surfaces (prefer --code-bg or --input-bg in code)" },
-    "bg-sidebar":    { "value": "#181818",     "role": "Docs sidebar background" },
-    "bg-table-head": { "value": "#1d1d1d",     "role": "Table header fill" },
-    "text":          { "value": "#EEE",        "role": "Primary body text" },
-    "text-soft":     { "value": "#BBB",        "role": "Secondary text, labels" },
-    "accent":        { "value": "#DD7F22",     "role": "Primary interactive, headings in docs" },
-    "accent-hover":  { "value": "#F93",        "role": "Hover state for accent elements" },
-    "border":        { "value": "#333",        "role": "All dividers and borders" },
-    "target-bg":     { "value": "#DD7F2233",   "role": "Anchor :target flash (20% accent)" },
-    "code-inline":   { "value": "#ff8080",     "role": "Inline code text" },
-    "selection-bg":  { "value": "#DD7F22",     "role": "Text selection background" },
-    "selection-text":{ "value": "#EEE",        "role": "Text selection foreground (--text, not #fff)" }
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-01",
+  "title": "Design System: ES Doc",
+  "extensions": {
+    "colorMeta": {
+      "pioneer-red": {
+        "role": "primary",
+        "displayName": "Pioneer Red — the Galstuk",
+        "canonical": "#C8202E",
+        "dark": "#F2606C",
+        "tonalRamp": ["#3A0A0E", "#5C1016", "#7E161F", "#A81824", "#C8202E", "#D8515C", "#E8B5BA", "#F7E0E2"]
+      },
+      "sunset": {
+        "role": "secondary",
+        "displayName": "Sunset",
+        "canonical": "#E89460",
+        "dark": "#F5A878",
+        "tonalRamp": ["#3D2413", "#5E381E", "#82502C", "#A6683B", "#CB8150", "#E89460", "#F3BE9C", "#FBE4D6"]
+      },
+      "pine": {
+        "role": "tertiary",
+        "displayName": "Pine",
+        "canonical": "#4F6B3E",
+        "dark": "#6E8B5C",
+        "tonalRamp": ["#161F10", "#26341C", "#374B29", "#495F37", "#5C7546", "#6E8B5C", "#9CB388", "#CFDCC2"]
+      },
+      "sky": {
+        "role": "tertiary",
+        "displayName": "Sky",
+        "canonical": "#8FB2C8",
+        "dark": "#6F8EA3",
+        "tonalRamp": ["#16242D", "#243B49", "#345566", "#467184", "#5C8FA5", "#8FB2C8", "#B7CFDD", "#E0EBF1"]
+      },
+      "sand-path": {
+        "role": "neutral",
+        "displayName": "Sand Path",
+        "canonical": "#F4EAD6",
+        "dark": "#161B26",
+        "tonalRamp": ["#161B26", "#2B2519", "#4A4030", "#6B5D45", "#8C7C5F", "#B0A07C", "#D9C7A4", "#F4EAD6"]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#2B1F16",
+        "dark": "#ECE2C9",
+        "tonalRamp": ["#1A120B", "#2B1F16", "#42342A", "#6B5847", "#8C7A67", "#B0A08C", "#D9C7A4", "#F4EAD6"]
+      },
+      "border-tan": {
+        "role": "neutral",
+        "displayName": "Border Tan",
+        "canonical": "#D9C7A4",
+        "dark": "#3A4254"
+      },
+      "info": {
+        "role": "semantic",
+        "displayName": "Info Sky",
+        "canonical": "#215D70",
+        "dark": "#86C0DA",
+        "tonalRamp": ["#0C222A", "#13323E", "#1A4353", "#215D70", "#357E96", "#5AA0B8", "#86C0DA", "#C0E0EC"]
+      },
+      "warning": {
+        "role": "semantic",
+        "displayName": "Warning Red",
+        "canonical": "#A81824",
+        "dark": "#F46974"
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Home/error page titles only; PT Serif, fluid clamp." },
+      "headline": { "displayName": "Headline", "purpose": "Doc H1, PT Serif 700, 2px bottom border." },
+      "title": { "displayName": "Title", "purpose": "Doc H2 and sidebar title, PT Serif 700." },
+      "body": { "displayName": "Body", "purpose": "Inter running text and UI, capped at 72ch on prose." },
+      "label": { "displayName": "Label", "purpose": "Consolas uppercase meta labels and badges." }
+    },
+    "shadows": [
+      { "name": "soft", "value": "0 2px 12px rgba(43,31,22,0.06)", "purpose": "Quiet warm-tinted lift for popovers; near-black at night (rgba(0,0,0,0.35))." },
+      { "name": "modal", "value": "0 16px 48px rgba(43,31,22,0.14)", "purpose": "Deep lift under the search results listbox; the one floating surface. Night: rgba(0,0,0,0.5)." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Ease-out-quart; interactive transitions leave fast, settle soft." },
+      { "name": "duration-fast", "value": "0.15s", "purpose": "Default transition duration for color/opacity/border-color state changes." }
+    ],
+    "breakpoints": [
+      { "name": "tablet", "value": "768px" },
+      { "name": "mobile", "value": "640px" },
+      { "name": "narrow", "value": "400px" }
+    ]
   },
-
-  "typography": {
-    "families": {
-      "body": "system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
-      "mono": "Consolas, \"Courier New\", monospace"
+  "components": [
+    {
+      "name": "Search Combobox",
+      "kind": "input",
+      "refersTo": "search-box",
+      "description": "Header type-ahead: bordered input group that warms its border on focus and drops a lifted listbox.",
+      "html": "<div class=\"ds-search\"><svg class=\"ds-search-icon\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" aria-hidden=\"true\"><circle cx=\"6.5\" cy=\"6.5\" r=\"4.5\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M10.5 10.5L14 14\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg><input class=\"ds-search-input\" type=\"search\" placeholder=\"Найти термин или раздел…\"><kbd class=\"ds-search-kbd\">/</kbd></div>",
+      "css": ".ds-search { display: inline-flex; align-items: center; gap: 8px; width: 320px; height: 34px; padding: 0 10px; background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--radius-sm); transition: border-color 0.15s var(--ease-out); } .ds-search:focus-within { border-color: var(--accent); } .ds-search-icon { flex-shrink: 0; color: var(--text-soft); } .ds-search-input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--text); font-family: inherit; font-size: 0.875rem; outline: none; } .ds-search-input::placeholder { color: var(--text-soft); opacity: 1; } .ds-search-kbd { font-family: var(--font-mono); font-size: 0.7rem; line-height: 1; color: var(--text-soft); border: 1px solid var(--border); border-radius: 3px; padding: 2px 5px; }"
     },
-    "scale": {
-      "hero":  { "size": "clamp(1.85rem, 4.5vw, 2.8rem)", "weight": 700, "use": "Homepage H1" },
-      "h1":    { "size": "2.4rem",   "weight": 700, "use": "Doc page H1, border-bottom 2px" },
-      "h2":    { "size": "1.8rem",   "weight": 700, "use": "Doc page H2, border-bottom 1px" },
-      "base":  { "size": "1rem",     "weight": "400/600", "use": "Body, section names" },
-      "sm":    { "size": "0.875rem", "weight": 400, "use": "Nav links, descriptions, footer" },
-      "xs":    { "size": "0.75rem",  "weight": 600, "use": "Mono labels, WIP badges" }
+    {
+      "name": "Section Row",
+      "kind": "nav",
+      "refersTo": "section-row",
+      "description": "The primary grouping affordance: a bordered list row with a pioneer-red arrow that fades in on hover.",
+      "html": "<ul class=\"ds-rows\"><li><a class=\"ds-row\" href=\"#\"><span class=\"ds-row-name\">Глоссарий</span><span class=\"ds-row-desc\">Термины движка RenPy и модов БЛ</span><span class=\"ds-row-arrow\" aria-hidden=\"true\">→</span></a></li></ul>",
+      "css": ".ds-rows { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border); } .ds-rows li { border-bottom: 1px solid var(--border); } .ds-row { display: flex; align-items: baseline; gap: 20px; padding: 16px 0; text-decoration: none; color: inherit; } .ds-row-name { font-size: 1rem; font-weight: 600; color: var(--text); transition: color 0.15s var(--ease-out); } .ds-row-desc { font-size: 0.875rem; color: var(--text-soft); flex: 1; } .ds-row-arrow { font-size: 0.875rem; color: var(--accent); opacity: 0; transition: opacity 0.15s var(--ease-out); } .ds-row:hover .ds-row-name, .ds-row:focus-visible .ds-row-name { color: var(--accent); } .ds-row:hover .ds-row-arrow, .ds-row:focus-visible .ds-row-arrow { opacity: 1; }"
     },
-    "lineHeight": {
-      "body": 1.7,
-      "heading": "1.15–1.2"
+    {
+      "name": "Info Callout",
+      "kind": "custom",
+      "refersTo": "callout-info",
+      "description": "Calm sky-blue note block: paired hairlines + faint gradient band, 32px currentColor icon. No side-stripe.",
+      "html": "<div class=\"ds-info\"><svg class=\"ds-info-icon\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20m0 4a1 1 0 1 1 0 2 1 1 0 0 1 0-2m1 12h-2v-6h2z\"/></svg><div class=\"ds-info-body\"><strong>Примечание.</strong> Это информационный блок.</div></div>",
+      "css": ".ds-info { display: flex; align-items: center; gap: 12px; padding: 16px; margin: 32px 0; color: var(--info); border-top: 1px solid var(--info); border-bottom: 1px solid var(--info); background: linear-gradient(0deg, var(--info-bg) 5%, var(--info-bg1) 25%, var(--info-bg1) 75%, var(--info-bg) 95%); } .ds-info-icon { width: 32px; height: 32px; flex-shrink: 0; } .ds-info-body { color: var(--text); } .ds-info-body strong { color: var(--info); }"
     },
-    "maxWidth": {
-      "heroParagraph": "55ch",
-      "bodyContent": "65–75ch recommended"
+    {
+      "name": "Warning Callout",
+      "kind": "custom",
+      "refersTo": "callout-warning",
+      "description": "Deeper-red caution block, same structure as info so the two read as a matched pair.",
+      "html": "<div class=\"ds-warn\"><svg class=\"ds-warn-icon\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 3 2 21h20zm0 6 6 10H6zm-1 3v3h2v-3zm0 5v2h2v-2z\"/></svg><div class=\"ds-warn-body\"><strong>Внимание.</strong> Это предупреждение.</div></div>",
+      "css": ".ds-warn { display: flex; align-items: center; gap: 12px; padding: 16px; margin: 32px 0; color: var(--warning); border-top: 1px solid var(--warning); border-bottom: 1px solid var(--warning); background: linear-gradient(0deg, var(--warning-bg) 5%, var(--warning-bg1) 25%, var(--warning-bg1) 75%, var(--warning-bg) 95%); } .ds-warn-icon { width: 32px; height: 32px; flex-shrink: 0; } .ds-warn-body { color: var(--text); } .ds-warn-body strong { color: var(--warning); }"
+    },
+    {
+      "name": "Nav Link",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Full-height sticky-header link; ink-soft at rest, inset pioneer-red underline when current.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-link\" href=\"#\">Документация</a><a class=\"ds-nav-link\" href=\"#\" aria-current=\"page\">Авторы</a></nav>",
+      "css": ".ds-nav { display: inline-flex; align-items: stretch; min-height: 52px; } .ds-nav-link { display: flex; align-items: center; padding-inline: 16px; font-size: 0.875rem; color: var(--text-soft); text-decoration: none; transition: color 0.15s var(--ease-out); } .ds-nav-link:hover { color: var(--text); } .ds-nav-link[aria-current=\"page\"] { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); } .ds-nav-link:focus-visible { color: var(--text); outline: 2px solid var(--accent); outline-offset: -3px; border-radius: 2px; }"
     }
-  },
-
-  "spacing": {
-    "1": "8px",
-    "2": "16px",
-    "3": "20px",
-    "4": "24px",
-    "5": "32px",
-    "6": "40px",
-    "7": "48px",
-    "8": "56px",
-    "9": "64px",
-    "10": "72px"
-  },
-
-  "rounded": {
-    "none": "0",
-    "xs": "2px",
-    "sm": "3px",
-    "md": "6px",
-    "lg": "12px"
-  },
-
-  "shadows": "none — zero box-shadow in this system; depth via border + background tint only",
-
-  "motion": {
-    "duration": "0.15s",
-    "easing": "ease",
-    "properties": ["color", "background", "opacity", "border-color"],
-    "syntax": "Always explicit: `transition: color 0.15s ease` — never bare `transition: 0.15s`",
-    "reducedMotion": "transitions → none; keyframe animations → none (both must be covered)"
-  },
-
-  "breakpoints": {
-    "tablet": "768px (doc sidebar collapses to horizontal nav strip)",
-    "mobile": "640px (padding reduction, min-width adjustments)",
-    "narrow": "400px (GitHub nav hidden, section descriptions hidden)"
-  },
-
-  "elevation": {
-    "skip-link":   { "z-index": 100 },
-    "site-header": { "z-index": 10, "position": "sticky", "top": 0 },
-    "content":     { "z-index": 0 }
-  },
-
-  "architecture": {
-    "shared": "main.css — skip-link, sr-only, site-header, site-nav, site-footer; used on every page",
-    "pageSpecific": "home.css, doc.css, authors.css",
-    "tokens": "vars.css — imported once by main.css; never re-import in page files"
-  },
-
-  "components": {
-    "nav": {
-      "file": "main.css",
-      "height": "52px min",
-      "approach": "align-items: stretch cascade — nav > ul > li > a all stretch to full height",
-      "tapTarget": "52px (exceeds WCAG 2.5.5 AAA 44px)",
-      "activeState": "aria-current=\"page\" on the active link — drives CSS and AT"
-    },
-    "siteFooter": {
-      "file": "main.css",
-      "class": ".site-footer",
-      "tapTarget": "~29px via display:inline-block + padding-block:6px (meets WCAG 2.5.8 24px)"
-    },
-    "searchGroup": {
-      "structure": "flex row: input + button, wrapped in border",
-      "focusBehavior": "focus-within on wrapper changes border-color to --accent",
-      "buttonHeight": "44px via padding: 14px"
-    },
-    "sectionRow": {
-      "layout": "flex, align-items: baseline, gap: 20px",
-      "interactiveVariant": "<a> — shows arrow on hover via opacity",
-      "wipVariant": "<span> — cursor: default, name in text-soft, no arrow"
-    },
-    "sidebar": {
-      "width": "260px",
-      "position": "sticky, top: 52px (below site-header), height: calc(100vh - 52px)",
-      "tokens": "background: var(--bg-sidebar); border-right: 1px solid var(--border)",
-      "nestedIndent": "padding-left: 18px + border-left: 1px solid var(--border) (structural, not decorative)",
-      "mobile": "stacks above content at ≤768px; horizontal scroll; nested lists hidden"
-    },
-    "blockquote": {
-      "border": "1px solid var(--border) — full border, NOT an accent side-stripe",
-      "background": "var(--bg-light)",
-      "color": "var(--text-soft)"
-    },
-    "anchorLinks": {
-      "defaultOpacity": 0.3,
-      "revealOn": ["parent :hover", ":focus-visible"],
-      "note": "Must be visible at focus-visible — keyboard users tab to these links",
-      "scrollMarginTop": "76px (52px nav + 24px clearance)"
-    },
-    "anchorFlash": {
-      "trigger": ":target pseudo-class",
-      "animation": "flash 1s ease — background fades from target-bg to transparent",
-      "reducedMotion": "animation disabled entirely"
-    }
-  },
-
-  "focusStyle": {
-    "outline": "2px solid var(--accent)",
-    "offsets": {
-      "contained": "-2px to -3px (nav links, search button)",
-      "outside": "2–3px (logo, section rows, footer links)"
-    },
-    "pseudo": "focus-visible only"
-  },
-
-  "accessibility": {
-    "target": "WCAG 2.1 AA",
-    "touchTargets": {
-      "navLinks": "52px full-height via stretch",
-      "searchButton": "44px",
-      "footerLinks": "~29px via display:inline-block + padding-block:6px"
-    },
-    "landmarks": ["banner (site-header)", "navigation (site-nav)", "main", "contentinfo (site-footer)", "complementary (sidebar, doc pages)"],
-    "skipLink": "First focusable element on every page; position: absolute top: -100% → top: 0 on :focus",
-    "lang": "lang=\"ru\" required on every <html> element"
+  ],
+  "narrative": {
+    "northStar": "The Endless Golden Hour",
+    "overview": "ES Doc is a field manual for Russian-speaking modders of Everlasting Summer. The whole system lives inside the game's own light: warm afternoon sun on a sand path by day, the deep blue of the lake at camp by night. It should feel like a senior modder left you good notes, warm enough to trust and precise enough to ship from. The theme is genuinely bimodal: light is the default (prefers-color-scheme chooses), dark is the night scene by the lake. Code panels are the deliberate exception, staying film-warm-dark in both modes.",
+    "keyCharacteristics": [
+      "Warm-tinted neutrals only; never pure #000 or #fff.",
+      "Pioneer red is a once-per-screen spotlight, not a fill.",
+      "PT Serif carries the warmth in headings; Inter carries the body; Consolas signals meta and code.",
+      "Flat by default; the one shadow is the search popover lifting off the page.",
+      "Light and dark are equal citizens, switched by ambient preference."
+    ],
+    "rules": [
+      { "name": "The Galstuk Rule", "body": "Pioneer red appears on ≤10% of any screen. Its rarity is the point; emphasis inside a red-tinted surface leans on weight, not more red.", "section": "colors" },
+      { "name": "The Warm-Dark Panel Rule", "body": "Code panels stay #241B12/#12161E in both themes; the syntax palette is verified ≥4.5:1 on those backgrounds, so there is no separate dark override.", "section": "colors" },
+      { "name": "The No Pure Neutral Rule", "body": "Never #000 or #fff, and never an untinted gray. Prefer the token over any literal hex that has one.", "section": "colors" },
+      { "name": "The Serif-Carries-Warmth Rule", "body": "Headings are ink-colored, not accent-colored. PT Serif carries the warmth so pioneer red stays a spotlight.", "section": "typography" },
+      { "name": "The Three-Weight Rule", "body": "Only 400, 600, and 700 exist. Weight 500 was removed; do not reintroduce it.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. A shadow appears only when an element leaves the page plane; today that is the search popover alone.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do reach for the token (var(--ink), var(--border), var(--accent), var(--info)), never a literal hex that has a token.",
+      "Do define both a light :root value and a prefers-color-scheme: dark value for every new color token.",
+      "Do keep pioneer red to a once-per-screen spotlight; use weight or size for emphasis inside warm surfaces.",
+      "Do keep code panels warm-dark in both themes.",
+      "Do use PT Serif for headings/quotes, Inter for body/UI, Consolas for meta labels and code, at weights 400/600/700 only.",
+      "Do pair every callout icon with class=\"icon\" and currentColor so it inherits the semantic color and the 32px size.",
+      "Do use тире (—, U+2014) as the Russian title separator and nested-list marker, overriding the English no-em-dash default.",
+      "Do respect prefers-reduced-motion: disable both transitions and keyframe animations."
+    ],
+    "donts": [
+      "Don't ship the sterile ReadTheDocs / Sphinx look, the corporate gray of a Confluence wiki, or neon/cyberpunk gaming aesthetics.",
+      "Don't use #000, #fff, or any untinted gray.",
+      "Don't use border-left/border-right wider than 1px as a colored accent stripe (the sidebar's 1px structural indent is the only exception).",
+      "Don't add drop shadows to cards, rows, or callouts; the search popover is the only floating surface.",
+      "Don't color headings with pioneer red.",
+      "Don't reintroduce font-weight 500, or a display font in UI labels/data.",
+      "Don't replace тире (—) in Russian copy with a colon, pipe, or middle dot."
+    ]
   }
 }

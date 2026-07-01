@@ -1,6 +1,8 @@
-/* Global documentation search — client-side type-ahead over a small index of
-   doc titles + h2/h3 headings (/api/search-index). Progressive enhancement:
-   the surrounding <form> stays a navigable fallback if this never runs.
+/* Global documentation search — a thin type-ahead over the server-side search
+   endpoint (/api/search?q=…). The backend does the matching, scoring and
+   ranking; this only debounces input, renders the ranked results, highlights
+   the query, and wires keyboard/ARIA behaviour. Progressive enhancement: the
+   surrounding <form> stays a navigable fallback if this never runs.
    Implements the WAI-ARIA combobox + listbox pattern. */
 (function () {
     var form = document.getElementById('site-search');
@@ -10,52 +12,10 @@
     var toggle = document.querySelector('.nav-search-toggle');
     if (!form || !input || !list) return;
 
-    var MAX = 8;
-    var items = null;        // flattened {label, doc, anchor, context} — null until loaded
-    var loadState = 'idle';  // idle | loading | ready | error
-    var matches = [];
+    var LIMIT = 8;
+    var matches = [];        // latest ranked results from the server
     var active = -1;         // index into `matches` of the highlighted option
-
-    // ── Index loading ────────────────────────────────────────
-    function load() {
-        if (loadState === 'loading' || loadState === 'ready') return;
-        loadState = 'loading';
-        fetch('/api/search-index')
-            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
-            .then(function (docs) {
-                items = [];
-                docs.forEach(function (d) {
-                    items.push({ label: d.title, doc: d.slug, anchor: '', context: '' });
-                    (d.headings || []).forEach(function (h) {
-                        items.push({ label: h.text, doc: d.slug, anchor: h.slug, context: d.title });
-                    });
-                });
-                loadState = 'ready';
-                if (input.value.trim()) update();   // user typed while it loaded
-            })
-            .catch(function () { loadState = 'error'; });
-    }
-
-    // ── Matching ─────────────────────────────────────────────
-    function score(label, q) {
-        var l = label.toLowerCase();
-        var i = l.indexOf(q);
-        if (i === -1) return -1;
-        // prefix and word-start matches rank above mid-word substrings
-        if (i === 0) return 0;
-        if (/\s|[(\[«]/.test(l.charAt(i - 1))) return 1;
-        return 2;
-    }
-
-    function find(q) {
-        var scored = [];
-        for (var i = 0; i < items.length; i++) {
-            var s = score(items[i].label, q);
-            if (s !== -1) scored.push({ item: items[i], s: s, i: i });
-        }
-        scored.sort(function (a, b) { return a.s - b.s || a.i - b.i; });
-        return scored.slice(0, MAX).map(function (x) { return x.item; });
-    }
+    var seq = 0;             // request counter — drop out-of-order responses
 
     // ── Rendering ────────────────────────────────────────────
     function esc(s) {
@@ -79,15 +39,16 @@
         active = -1;
     }
 
-    function render(q) {
+    function announce(msg) { if (status) status.textContent = msg; }
+
+    function render(query) {
+        var q = query.toLowerCase();   // lowercased for substring highlighting
         if (!matches.length) {
-            const msg = items && items.length
-                ? 'Ничего не найдено по запросу «' + esc(q) + '». ' +
-                  '<a class="nav-search-empty-link" href="/docs/">Открыть все разделы</a>'
-                : 'Документация ещё наполняется.';
-            list.innerHTML = '<li class="nav-search-empty" aria-disabled="true">' + msg + '</li>';
+            list.innerHTML = '<li class="nav-search-empty" aria-disabled="true">' +
+                'Ничего не найдено по запросу «' + esc(query) + '». ' +
+                '<a class="nav-search-empty-link" href="/docs/">Открыть все разделы</a></li>';
             open();
-            announce(items && items.length ? 'Ничего не найдено' : 'Документация ещё наполняется');
+            announce('Ничего не найдено');
             return;
         }
         var html = '';
@@ -104,14 +65,28 @@
         announce(matches.length + (matches.length === 1 ? ' результат' : ' результата(ов)'));
     }
 
-    function announce(msg) { if (status) status.textContent = msg; }
-
+    // ── Query ────────────────────────────────────────────────
     function update() {
-        var q = input.value.trim().toLowerCase();
-        if (!q) { close(); list.innerHTML = ''; announce(''); return; }
-        if (loadState !== 'ready') { load(); return; }   // results appear once loaded
-        matches = find(q);
-        render(q);
+        var q = input.value.trim();
+        if (!q) { close(); list.innerHTML = ''; matches = []; announce(''); return; }
+
+        var mine = ++seq;   // tag this request; a newer one supersedes it
+        fetch('/api/search?q=' + encodeURIComponent(q) + '&limit=' + LIMIT)
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(function (results) {
+                if (mine !== seq) return;   // a later keystroke already fired
+                matches = results;
+                active = -1;
+                render(q);   // original case; render() lowercases for highlighting
+            })
+            .catch(function () {
+                if (mine !== seq) return;
+                matches = [];
+                list.innerHTML = '<li class="nav-search-empty" aria-disabled="true">' +
+                    'Не удалось загрузить результаты. Попробуйте ещё раз.</li>';
+                open();
+                announce('Ошибка поиска');
+            });
     }
 
     function highlight(next) {
@@ -137,7 +112,6 @@
         clearTimeout(timer);
         timer = setTimeout(update, 120);
     });
-    input.addEventListener('focus', load);
 
     input.addEventListener('keydown', function (e) {
         if (e.key === 'ArrowDown') { e.preventDefault(); if (list.hidden) update(); else highlight(active + 1); }

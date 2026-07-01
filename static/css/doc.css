@@ -66,7 +66,7 @@ code {
     background: var(--code-bg);
 
     padding: 0.15em 0.4em;
-    border-radius: 6px;
+    border-radius: var(--radius-code);
 
     font-family: var(--font-mono);
 
@@ -80,7 +80,7 @@ pre {
     overflow-x: auto;
 
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: var(--radius-block);
 }
 
 pre code {
@@ -130,7 +130,7 @@ hr {
 
 img {
     max-width: 100%;
-    border-radius: 12px;
+    border-radius: var(--radius-block);
 }
 
 /* ── Layout (sidebar + content) ──────────────────────────── */
@@ -241,6 +241,10 @@ img {
     min-width: 0;
 
     padding: 32px 48px;
+
+    /* A long unbroken token (file path, URL, RenPy identifier) shouldn't force
+       horizontal scroll on narrow screens. pre keeps its own overflow-x. */
+    overflow-wrap: break-word;
 }
 
 /* ── Heading anchors ─────────────────────────────────────── */
@@ -353,7 +357,9 @@ pre code .w { color: var(--code-whitespace); }
     padding: 16px;
     margin: 32px 0;
     display: flex;
-    align-items: center;
+    /* top-align: on a multi-line callout the icon sits with the first line
+       instead of floating in the vertical middle of a long paragraph. */
+    align-items: flex-start;
 }
 
 .info {
@@ -378,6 +384,8 @@ pre code .w { color: var(--code-whitespace); }
     width: 32px;
     height: 32px;
     margin-right: 12px;
+    /* Never let the flex row squeeze the icon on long callouts. */
+    flex-shrink: 0;
 }
 
 .info .icon { color: var(--info); }
@@ -474,7 +482,7 @@ pre code .w { color: var(--code-whitespace); }
     }
 
     pre {
-        border-radius: 6px;
+        border-radius: var(--radius-code);
     }
 }
 

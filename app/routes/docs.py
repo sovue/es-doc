@@ -7,16 +7,15 @@ from . import main_router
 from ..utils.config import CONFIG
 from ..utils.file import templates, read_text
 from ..utils.md import render
-from ..utils.docs import build_tree
 
 router = APIRouter(prefix='/docs')
 
 @router.get('/')
 async def index(request: Request):
-    # The "Документация" nav destination: docs as a nested tree (tree.yaml),
-    # with anything unplaced under "Прочее". Shares the search corpus.
-    data = build_tree()
-    return templates.TemplateResponse(request, 'docs_index.html', data)
+    # The "Документация" nav destination: docs as a nested tree resolved from
+    # tree.yaml. Only pages named in the tree are listed; the cache is kept warm
+    # by the lifespan refresh (see utils/lifespan.py).
+    return templates.TemplateResponse(request, 'docs_index.html', {'tree': CONFIG.docs_tree})
 
 @router.get('/{doc}')
 async def page(doc, request: Request):

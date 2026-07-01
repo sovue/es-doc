@@ -69,10 +69,13 @@
     --selection-text: var(--text);
 
     /* ── Elevation (DESIGN.md §04) — flat by default, warm-tinted lift ── */
-    --radius-sm: 4px;
-    --radius-md: 8px;
+    --radius-xs: 2px;      /* focus rings, badges, skip-link corner */
+    --radius-sm: 4px;      /* compact controls (search box) */
+    --radius-md: 8px;      /* elevated popover (search results) */
     --radius-lg: 16px;
     --radius-full: 999px;
+    --radius-code: 6px;    /* inline code, tightened pre on narrow screens */
+    --radius-block: 12px;  /* code blocks and images */
     --shadow-soft: 0 2px 12px rgba(43, 31, 22, 0.06);
     --shadow-modal: 0 16px 48px rgba(43, 31, 22, 0.14);
 
@@ -89,6 +92,14 @@
     --warning: #A81824;
     --warning-bg: #C8202E2A;
     --warning-bg1: #C8202E14;
+
+    /* Info is the calm counterpart to warning: a deep sky-blue (sibling of the
+       --sky relief) so it reads as "note", never as alarm. --info carries the
+       text/border/icon (deep enough for AA on the tinted panel); --info-bg /
+       --info-bg1 are the faint gradient bands, mirroring the warning washes. */
+    --info: #215D70;
+    --info-bg: #3E93B52A;
+    --info-bg1: #3E93B514;
 }
 
 /* ── Dark (Night at camp — by the lake) ───────────────────── */
@@ -133,5 +144,10 @@
         --warning: #F46974;     /* clears AA on the gradient's strongest band */
         --warning-bg: #E8404E33;
         --warning-bg1: #E8404E1A;
+
+        /* Info lifted for night — light sky-blue clears AA on the dark panel. */
+        --info: #86C0DA;
+        --info-bg: #5FA6C833;
+        --info-bg1: #5FA6C81A;
     }
 }

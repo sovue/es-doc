@@ -27,7 +27,7 @@
             <div class="page-hero-inner">
                 <h1 class="page-title page-title--lg">Документация</h1>
                 <p class="page-lead">
-                    {% if tree or rest %}
+                    {% if tree %}
                     Все материалы по созданию модов для «Бесконечному Лету».
                     Выберите раздел ниже или воспользуйтесь поиском.
                     {% else %}
@@ -45,22 +45,6 @@
                     {% for node in tree %}{{ tree_node(node) }}{% endfor %}
                 </ul>
             </nav>
-            {% endif %}
-
-            {% if rest %}
-            <section class="docs-rest" aria-labelledby="docs-rest-label">
-                <h2 id="docs-rest-label" class="authors-list-label">Прочее · {{ rest|length }}</h2>
-                <ul class="sections-list doc-index" role="list">
-                    {% for d in rest %}
-                    <li>
-                        <a href="/docs/{{ d.slug|urlencode }}" class="section-row">
-                            <span class="section-name">{{ d.title }}</span>
-                            <span class="section-arrow" aria-hidden="true">→</span>
-                        </a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </section>
             {% endif %}
 
         </div>

@@ -16,8 +16,6 @@
             box.dataset.state = 'error';
             var link = document.createElement('a');
             link.href = 'https://github.com/sovue/es-doc/graphs/contributors';
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
             link.textContent = 'открыть список на GitHub';
             status.textContent = 'Не удалось загрузить список. Можно ';
             status.appendChild(link);

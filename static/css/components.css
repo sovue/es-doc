@@ -119,7 +119,7 @@
 .nav-logo:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;
-    border-radius: 2px;
+    border-radius: var(--radius-xs);
     color: var(--accent-hover);
 }
 
@@ -163,7 +163,7 @@
     color: var(--text);
     outline: 2px solid var(--accent);
     outline-offset: -3px;
-    border-radius: 2px;
+    border-radius: var(--radius-xs);
 }
 
 /* ── Header search (combobox + listbox) ──────────────────── */
@@ -229,7 +229,7 @@
     line-height: 1;
     color: var(--text-soft);
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: var(--radius-xs);
     padding: 2px 5px;
 }
 
@@ -273,6 +273,14 @@
 
 .nav-search-ctx {
     color: var(--text-soft);
+}
+
+/* On the highlighted row the muted-accent fill lightens the surface, so the
+   soft context text would fall to ~3.8:1 in light mode. Lift it to full ink
+   (a shade of the same warm family, not gray) to hold WCAG AA in both themes. */
+.nav-search-option[aria-selected="true"] .nav-search-ctx,
+.nav-search-option:hover .nav-search-ctx {
+    color: var(--text);
 }
 
 /* Matched substring leans on weight, keeping pioneer red a once-per-screen spotlight. */
@@ -354,7 +362,7 @@
 .site-footer a:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
-    border-radius: 2px;
+    border-radius: var(--radius-xs);
 }
 
 /* ── Sections directory (list of links/rows) ─────────────── */
@@ -387,7 +395,7 @@ a.section-row:focus-visible .section-name {
 a.section-row:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
-    border-radius: 2px;
+    border-radius: var(--radius-xs);
 }
 
 .section-name {
@@ -411,12 +419,6 @@ a.section-row:focus-visible {
     white-space: nowrap;
 }
 
-/* Docs index has no description column, so the name grows to push the arrow
-   to the right edge (on the home/error lists the flexible desc does that). */
-.doc-index .section-name {
-    flex: 1;
-}
-
 /* ── Docs index tree (nested doc hierarchy) ──────────────── */
 
 .doc-tree,
@@ -433,11 +435,13 @@ a.section-row:focus-visible {
     border-left: 1px solid var(--border);
 }
 
+/* padding lifts the row to a ~47px tap target — the docs tree is the whole
+   /docs/ index, so its rows deserve the same 44px comfort as the primary nav. */
 .doc-tree-row {
     display: flex;
     align-items: baseline;
     gap: 12px;
-    padding: 8px 0;
+    padding: 10px 0;
     text-decoration: none;
     color: var(--text);
 }
@@ -459,7 +463,7 @@ a.section-row:focus-visible {
 .doc-tree-row:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
-    border-radius: 2px;
+    border-radius: var(--radius-xs);
 }
 
 .doc-tree-row .section-arrow {
@@ -469,11 +473,6 @@ a.section-row:focus-visible {
 .doc-tree-row:hover .section-arrow,
 .doc-tree-row:focus-visible .section-arrow {
     opacity: 1;
-}
-
-/* Space the "Прочее" bucket off the tree above it. */
-.docs-rest {
-    margin-top: 40px;
 }
 
 .section-arrow {
@@ -508,7 +507,7 @@ a.section-row:focus-visible .section-arrow {
     text-transform: uppercase;
     color: var(--text-soft);
     border: 1px solid var(--border);
-    border-radius: 2px;
+    border-radius: var(--radius-xs);
     padding: 2px 6px;
     flex-shrink: 0;
 }
@@ -629,7 +628,7 @@ a.section-row:focus-visible .section-arrow {
     color: var(--text);
     outline: 2px solid var(--accent);
     outline-offset: 2px;
-    border-radius: 2px;
+    border-radius: var(--radius-xs);
 }
 
 /* ── GitHub contributors gallery ─────────────────────────── */
@@ -724,7 +723,7 @@ a.section-row:focus-visible .section-arrow {
 .thanks-list a:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
-    border-radius: 2px;
+    border-radius: var(--radius-xs);
 }
 
 .thanks-list ul {
