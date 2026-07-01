@@ -310,8 +310,13 @@ pre code .c,
 pre code .c1,
 pre code .ch,
 pre code .cm,
-pre code .cp,
-pre code .cs { color: var(--code-comment); }
+pre code .cp { color: var(--code-comment); }
+
+pre code .cs {
+    color: var(--code-operator);
+    text-decoration: underline dotted;
+    cursor: help;
+}
 
 pre code .n,
 pre code .na,

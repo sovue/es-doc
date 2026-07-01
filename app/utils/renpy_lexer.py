@@ -1,4 +1,4 @@
-from pygments.lexer import RegexLexer, words
+from pygments.lexer import RegexLexer, words, include
 from pygments.token import *
 
 class RenPyLexer(RegexLexer):
@@ -7,8 +7,30 @@ class RenPyLexer(RegexLexer):
     filenames = ["*.rpy"]
 
     tokens = {
+        "string_common": [
+            (r'\|[^|\n]*\|', Comment.Special),
+        ],
+
+        "double_string": [
+            include("string_common"),
+            (r'"', String.Double, "#pop"),
+            (r'[^"|]+', String.Double),
+            (r'.', String.Double),
+        ],
+
+        "single_string": [
+            include("string_common"),
+            (r"'", String.Single, "#pop"),
+            (r"[^'|]+", String.Single),
+            (r'.', String.Single),
+        ],
+
         "root": [
             (r"#.*$", Comment),
+            include("string_common"),
+
+            (r'"', String.Double, "double_string"),
+            (r"'", String.Single, "single_string"),
 
             (words((
                 "label",
@@ -40,15 +62,13 @@ class RenPyLexer(RegexLexer):
                 "pause",
             ), suffix=r"\b"), Keyword),
 
-            (r'"([^"\\]|\\.)*"', String.Double),
-            (r"'([^'\\]|\\.)*'", String.Single),
-
             (r"\$.*$", Name.Builtin),
             (r"\b[a-zA-Zа-яёА-ЯЁ_][a-zA-Zа-яёА-ЯЁ0-9_]*\b", Name),
 
             (r"[0-9]+\.[0-9]+", Number.Float),
             (r"[0-9]+", Number.Integer),
             (r"\s+", Whitespace),
+            (r"\.\.\.", Comment),
             (r".", Text),
-        ]
+        ],
     }
