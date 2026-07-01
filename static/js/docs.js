@@ -1,3 +1,4 @@
+/* ── Code whitespace handling ── */
 let whitespace = '∙';
 
 document.querySelectorAll('span.w').forEach(el => {
@@ -22,6 +23,15 @@ document.addEventListener('copy', e => {
     const text = sel.toString().replace(new RegExp(whitespace, 'g'), ' ');
 
     e.clipboardData.setData('text/plain', text);
+});
+
+/* ── Adding tooltips for special comments (placeholders in code) ── */
+let placeholder_delimiter_old = '|';
+let placeholder_delimiter_new = '';
+
+document.querySelectorAll("span.cs").forEach(el => {
+    el.textContent = el.textContent.replaceAll(placeholder_delimiter_old, placeholder_delimiter_new);
+    el.title = "Это значение необходимо заменить на своё!";
 });
 
 /* ── Scroll-spy: highlight the TOC entry for the heading you're reading ── */
