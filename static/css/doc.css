@@ -341,29 +341,42 @@ pre code .ow { color: var(--code-operator); }
 
 pre code .w { color: var(--code-whitespace); }
 
-/* ── Warning ─────────────────────────────────────────────── */
+/* ── Warning & Info ──────────────────────────────────────── */
 
+.info,
 .warning {
-    color: var(--warning);
     padding: 16px;
     margin: 32px 0;
-    border-top: 1px solid var(--warning);
-    border-bottom: 1px solid var(--warning);
-    background: linear-gradient(0deg, var(--warning-bg) 5%, var(--warning-bg1) 25%, var(--warning-bg1) 75%, var(--warning-bg) 95%);
     display: flex;
     align-items: center;
 }
 
-.warning strong {
-    color: var(--warning);
+.info {
+    color: var(--info);
+    border-top: 1px solid var(--info);
+    border-bottom: 1px solid var(--info);
+    background: linear-gradient(0deg, var(--info-bg) 5%, var(--info-bg1) 25%, var(--info-bg1) 75%, var(--info-bg) 95%);
 }
 
+.warning {
+    color: var(--warning);
+    border-top: 1px solid var(--warning);
+    border-bottom: 1px solid var(--warning);
+    background: linear-gradient(0deg, var(--warning-bg) 5%, var(--warning-bg1) 25%, var(--warning-bg1) 75%, var(--warning-bg) 95%);
+}
+
+.info strong { color: var(--info); }
+.warning strong { color: var(--warning); }
+
+.info .icon,
 .warning .icon {
     width: 32px;
     height: 32px;
-    color: var(--warning);
     margin-right: 12px;
 }
+
+.info .icon { color: var(--info); }
+.warning .icon { color: var(--warning); }
 
 /* ── Responsive ──────────────────────────────────────────── */
 

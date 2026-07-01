@@ -23,12 +23,16 @@ def highlight_code(code, lang, attrs):
 MD = MarkdownIt('commonmark', {'highlight': highlight_code})
 
 MD.block.ruler.before('fence', 'table', table_block)
+MD.block.ruler.before('fence', 'info', template('info'))
 MD.block.ruler.before('fence', 'warning', template('warning'))
 
 MD.add_render_rule('heading_open', render_heading_open)
 
 MD.add_render_rule('table_open', dummy_rule('<table class="table">') )
 MD.add_render_rule('table_close', dummy_rule('</table>'))
+
+MD.add_render_rule('info_open', dummy_rule(f'<div class="info">{SVG["info"]}<div class="info-content">'))
+MD.add_render_rule('info_close', dummy_rule('</div></div>'))
 
 MD.add_render_rule('warning_open', dummy_rule(f'<div class="warning">{SVG["warning"]}<div class="warning-content">'))
 MD.add_render_rule('warning_close', dummy_rule('</div></div>'))
