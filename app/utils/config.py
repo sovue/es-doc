@@ -6,8 +6,9 @@ from .logging import root_logger
 class _ConfigContainer():
 
     _DEFAULT_CONFIG = {
+        'cache-update-delay': 5,
         'docs': {
-            'path': 'content/docs'
+            'path': 'content/docs',
         },
         'http-errors': {
             'default': 'Во время загрузки страницы произошла ошибка. Попробуйте повторить запрос позже. Если проблема сохраняется — сообщите администрации.',
@@ -39,8 +40,10 @@ class _ConfigContainer():
     }
 
     def __init__(self):
-        self.config = {}
+        self.config: dict = {}
         self.logger = root_logger.getChild('config')
+        self.page_cache = {}
+        self.page_last_edited = 0
 
     def setup(self, path):
 
@@ -55,7 +58,7 @@ class _ConfigContainer():
 
             self.logger.info('Configuration file doesn\'t exist! Creating...')
             self.config = self.__class__._DEFAULT_CONFIG
-            path.write_text(yaml.dump(self.config, Dumper=yaml.SafeDumper, allow_unicode=True, width=float('inf'), indent=4), encoding='utf-8')
+            path.write_text(yaml.dump(self.config, Dumper=yaml.SafeDumper, allow_unicode=True, width=float('inf'), indent=4, sort_keys=False), encoding='utf-8')
             self.logger.info('Configuration file created.')
 
 CONFIG = _ConfigContainer()

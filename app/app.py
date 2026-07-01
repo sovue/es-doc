@@ -7,10 +7,11 @@ from .routes import main_router
 from .utils.config import CONFIG
 from .utils.file import templates
 from .utils.logging import root_logger
+from .utils.lifespan import lifespan
 
 CONFIG.setup('config.yaml')
 
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
 # Compress text responses (HTML/CSS/JS). Skips already-compressed woff2 and
 # small payloads; GZipMiddleware leaves the binary font route untouched.
 app.add_middleware(GZipMiddleware, minimum_size=500)
