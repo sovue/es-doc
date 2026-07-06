@@ -1,7 +1,7 @@
 import yaml
 from pathlib import Path
 
-from .file import ROOT
+from .file import ROOT, resolve
 from .logging import root_logger
 
 class _ConfigContainer():
@@ -51,12 +51,13 @@ class _ConfigContainer():
         self.search_items = []
         self.docs_tree = []
 
-        self.sprites_cached = []
+        # Sprite name -> list of layer image paths (relative to res_path),
+        # parsed from sprites.rpy at startup (see utils/lifespan/sprites_cache.py).
+        # Sprites are composed lazily on first request and cached on disk.
+        self.sprite_layers = {}
 
         self.docs_path: Path = None
         self.res_path: Path = None
-
-        self.current_tasks = {}
 
     def setup(self, path):
 
@@ -74,11 +75,16 @@ class _ConfigContainer():
             path.write_text(yaml.dump(self.config, Dumper=yaml.SafeDumper, allow_unicode=True, width=float('inf'), indent=4, sort_keys=False), encoding='utf-8')
             self.logger.info('Configuration file created.')
 
-        if not self.config.get('assets-path') or not (Path(self.config.get('assets-path'))).exists():
+        # Anchor relative paths to ROOT (not the CWD) so the existence check
+        # and every later read resolve the same way regardless of where the
+        # server was launched from.
+        assets_path = resolve(self.config.get('assets-path') or '')
+
+        if not self.config.get('assets-path') or not assets_path.exists():
             self.logger.error('Assets folder not found, terminating app! Did you forget to change the assets-path in the config?')
             raise FileNotFoundError('Assets folder not found in current configuration')
 
-        self.docs_path = Path(self.config.get('assets-path')) / 'docs'
-        self.res_path = Path(self.config.get('assets-path')) / 'game'
+        self.docs_path = assets_path / 'docs'
+        self.res_path = assets_path / 'game'
 
 CONFIG = _ConfigContainer()
