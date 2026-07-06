@@ -56,6 +56,13 @@ class _ConfigContainer():
         # Sprites are composed lazily on first request and cached on disk.
         self.sprite_layers = {}
 
+        # {'original': {category: items}, 'community': {...}} parsed from the
+        # game's resources.rpy at startup (see utils/lifespan/resources_cache.py).
+        self.resources = {}
+        # Search-corpus rows for resources; docs_cache merges them into
+        # search_items after every docs refresh.
+        self.resource_search_items = []
+
         self.docs_path: Path = None
         self.res_path: Path = None
 

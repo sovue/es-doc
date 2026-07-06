@@ -43,7 +43,9 @@ def cache_docs(silent=False):
 
         CONFIG.page_cache = page_cache
         CONFIG.search_index = index
-        CONFIG.search_items = build_items(index)
+        # Docs first, resources after: the search endpoint breaks score ties on
+        # corpus order, and the dropdown splits the two kinds visually.
+        CONFIG.search_items = build_items(index) + CONFIG.resource_search_items
         CONFIG.docs_tree = build_tree(index)
 
         logger.info('Page file cache updated.')

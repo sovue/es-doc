@@ -116,6 +116,12 @@ def search(query, limit=8):
     scored = []
     for pos, item in enumerate(CONFIG.search_items):
         s = _score(item['label'], q)
+        if s == -1 and item.get('desc'):
+            # Resource descriptions are searchable too, ranked below any
+            # label match (offset past the 0–2 label scores).
+            d = _score(item['desc'], q)
+            if d != -1:
+                s = d + 3
         if s != -1:
             scored.append((s, pos, item))
 

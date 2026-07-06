@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% set page_title = collection_meta.title + ' — ES Doc' %}
+{% set body_class = 'bg-solid' %}
+{% set active = 'resources' %}
+{% set extra_css = ['/static/css/resources.css'] %}
+
+{% block content %}
+<div class="page">
+
+    <main id="main-content">
+
+        <section class="page-hero">
+            <div class="page-hero-inner">
+                <h1 class="page-title page-title--lg">Ресурсы</h1>
+                <p class="page-lead">{{ collection_meta.lead }}</p>
+            </div>
+        </section>
+
+        <nav class="res-tabs" aria-label="Коллекции ресурсов">
+            <a href="/resources/" class="res-tab"{% if collection == 'original' %} aria-current="page"{% endif %}>Ресурсы оригинала</a>
+            <a href="/resources/community" class="res-tab"{% if collection == 'community' %} aria-current="page"{% endif %}>Ресурсы сообщества</a>
+        </nav>
+
+        <div class="page-main">
+
+            {% if total %}
+            <nav aria-label="Разделы коллекции «{{ collection_meta.title }}»">
+                <ul class="sections-list" role="list">
+                    {% for cat in categories %}
+                    <li>
+                        <a href="/resources/{{ collection }}/{{ cat.slug }}" class="section-row">
+                            <span class="section-name">{{ cat.title }}</span>
+                            <span class="section-desc">{{ cat.desc }}</span>
+                            <span class="res-count">{{ cat.count }}</span>
+                            <span class="section-arrow" aria-hidden="true">→</span>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </nav>
+            {% else %}
+            <div class="res-empty">
+                <p class="res-empty-title">Здесь пока пусто.</p>
+                <p>Ресурсы сообщества ещё собираются. Если у вас есть фоны, спрайты или музыка,
+                   которыми вы готовы поделиться с другими мододелами —
+                   <a href="https://github.com/sovue/es-doc/issues">расскажите нам</a>.</p>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </main>
+
+    {% include "partials/footer.html" %}
+
+</div>
+{% endblock %}

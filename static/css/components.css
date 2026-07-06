@@ -109,6 +109,7 @@
     letter-spacing: 0.02em;
     color: var(--accent);
     text-decoration: none;
+    white-space: nowrap;
     transition: color 0.15s var(--ease-out);
 }
 
@@ -294,6 +295,25 @@
     color: var(--text-soft);
 }
 
+/* Divider between doc results and resource results in the dropdown. */
+.nav-search-sep {
+    margin: 6px 4px 2px;
+    padding: 4px 6px 2px;
+    border-top: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+}
+
+.nav-search-sep:first-child {
+    margin-top: 0;
+    padding-top: 4px;
+    border-top: 0;
+}
+
 .nav-search-empty-link {
     color: var(--accent);
     text-decoration: none;
@@ -363,6 +383,50 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
+}
+
+/* ── Back to top ─────────────────────────────────────────── */
+
+/* Genuinely floats above the page, so it earns the soft shadow
+   (the Flat-By-Default rule's second exception after the search popover). */
+.to-top {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    color: var(--text-soft);
+    cursor: pointer;
+    box-shadow: var(--shadow-soft);
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 0.2s var(--ease-out), transform 0.2s var(--ease-out),
+                color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
+}
+
+.to-top--visible {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+}
+
+.to-top:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.to-top:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 
 /* ── Sections directory (list of links/rows) ─────────────── */
@@ -812,8 +876,10 @@ a.section-row:focus-visible .section-arrow {
         padding: 0 16px;
     }
 
+    /* Four items share the bar since «Ресурсы» joined; 8px keeps them all
+       on one line at 375px while the tap height stays 52px. */
     .nav-links a {
-        padding-inline: 10px;
+        padding-inline: 8px;
     }
 
     /* hide GitHub link at narrowest widths to prevent nav overflow */
@@ -847,7 +913,15 @@ a.section-row:focus-visible .section-arrow {
     .gh-contributor,
     .gh-contributors-status a,
     .section-name,
-    .section-arrow {
+    .section-arrow,
+    .to-top {
         transition: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .to-top {
+        right: 16px;
+        bottom: 16px;
     }
 }

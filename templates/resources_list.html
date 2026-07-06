@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% set page_title = category_meta.title + ' — ' + collection_meta.title + ' — ES Doc' %}
+{% set body_class = 'bg-solid' %}
+{% set active = 'resources' %}
+{% set extra_css = ['/static/css/resources.css'] %}
+
+{% macro copy_button(value) %}
+<button type="button" class="res-copy" data-copy="{{ value }}" aria-label="Скопировать: {{ value }}" hidden>
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <rect x="4.5" y="4.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+        <path d="M9.5 3V2.5A1.5 1.5 0 0 0 8 1H2.5A1.5 1.5 0 0 0 1 2.5V8a1.5 1.5 0 0 0 1.5 1.5H3" stroke="currentColor" stroke-width="1.3"/>
+    </svg>
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path d="M2 7.5L5.5 11L12 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+</button>
+{% endmacro %}
+
+{% macro name_line(item) %}
+        <span class="res-name-line"><code class="res-name">{{ item.code }}</code>
+        {%- if not item.declared %} <span class="res-flag">не объявлен</span>{% endif %}</span>
+{% endmacro %}
+
+{% macro image_row(item, sprite=false) %}
+<li class="res-row{% if sprite %} res-row--sprite{% endif %}" id="{{ item.rid }}" data-name="{{ item.name }}"
+    {%- if not item.declared %} data-undeclared hidden{% endif %}{% if item.nsfw %} data-nsfw{% endif %}
+    {%- if item.loc is not none or item.time is not none %} data-loc="{{ item.loc or '' }}" data-time="{{ item.time or '' }}"{% endif %}>
+    {% if item.thumb %}
+    <a class="res-thumb{% if sprite %} res-thumb--sprite{% endif %}" href="{{ item.raw }}"
+       data-zoom="{{ item.code }}" aria-label="Открыть «{{ item.code }}» в полном размере">
+        <img src="{{ item.thumb }}" loading="lazy" decoding="async" alt="">
+    </a>
+    {% else %}
+    <span class="res-thumb{% if sprite %} res-thumb--sprite{% endif %} res-thumb--none">нет превью</span>
+    {% endif %}
+    <div class="res-meta">
+        {{ name_line(item) }}
+        {% if item.desc %}<span class="res-desc">{{ item.desc }}</span>{% endif %}
+        {% if item.file %}<span class="res-file">{{ item.file }}</span>{% endif %}
+    </div>
+    {{ copy_button(item.code) }}
+</li>
+{% endmacro %}
+
+{% macro audio_row(item) %}
+<li class="res-row" id="{{ item.rid }}" data-name="{{ item.name }}"{% if not item.declared %} data-undeclared hidden{% endif %}>
+    <button type="button" class="res-play" data-src="{{ item.raw }}" data-name="{{ item.name }}"
+            aria-label="Прослушать {{ item.name }}" aria-pressed="false" hidden>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
+            <path d="M3.5 2.2a.6.6 0 0 1 .9-.52l7.2 4.3a.6.6 0 0 1 0 1.04l-7.2 4.3a.6.6 0 0 1-.9-.52z"/>
+        </svg>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
+            <rect x="2.8" y="2" width="3.2" height="10" rx="0.8"/>
+            <rect x="8" y="2" width="3.2" height="10" rx="0.8"/>
+        </svg>
+    </button>
+    <div class="res-meta">
+        {{ name_line(item) }}
+        {% if item.desc %}<span class="res-desc">{{ item.desc }}</span>{% endif %}
+        {% if item.raw %}
+        <a class="res-file" href="{{ item.raw }}">{{ item.file }}</a>
+        {% elif item.file %}
+        <span class="res-file">{{ item.file }}</span>
+        {% endif %}
+    </div>
+    {{ copy_button(item.code) }}
+</li>
+{% endmacro %}
+
+{% block content %}
+<div class="page">
+
+    <main id="main-content">
+
+        <section class="page-hero">
+            <div class="page-hero-inner">
+                <h1 class="page-title">{{ category_meta.title }}</h1>
+                <p class="page-lead">
+                    {{ category_meta.desc }}.
+                    Пример использования: <code class="res-usage">{{ category_meta.usage }}</code>
+                </p>
+            </div>
+        </section>
+
+        <nav class="res-tabs" aria-label="Коллекции ресурсов">
+            <a href="{% if collection == 'original' %}/resources/original/{{ category }}{% else %}{{ other_href }}{% endif %}"
+               class="res-tab"{% if collection == 'original' %} aria-current="page"{% endif %}>Ресурсы оригинала</a>
+            <a href="{% if collection == 'community' %}/resources/community/{{ category }}{% else %}{{ other_href }}{% endif %}"
+               class="res-tab"{% if collection == 'community' %} aria-current="page"{% endif %}>Ресурсы сообщества</a>
+        </nav>
+
+        <nav class="res-cats" aria-label="Разделы коллекции «{{ collection_meta.title }}»">
+            <ul role="list">
+                {% for cat in categories %}
+                <li>
+                    <a href="/resources/{{ collection }}/{{ cat.slug }}"{% if cat.slug == category %} aria-current="page"{% endif %}>
+                        {{ cat.title }}<span class="res-cat-count">{{ cat.count }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </nav>
+
+        <div class="page-main page-main--res">
+
+            {% if count_all %}
+
+            <div class="res-filter" hidden>
+                <div class="res-filter-controls">
+                    <input type="search" id="res-filter-input" placeholder="Фильтр по имени…"
+                           autocomplete="off" spellcheck="false" aria-label="Фильтр по имени">
+
+                    {% if category == 'bg' %}
+                    <select id="res-loc-select" aria-label="Локация">
+                        <option value="">Все локации</option>
+                        {% for loc in bg_locations %}<option value="{{ loc }}">{{ loc }}</option>{% endfor %}
+                    </select>
+                    <select id="res-time-select" aria-label="Время суток">
+                        <option value="">Любое время</option>
+                        {% for key, label in bg_times %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+                    </select>
+                    {% endif %}
+
+                    {% if category_meta.media != 'sprites' %}
+                    <select id="res-sort-select" aria-label="Сортировка">
+                        <option value="az">А-Я</option>
+                        <option value="za">Я-А</option>
+                        {% if has_undeclared %}
+                        <option value="decl">Сначала объявленные</option>
+                        <option value="undecl">Сначала необъявленные</option>
+                        {% endif %}
+                    </select>
+                    {% endif %}
+
+                    {% if has_undeclared %}
+                    <label class="res-toggle">
+                        <input type="checkbox" id="res-undeclared-toggle">
+                        Необъявленные файлы
+                    </label>
+                    {% endif %}
+
+                    {% if category == 'cg' %}
+                    <label class="res-toggle">
+                        <input type="checkbox" id="res-nsfw-toggle">
+                        Показывать NSFW
+                    </label>
+                    {% endif %}
+
+                    {% if category_meta.media == 'audio' %}
+                    <label class="res-volume" for="res-volume-input">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M2.5 6v4h2.6L8.7 13V3L5.1 6z" fill="currentColor"/>
+                            <path d="M10.8 5.5a3.4 3.4 0 0 1 0 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                            <path d="M12.6 3.7a6 6 0 0 1 0 8.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                        </svg>
+                        <input type="range" id="res-volume-input" min="0" max="1" step="0.05" value="1"
+                               aria-label="Громкость прослушивания">
+                    </label>
+                    {% endif %}
+                </div>
+                <p class="res-filter-count" aria-live="polite" data-total="{{ count }}" data-all="{{ count_all }}"></p>
+            </div>
+
+            {% if category_meta.media == 'sprites' %}
+
+            <nav class="res-jump" aria-label="Персонажи">
+                <ul role="list">
+                    {% for group in items %}
+                    <li><a href="#{{ group.code }}"{% if group.color %} style="--char: {{ group.color }}"{% endif %}>{{ group.title }} <code>{{ group.code }}</code></a></li>
+                    {% endfor %}
+                </ul>
+            </nav>
+
+            {% for group in items %}
+            <section class="res-group" aria-labelledby="{{ group.code }}">
+                <h2 class="res-group-title" id="{{ group.code }}">
+                    {{ group.title }}
+                    <code class="res-group-code"{% if group.color %} style="--char: {{ group.color }}"{% endif %}>{{ group.code }}</code>
+                    <span class="res-count">{{ group.sprites|length }}</span>
+                </h2>
+                <ul class="res-list" role="list">
+                    {% for item in group.sprites %}{{ image_row(item, sprite=true) }}{% endfor %}
+                </ul>
+            </section>
+            {% endfor %}
+
+            {% elif category_meta.media == 'audio' %}
+            <ul class="res-list" role="list">
+                {% for item in items %}{{ audio_row(item) }}{% endfor %}
+            </ul>
+            {% else %}
+            <ul class="res-list" role="list">
+                {% for item in items %}{{ image_row(item) }}{% endfor %}
+            </ul>
+            {% endif %}
+
+            <p class="res-filter-empty" hidden>По этому запросу ничего не нашлось.</p>
+
+            {% else %}
+            <div class="res-empty">
+                <p class="res-empty-title">Здесь пока пусто.</p>
+                <p>В коллекции «{{ collection_meta.title }}» ещё нет раздела «{{ category_meta.title|lower }}».
+                   Если вам есть чем поделиться —
+                   <a href="https://github.com/sovue/es-doc/issues">расскажите нам</a>.</p>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </main>
+
+    {% include "partials/footer.html" %}
+
+</div>
+
+<dialog class="res-lightbox" aria-label="Просмотр изображения">
+    <img alt="">
+    <div class="res-lightbox-bar">
+        <code class="res-lightbox-name"></code>
+        <!-- Deliberate target=_blank (owner request): keeps the lightbox and
+             list position intact while the original opens beside them. -->
+        <a class="res-lightbox-raw" href="" target="_blank" rel="noopener">Открыть файл</a>
+        <button type="button" class="res-lightbox-close" aria-label="Закрыть">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <path d="M2.5 2.5l9 9M11.5 2.5l-9 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+        </button>
+    </div>
+</dialog>
+
+<p class="sr-only" role="status" aria-live="polite" id="res-copy-status"></p>
+{% endblock %}

@@ -54,11 +54,22 @@
         var html = '';
         for (var i = 0; i < matches.length; i++) {
             var m = matches[i];
+            // Resources are grouped after docs (see update()); a quiet divider
+            // marks where the doc results end.
+            if (m.kind === 'res' && (i === 0 || matches[i - 1].kind !== 'res')) {
+                html += '<li class="nav-search-sep" role="presentation" aria-hidden="true">Ресурсы</li>';
+            }
             var ctx = m.context
                 ? '<span class="nav-search-ctx">' + esc(m.context) + ' › </span>'
                 : '';
+            // When the hit came from a resource's description, show that
+            // description after the name so the match is visible.
+            var desc = (m.desc && m.label.toLowerCase().indexOf(q) === -1 &&
+                        m.desc.toLowerCase().indexOf(q) !== -1)
+                ? '<span class="nav-search-ctx"> — ' + mark(m.desc, q) + '</span>'
+                : '';
             html += '<li class="nav-search-option" role="option" id="ss-opt-' + i + '"' +
-                ' aria-selected="false">' + ctx + mark(m.label, q) + '</li>';
+                ' aria-selected="false">' + ctx + mark(m.label, q) + desc + '</li>';
         }
         list.innerHTML = html;
         open();
@@ -75,7 +86,10 @@
             .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
             .then(function (results) {
                 if (mine !== seq) return;   // a later keystroke already fired
-                matches = results;
+                // Keep each kind's own ranking but show docs as one block and
+                // resources as another, so the divider always sits between them.
+                matches = results.filter(function (m) { return m.kind !== 'res'; })
+                    .concat(results.filter(function (m) { return m.kind === 'res'; }));
                 active = -1;
                 render(q);   // original case; render() lowercases for highlighting
             })
@@ -102,8 +116,8 @@
 
     function go(m) {
         if (!m) return;
-        window.location.href = '/docs/' + encodeURIComponent(m.doc) +
-            (m.anchor ? '#' + m.anchor : '');
+        window.location.href = m.url ||
+            '/docs/' + encodeURIComponent(m.doc) + (m.anchor ? '#' + m.anchor : '');
     }
 
     // ── Events ───────────────────────────────────────────────

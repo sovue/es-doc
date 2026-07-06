@@ -1,0 +1,813 @@
+/* =====================================================================
+   Resources browser (/resources/*) — collection tabs, category switcher,
+   and the listing rows for images, sprites, and audio.
+   Linked via extra_css from resources_index.html / resources_list.html.
+   ===================================================================== */
+
+/* ── Collection tabs ─────────────────────────────────────── */
+
+.res-tabs {
+    display: flex;
+    padding: 0 48px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Same active-page vocabulary as the header nav: inset accent underline,
+   no layout shift. */
+.res-tab {
+    padding: 12px 2px;
+    margin-right: 28px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-soft);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.15s var(--ease-out);
+}
+
+.res-tab:hover {
+    color: var(--text);
+}
+
+.res-tab[aria-current="page"] {
+    color: var(--text);
+    box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.res-tab:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -3px;
+    border-radius: var(--radius-xs);
+}
+
+/* ── Category switcher ───────────────────────────────────── */
+
+.res-cats {
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+}
+
+.res-cats ul {
+    display: flex;
+    gap: 22px;
+    margin: 0;
+    padding: 0 48px;
+    list-style: none;
+}
+
+.res-cats a {
+    display: inline-block;
+    padding: 10px 1px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.15s var(--ease-out);
+}
+
+.res-cats a:hover {
+    color: var(--text);
+}
+
+.res-cats a[aria-current="page"] {
+    color: var(--text);
+    box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.res-cats a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -3px;
+    border-radius: var(--radius-xs);
+}
+
+.res-cat-count {
+    margin-left: 6px;
+    font-weight: 400;
+    letter-spacing: 0;
+}
+
+/* ── Listing shell ───────────────────────────────────────── */
+
+/* Rows carry a thumbnail + name + actions, so they earn a wider column
+   than prose pages. */
+.page-main--res {
+    max-width: 920px;
+}
+
+.res-usage {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: var(--code-bg);
+    color: var(--code-inline);
+    padding: 2px 7px;
+    border-radius: var(--radius-code);
+    white-space: nowrap;
+}
+
+.res-count {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--text-soft);
+    flex-shrink: 0;
+}
+
+/* ── Filter ──────────────────────────────────────────────── */
+
+.res-filter {
+    margin-bottom: 20px;
+}
+
+.res-filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.res-filter input[type="search"],
+.res-filter select {
+    height: 34px;
+    padding: 0 10px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.875rem;
+    transition: border-color 0.15s var(--ease-out);
+}
+
+.res-filter input[type="search"] {
+    flex: 1 1 200px;
+    max-width: 360px;
+    min-width: 0;
+}
+
+.res-filter select:hover {
+    border-color: var(--text-soft);
+}
+
+.res-filter input[type="search"]:focus,
+.res-filter select:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.res-filter input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* ── Toggles (undeclared files, NSFW) ────────────────────── */
+
+.res-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.875rem;
+    color: var(--text-soft);
+    cursor: pointer;
+    user-select: none;
+}
+
+.res-toggle input {
+    accent-color: var(--accent);
+    width: 15px;
+    height: 15px;
+    margin: 0;
+}
+
+.res-toggle input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* ── Global volume (shared audio player) ─────────────────── */
+
+.res-volume {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-soft);
+}
+
+.res-volume input {
+    width: 110px;
+    accent-color: var(--accent);
+}
+
+.res-volume input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: var(--radius-xs);
+}
+
+/* ── Floating now-playing bar ────────────────────────────── */
+
+/* Follows the listener down the page, so the single volume control is at
+   hand exactly while something plays. Floats above the page plane, hence
+   the soft shadow. */
+.res-nowplaying {
+    position: fixed;
+    left: 24px;
+    bottom: 24px;
+    z-index: 9;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: min(420px, calc(100vw - 120px));
+    padding: 8px 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-soft);
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 0.2s var(--ease-out), transform 0.2s var(--ease-out);
+}
+
+.res-nowplaying--visible {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+}
+
+.res-nowplaying-stop {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    padding: 0;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    color: var(--text-soft);
+    cursor: pointer;
+    transition: color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
+}
+
+.res-nowplaying-stop:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.res-nowplaying-stop:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.res-nowplaying-name {
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.res-nowplaying .res-volume input {
+    width: 90px;
+}
+
+.res-filter-count {
+    margin: 6px 0 0;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-soft);
+}
+
+.res-filter-empty {
+    padding: 24px 0;
+    color: var(--text-soft);
+}
+
+/* ── Rows ────────────────────────────────────────────────── */
+
+.res-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+}
+
+.res-row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    /* Search-result anchors (#r-…) land below the sticky header. */
+    scroll-margin-top: 64px;
+}
+
+/* display:flex would win over the hidden attribute the filter sets */
+.res-row[hidden] {
+    display: none;
+}
+
+/* The row a search result deep-linked to. */
+.res-row:target {
+    background: var(--target-bg);
+}
+
+.res-thumb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 192px;
+    height: 108px;
+    flex-shrink: 0;
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    text-decoration: none;
+}
+
+.res-thumb img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+}
+
+a.res-thumb {
+    transition: border-color 0.15s var(--ease-out);
+}
+
+a.res-thumb:hover {
+    border-color: var(--accent);
+}
+
+a.res-thumb:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.res-thumb--sprite {
+    width: 96px;
+    height: 144px;
+}
+
+.res-thumb--none {
+    border-style: dashed;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-soft);
+}
+
+.res-meta {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    /* minmax(0, …) lets long one-word names shrink and wrap instead of
+       blowing the track out under the copy button. */
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 2px;
+}
+
+.res-name-line {
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+
+.res-name {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+    overflow-wrap: break-word;
+}
+
+.res-desc {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--text-soft);
+}
+
+/* «не объявлен» chip next to the name */
+.res-flag {
+    display: inline-block;
+    vertical-align: 1px;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    color: var(--text-soft);
+    white-space: nowrap;
+}
+
+/* ── NSFW previews (Арты) ────────────────────────────────── */
+
+/* Blurred until the page switch or a per-row click reveals them. scale
+   hides the sharp edge the blur would leave at the crop border. */
+body:not(.nsfw-ok) .res-row[data-nsfw]:not(.res-revealed) .res-thumb img {
+    filter: blur(18px);
+    transform: scale(1.15);
+}
+
+body:not(.nsfw-ok) .res-row[data-nsfw]:not(.res-revealed) a.res-thumb::after {
+    content: '18+';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text);
+}
+
+.res-row[data-nsfw] .res-thumb {
+    position: relative;
+}
+
+.res-file {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+a.res-file {
+    text-decoration: none;
+    justify-self: start;
+    max-width: 100%;
+    transition: color 0.15s var(--ease-out);
+}
+
+a.res-file:hover {
+    color: var(--accent);
+    text-decoration: underline;
+}
+
+a.res-file:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+}
+
+/* ── Row actions (copy / play) ───────────────────────────── */
+
+.res-copy,
+.res-play {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    padding: 0;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-soft);
+    cursor: pointer;
+    transition: color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
+}
+
+.res-copy:hover,
+.res-play:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.res-copy:focus-visible,
+.res-play:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Each button holds two icons; the second (check / pause) shows on state. */
+.res-copy svg + svg,
+.res-play svg + svg {
+    display: none;
+}
+
+.res-copy.copied {
+    color: var(--pine);
+    border-color: var(--pine);
+}
+
+.res-copy.copied svg:first-child,
+.res-play[aria-pressed="true"] svg:first-child {
+    display: none;
+}
+
+.res-copy.copied svg + svg,
+.res-play[aria-pressed="true"] svg + svg {
+    display: block;
+}
+
+.res-play {
+    border-radius: var(--radius-full);
+}
+
+.res-play[aria-pressed="true"] {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* ── Sprite groups ───────────────────────────────────────── */
+
+.res-jump {
+    margin-bottom: 8px;
+}
+
+.res-jump ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.res-jump a {
+    display: inline-block;
+    padding-block: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-soft);
+    text-decoration: none;
+    transition: color 0.15s var(--ease-out);
+}
+
+/* Idle state carries the character's in-game name color. The raw game values
+   are tuned for the dark dialogue box, so mix them toward ink for AA on paper;
+   at night they can run closer to full strength. */
+.res-jump a[style],
+.res-group-code[style] {
+    color: color-mix(in oklab, var(--char) 55%, var(--text));
+}
+
+@media (prefers-color-scheme: dark) {
+    .res-jump a[style],
+    .res-group-code[style] {
+        color: color-mix(in oklab, var(--char) 80%, var(--text));
+    }
+}
+
+.res-jump a:hover {
+    color: var(--accent);
+}
+
+.res-jump a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+}
+
+.res-jump code {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+}
+
+/* Jump-nav anchors land on the h2 (it carries the id) — keep it clear of
+   the sticky header. */
+.res-group-title {
+    scroll-margin-top: 64px;
+}
+
+.res-group[hidden] {
+    display: none;
+}
+
+.res-group-title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 40px 0 10px;
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text);
+}
+
+.res-jump + .res-group .res-group-title {
+    margin-top: 20px;
+}
+
+.res-group-code {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--text-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    padding: 1px 6px;
+}
+
+/* ── Lightbox ────────────────────────────────────────────── */
+
+.res-lightbox {
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow-modal);
+    max-width: min(92vw, 1200px);
+    max-height: 92vh;
+}
+
+.res-lightbox::backdrop {
+    background: rgb(20 15 10 / 0.55);
+}
+
+.res-lightbox img {
+    display: block;
+    max-width: 100%;
+    max-height: calc(92vh - 58px);
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+}
+
+.res-lightbox-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+}
+
+.res-lightbox-name {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.res-lightbox-raw {
+    flex-shrink: 0;
+    font-size: 0.875rem;
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.res-lightbox-raw:hover {
+    text-decoration: underline;
+}
+
+.res-lightbox-raw:focus-visible,
+.res-lightbox-close:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+}
+
+.res-lightbox-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    padding: 0;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-soft);
+    cursor: pointer;
+    transition: color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
+}
+
+.res-lightbox-close:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* The smooth zoom: scale + fade in on open (ease-out-quint). */
+@media (prefers-reduced-motion: no-preference) {
+    .res-lightbox[open] {
+        animation: res-zoom 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .res-lightbox[open]::backdrop {
+        animation: res-fade 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+}
+
+@keyframes res-zoom {
+    from {
+        opacity: 0;
+        transform: scale(0.88);
+    }
+}
+
+@keyframes res-fade {
+    from {
+        opacity: 0;
+    }
+}
+
+/* ── Empty state ─────────────────────────────────────────── */
+
+.res-empty {
+    max-width: 55ch;
+    color: var(--text-soft);
+}
+
+.res-empty-title {
+    margin: 0 0 8px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.res-empty p {
+    margin: 0;
+    line-height: 1.7;
+}
+
+.res-empty a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.res-empty a:hover {
+    text-decoration: underline;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+    .res-tabs {
+        padding: 0 20px;
+    }
+
+    .res-tab {
+        margin-right: 20px;
+    }
+
+    .res-cats ul {
+        padding: 0 20px;
+    }
+
+    .res-row {
+        gap: 12px;
+    }
+
+    .res-thumb {
+        width: 144px;
+        height: 81px;
+    }
+
+    .res-thumb--sprite {
+        width: 76px;
+        height: 114px;
+    }
+
+    .res-file {
+        display: none;
+    }
+}
+
+/* ── Reduced motion ──────────────────────────────────────── */
+
+@media (max-width: 640px) {
+    .res-nowplaying {
+        left: 16px;
+        bottom: 16px;
+        max-width: calc(100vw - 90px);
+        padding: 6px 12px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .res-tab,
+    .res-cats a,
+    a.res-thumb,
+    a.res-file,
+    .res-copy,
+    .res-play,
+    .res-jump a,
+    .res-nowplaying,
+    .res-nowplaying-stop {
+        transition: none;
+    }
+}
