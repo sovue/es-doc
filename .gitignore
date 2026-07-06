@@ -19,5 +19,8 @@ __pypackages__/
 # Logs
 logs/
 
+# Temp folder
+temp/
+
 # Config file
 config.yaml
