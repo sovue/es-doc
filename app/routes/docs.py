@@ -1,6 +1,5 @@
-from fastapi import APIRouter, Request, Query
+from fastapi import APIRouter, Request
 from fastapi.responses import PlainTextResponse
-from pathlib import Path
 import re
 
 from . import main_router
@@ -22,7 +21,7 @@ async def page(doc, request: Request):
 
     # read_text raises HTTPException(404) for a missing doc, which the app's
     # handler renders as the styled error page.
-    text = read_text(Path(CONFIG.config['docs']['path']) / f'{doc}.md')
+    text = read_text(CONFIG.docs_path / f'{doc}.md')
 
     if any(i in request.query_params for i in ['md', 'markdown']):
         return PlainTextResponse(text)
