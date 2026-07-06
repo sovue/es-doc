@@ -2,12 +2,12 @@ import re
 import yaml
 
 from .config import CONFIG
-from .file import ROOT
+from .file import resolve
 from .md import outline
 
 
 def _docs_dir():
-    return ROOT / CONFIG.config['docs']['path']
+    return resolve(CONFIG.docs_path)
 
 
 def build_index():
