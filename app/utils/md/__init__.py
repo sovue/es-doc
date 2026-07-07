@@ -1,4 +1,5 @@
 from markdown_it import MarkdownIt
+from markdown_it.common.utils import escapeHtml, unescapeAll
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters import HtmlFormatter
@@ -20,7 +21,43 @@ def highlight_code(code, lang, attrs):
 
     return highlight(code, lexer, HtmlFormatter(nowrap=True))
 
+# Copy button markup, ships [hidden] and revealed by docs.js — mirrors the
+# progressive-enhancement pattern the resource listings use for their own
+# copy buttons (res_macros.html).
+CODE_COPY_BUTTON = (
+    '<button type="button" class="code-copy" aria-label="Скопировать код" hidden>'
+    '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">'
+    '<rect x="4.5" y="4.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/>'
+    '<path d="M9.5 3V2.5A1.5 1.5 0 0 0 8 1H2.5A1.5 1.5 0 0 0 1 2.5V8a1.5 1.5 0 0 0 1.5 1.5H3" stroke="currentColor" stroke-width="1.3"/>'
+    '</svg>'
+    '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">'
+    '<path d="M2 7.5L5.5 11L12 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'
+    '</svg>'
+    '</button>'
+)
+
+def render_fence(self, tokens, idx, options, env):
+    # Same shape as markdown-it-py's default fence renderer, wrapped in a
+    # positioned container so a copy button can sit in the corner regardless
+    # of the pre's own horizontal scroll.
+    token = tokens[idx]
+    info = unescapeAll(token.info).strip() if token.info else ''
+    lang_name = info.split(maxsplit=1)[0] if info else ''
+
+    highlighted = options.highlight(token.content, lang_name, '') if options.highlight else ''
+    highlighted = highlighted or escapeHtml(token.content)
+
+    lang_class = f' class="{options.langPrefix}{lang_name}"' if lang_name else ''
+
+    return (
+        '<div class="code-block">'
+        f'{CODE_COPY_BUTTON}'
+        f'<pre><code{lang_class}>{highlighted}</code></pre>'
+        '</div>\n'
+    )
+
 MD = MarkdownIt('commonmark', {'highlight': highlight_code})
+MD.add_render_rule('fence', render_fence)
 
 MD.block.ruler.before('fence', 'table', table_block)
 MD.block.ruler.before('fence', 'info', template('info'))

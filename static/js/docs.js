@@ -25,6 +25,30 @@ document.addEventListener('copy', e => {
     e.clipboardData.setData('text/plain', text);
 });
 
+/* ── Copy-code buttons ── */
+if (navigator.clipboard) {
+    const status = document.getElementById('code-copy-status');
+
+    document.querySelectorAll('.code-copy').forEach(btn => {
+        btn.hidden = false;
+        let timer = null;
+
+        btn.addEventListener('click', () => {
+            const code = btn.closest('.code-block')?.querySelector('code');
+            if (!code) return;
+
+            const text = code.textContent.replace(new RegExp(whitespace, 'g'), ' ');
+
+            navigator.clipboard.writeText(text).then(() => {
+                btn.classList.add('copied');
+                if (status) status.textContent = 'Код скопирован.';
+                clearTimeout(timer);
+                timer = setTimeout(() => btn.classList.remove('copied'), 1600);
+            });
+        });
+    });
+}
+
 /* ── Adding tooltips for special comments (placeholders in code) ── */
 let placeholder_delimiter_old = '|';
 let placeholder_delimiter_new = '';

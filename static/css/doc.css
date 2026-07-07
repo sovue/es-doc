@@ -88,6 +88,62 @@ pre code {
     padding: 0;
 }
 
+/* The copy button sits pinned to the block's corner, independent of the
+   pre's own horizontal scroll. Colors are code-panel-tuned (--code-comment
+   at rest, --code-inline on hover/copied), not the paper accent — the
+   panel stays warm-dark in both themes, so paper-tuned colors would fight
+   it (DESIGN.md's Warm-Dark Panel Rule). */
+.code-block {
+    position: relative;
+}
+
+.code-copy {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--code-comment);
+    cursor: pointer;
+    transition: color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
+}
+
+.code-copy:hover,
+.code-copy:focus-visible {
+    color: var(--code-inline);
+    border-color: var(--code-inline);
+}
+
+.code-copy:focus-visible {
+    outline: 2px solid var(--code-inline);
+    outline-offset: 2px;
+}
+
+/* Each button holds two icons; the second (check) shows once copied. */
+.code-copy svg + svg {
+    display: none;
+}
+
+.code-copy.copied {
+    color: var(--pine);
+    border-color: var(--pine);
+}
+
+.code-copy.copied svg:first-child {
+    display: none;
+}
+
+.code-copy.copied svg + svg {
+    display: block;
+}
+
 blockquote {
     margin: 1.5em 0;
     padding: 0.8em 1.2em;
@@ -515,7 +571,8 @@ pre code .w { color: var(--code-whitespace); }
 
 @media (prefers-reduced-motion: reduce) {
     a,
-    .anchor {
+    .anchor,
+    .code-copy {
         transition: none;
     }
 
