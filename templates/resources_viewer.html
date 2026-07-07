@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% import "partials/res_macros.html" as res %}
+
+{% set page_title = name + ' — Браузер ресурсов — ES Doc' %}
+{% set body_class = 'bg-solid' %}
+{% set active = 'resources' %}
+{% set extra_css = ['/static/css/resources.css'] %}
+
+{% block content %}
+<div class="page">
+
+    <main id="main-content">
+
+        <section class="page-hero">
+            <div class="page-hero-inner">
+                <h1 class="page-title fb-view-title">{{ name }}</h1>
+                <p class="page-lead">{{ sub }}</p>
+            </div>
+        </section>
+
+        {{ res.tabs('browser') }}
+
+        <div class="page-main page-main--res">
+
+            <nav class="fb-crumbs" aria-label="Путь к файлу">
+                {% for label, href in crumbs %}
+                    {%- if not loop.last -%}
+                        <a href="{{ href }}">{{ label }}</a><span class="fb-crumbs-sep" aria-hidden="true">›</span>
+                    {%- else -%}
+                        <span aria-current="page">{{ label }}</span>
+                    {%- endif -%}
+                {% endfor %}
+            </nav>
+
+            <div class="fb-actions">
+                {#- On a script page the useful clipboard payload is the code
+                    itself; for everything else it stays the game-code path. -#}
+                {% if view.mode == 'code' %}
+                {{ res.copy_button(none, 'скопировать код', source='.fb-code code') }}
+                {% else %}
+                {{ res.copy_button(code, 'скопировать путь') }}
+                {% endif %}
+                <a class="fb-action" href="{{ raw }}">Открыть файл</a>
+                <a class="fb-action" href="{{ raw }}" download="{{ name }}">Скачать</a>
+            </div>
+
+            {% if view.mode == 'code' %}
+            <pre class="fb-code"><code>{{ view.code|safe }}</code></pre>
+
+            {% elif view.mode == 'image' %}
+            <img class="fb-media" src="{{ raw }}" alt="{{ name }}" decoding="async">
+
+            {% elif view.mode == 'audio' %}
+            <audio class="fb-media fb-media--audio" src="{{ raw }}" controls preload="metadata"></audio>
+
+            {% elif view.mode == 'video' %}
+            <video class="fb-media" src="{{ raw }}" controls preload="metadata"></video>
+
+            {% elif view.mode == 'font' %}
+            <style>@font-face { font-family: 'fb-specimen'; src: url('{{ raw }}'); }</style>
+            <div class="fb-specimen">
+                <p class="fb-specimen-lg">Съешь ещё этих мягких французских булок, да выпей чаю.</p>
+                <p>The quick brown fox jumps over the lazy dog.</p>
+                <p>АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ абвгдеёжзийклмнопрстуфхцчшщъыьэюя</p>
+                <p>ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789 .,:;!?«»—()[]</p>
+            </div>
+
+            {% elif view.mode == 'toobig' %}
+            <div class="res-empty">
+                <p class="res-empty-title">Файл слишком большой для просмотра на сайте.</p>
+                <p>Откройте его по ссылке «Открыть файл» или скачайте — так браузеру
+                   не придётся строить страницу на сотни тысяч строк.</p>
+            </div>
+
+            {% else %}
+            <div class="res-empty">
+                <p class="res-empty-title">Предпросмотр недоступен.</p>
+                <p>Для этого типа файла нет просмотра на сайте — его можно открыть напрямую или скачать.</p>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </main>
+
+    {% include "partials/footer.html" %}
+
+</div>
+
+<p class="sr-only" role="status" aria-live="polite" id="res-copy-status"></p>
+{% endblock %}

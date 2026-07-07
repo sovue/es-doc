@@ -15,9 +15,19 @@
         let timer = null;
 
         btn.addEventListener('click', () => {
-            navigator.clipboard.writeText(btn.dataset.copy).then(() => {
+            // data-copy-from points at an element whose text is the payload
+            // (the file viewer copies the whole script this way).
+            const value = btn.dataset.copyFrom
+                ? (document.querySelector(btn.dataset.copyFrom)?.textContent ?? '')
+                : btn.dataset.copy;
+
+            navigator.clipboard.writeText(value).then(() => {
                 btn.classList.add('copied');
-                if (status) status.textContent = 'Скопировано: ' + btn.dataset.copy;
+                if (status) {
+                    status.textContent = btn.dataset.copyFrom
+                        ? 'Код файла скопирован.'
+                        : 'Скопировано: ' + value;
+                }
                 clearTimeout(timer);
                 timer = setTimeout(() => btn.classList.remove('copied'), 1600);
             });
@@ -199,11 +209,16 @@
     });
 
     // Sorting re-appends rows in the new order inside their own list.
+    // Folders (file-browser rows with [data-dir]) always group before files,
+    // like every file manager; on listing pages the term is a constant 0.
+    const dirsFirst = el => el.hasAttribute('data-dir') ? 0 : 1;
     const keys = {
-        az: el => [0, el.dataset.name],
-        za: el => [0, el.dataset.name],
+        az: el => [dirsFirst(el), el.dataset.name],
+        za: el => [dirsFirst(el), el.dataset.name],
         decl: el => [el.hasAttribute('data-undeclared') ? 1 : 0, el.dataset.name],
         undecl: el => [el.hasAttribute('data-undeclared') ? 0 : 1, el.dataset.name],
+        big: el => [dirsFirst(el), -(+el.dataset.size || 0)],
+        small: el => [dirsFirst(el), +el.dataset.size || 0],
     };
 
     sortSelect?.addEventListener('change', () => {
@@ -213,8 +228,12 @@
         document.querySelectorAll('.res-list').forEach(list => {
             [...list.children]
                 .sort((a, b) => {
-                    const [ga, na] = key(a), [gb, nb] = key(b);
-                    return (ga - gb) || dir * na.localeCompare(nb);
+                    const [ga, pa] = key(a), [gb, pb] = key(b);
+                    if (ga !== gb) return ga - gb;
+                    if (typeof pa === 'number') {
+                        return (pa - pb) || a.dataset.name.localeCompare(b.dataset.name);
+                    }
+                    return dir * pa.localeCompare(pb);
                 })
                 .forEach(li => list.appendChild(li));
         });
@@ -228,9 +247,12 @@
 
     const img = box.querySelector('img');
     const name = box.querySelector('.res-lightbox-name');
-    const raw = box.querySelector('.res-lightbox-raw');
+    const raw = box.querySelector('.res-lightbox-raw:not(.res-lightbox-dl)');
+    const dl = box.querySelector('.res-lightbox-dl');
 
-    document.querySelectorAll('a.res-thumb[data-zoom]').forEach(link => {
+    // Thumbnails on the listing pages and image-name links in the file
+    // browser both zoom.
+    document.querySelectorAll('a[data-zoom]').forEach(link => {
         link.addEventListener('click', e => {
             e.preventDefault();
 
@@ -247,6 +269,8 @@
             img.src = link.href;
             name.textContent = link.dataset.zoom;
             raw.href = link.href;
+            dl.href = link.href;
+            dl.download = link.dataset.file || '';
             box.showModal();
         });
     });

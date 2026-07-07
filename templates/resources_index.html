@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "partials/res_macros.html" as res %}
 
 {% set page_title = collection_meta.title + ' — ES Doc' %}
 {% set body_class = 'bg-solid' %}
@@ -17,10 +18,7 @@
             </div>
         </section>
 
-        <nav class="res-tabs" aria-label="Коллекции ресурсов">
-            <a href="/resources/" class="res-tab"{% if collection == 'original' %} aria-current="page"{% endif %}>Ресурсы оригинала</a>
-            <a href="/resources/community" class="res-tab"{% if collection == 'community' %} aria-current="page"{% endif %}>Ресурсы сообщества</a>
-        </nav>
+        {{ res.tabs(collection) }}
 
         <div class="page-main">
 

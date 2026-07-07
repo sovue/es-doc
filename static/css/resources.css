@@ -10,6 +10,9 @@
     display: flex;
     padding: 0 48px;
     border-bottom: 1px solid var(--border);
+    /* Three tabs no longer fit a phone; scroll like the category switcher. */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Same active-page vocabulary as the header nav: inset accent underline,
@@ -726,6 +729,207 @@ a.res-file:focus-visible {
     }
 }
 
+/* ── File browser («Браузер ресурсов») ───────────────────── */
+
+.fb-crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 8px;
+    margin-bottom: 14px;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+}
+
+.fb-crumbs a {
+    color: var(--text-soft);
+    text-decoration: none;
+    transition: color 0.15s var(--ease-out);
+}
+
+.fb-crumbs a:hover {
+    color: var(--accent);
+    text-decoration: underline;
+}
+
+.fb-crumbs a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+}
+
+.fb-crumbs [aria-current] {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.fb-crumbs-sep {
+    color: var(--text-soft);
+}
+
+.fb-stats {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--text-soft);
+}
+
+.fb-ico {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    color: var(--text-soft);
+}
+
+/* Folders read at a glance, like in every file manager — the warm relief
+   orange, not the red spotlight. */
+.fb-ico--dir {
+    color: var(--sunset);
+}
+
+.fb-link {
+    color: var(--text);
+    text-decoration: none;
+    transition: color 0.15s var(--ease-out);
+}
+
+.fb-link:hover {
+    color: var(--accent);
+    text-decoration: underline;
+}
+
+.fb-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+}
+
+/* The browser's copy button says what it copies — the game-code path. */
+.res-copy--label {
+    width: auto;
+    max-width: 100%;
+    padding: 0 10px;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+}
+
+.res-copy--label span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── File viewer («открыть файл на сайте») ───────────────── */
+
+.fb-view-title {
+    overflow-wrap: break-word;
+}
+
+.fb-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    margin-bottom: 18px;
+}
+
+.fb-action {
+    font-size: 0.875rem;
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.fb-action:hover {
+    text-decoration: underline;
+}
+
+.fb-action:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+}
+
+/* Read-only code view on the film-dark panel, same palette the docs'
+   fenced blocks use (tokens are global in vars.css). */
+.fb-code {
+    margin: 0;
+    padding: 16px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-block);
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.55;
+    tab-size: 4;
+}
+
+.fb-code code {
+    background: none;
+    padding: 0;
+    color: var(--code-name);
+}
+
+.fb-code .k, .fb-code .kc, .fb-code .kd, .fb-code .kn,
+.fb-code .kp, .fb-code .kr { color: var(--code-keyword); }
+.fb-code .kt { color: var(--code-type); }
+.fb-code .s, .fb-code .sa, .fb-code .sb, .fb-code .sc, .fb-code .dl,
+.fb-code .s1, .fb-code .s2, .fb-code .sh, .fb-code .si, .fb-code .sx { color: var(--code-string); }
+.fb-code .c, .fb-code .c1, .fb-code .ch, .fb-code .cm,
+.fb-code .cp, .fb-code .cs { color: var(--code-comment); }
+.fb-code .n, .fb-code .na, .fb-code .nb, .fb-code .nd, .fb-code .ne,
+.fb-code .ni, .fb-code .nl, .fb-code .nn, .fb-code .nx { color: var(--code-name); }
+.fb-code .nf { color: var(--code-func); }
+.fb-code .nc { color: var(--code-class); }
+.fb-code .m, .fb-code .mb, .fb-code .mf, .fb-code .mh,
+.fb-code .mi, .fb-code .mo { color: var(--code-number); }
+.fb-code .o, .fb-code .ow { color: var(--code-operator); }
+
+.fb-media {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-light);
+}
+
+video.fb-media {
+    width: min(900px, 100%);
+}
+
+.fb-media--audio {
+    width: min(560px, 100%);
+    border: none;
+    background: none;
+}
+
+/* Font files preview as a live specimen. */
+.fb-specimen {
+    padding: 24px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-block);
+    background: var(--bg-light);
+    font-family: 'fb-specimen', sans-serif;
+    overflow-wrap: break-word;
+}
+
+.fb-specimen p {
+    margin: 0;
+    line-height: 1.6;
+}
+
+.fb-specimen p + p {
+    margin-top: 14px;
+}
+
+.fb-specimen-lg {
+    font-size: 1.7rem;
+}
+
 /* ── Empty state ─────────────────────────────────────────── */
 
 .res-empty {
@@ -805,9 +1009,13 @@ a.res-file:focus-visible {
     a.res-file,
     .res-copy,
     .res-play,
+    .res-dl,
     .res-jump a,
+    .fb-crumbs a,
+    .fb-link,
     .res-nowplaying,
-    .res-nowplaying-stop {
+    .res-nowplaying-stop,
+    .res-nowplaying-pause {
         transition: none;
     }
 }
