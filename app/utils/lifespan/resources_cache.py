@@ -282,18 +282,26 @@ def _parse_rpy(root, raw_base, described):
             nsfw=kind == 'cg' and name.startswith(NSFW_CG_PREFIXES),
         ))
 
+    # A plain sound (unlike an image) is useless without its file — there is
+    # nothing to preview, nothing to play, just a dead row. A declaration
+    # whose file never made it into the decompiled dump is dropped outright
+    # rather than shown as a row no one can do anything with.
     for name, file in {n: f for n, f in RE_MUSIC.findall(text)}.items():
+        if raw_base and not (root / file).exists():
+            continue
         collection['music'].append(_item(
             name, f'music_list["{name}"]', file,
-            raw=f'{raw_base}/{quote(file)}' if raw_base and (root / file).exists() else None,
+            raw=f'{raw_base}/{quote(file)}' if raw_base else None,
             desc=desc_for('music', name, _music_title(name)),
         ))
 
     for regex, kind in ((RE_AMBIENCE, 'ambience'), (RE_SFX, 'sfx')):
         for name, file in {n: f for n, f in regex.findall(text)}.items():
+            if raw_base and not (root / file).exists():
+                continue
             collection[kind].append(_item(
                 name, name, file,
-                raw=f'{raw_base}/{quote(file)}' if raw_base and (root / file).exists() else None,
+                raw=f'{raw_base}/{quote(file)}' if raw_base else None,
                 desc=desc_for(kind, name),
             ))
 
