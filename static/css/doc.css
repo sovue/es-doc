@@ -217,10 +217,35 @@ img {
     font-weight: 600;
 }
 
-/* Power-user affordance: jump to the raw .md source. Quiet by default. */
-.sidebar-raw {
-    display: inline-block;
+/* Power-user affordance: the page-source block under the TOC — open the raw
+   Markdown in place, or save it as «<страница>.md». Quiet by default. */
+.sidebar-source {
     margin-top: 24px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+
+.sidebar-source-label {
+    display: block;
+    margin-bottom: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+}
+
+.sidebar-source-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+}
+
+.sidebar-source-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-family: var(--font-mono);
     font-size: 0.75rem;
     letter-spacing: 0.04em;
@@ -229,8 +254,8 @@ img {
     transition: color 0.15s var(--ease-out);
 }
 
-.sidebar-raw:hover,
-.sidebar-raw:focus-visible {
+.sidebar-source-links a:hover,
+.sidebar-source-links a:focus-visible {
     color: var(--accent);
 }
 
