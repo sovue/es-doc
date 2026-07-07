@@ -50,10 +50,22 @@
     const bar = document.createElement('div');
     bar.className = 'res-nowplaying';
     bar.innerHTML =
+        '<button type="button" class="res-nowplaying-pause" aria-label="Пауза">' +
+        '<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">' +
+        '<rect x="2" y="1.5" width="3" height="9" rx="0.8"/>' +
+        '<rect x="7" y="1.5" width="3" height="9" rx="0.8"/></svg>' +
+        '<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">' +
+        '<path d="M3 1.9a.6.6 0 0 1 .9-.52l6 3.6a.6.6 0 0 1 0 1.04l-6 3.6a.6.6 0 0 1-.9-.52z"/></svg></button>' +
         '<button type="button" class="res-nowplaying-stop" aria-label="Остановить">' +
         '<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">' +
         '<rect x="1.5" y="1.5" width="9" height="9" rx="1.5"/></svg></button>' +
+        '<div class="res-nowplaying-main">' +
         '<code class="res-nowplaying-name"></code>' +
+        '<div class="res-seek">' +
+        '<span class="res-time" data-current>0:00</span>' +
+        '<input type="range" min="0" max="0" step="0.1" value="0" aria-label="Позиция воспроизведения">' +
+        '<span class="res-time" data-duration>0:00</span>' +
+        '</div></div>' +
         '<label class="res-volume">' +
         '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
         '<path d="M2.5 6v4h2.6L8.7 13V3L5.1 6z" fill="currentColor"/>' +
@@ -64,7 +76,33 @@
 
     const barName = bar.querySelector('.res-nowplaying-name');
     const topVolume = document.getElementById('res-volume-input');
-    const barVolume = bar.querySelector('input');
+    const barVolume = bar.querySelector('.res-volume input');
+
+    // The seek bar: click or drag anywhere on the track to jump there.
+    const seek = bar.querySelector('.res-seek input');
+    const timeNow = bar.querySelector('[data-current]');
+    const timeAll = bar.querySelector('[data-duration]');
+
+    const fmt = s => {
+        s = Math.round(s) || 0;
+        return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    };
+
+    audio.addEventListener('loadedmetadata', () => {
+        seek.max = audio.duration;
+        timeAll.textContent = fmt(audio.duration);
+    });
+
+    audio.addEventListener('timeupdate', () => {
+        // Don't fight the hand that's dragging the thumb.
+        if (!seek.matches(':active')) seek.value = audio.currentTime;
+        timeNow.textContent = fmt(audio.currentTime);
+    });
+
+    seek.addEventListener('input', () => {
+        audio.currentTime = +seek.value;
+        timeNow.textContent = fmt(+seek.value);
+    });
 
     const setVolume = v => {
         audio.volume = v;
@@ -91,6 +129,25 @@
 
     bar.querySelector('.res-nowplaying-stop').addEventListener('click', stop);
 
+    // Pause keeps the track loaded (the bar stays up, the seek position
+    // holds); stop clears everything.
+    const pause = bar.querySelector('.res-nowplaying-pause');
+
+    pause.addEventListener('click', () => {
+        if (audio.paused) audio.play().catch(stop);
+        else audio.pause();
+    });
+
+    audio.addEventListener('pause', () => {
+        bar.classList.add('res-nowplaying--paused');
+        pause.setAttribute('aria-label', 'Продолжить');
+    });
+
+    audio.addEventListener('play', () => {
+        bar.classList.remove('res-nowplaying--paused');
+        pause.setAttribute('aria-label', 'Пауза');
+    });
+
     buttons.forEach(btn => {
         btn.hidden = false;
 
@@ -103,6 +160,9 @@
             current = btn;
             btn.setAttribute('aria-pressed', 'true');
             barName.textContent = btn.dataset.name || '';
+            seek.value = 0;
+            seek.max = 0;
+            timeNow.textContent = timeAll.textContent = '0:00';
             bar.classList.add('res-nowplaying--visible');
             audio.src = btn.dataset.src;
             audio.play().catch(stop);
