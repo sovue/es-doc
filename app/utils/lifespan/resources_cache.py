@@ -180,6 +180,12 @@ def _music_title(name):
     return ' '.join(w.capitalize() if w.isalpha() else w for w in words) + version
 
 
+def _fmt_num(x):
+    """1.0 -> '1', 0.35 -> '0.35' — matches how these numbers are written
+    in the .rpy source, for the reconstructed-expression file line."""
+    return f'{x:g}'
+
+
 # image bg ext_beach_day = "images/bg/ext_beach_day.jpg"
 RE_IMAGE = re.compile(r'^\s*image (bg|cg|anim) ([\w ]+?)\s*=\s*"([^"]+)"', re.M)
 # image bg int_catacombs_entrance_red = im.MatrixColor("images/bg/int_catacombs_entrance.jpg", im.matrix.tint(1, 0.35, 0.35))
@@ -227,13 +233,18 @@ CATEGORY_DIRS = {
 
 
 def _item(name, code, file=None, raw=None, thumb=None, desc=None, loc=None, time=None,
-          declared=True, nsfw=False, tint=None):
+          declared=True, nsfw=False, tint=None, source=None):
     # Key is 'code', not 'copy': Jinja resolves dotted access against dict
     # methods first, so item.copy would return dict.copy instead of the string.
     return {
         'name': name, 'code': code, 'file': file, 'raw': raw, 'thumb': thumb,
         'desc': desc, 'loc': loc, 'time': time,
         'declared': declared, 'nsfw': nsfw, 'tint': tint,
+        # What the file line shows. Plain items show `file` itself (a real
+        # path); a tinted item has no file of its own — it's built from one
+        # at request time — so it shows the actual code expression instead
+        # (`source`, when set) rather than implying `file` IS its path.
+        'source': source,
         'rid': 'r-' + name.replace(' ', '-'),
     }
 
@@ -289,10 +300,16 @@ def _parse_rpy(root, raw_base, described):
         seen.add((kind, name))
         exists = raw_base and file and (root / file).exists()
         loc, time, auto_desc = _parse_bg_name(name) if kind == 'bg' else (None, None, None)
+        source = None
         if tint and exists:
             # A recolored variant of `file` — composed on demand from it
             # rather than served as-is (tint_cache.py, res.py's /tinted/).
             raw = f'/resource/tinted/{kind}/{quote(name)}'
+            # `file` is an ingredient, not this item's own path — show the
+            # actual expression so the file line doesn't claim a path that
+            # doesn't exist for a code-built image.
+            r, g, b = tint
+            source = f'im.MatrixColor("{file}", im.matrix.tint({_fmt_num(r)}, {_fmt_num(g)}, {_fmt_num(b)}))'
         else:
             raw = f'{raw_base}/{quote(file)}' if exists else None
         collection[kind].append(_item(
@@ -303,6 +320,7 @@ def _parse_rpy(root, raw_base, described):
             loc=loc, time=time,
             nsfw=kind == 'cg' and name.startswith(NSFW_CG_PREFIXES),
             tint=tint if exists else None,
+            source=source,
         ))
 
     # A plain sound (unlike an image) is useless without its file — there is
