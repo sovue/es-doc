@@ -20,12 +20,19 @@ def thumb_file(kind, name):
     return THUMBS_PATH / kind / f'{name}.webp'
 
 def _source_file(kind, name):
-    # Sprite thumbs derive from the composed sprite in temp/sprites;
-    # image thumbs from the original asset file.
+    # Sprite thumbs derive from the composed sprite in temp/sprites; image
+    # thumbs from the asset file, wherever it lives — the game folder or the
+    # community drop-in folder next to it (cut NSFW arts resolve there).
     if kind == 'sprite':
         return sprite_file(name)
-    item = next((i for i in CONFIG.resources['original'][kind] if i['name'] == name), None)
-    return CONFIG.res_path / item['file'] if item and item['file'] else None
+    item = next((i for collection in CONFIG.resources.values()
+                 for i in collection.get(kind, []) if i['name'] == name), None)
+    if not item or not item['file']:
+        return None
+    for root in (CONFIG.res_path, CONFIG.res_path.parent / 'community'):
+        if (root / item['file']).is_file():
+            return root / item['file']
+    return None
 
 def is_thumbed(kind, name):
     path = thumb_file(kind, name)

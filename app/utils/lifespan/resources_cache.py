@@ -198,9 +198,11 @@ RE_SPRITE = re.compile(r'image ([\w ]+)\b[\s\S]+?im.Composite\(', re.M | re.U)
 PLACEHOLDER_DESC = 'Описание уточняется.'
 UNDECLARED_DESC = 'Не объявлен в игре — используется по пути к файлу.'
 
-# The base game's adult CGs, by declared-name prefix. Their files are absent
-# from the decompiled assets today; when they appear, previews blur until the
-# NSFW switch on the Арты page is flipped.
+# The base game's adult CGs, by declared-name prefix. Their files were cut
+# from the game (only the declarations remain in its code), so these items
+# live in the community collection — where the files can reappear — behind
+# the NSFW switch on the Арты page.
+NSFW_DESC = 'Вырезан из файлов игры — объявление в коде осталось.'
 NSFW_CG_PREFIXES = (
     'd2_mt_undressed', 'd3_sl_bathhouse', 'd5_dv_us_wash', 'd6_dv_hentai',
     'd2_sl_swim', 'd6_sl_swim', 'd6_sl_hentai', 'd7_sl_morning',
@@ -230,24 +232,29 @@ def _item(name, code, file=None, raw=None, thumb=None, desc=None, loc=None, time
     }
 
 
-def _load_descriptions(root):
-    """Optional descriptions.yaml in the assets root: {category: {name: text}}.
-    Hand-written entries win over the automatic bg/music descriptions."""
-    path = root / 'descriptions.yaml'
+def _load_descriptions():
+    """descriptions.yaml in the assets root (next to `game`):
+    {category: {name: text}}. The one hand-edited source for resource
+    descriptions — undeclared files included, keyed by their file stem.
+    Entries win over the automatic bg/music descriptions and the undeclared
+    fallback; empty values fall back to them."""
+    path = CONFIG.res_path.parent / 'descriptions.yaml'
     if not path.exists():
         return {}
     try:
         data = yaml.safe_load(path.read_text('utf-8')) or {}
-        return {k: v for k, v in data.items() if isinstance(v, dict)}
+        # str() guards names YAML would otherwise type (the track "410").
+        return {k: {str(n): t for n, t in v.items()}
+                for k, v in data.items() if isinstance(v, dict)}
     except Exception:
         logger.exception('descriptions.yaml is not valid YAML; ignoring it.')
         return {}
 
 
-def _parse_rpy(root, served, described):
+def _parse_rpy(root, raw_base, described):
     """Parse one collection root (a folder holding resources.rpy) into
-    {category: items}. `served` marks a root whose files the /resource/raw
-    route can actually serve — items then get raw/thumb links."""
+    {category: items}. `raw_base` is the URL prefix of the route that serves
+    this root's files (None → files are not served: no raw/thumb links)."""
     collection = {'bg': [], 'cg': [], 'anim': [], 'music': [], 'ambience': [], 'sfx': []}
 
     path = root / 'resources.rpy'
@@ -264,11 +271,11 @@ def _parse_rpy(root, served, described):
         if (kind, name) in seen:
             continue
         seen.add((kind, name))
-        exists = served and file and (root / file).exists()
+        exists = raw_base and file and (root / file).exists()
         loc, time, auto_desc = _parse_bg_name(name) if kind == 'bg' else (None, None, None)
         collection[kind].append(_item(
             name, f'{kind} {name}', file,
-            raw=f'/resource/raw/{quote(file)}' if exists else None,
+            raw=f'{raw_base}/{quote(file)}' if exists else None,
             thumb=f'/resource/thumb/{kind}/{quote(name)}' if exists else None,
             desc=desc_for(kind, name, auto_desc),
             loc=loc, time=time,
@@ -278,7 +285,7 @@ def _parse_rpy(root, served, described):
     for name, file in {n: f for n, f in RE_MUSIC.findall(text)}.items():
         collection['music'].append(_item(
             name, f'music_list["{name}"]', file,
-            raw=f'/resource/raw/{quote(file)}' if served and (root / file).exists() else None,
+            raw=f'{raw_base}/{quote(file)}' if raw_base and (root / file).exists() else None,
             desc=desc_for('music', name, _music_title(name)),
         ))
 
@@ -286,20 +293,20 @@ def _parse_rpy(root, served, described):
         for name, file in {n: f for n, f in regex.findall(text)}.items():
             collection[kind].append(_item(
                 name, name, file,
-                raw=f'/resource/raw/{quote(file)}' if served and (root / file).exists() else None,
+                raw=f'{raw_base}/{quote(file)}' if raw_base and (root / file).exists() else None,
                 desc=desc_for(kind, name),
             ))
 
     for items in collection.values():
         items.sort(key=lambda i: i['name'])
 
-    if served:
-        _append_undeclared(root, collection)
+    if raw_base:
+        _append_undeclared(root, collection, raw_base, described)
 
     return collection
 
 
-def _append_undeclared(root, collection):
+def _append_undeclared(root, collection, raw_base, described):
     """Files sitting in the asset folders that no declaration references —
     still usable in mods by path, so list them behind the «необъявленные»
     toggle. Compared against every declared file across categories, since
@@ -325,9 +332,11 @@ def _append_undeclared(root, collection):
             names.add(name)
             collection[kind].append(_item(
                 name, f'"{rel}"', rel,
-                raw=f'/resource/raw/{quote(rel)}',
+                raw=f'{raw_base}/{quote(rel)}',
                 thumb=f'/resource/thumb/{kind}/{quote(name)}' if image else None,
-                desc=UNDECLARED_DESC,
+                # Hand-written descriptions apply here too (keyed by the file
+                # stem in descriptions.yaml).
+                desc=described.get(kind, {}).get(name) or UNDECLARED_DESC,
                 declared=False,
             ))
 
@@ -396,9 +405,9 @@ def _build_search_items(collection):
 
 
 def parse_resources():
-    described = _load_descriptions(CONFIG.res_path.parent)
+    described = _load_descriptions()
 
-    original = _parse_rpy(CONFIG.res_path, served=True, described=described)
+    original = _parse_rpy(CONFIG.res_path, '/resource/raw', described)
     # sprites.rpy was already parsed by parse_sprites(); these names are
     # composable on demand via /resource/sprite/.
     original['sprites'] = _group_sprites(CONFIG.sprite_layers, composable=True)
@@ -407,11 +416,24 @@ def parse_resources():
     # in the assets root, holding resources.rpy / sprites.rpy in the same
     # format. Absent today — every category then renders its empty state.
     community_root = CONFIG.res_path.parent / 'community'
-    community = _parse_rpy(community_root, served=False, described={})
+    community = _parse_rpy(community_root, '/resource/community', described)
     community.pop('anim')  # the community set has no effects/animations
     sprites_rpy = community_root / 'sprites.rpy'
     community_sprite_names = RE_SPRITE.findall(sprites_rpy.read_text('utf-8')) if sprites_rpy.exists() else []
     community['sprites'] = _group_sprites(community_sprite_names, composable=False)
+
+    # The cut adult CGs live under «Ресурсы сообщества»: valid declarations
+    # with no files in the game, waiting for community-supplied ones (looked
+    # up in community/<file> so a drop-in re-enables previews and the blur).
+    nsfw = [i for i in original['cg'] if i['nsfw']]
+    original['cg'] = [i for i in original['cg'] if not i['nsfw']]
+    for item in nsfw:
+        if item['desc'] == PLACEHOLDER_DESC:
+            item['desc'] = NSFW_DESC
+        if not item['raw'] and item['file'] and (community_root / item['file']).is_file():
+            item['raw'] = f'/resource/community/{quote(item["file"])}'
+            item['thumb'] = f'/resource/thumb/cg/{quote(item["name"])}'
+    community['cg'] = sorted(community['cg'] + nsfw, key=lambda i: i['name'])
 
     CONFIG.resources = {'original': original, 'community': community}
     # Merged into CONFIG.search_items by the docs cache refresh (docs_cache.py).

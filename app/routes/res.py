@@ -52,7 +52,9 @@ async def thumb_page(kind, name, request: Request):
     if kind == 'sprite':
         # A sprite thumb derives from the composed sprite, so compose first.
         await _ensure_composed(name)
-    elif not any(i['name'] == name and i['thumb'] for i in CONFIG.resources.get('original', {}).get(kind, [])):
+    elif not any(i['name'] == name and i['thumb']
+                 for collection in CONFIG.resources.values()
+                 for i in collection.get(kind, [])):
         # Covers unknown names and names whose source file is absent from the
         # decompiled assets (they parse with thumb=None).
         raise HTTPException(404, f'Ресурс "{name}" не существует.')
@@ -68,16 +70,25 @@ async def thumb_page(kind, name, request: Request):
 
     return FileResponse(str(thumb_file(kind, name)), media_type='image/webp', headers=CACHE_HEADERS)
 
+def _confined_file(base, resource):
+    # Resolve and confine to the base folder: {resource:path} accepts ".."
+    # segments, which must not escape it.
+    path = (base / resource).resolve()
+
+    if not path.is_relative_to(base.resolve()) or not path.is_file():
+        raise HTTPException(404, f'Файл "{resource}" не существует.')
+
+    return path
+
 @router.get('/raw/{resource:path}')
 async def raw_page(resource, request: Request):
 
-    # Resolve and confine to res_path: {resource:path} accepts ".." segments,
-    # which must not escape the assets folder.
-    path = (CONFIG.res_path / resource).resolve()
+    return FileResponse(str(_confined_file(CONFIG.res_path, resource)), headers=CACHE_HEADERS)
 
-    if not path.is_relative_to(CONFIG.res_path.resolve()) or not path.is_file():
-        raise HTTPException(404, f'Файл "{resource}" не существует.')
+@router.get('/community/{resource:path}')
+async def community_page(resource, request: Request):
 
-    return FileResponse(str(path), headers=CACHE_HEADERS)
+    # The community drop-in folder sits next to `game` in the assets root.
+    return FileResponse(str(_confined_file(CONFIG.res_path.parent / 'community', resource)), headers=CACHE_HEADERS)
 
 main_router.include_router(router)
