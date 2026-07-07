@@ -918,7 +918,6 @@ a.res-file:focus-visible {
     font-family: var(--font-mono);
     font-size: 0.85rem;
     line-height: 1.55;
-    tab-size: 4;
 }
 
 .fb-code code {
@@ -941,6 +940,7 @@ a.res-file:focus-visible {
 .fb-code .m, .fb-code .mb, .fb-code .mf, .fb-code .mh,
 .fb-code .mi, .fb-code .mo { color: var(--code-number); }
 .fb-code .o, .fb-code .ow { color: var(--code-operator); }
+.fb-code .w { color: var(--code-whitespace); }
 
 .fb-media {
     display: block;

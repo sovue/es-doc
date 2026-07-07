@@ -4,6 +4,38 @@
    Controls ship with [hidden] in the markup and are revealed here, so a
    no-JS page stays a clean reference list. */
 
+/* ── File-viewer code whitespace handling (mirrors docs.js) ── */
+(function () {
+    const code = document.querySelector('.fb-code');
+    if (!code) return;
+
+    const whitespace = '∙';
+
+    code.querySelectorAll('span.w').forEach(el => {
+        el.textContent = whitespace.repeat(el.textContent.length);
+    });
+
+    document.addEventListener('copy', e => {
+        const sel = window.getSelection();
+
+        if (!sel.rangeCount) return;
+
+        const node = sel.getRangeAt(0).commonAncestorContainer;
+
+        const pre = node.nodeType === 1
+            ? node.closest('.fb-code')
+            : node.parentElement?.closest('.fb-code');
+
+        if (!pre) return;
+
+        e.preventDefault();
+
+        const text = sel.toString().replace(new RegExp(whitespace, 'g'), ' ');
+
+        e.clipboardData.setData('text/plain', text);
+    });
+})();
+
 /* ── Copy buttons ── */
 (function () {
     if (!navigator.clipboard) return;
