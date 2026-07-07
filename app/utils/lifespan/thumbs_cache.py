@@ -6,6 +6,7 @@ from ..file import ROOT
 from ..logging import root_logger
 
 from .sprites_cache import sprite_file
+from .tint_cache import tinted_file
 
 logger = root_logger.getChild('lifespan').getChild('thumbs-cache')
 
@@ -20,15 +21,19 @@ def thumb_file(kind, name):
     return THUMBS_PATH / kind / f'{name}.webp'
 
 def _source_file(kind, name):
-    # Sprite thumbs derive from the composed sprite in temp/sprites; image
-    # thumbs from the asset file, wherever it lives — the game folder or the
-    # community drop-in folder next to it (cut NSFW arts resolve there).
+    # Sprite thumbs derive from the composed sprite in temp/sprites; tinted
+    # variants from their own composed file in temp/tinted (res.py's
+    # /tinted/ route composes it before a thumb is ever requested); plain
+    # image thumbs from the asset file, wherever it lives — the game folder
+    # or the community drop-in folder next to it (cut NSFW arts resolve there).
     if kind == 'sprite':
         return sprite_file(name)
     item = next((i for collection in CONFIG.resources.values()
                  for i in collection.get(kind, []) if i['name'] == name), None)
     if not item or not item['file']:
         return None
+    if item.get('tint'):
+        return tinted_file(kind, name)
     for root in (CONFIG.res_path, CONFIG.res_path.parent / 'community'):
         if (root / item['file']).is_file():
             return root / item['file']

@@ -12,7 +12,8 @@
 {% endmacro %}
 
 {% macro image_row(item, sprite=false) %}
-{% set filename = item.file.rsplit('/', 1)[-1] if item.file else item.name + '.webp' %}
+{# Tinted variants are served as composed .webp, not the original file. #}
+{% set filename = (item.name + '.webp') if (item.tint or not item.file) else item.file.rsplit('/', 1)[-1] %}
 <li class="res-row{% if sprite %} res-row--sprite{% endif %}" id="{{ item.rid }}" data-name="{{ item.name }}"
     {%- if not item.declared %} data-undeclared hidden{% endif %}{% if item.nsfw %} data-nsfw{% endif %}
     {%- if item.loc is not none or item.time is not none %} data-loc="{{ item.loc or '' }}" data-time="{{ item.time or '' }}"{% endif %}>

@@ -6,6 +6,7 @@ from . import main_router
 from ..utils.config import CONFIG
 from ..utils.lifespan.sprites_cache import compose_sprite, is_composed, sprite_file
 from ..utils.lifespan.thumbs_cache import is_thumbed, make_thumb, thumb_file
+from ..utils.lifespan.tint_cache import compose_tint, is_tinted, tinted_file
 from ..utils.logging import root_logger
 
 router = APIRouter(prefix='/resource')
@@ -43,6 +44,42 @@ async def sprite_page(sprite, request: Request):
 
     return FileResponse(str(sprite_file(sprite)), media_type='image/webp', headers=CACHE_HEADERS)
 
+def _find_tinted(kind, name):
+    return next((i for collection in CONFIG.resources.values()
+                 for i in collection.get(kind, [])
+                 if i['name'] == name and i.get('tint')), None)
+
+async def _ensure_tinted(kind, name):
+
+    item = _find_tinted(kind, name)
+    if not item:
+        raise HTTPException(404, f'Тонированное изображение "{kind} {name}" не существует.')
+
+    # The source file lives in the game folder or, for a community-declared
+    # tint, the community drop-in folder next to it.
+    source = next((root / item['file'] for root in (CONFIG.res_path, CONFIG.res_path.parent / 'community')
+                    if (root / item['file']).is_file()), None)
+    if not source:
+        raise HTTPException(404, f'Исходный файл для "{kind} {name}" не существует.')
+
+    if not is_tinted(kind, name, source):
+        async with compose_lock:
+            # Re-check: the request holding the lock before us may have
+            # composed this very image.
+            if not is_tinted(kind, name, source):
+                try:
+                    await asyncio.to_thread(compose_tint, kind, name, source, item['tint'])
+                except Exception:
+                    logger.exception(f'Tinting "{kind} {name}" failed.')
+                    raise HTTPException(500, f'Не удалось применить тон к "{name}".')
+
+@router.get('/tinted/{kind}/{name}')
+async def tinted_page(kind, name, request: Request):
+
+    await _ensure_tinted(kind, name)
+
+    return FileResponse(str(tinted_file(kind, name)), media_type='image/webp', headers=CACHE_HEADERS)
+
 @router.get('/thumb/{kind}/{name}')
 async def thumb_page(kind, name, request: Request):
 
@@ -52,6 +89,10 @@ async def thumb_page(kind, name, request: Request):
     if kind == 'sprite':
         # A sprite thumb derives from the composed sprite, so compose first.
         await _ensure_composed(name)
+    elif _find_tinted(kind, name):
+        # A tinted image's thumb derives from the composed tint, so compose
+        # that first (mirrors the sprite branch above).
+        await _ensure_tinted(kind, name)
     elif not any(i['name'] == name and i['thumb']
                  for collection in CONFIG.resources.values()
                  for i in collection.get(kind, [])):

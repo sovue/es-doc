@@ -182,7 +182,13 @@ def _music_title(name):
 
 # image bg ext_beach_day = "images/bg/ext_beach_day.jpg"
 RE_IMAGE = re.compile(r'^\s*image (bg|cg|anim) ([\w ]+?)\s*=\s*"([^"]+)"', re.M)
-# Declarations with a computed right side (im.MatrixColor etc.) — the name is
+# image bg int_catacombs_entrance_red = im.MatrixColor("images/bg/int_catacombs_entrance.jpg", im.matrix.tint(1, 0.35, 0.35))
+# A recolored variant of a plain file — composed on demand (tint_cache.py)
+# instead of falling through to the "no preview" complex-declaration case.
+RE_IMAGE_TINT = re.compile(
+    r'^\s*image (bg|cg|anim) ([\w ]+?)\s*=\s*im\.MatrixColor\(\s*"([^"]+)"\s*,'
+    r'\s*im\.matrix\.tint\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)\s*\)', re.M)
+# Declarations with a computed right side (ConditionSwitch etc.) — the name is
 # valid in game code, but there is no single source file to preview.
 RE_IMAGE_COMPLEX = re.compile(r'^\s*image (bg|cg|anim) ([\w ]+?)\s*=\s*(?!")\S', re.M)
 # $ music_list["afterword"] = "sound/music/afterword.ogg"
@@ -221,13 +227,13 @@ CATEGORY_DIRS = {
 
 
 def _item(name, code, file=None, raw=None, thumb=None, desc=None, loc=None, time=None,
-          declared=True, nsfw=False):
+          declared=True, nsfw=False, tint=None):
     # Key is 'code', not 'copy': Jinja resolves dotted access against dict
     # methods first, so item.copy would return dict.copy instead of the string.
     return {
         'name': name, 'code': code, 'file': file, 'raw': raw, 'thumb': thumb,
         'desc': desc, 'loc': loc, 'time': time,
-        'declared': declared, 'nsfw': nsfw,
+        'declared': declared, 'nsfw': nsfw, 'tint': tint,
         'rid': 'r-' + name.replace(' ', '-'),
     }
 
@@ -266,20 +272,37 @@ def _parse_rpy(root, raw_base, described):
     def desc_for(kind, name, auto=None):
         return described.get(kind, {}).get(name) or auto or PLACEHOLDER_DESC
 
+    # Tint entries carry their own (file, r, g, b); plain and complex
+    # declarations carry None for both. Tint is listed before the complex
+    # catch-all so `seen` lets the catch-all skip what tint already handled.
+    image_entries = (
+        [(k, n, f, None) for k, n, f in RE_IMAGE.findall(text)]
+        + [(k, n, f, (float(r), float(g), float(b)))
+           for k, n, f, r, g, b in RE_IMAGE_TINT.findall(text)]
+        + [(k, n, None, None) for k, n in RE_IMAGE_COMPLEX.findall(text)]
+    )
+
     seen = set()
-    for kind, name, file in RE_IMAGE.findall(text) + [(k, n, None) for k, n in RE_IMAGE_COMPLEX.findall(text)]:
+    for kind, name, file, tint in image_entries:
         if (kind, name) in seen:
             continue
         seen.add((kind, name))
         exists = raw_base and file and (root / file).exists()
         loc, time, auto_desc = _parse_bg_name(name) if kind == 'bg' else (None, None, None)
+        if tint and exists:
+            # A recolored variant of `file` — composed on demand from it
+            # rather than served as-is (tint_cache.py, res.py's /tinted/).
+            raw = f'/resource/tinted/{kind}/{quote(name)}'
+        else:
+            raw = f'{raw_base}/{quote(file)}' if exists else None
         collection[kind].append(_item(
             name, f'{kind} {name}', file,
-            raw=f'{raw_base}/{quote(file)}' if exists else None,
+            raw=raw,
             thumb=f'/resource/thumb/{kind}/{quote(name)}' if exists else None,
             desc=desc_for(kind, name, auto_desc),
             loc=loc, time=time,
             nsfw=kind == 'cg' and name.startswith(NSFW_CG_PREFIXES),
+            tint=tint if exists else None,
         ))
 
     # A plain sound (unlike an image) is useless without its file — there is
