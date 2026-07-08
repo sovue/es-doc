@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% set page_title = 'Художники — ES Doc' %}
+{% set body_class = 'bg-solid' %}
+{% set active = 'artists' %}
+{% set extra_css = ['/static/css/artists.css'] %}
+
+{% macro status_pill(status) %}
+<span class="artist-status artist-status--{{ status }}">{{ status_labels[status] }}</span>
+{%- endmacro %}
+
+{% macro links_row(links) %}
+{%- if links %}
+<ul class="artist-links" role="list">
+    {%- for key, url in links.items() %}
+    <li><a href="{{ url }}">{{ link_labels.get(key) or key|capitalize }}</a></li>
+    {%- endfor %}
+</ul>
+{%- endif %}
+{%- endmacro %}
+
+{# Monogram sits under the image; if there's no preview (or it fails to load,
+   marked by artists.js), the image is gone/hidden and the monogram shows. #}
+{% macro preview(a) %}
+<span class="artist-preview{% if not a.preview %} artist-preview--none{% endif %}">
+    <span class="artist-monogram" aria-hidden="true">{{ a.name[:1]|upper }}</span>
+    {%- if a.preview %}
+    <img class="artist-preview-img" src="{{ a.preview }}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+    {%- endif %}
+</span>
+{%- endmacro %}
+
+{% block content %}
+<div class="page">
+
+    <main id="main-content">
+
+        <section class="page-hero">
+            <div class="page-hero-inner">
+                <h1 class="page-title">Художники</h1>
+                <p class="page-lead">
+                    Художники, которые берут заказы для модов «Бесконечного лета».
+                </p>
+            </div>
+        </section>
+
+        <div class="page-main page-main--artists" data-artists>
+
+            {% if artists %}
+
+            <div class="artists-controls" hidden>
+                <div class="view-switch" role="group" aria-label="Вид списка">
+                    <button type="button" class="view-btn view-btn--active" data-view="gallery" aria-pressed="true">
+                        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <rect x="1.5" y="1.5" width="5.4" height="5.4" rx="1" stroke="currentColor" stroke-width="1.3"/>
+                            <rect x="9.1" y="1.5" width="5.4" height="5.4" rx="1" stroke="currentColor" stroke-width="1.3"/>
+                            <rect x="1.5" y="9.1" width="5.4" height="5.4" rx="1" stroke="currentColor" stroke-width="1.3"/>
+                            <rect x="9.1" y="9.1" width="5.4" height="5.4" rx="1" stroke="currentColor" stroke-width="1.3"/>
+                        </svg>
+                        Галерея
+                    </button>
+                    <button type="button" class="view-btn" data-view="board" aria-pressed="false">
+                        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <rect x="1.5" y="1.5" width="3.8" height="13" rx="1" stroke="currentColor" stroke-width="1.3"/>
+                            <rect x="6.1" y="1.5" width="3.8" height="9" rx="1" stroke="currentColor" stroke-width="1.3"/>
+                            <rect x="10.7" y="1.5" width="3.8" height="11" rx="1" stroke="currentColor" stroke-width="1.3"/>
+                        </svg>
+                        Доска
+                    </button>
+                    <button type="button" class="view-btn" data-view="table" aria-pressed="false">
+                        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            <path d="M1.5 3.2h13M1.5 8h13M1.5 12.8h13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                        </svg>
+                        Таблица
+                    </button>
+                </div>
+
+                <div class="artists-filters">
+                    <input type="search" id="artist-search" class="artist-search-input"
+                           placeholder="Поиск по имени…" autocomplete="off" spellcheck="false"
+                           aria-label="Поиск художника по имени">
+                    <select id="artist-status" aria-label="Статус заказов">
+                        <option value="">Любой статус</option>
+                        {%- for status, label, count in status_counts %}
+                        <option value="{{ status }}">{{ label }} ({{ count }})</option>
+                        {%- endfor %}
+                    </select>
+                    <select id="artist-sort" aria-label="Сортировка">
+                        <option value="az">А-Я</option>
+                        <option value="za">Я-А</option>
+                        <option value="open">Сначала открытые</option>
+                    </select>
+                </div>
+
+                <p class="artists-count" aria-live="polite"></p>
+            </div>
+
+            <!-- Gallery (default; the only view a no-JS visitor sees) -->
+            <section id="view-gallery" aria-label="Галерея художников">
+                <ul class="artists-gallery" role="list">
+                    {% for a in artists %}
+                    <li class="artist-card" data-artist data-name="{{ a.name }}" data-status="{{ a.status }}">
+                        {{ preview(a) }}
+                        <div class="artist-card-body">
+                            <div class="artist-card-head">
+                                <span class="artist-name">{{ a.name }}</span>
+                                {{ status_pill(a.status) }}
+                            </div>
+                            {{ links_row(a.links) }}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </section>
+
+            <!-- Board: columns grouped by commission status -->
+            <section id="view-board" aria-label="Доска по статусу заказов" hidden>
+                <div class="artists-board">
+                    {% for status, label, members in groups %}
+                    <section class="board-col" data-status-col="{{ status }}" aria-labelledby="board-col-{{ status }}">
+                        <h2 class="board-col-head" id="board-col-{{ status }}">
+                            {{ status_pill(status) }}
+                            <span class="board-col-count">{{ members|length }}</span>
+                        </h2>
+                        <ul class="board-col-list" role="list">
+                            {% for a in members %}
+                            <li class="board-card" data-artist data-name="{{ a.name }}" data-status="{{ a.status }}">
+                                <span class="artist-name">{{ a.name }}</span>
+                                {{ links_row(a.links) }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        <p class="board-col-empty" hidden>Нет совпадений</p>
+                    </section>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <!-- Table: dense, scannable -->
+            <section id="view-table" aria-label="Таблица художников" hidden>
+                <div class="artists-table-wrap">
+                    <table class="artists-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Художник</th>
+                                <th scope="col">Статус</th>
+                                <th scope="col">Ссылки</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for a in artists %}
+                            <tr data-artist data-name="{{ a.name }}" data-status="{{ a.status }}">
+                                <td class="artist-name">{{ a.name }}</td>
+                                <td>{{ status_pill(a.status) }}</td>
+                                <td>{{ links_row(a.links) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <p class="artists-empty" hidden>По этому запросу ничего не нашлось.</p>
+
+            {% else %}
+            <div class="res-empty">
+                <p class="res-empty-title">Список пока пуст.</p>
+                <p>Здесь появятся художники, берущие заказы для модов. Если вы рисуете или знаете, кого добавить —
+                   <a href="https://github.com/sovue/es-doc/issues">расскажите нам</a>.</p>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </main>
+
+    {% include "partials/footer.html" %}
+
+</div>
+{% endblock %}

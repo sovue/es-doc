@@ -1,0 +1,378 @@
+/* /artists — the commission-artist directory. One dataset, three views
+   (gallery, board, table) toggled by artists.js. Follows the ES Doc tokens:
+   warm surfaces, the 1px tan divider, pioneer red kept to focus/hover only. */
+
+.page-main--artists {
+    max-width: 1120px;
+}
+
+/* [hidden] must beat the flex/display rules below it: the controls ship
+   hidden (revealed by JS), and filtering hides individual artist entries.
+   A bare [hidden] loses to .artist-card{display:flex}, so guard explicitly. */
+.artists-controls[hidden],
+[data-artist][hidden] {
+    display: none !important;
+}
+
+/* ── Controls (revealed by JS; ship [hidden]) ─────────────── */
+.artists-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 16px;
+    margin-bottom: 28px;
+}
+
+/* Segmented view switcher */
+.view-switch {
+    display: inline-flex;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--text-soft);
+    background: none;
+    border: 0;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s var(--ease-out), background-color 0.15s var(--ease-out);
+}
+
+.view-btn + .view-btn {
+    border-left: 1px solid var(--border);
+}
+
+.view-btn svg {
+    flex: none;
+    opacity: 0.85;
+}
+
+.view-btn:hover {
+    color: var(--text);
+}
+
+.view-btn--active {
+    color: var(--text);
+    background: var(--surface-hover);
+    font-weight: 600;
+}
+
+.view-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+    color: var(--text);
+}
+
+/* Filters */
+.artists-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    flex: 1 1 auto;
+}
+
+.artist-search-input,
+.artists-filters select {
+    height: 36px;
+    padding: 0 12px;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    color: var(--text);
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.artist-search-input {
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
+.artist-search-input:focus-visible,
+.artists-filters select:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+
+.artists-count {
+    flex: 1 1 100%;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: var(--text-soft);
+}
+
+/* ── Shared bits: name, status pill, links ────────────────── */
+.artist-name {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.artist-status {
+    display: inline-block;
+    flex: none;
+    padding: 3px 9px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    border-radius: var(--radius-full);
+}
+
+.artist-status--open {
+    color: var(--pine);
+    background: color-mix(in srgb, var(--pine) 14%, transparent);
+    border-color: color-mix(in srgb, var(--pine) 34%, transparent);
+}
+
+.artist-status--unknown {
+    color: var(--text-soft);
+    background: var(--surface-hover);
+    border-color: var(--border);
+}
+
+.artist-status--closed {
+    color: var(--warning);
+    background: var(--warning-bg1);
+    border-color: color-mix(in srgb, var(--warning) 32%, transparent);
+}
+
+.artist-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+}
+
+.artist-links a {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    text-decoration: none;
+    transition: color 0.15s var(--ease-out);
+}
+
+.artist-links a:hover {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* ── Gallery ──────────────────────────────────────────────── */
+.artists-gallery {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
+    gap: 18px;
+}
+
+.artist-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-block);
+    overflow: hidden;
+    transition: border-color 0.15s var(--ease-out);
+}
+
+.artist-card:hover {
+    border-color: var(--accent-muted);
+}
+
+.artist-preview {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 3 / 2;
+    background: var(--bg-light);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.artist-monogram {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 2.6rem;
+    line-height: 1;
+    color: color-mix(in srgb, var(--text-soft) 55%, transparent);
+    user-select: none;
+}
+
+.artist-preview-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* No image: drop the divider so an empty tile isn't double-lined. */
+.artist-preview--none {
+    border-bottom-color: transparent;
+}
+
+.artist-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    padding: 13px 14px 15px;
+}
+
+.artist-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+/* ── Board ────────────────────────────────────────────────── */
+.artists-board {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+/* A column is one bordered surface holding hairline-separated rows — the
+   site's endorsed "bordered list of rows", not a stack of nested cards. */
+.board-col {
+    flex: 1 1 0;
+    min-width: 220px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-block);
+    overflow: hidden;
+}
+
+.board-col-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.board-col-count {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-soft);
+}
+
+.board-col-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.board-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.board-col-list .board-card:last-child {
+    border-bottom: 0;
+}
+
+.board-col-empty {
+    margin: 0;
+    padding: 14px;
+    font-size: 0.85rem;
+    color: var(--text-soft);
+}
+
+/* ── Table ────────────────────────────────────────────────── */
+.artists-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-block);
+}
+
+.artists-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.artists-table th {
+    text-align: left;
+    padding: 11px 16px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    background: var(--bg-table-head);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.artists-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.artists-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.artists-table tbody tr:hover {
+    background: var(--surface-hover);
+}
+
+/* ── Empty state (filter yields nothing) ──────────────────── */
+.artists-empty {
+    margin: 28px 0 0;
+    font-size: 0.95rem;
+    color: var(--text-soft);
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 640px) {
+    .artists-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 14px;
+    }
+
+    .board-col {
+        min-width: 200px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .view-btn,
+    .artist-card,
+    .artist-links a {
+        transition: none;
+    }
+}

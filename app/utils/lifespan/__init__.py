@@ -4,6 +4,7 @@ from fastapi import FastAPI
 
 from ..logging import root_logger
 
+from .artists_cache import parse_artists
 from .docs_cache import cache_docs, worker_cache_docs
 from .resources_cache import parse_resources
 from .sprites_cache import parse_sprites, SPRITES_PATH
@@ -29,6 +30,11 @@ async def lifespan(app: FastAPI):
         await asyncio.to_thread(parse_resources)
     except Exception:
         logger.exception('Parsing resources failed; /resources/ pages will be empty until restart.')
+
+    try:
+        await asyncio.to_thread(parse_artists)
+    except Exception:
+        logger.exception('Parsing artists.yaml failed; /artists will be empty until restart.')
 
     # Populate the caches before the app starts serving so the first request
     # never races an empty tree or search corpus.
