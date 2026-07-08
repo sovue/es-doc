@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse
 
 from . import main_router
 from ..utils.config import CONFIG
+from ..utils.lifespan.artist_img_cache import cache_file as artist_img_file, fetch_and_cache as fetch_artist_img, is_cached as artist_img_cached
 from ..utils.lifespan.sprites_cache import compose_sprite, is_composed, sprite_file
 from ..utils.lifespan.thumbs_cache import is_thumbed, make_thumb, thumb_file
 from ..utils.lifespan.tint_cache import compose_tint, is_tinted, tinted_file
@@ -20,6 +21,17 @@ CACHE_HEADERS = {'Cache-Control': 'public, max-age=86400'}
 # One compose at a time: concurrent first requests for the same sprite would
 # duplicate work, and the target machine has few cores to spare anyway.
 compose_lock = asyncio.Lock()
+
+# Artist images are fetched over the network, so unlike sprite composing they
+# shouldn't all serialise behind one lock. Key a lock per source URL: same
+# image fetches once, different images still fetch in parallel.
+_artist_img_locks: dict[str, asyncio.Lock] = {}
+
+def _artist_img_lock(url):
+    lock = _artist_img_locks.get(url)
+    if lock is None:
+        lock = _artist_img_locks[url] = asyncio.Lock()
+    return lock
 
 async def _ensure_composed(sprite):
 
@@ -131,5 +143,33 @@ async def community_page(resource, request: Request):
 
     # The community drop-in folder sits next to `game` in the assets root.
     return FileResponse(str(_confined_file(CONFIG.res_path.parent / 'community', resource)), headers=CACHE_HEADERS)
+
+def _artist_img_url(kind, name):
+    # Fetch by reference, not by arbitrary URL: only links already present in
+    # artists.yaml are reachable, so this is not an open proxy.
+    if kind not in ('logo', 'preview'):
+        return None
+    item = next((a for a in CONFIG.artists if a['name'] == name), None)
+    return item.get(kind) if item else None
+
+@router.get('/artist/{kind}/{name}')
+async def artist_image(kind, name, request: Request):
+
+    url = _artist_img_url(kind, name)
+    if not url:
+        raise HTTPException(404, f'Изображение "{kind}" для «{name}» не существует.')
+
+    # Serving these through the backend (instead of hotlinking) normalises the
+    # image to WebP and sidesteps the browser's cross-origin ORB block.
+    if not artist_img_cached(url):
+        async with _artist_img_lock(url):
+            if not artist_img_cached(url):
+                try:
+                    await fetch_artist_img(url)
+                except Exception:
+                    logger.exception(f'Fetching artist image "{kind}" for "{name}" failed.')
+                    raise HTTPException(502, f'Не удалось загрузить изображение для «{name}».')
+
+    return FileResponse(str(artist_img_file(url)), media_type='image/webp', headers=CACHE_HEADERS)
 
 main_router.include_router(router)
