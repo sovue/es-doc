@@ -30,6 +30,15 @@
 </span>
 {%- endmacro %}
 
+{# The author's logo as a small round avatar beside the name. Rendered only
+   when a logo is set; artists.js drops it if the URL fails to load. #}
+{% macro name_id(a) %}
+<span class="artist-id">
+    {%- if a.logo %}<img class="artist-avatar" src="{{ a.logo }}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">{% endif %}
+    <span class="artist-name">{{ a.name }}</span>
+</span>
+{%- endmacro %}
+
 {% block content %}
 <div class="page">
 
@@ -103,7 +112,7 @@
                         {{ preview(a) }}
                         <div class="artist-card-body">
                             <div class="artist-card-head">
-                                <span class="artist-name">{{ a.name }}</span>
+                                {{ name_id(a) }}
                                 {{ status_pill(a.status) }}
                             </div>
                             {{ links_row(a.links) }}
@@ -125,7 +134,7 @@
                         <ul class="board-col-list" role="list">
                             {% for a in members %}
                             <li class="board-card" data-artist data-name="{{ a.name }}" data-status="{{ a.status }}">
-                                <span class="artist-name">{{ a.name }}</span>
+                                {{ name_id(a) }}
                                 {{ links_row(a.links) }}
                             </li>
                             {% endfor %}
@@ -150,7 +159,7 @@
                         <tbody>
                             {% for a in artists %}
                             <tr data-artist data-name="{{ a.name }}" data-status="{{ a.status }}">
-                                <td class="artist-name">{{ a.name }}</td>
+                                <td>{{ name_id(a) }}</td>
                                 <td>{{ status_pill(a.status) }}</td>
                                 <td>{{ links_row(a.links) }}</td>
                             </tr>

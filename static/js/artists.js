@@ -35,6 +35,13 @@
         if (img.complete) done();
     });
 
+    /* ── Logo avatars: just drop a broken one, leaving the bare name ── */
+    root.querySelectorAll('.artist-avatar').forEach(img => {
+        const drop = () => { if (!img.complete || img.naturalWidth === 0) img.remove(); };
+        img.addEventListener('error', drop);
+        if (img.complete) drop();
+    });
+
     /* ── View switching ── */
     function setView(v) {
         if (!views[v]) return;

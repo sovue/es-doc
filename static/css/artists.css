@@ -113,12 +113,36 @@
     color: var(--text-soft);
 }
 
-/* ── Shared bits: name, status pill, links ────────────────── */
+/* ── Shared bits: name, avatar, status pill, links ────────── */
+.artist-id {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+}
+
 .artist-name {
     font-family: var(--font-sans);
     font-weight: 600;
     color: var(--text);
     overflow-wrap: anywhere;
+}
+
+/* The author's logo. Small round avatar; drops out entirely (via artists.js)
+   if the URL fails, leaving just the name. */
+.artist-avatar {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+}
+
+.artists-table .artist-avatar {
+    width: 26px;
+    height: 26px;
 }
 
 .artist-status {
