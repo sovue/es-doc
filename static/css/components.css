@@ -408,6 +408,23 @@
     }
 }
 
+/* Cross-fade colours only while the toggle flips themes: theme.js adds this
+   class for the duration of the switch, then removes it. It's never present
+   on load, so a pinned theme still paints instantly with no fade-in. */
+:root.theme-animating,
+:root.theme-animating * {
+    transition: background-color 0.32s var(--ease-out),
+                color 0.32s var(--ease-out),
+                border-color 0.32s var(--ease-out) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root.theme-animating,
+    :root.theme-animating * {
+        transition: none !important;
+    }
+}
+
 /* ── Site footer ─────────────────────────────────────────── */
 
 .site-footer {

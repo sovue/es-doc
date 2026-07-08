@@ -29,8 +29,20 @@
     };
     relabel();
 
+    // Briefly cross-fade colours across the switch (see .theme-animating in
+    // components.css). Only around the toggle, never on load.
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    var animTimer = null;
+    var animate = function () {
+        if (reduce.matches) return;
+        root.classList.add('theme-animating');
+        clearTimeout(animTimer);
+        animTimer = setTimeout(function () { root.classList.remove('theme-animating'); }, 360);
+    };
+
     btn.addEventListener('click', function () {
         var next = resolved() === 'dark' ? 'light' : 'dark';
+        animate();
         root.setAttribute('data-theme', next);
         try { localStorage.setItem(KEY, next); } catch (e) {}
         relabel();
