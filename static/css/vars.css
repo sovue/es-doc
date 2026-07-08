@@ -102,9 +102,19 @@
     --info-bg1: #3E93B514;
 }
 
-/* ── Dark (Night at camp — by the lake) ───────────────────── */
+/* ── Dark (Night at camp — by the lake) ───────────────────────
+   Served two ways, so the theme toggle can override the system while
+   no-JS visitors still get the night scene from their OS preference:
+     1. prefers-color-scheme: dark   — the OS default, UNLESS the visitor
+        has forced light via the toggle (:not([data-theme="light"])).
+     2. [data-theme="dark"]          — the toggle's explicit night choice,
+        regardless of OS preference.
+   The two dark blocks below are identical and MUST stay in sync — a token
+   present in one but not the other is a bug (same discipline DESIGN.md sets
+   for the light/dark pair). Light lives once in :root above and shows through
+   whenever neither dark path applies. */
 @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
         --bg: #161B26;          /* deep night blue, not black */
         --bg-light: #1F2532;
         --bg-surface: #1F2532;
@@ -150,4 +160,53 @@
         --info-bg: #5FA6C833;
         --info-bg1: #5FA6C81A;
     }
+}
+
+/* Explicit night, chosen via the toggle (wins over a light OS preference).
+   Identical to the prefers-color-scheme block above — keep the two in sync. */
+:root[data-theme="dark"] {
+    --bg: #161B26;          /* deep night blue, not black */
+    --bg-light: #1F2532;
+    --bg-surface: #1F2532;
+    --bg-elevated: #2A3142;
+
+    --text: #ECE2C9;        /* warm cream, not white */
+    --text-soft: #B5A88E;
+
+    --accent: #F2606C;      /* pioneer red, lifted for night — passes AA as link text */
+    --accent-hover: #FF7A85;
+    --accent-muted: #5A3338;
+
+    --target-bg: #F2606C2E;
+
+    --sunset: #F5A878;
+    --sky: #6F8EA3;
+    --pine: #6E8B5C;
+
+    --border: #3A4254;
+
+    --code-bg: #12161E;
+    --input-bg: #1F2532;
+    --code-inline: var(--sunset);
+
+    --bg-sidebar: #1A2030;
+    --bg-table-head: #222A3A;
+
+    --surface-hover: rgb(236 226 201 / 0.05);
+
+    /* Warm-tint shadows collapse to near-black depth at night. */
+    --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.35);
+    --shadow-modal: 0 16px 48px rgba(0, 0, 0, 0.5);
+
+    --selection-bg: var(--accent);
+    --selection-text: var(--bg);
+
+    --warning: #F46974;     /* clears AA on the gradient's strongest band */
+    --warning-bg: #E8404E33;
+    --warning-bg1: #E8404E1A;
+
+    /* Info lifted for night — light sky-blue clears AA on the dark panel. */
+    --info: #86C0DA;
+    --info-bg: #5FA6C833;
+    --info-bg1: #5FA6C81A;
 }

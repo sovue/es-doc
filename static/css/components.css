@@ -351,6 +351,63 @@
     color: var(--accent);
 }
 
+/* ── Theme toggle (light ⇄ dark) ─────────────────────────────
+   Icon-only control at the end of the nav. Ships [hidden]; theme.js
+   reveals it. The sun/moon swap mirrors the token conditions in vars.css:
+   whichever scene is active shows its own icon. */
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 38px;
+    height: 38px;
+    align-self: center;
+    margin-left: 4px;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: var(--radius-sm);
+    color: var(--text-soft);
+    cursor: pointer;
+    transition: color 0.15s var(--ease-out);
+}
+
+.theme-toggle:hover {
+    color: var(--accent);
+}
+
+.theme-toggle:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -3px;
+    color: var(--accent);
+}
+
+/* Default (light scene): show the sun, hide the moon. */
+.theme-toggle-moon {
+    display: none;
+}
+
+/* Explicit night, or a dark OS preference that hasn't been overridden to
+   light — show the moon instead (mirrors the vars.css dark selectors). */
+:root[data-theme="dark"] .theme-toggle-sun {
+    display: none;
+}
+
+:root[data-theme="dark"] .theme-toggle-moon {
+    display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle-sun {
+        display: none;
+    }
+
+    :root:not([data-theme="light"]) .theme-toggle-moon {
+        display: block;
+    }
+}
+
 /* ── Site footer ─────────────────────────────────────────── */
 
 .site-footer {
@@ -876,10 +933,16 @@ a.section-row:focus-visible .section-arrow {
         padding: 0 16px;
     }
 
-    /* Four items share the bar since «Ресурсы» joined; 8px keeps them all
-       on one line at 375px while the tap height stays 52px. */
+    /* Four items share the bar since «Ресурсы» joined; the theme toggle
+       joins them too, so tighten padding to 6px and trim the toggle's box
+       to keep everything on one line at 375px (tap height stays 52px). */
     .nav-links a {
-        padding-inline: 8px;
+        padding-inline: 6px;
+    }
+
+    .theme-toggle {
+        width: 34px;
+        margin-left: 0;
     }
 
     /* hide GitHub link at narrowest widths to prevent nav overflow */
@@ -914,6 +977,7 @@ a.section-row:focus-visible .section-arrow {
     .gh-contributors-status a,
     .section-name,
     .section-arrow,
+    .theme-toggle,
     .to-top {
         transition: none;
     }

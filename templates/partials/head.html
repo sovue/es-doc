@@ -1,6 +1,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ page_title|default('ES Doc') }}</title>
+<!-- Apply a saved theme choice before the first paint so the page never
+     flashes the wrong scene. No stored choice = fall through to the OS
+     preference (prefers-color-scheme), leaving the attribute unset. -->
+<script>(function(){try{var t=localStorage.getItem('es-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <link rel="preload" href="/static/fonts/inter-400-normal-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/static/fonts/ptserif-700-normal-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/static/css/fonts.css">
@@ -11,6 +15,7 @@
 {% endfor %}<link rel="icon" href="/favicon.webp">
 <script src="/static/js/search.js" defer></script>
 <script src="/static/js/totop.js" defer></script>
+<script src="/static/js/theme.js" defer></script>
 {% if with_contributors_js %}<script src="/static/js/contributors.js" defer></script>
 {% endif %}
 {% if active == "docs" %}<script src="/static/js/docs.js" defer></script>
