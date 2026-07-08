@@ -144,32 +144,45 @@ async def community_page(resource, request: Request):
     # The community drop-in folder sits next to `game` in the assets root.
     return FileResponse(str(_confined_file(CONFIG.res_path.parent / 'community', resource)), headers=CACHE_HEADERS)
 
-def _artist_img_url(kind, name):
-    # Fetch by reference, not by arbitrary URL: only links already present in
-    # artists.yaml are reachable, so this is not an open proxy.
+def _artist_img_value(kind, name):
+    # Fetch by reference, not by arbitrary URL/path: only values already
+    # present in artists.yaml are reachable, so this is not an open proxy.
     if kind not in ('logo', 'preview'):
         return None
     item = next((a for a in CONFIG.artists if a['name'] == name), None)
     return item.get(kind) if item else None
 
+def _is_remote(value):
+    return value.startswith('http://') or value.startswith('https://')
+
+def _artists_local_dir():
+    # Locally-supplied artist images (dropped in by hand instead of linked
+    # from elsewhere) live here, next to `game` and `community`.
+    return CONFIG.res_path.parent / 'artists'
+
 @router.get('/artist/{kind}/{name}')
 async def artist_image(kind, name, request: Request):
 
-    url = _artist_img_url(kind, name)
-    if not url:
+    value = _artist_img_value(kind, name)
+    if not value:
         raise HTTPException(404, f'Изображение "{kind}" для «{name}» не существует.')
 
-    # Serving these through the backend (instead of hotlinking) normalises the
-    # image to WebP and sidesteps the browser's cross-origin ORB block.
-    if not artist_img_cached(url):
-        async with _artist_img_lock(url):
-            if not artist_img_cached(url):
+    # A local file (relative path under assets/artists/) is already trusted
+    # content — serve it as-is, confined against path traversal like /raw
+    # and /community. A remote URL is fetched, re-encoded to WebP and cached,
+    # which normalises the format and sidesteps the browser's ORB block.
+    if not _is_remote(value):
+        return FileResponse(str(_confined_file(_artists_local_dir(), value)), headers=CACHE_HEADERS)
+
+    if not artist_img_cached(value):
+        async with _artist_img_lock(value):
+            if not artist_img_cached(value):
                 try:
-                    await fetch_artist_img(url)
+                    await fetch_artist_img(value)
                 except Exception:
                     logger.exception(f'Fetching artist image "{kind}" for "{name}" failed.')
                     raise HTTPException(502, f'Не удалось загрузить изображение для «{name}».')
 
-    return FileResponse(str(artist_img_file(url)), media_type='image/webp', headers=CACHE_HEADERS)
+    return FileResponse(str(artist_img_file(value)), media_type='image/webp', headers=CACHE_HEADERS)
 
 main_router.include_router(router)
