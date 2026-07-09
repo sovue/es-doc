@@ -88,6 +88,19 @@ def build_tree(index=None):
         return []
 
 
+def flatten_tree(tree):
+    """Flatten a resolved docs tree (as returned by build_tree) into reading
+    order: pre-order, parent before its children — the order a reader moving
+    through the tree top to bottom would encounter each doc. Drops
+    `children` from each row; only {slug, title} survives, since that's all
+    the "next article" link needs."""
+    out = []
+    for node in tree:
+        out.append({'slug': node['slug'], 'title': node['title']})
+        out.extend(flatten_tree(node['children']))
+    return out
+
+
 def _score(label, q):
     """Rank a candidate label against the lowercased query `q`: 0 = prefix,
     1 = word-start, 2 = mid-word substring, -1 = no match — so prefix and

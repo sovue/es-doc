@@ -36,6 +36,18 @@
 
         <main class="content" id="main-content">
             {{ body|safe }}
+
+            {% if next_doc %}
+            <nav class="doc-next" aria-label="Следующая статья">
+                <a href="/docs/{{ next_doc.slug|urlencode }}" class="doc-next-link">
+                    <span class="doc-next-meta">
+                        <span class="doc-next-label">Следующая статья</span>
+                        <span class="doc-next-title">{{ next_doc.title }}</span>
+                    </span>
+                    <span class="doc-next-arrow" aria-hidden="true">→</span>
+                </a>
+            </nav>
+            {% endif %}
         </main>
 
     </div>

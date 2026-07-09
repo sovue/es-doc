@@ -328,6 +328,69 @@ img {
     overflow-wrap: break-word;
 }
 
+/* ── Next article ────────────────────────────────────────── */
+
+.doc-next {
+    margin-top: 56px;
+}
+
+.doc-next-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 20px 0;
+    border-top: 1px solid var(--border);
+    text-decoration: none;
+}
+
+.doc-next-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.doc-next-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+}
+
+.doc-next-title {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+    transition: color 0.15s var(--ease-out);
+}
+
+.doc-next-arrow {
+    font-size: 1.1rem;
+    color: var(--accent);
+    flex-shrink: 0;
+    transition: transform 0.15s var(--ease-out);
+}
+
+.doc-next-link:hover .doc-next-title,
+.doc-next-link:focus-visible .doc-next-title {
+    color: var(--accent);
+}
+
+.doc-next-link:hover .doc-next-arrow,
+.doc-next-link:focus-visible .doc-next-arrow {
+    transform: translateX(3px);
+}
+
+.doc-next-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+    border-radius: var(--radius-xs);
+}
+
 /* ── Heading anchors ─────────────────────────────────────── */
 
 .heading {
@@ -572,7 +635,9 @@ pre code .w { color: var(--code-whitespace); }
 @media (prefers-reduced-motion: reduce) {
     a,
     .anchor,
-    .code-copy {
+    .code-copy,
+    .doc-next-title,
+    .doc-next-arrow {
         transition: none;
     }
 

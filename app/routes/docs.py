@@ -5,6 +5,7 @@ from urllib.parse import quote
 
 from . import main_router
 from ..utils.config import CONFIG
+from ..utils.docs import flatten_tree
 from ..utils.file import templates, read_text
 from ..utils.md import render
 
@@ -16,6 +17,16 @@ async def index(request: Request):
     # tree.yaml. Only pages named in the tree are listed; the cache is kept warm
     # by the lifespan refresh (see utils/lifespan.py).
     return templates.TemplateResponse(request, 'docs_index.html', {'tree': CONFIG.docs_tree})
+
+def _next_doc(doc):
+    # Reading order is the tree flattened pre-order (see flatten_tree): the
+    # doc right after this one is "next". A doc absent from tree.yaml (or
+    # the last one in it) simply has no next.
+    flat = flatten_tree(CONFIG.docs_tree)
+    for i, node in enumerate(flat):
+        if node['slug'] == doc and i + 1 < len(flat):
+            return flat[i + 1]
+    return None
 
 @router.get('/{doc}')
 async def page(doc, request: Request):
@@ -44,6 +55,8 @@ async def page(doc, request: Request):
     if any(i in request.query_params for i in ['r', 'raw']):
         return PlainTextResponse(body)
 
-    return templates.TemplateResponse(request, 'doc.html', {'title': title or doc, 'body': body, 'nav': nav, 'doc': doc})
+    return templates.TemplateResponse(request, 'doc.html', {
+        'title': title or doc, 'body': body, 'nav': nav, 'doc': doc, 'next_doc': _next_doc(doc),
+    })
 
 main_router.include_router(router)
