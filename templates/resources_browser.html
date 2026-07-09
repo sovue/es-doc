@@ -69,13 +69,17 @@
         <div class="page-main page-main--res">
 
             <nav class="fb-crumbs" aria-label="Путь к папке">
-                {% for label, href in crumbs %}
-                    {%- if not loop.last -%}
-                        <a href="{{ href }}">{{ label }}</a><span class="fb-crumbs-sep" aria-hidden="true">›</span>
-                    {%- else -%}
-                        <span aria-current="page">{{ label }}</span>
-                    {%- endif -%}
-                {% endfor %}
+                <ol class="fb-crumbs-list">
+                    {% for label, href in crumbs %}
+                    <li>
+                        {%- if not loop.last -%}
+                            <a href="{{ href }}">{{ label }}</a>
+                        {%- else -%}
+                            <span aria-current="page">{{ label }}</span>
+                        {%- endif -%}
+                    </li>
+                    {% endfor %}
+                </ol>
                 <span class="fb-stats">{{ stats }}</span>
             </nav>
 

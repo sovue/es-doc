@@ -792,6 +792,31 @@ a.res-file:focus-visible {
     gap: 4px 8px;
     margin-bottom: 14px;
     font-family: var(--font-mono);
+}
+
+/* An ordered list: the path is a sequence, and screen readers announce it as
+   "list, N items" with position. Separators are decorative CSS, so they're
+   never voiced between the parts. */
+.fb-crumbs-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+}
+
+.fb-crumbs-list li {
+    display: inline-flex;
+    align-items: baseline;
+}
+
+.fb-crumbs-list li:not(:first-child)::before {
+    /* Empty alt text (the '/ ""') keeps the glyph visual-only, so screen
+       readers announce the list structure without voicing "›" each step. */
+    content: '›' / '';
+    margin: 0 8px;
+    color: var(--text-soft);
     font-size: 0.875rem;
 }
 
@@ -815,10 +840,6 @@ a.res-file:focus-visible {
 .fb-crumbs [aria-current] {
     color: var(--text);
     font-weight: 600;
-}
-
-.fb-crumbs-sep {
-    color: var(--text-soft);
 }
 
 .fb-stats {
@@ -1042,6 +1063,21 @@ video.fb-media {
 
     .res-file {
         display: none;
+    }
+
+    /* Touch comfort: lift the filter fields and the row action buttons to a
+       finger-sized target on phones. min-* (not fixed width/height) so the
+       labelled copy button keeps its text width and only grows if smaller. */
+    .res-filter input[type="search"],
+    .res-filter select {
+        height: 44px;
+    }
+
+    .res-copy,
+    .res-dl,
+    .res-play {
+        min-width: 44px;
+        min-height: 44px;
     }
 }
 
