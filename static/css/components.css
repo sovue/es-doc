@@ -54,6 +54,35 @@
     color: var(--accent);
 }
 
+/* A quiet way back to the parent section. Muted at rest (unlike the
+   accent-colored eyebrow above) so it doesn't compete for the one-red-
+   spotlight the Galstuk Rule reserves for genuine emphasis. */
+.page-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 14px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    text-decoration: none;
+    transition: color 0.15s var(--ease-out);
+}
+
+.page-back:hover {
+    color: var(--accent);
+}
+
+.page-back:focus-visible {
+    color: var(--accent);
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+}
+
 .page-title {
     margin: 0;
     font-family: var(--font-serif);
@@ -1035,6 +1064,7 @@ a.section-row:focus-visible .section-arrow {
     .section-name,
     .section-arrow,
     .lit-row a,
+    .page-back,
     .theme-toggle,
     .to-top {
         transition: none;
