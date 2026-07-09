@@ -29,6 +29,14 @@ LINK_LABELS = {
     'behance': 'Behance',
     'youtube': 'YouTube',
     'site': 'Сайт',
+    'deviantart': 'DeviantArt',
+    'tumblr': 'Tumblr',
+    'twitch': 'Twitch',
+    'furaffinity': 'FurAffinity',
+    'pixiv': 'Pixiv',
+    'patreon': 'Patreon',
+    'tiktok': 'TikTok',
+    'bluesky': 'Bluesky',
 }
 
 @router.get('/artists')
