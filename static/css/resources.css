@@ -1064,15 +1064,26 @@ video.fb-media {
 /* ── Reduced motion ──────────────────────────────────────── */
 
 @media (max-width: 640px) {
+    /* Volume drops to its own full-width row instead of squeezing beside the
+       seek bar (there isn't horizontal room for both on a phone) — it stays
+       reachable rather than being cut, the only volume control available
+       once the device's own hardware buttons are out of easy reach. */
     .res-nowplaying {
         left: 16px;
         bottom: 16px;
         width: calc(100vw - 90px);
         padding: 6px 12px;
+        flex-wrap: wrap;
+        row-gap: 4px;
     }
 
     .res-nowplaying .res-volume {
-        display: none;
+        flex: 1 1 100%;
+    }
+
+    .res-nowplaying .res-volume input {
+        flex: 1;
+        width: auto;
     }
 }
 
