@@ -20,13 +20,16 @@
 {%- endmacro %}
 
 {# Monogram sits under the image; if there's no preview (or it fails to load,
-   marked by artists.js), the image is gone/hidden and the monogram shows. #}
+   marked by artists.js), the image is gone/hidden and the monogram shows.
+   The status badge floats in the corner: secondary metadata, out of the way
+   of the name and contact links that follow in the card body. #}
 {% macro preview(a) %}
 <span class="artist-preview{% if not a.preview %} artist-preview--none{% endif %}">
     <span class="artist-monogram" aria-hidden="true">{{ a.name[:1]|upper }}</span>
     {%- if a.preview %}
     <img class="artist-preview-img" src="/resource/artist/preview/{{ a.name|urlencode }}" alt="" loading="lazy" decoding="async">
     {%- endif %}
+    <span class="artist-status-badge">{{ status_pill(a.status) }}</span>
 </span>
 {%- endmacro %}
 
@@ -114,7 +117,6 @@
                         <div class="artist-card-body">
                             <div class="artist-card-head">
                                 {{ name_id(a) }}
-                                {{ status_pill(a.status) }}
                             </div>
                             {{ links_row(a.links) }}
                         </div>

@@ -154,29 +154,37 @@
     padding: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 4px 12px;
+    gap: 6px;
 }
 
+/* This is the reason a visitor comes to the page (how to reach the artist),
+   so it carries more weight than plain inline text: a bordered chip with
+   full-ink color at rest, not a muted afterthought under the status pill.
+   Shape and weight do the work, not color, so the accent stays a hover-only
+   spotlight (Galstuk Rule). */
 .artist-links a {
     display: inline-flex;
     align-items: center;
     /* Padding grows the tap area past the WCAG 2.5.8 (AA) 24px floor at every
        size; the mobile block below lifts it further toward comfortable touch. */
-    padding-block: 4px;
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-light);
     font-family: var(--font-mono);
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--text-soft);
+    color: var(--text);
     text-decoration: none;
-    transition: color 0.15s var(--ease-out);
+    transition: color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), background-color 0.15s var(--ease-out);
 }
 
 .artist-links a:hover {
     color: var(--accent);
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    border-color: var(--accent-muted);
+    background: var(--bg-surface);
 }
 
 /* ── Gallery ──────────────────────────────────────────────── */
@@ -233,6 +241,19 @@
 /* No image: drop the divider so an empty tile isn't double-lined. */
 .artist-preview--none {
     border-bottom-color: transparent;
+}
+
+/* Status recedes to a corner badge on the gallery card: it's metadata you
+   scan, not the reason you're on this page. A solid backing plate (not the
+   pill's own ~15% tint) keeps it legible over any preview photo. */
+.artist-status-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 1;
+    display: inline-flex;
+    background: var(--bg-surface);
+    border-radius: var(--radius-full);
 }
 
 .artist-card-body {
@@ -371,7 +392,7 @@
     }
 
     .artist-links a {
-        padding-block: 9px;
+        padding: 10px 12px;
     }
 }
 
