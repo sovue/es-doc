@@ -40,6 +40,14 @@
     padding: 72px 48px 64px;
 }
 
+/* Tighter variant for nested browsing pages that stack more chrome below
+   the hero (tabs, category nav, filters) before content starts: resources
+   category/browser/viewer. The hero still carries the title, back-link and
+   lead, just with less air around them. */
+.page-hero--tight {
+    padding: 28px 48px 24px;
+}
+
 .page-hero-inner {
     max-width: 640px;
 }
@@ -1068,6 +1076,10 @@ a.section-row:focus-visible .section-arrow {
 
     .page-hero--lg {
         padding: 48px 20px 40px;
+    }
+
+    .page-hero--tight {
+        padding: 24px 20px 20px;
     }
 
     .page-main {

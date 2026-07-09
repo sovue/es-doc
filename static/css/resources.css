@@ -96,9 +96,12 @@
 /* ── Listing shell ───────────────────────────────────────── */
 
 /* Rows carry a thumbnail + name + actions, so they earn a wider column
-   than prose pages. */
+   than prose pages. Tighter top padding than the site default: this page
+   already stacks tabs and a category strip above it, so the full 56px
+   rhythm reads as an extra gap rather than breathing room. */
 .page-main--res {
     max-width: 920px;
+    padding-top: 28px;
 }
 
 .res-usage {
