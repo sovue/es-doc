@@ -437,6 +437,7 @@
 .site-footer p {
     margin: 0;
     display: flex;
+    align-items: center;
     gap: 20px;
 }
 
@@ -457,6 +458,11 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
+}
+
+.footer-github {
+    padding: 6px;
+    line-height: 0;
 }
 
 /* ── Back to top ─────────────────────────────────────────── */
@@ -921,7 +927,9 @@ a.section-row:focus-visible .section-arrow {
     }
 
     .site-footer {
-        padding: 20px;
+        /* Extra right padding clears the fixed to-top button (44px + 16px
+           offset), which otherwise sits over the footer's last line here. */
+        padding: 20px 76px 20px 20px;
     }
 
     .page-hero {
@@ -960,11 +968,6 @@ a.section-row:focus-visible .section-arrow {
     .theme-toggle {
         width: 34px;
         margin-left: 0;
-    }
-
-    /* hide GitHub link at narrowest widths to prevent nav overflow */
-    .nav-links li:last-child {
-        display: none;
     }
 
     .section-desc {
