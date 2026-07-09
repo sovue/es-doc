@@ -68,6 +68,15 @@ class _ConfigContainer():
         # {name, status, preview, logo, links}.
         self.artists = []
 
+        # News/content channels, parsed from news.yaml at startup (see
+        # utils/lifespan/news_cache.py). List of dicts: {name, url, note}.
+        self.news = []
+
+        # Reading list, parsed from literature.yaml at startup (see
+        # utils/lifespan/literature_cache.py). List of dicts:
+        # {name, items: [{title, url}]}.
+        self.literature = []
+
         self.docs_path: Path = None
         self.res_path: Path = None
 

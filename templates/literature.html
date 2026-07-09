@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% set page_title = 'Полезная литература — ES Doc' %}
+{% set body_class = 'bg-solid' %}
+
+{% block content %}
+<div class="page">
+
+    <main id="main-content">
+
+        <section class="page-hero">
+            <div class="page-hero-inner">
+                <h1 class="page-title">Полезная литература</h1>
+                <p class="page-lead">
+                    Список литературы по писательскому мастерству и основам программирования
+                    на Python, полезной при создании модов.
+                </p>
+            </div>
+        </section>
+
+        <div class="page-main">
+
+            {% if categories %}
+            {% for cat in categories %}
+            <section class="contributors-section" aria-labelledby="lit-cat-{{ loop.index }}">
+                <h2 class="authors-list-label" id="lit-cat-{{ loop.index }}">{{ cat.name }}</h2>
+                <ul class="lit-list" role="list">
+                    {% for item in cat['items'] %}
+                    <li class="lit-row">
+                        {% if item.url %}<a href="{{ item.url }}">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </section>
+            {% endfor %}
+            {% else %}
+            <div class="res-empty">
+                <p class="res-empty-title">Список пока пуст.</p>
+                <p>Знаете книгу или статью, которая стоит здесь указать —
+                   <a href="https://github.com/sovue/es-doc/issues">расскажите нам</a>.</p>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </main>
+
+    {% include "partials/footer.html" %}
+
+</div>
+{% endblock %}

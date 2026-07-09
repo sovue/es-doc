@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% set page_title = 'Новостные ресурсы — ES Doc' %}
+{% set body_class = 'bg-solid' %}
+
+{% block content %}
+<div class="page">
+
+    <main id="main-content">
+
+        <section class="page-hero">
+            <div class="page-hero-inner">
+                <h1 class="page-title">Новостные ресурсы</h1>
+                <p class="page-lead">
+                    Каналы и сообщества, которые публикуют новости и контент, связанный
+                    с «Бесконечным Летом» и модами к нему.
+                </p>
+            </div>
+        </section>
+
+        <div class="page-main">
+
+            {% if resources %}
+            <ul class="sections-list" role="list">
+                {% for r in resources %}
+                <li>
+                    <a href="{{ r.url }}" class="section-row">
+                        <span class="section-name">{{ r.name }}</span>
+                        {% if r.note %}<span class="section-desc">{{ r.note }}</span>{% endif %}
+                        <span class="section-arrow" aria-hidden="true">→</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="res-empty">
+                <p class="res-empty-title">Список пока пуст.</p>
+                <p>Знаете канал или сообщество, которое стоит здесь указать —
+                   <a href="https://github.com/sovue/es-doc/issues">расскажите нам</a>.</p>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </main>
+
+    {% include "partials/footer.html" %}
+
+</div>
+{% endblock %}

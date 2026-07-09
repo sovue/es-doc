@@ -6,6 +6,8 @@ from ..logging import root_logger
 
 from .artists_cache import parse_artists
 from .docs_cache import cache_docs, worker_cache_docs
+from .literature_cache import parse_literature
+from .news_cache import parse_news
 from .resources_cache import parse_resources
 from .sprites_cache import parse_sprites, SPRITES_PATH
 
@@ -35,6 +37,16 @@ async def lifespan(app: FastAPI):
         await asyncio.to_thread(parse_artists)
     except Exception:
         logger.exception('Parsing artists.yaml failed; /artists will be empty until restart.')
+
+    try:
+        await asyncio.to_thread(parse_news)
+    except Exception:
+        logger.exception('Parsing news.yaml failed; /news will be empty until restart.')
+
+    try:
+        await asyncio.to_thread(parse_literature)
+    except Exception:
+        logger.exception('Parsing literature.yaml failed; /literature will be empty until restart.')
 
     # Populate the caches before the app starts serving so the first request
     # never races an empty tree or search corpus.

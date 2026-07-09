@@ -775,6 +775,43 @@ a.section-row:focus-visible .section-arrow {
     border-radius: var(--radius-xs);
 }
 
+/* ── Reading list (/literature) ──────────────────────────── */
+
+.lit-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+}
+
+.lit-list li {
+    border-bottom: 1px solid var(--border);
+}
+
+.lit-row {
+    display: block;
+    padding: 14px 0;
+    font-size: 1rem;
+    color: var(--text);
+    line-height: 1.5;
+}
+
+.lit-row a {
+    color: var(--text);
+    text-decoration: none;
+    transition: color 0.15s var(--ease-out);
+}
+
+.lit-row a:hover {
+    color: var(--accent);
+}
+
+.lit-row a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+}
+
 /* ── GitHub contributors gallery ─────────────────────────── */
 
 .gh-contributors-status {
@@ -997,6 +1034,7 @@ a.section-row:focus-visible .section-arrow {
     .gh-contributors-status a,
     .section-name,
     .section-arrow,
+    .lit-row a,
     .theme-toggle,
     .to-top {
         transition: none;
