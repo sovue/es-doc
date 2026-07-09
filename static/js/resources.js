@@ -72,6 +72,11 @@
     const buttons = document.querySelectorAll('.res-play');
     if (!buttons.length) return;
 
+    // Reuses the page's shared status live region (also used by the copy
+    // buttons above) so screen-reader users hear what's playing — the bar
+    // itself is a floating div with no live region of its own.
+    const status = document.getElementById('res-copy-status');
+
     const audio = new Audio();
     audio.preload = 'none';
     audio.volume = parseFloat(localStorage.getItem('es-doc-volume') ?? '1');
@@ -173,11 +178,16 @@
     audio.addEventListener('pause', () => {
         bar.classList.add('res-nowplaying--paused');
         pause.setAttribute('aria-label', 'Продолжить');
+        if (status) status.textContent = 'Пауза.';
     });
 
+    // Fires for both a fresh track (the click handler below sets audio.src
+    // then calls .play()) and resuming after pause, so one announcement
+    // covers both without duplicating the "now playing" text in two places.
     audio.addEventListener('play', () => {
         bar.classList.remove('res-nowplaying--paused');
         pause.setAttribute('aria-label', 'Пауза');
+        if (status) status.textContent = 'Воспроизведение: ' + (barName.textContent || '') + '.';
     });
 
     buttons.forEach(btn => {
@@ -249,6 +259,33 @@
 
     box.hidden = false;
 
+    /* ── URL state: text/location/time/sort round-trip through the query
+       string, so a filtered view ("night backgrounds") is bookmarkable and
+       survives a reload. The undeclared/NSFW toggles stay in localStorage
+       instead (below and in the NSFW block above): they're a standing
+       viewing preference, not something tied to this particular page. ── */
+    const urlParams = new URLSearchParams(location.search);
+    if (urlParams.has('q')) input.value = urlParams.get('q');
+    if (locSelect && [...locSelect.options].some(o => o.value === urlParams.get('loc'))) {
+        locSelect.value = urlParams.get('loc');
+    }
+    if (timeSelect && [...timeSelect.options].some(o => o.value === urlParams.get('time'))) {
+        timeSelect.value = urlParams.get('time');
+    }
+    if (sortSelect && [...sortSelect.options].some(o => o.value === urlParams.get('sort'))) {
+        sortSelect.value = urlParams.get('sort');
+    }
+
+    function syncUrl() {
+        const p = new URLSearchParams();
+        if (input.value) p.set('q', input.value);
+        if (locSelect?.value) p.set('loc', locSelect.value);
+        if (timeSelect?.value) p.set('time', timeSelect.value);
+        if (sortSelect?.value && sortSelect.value !== 'az') p.set('sort', sortSelect.value);
+        const qs = p.toString();
+        history.replaceState(null, '', location.pathname + (qs ? '?' + qs : ''));
+    }
+
     const apply = () => {
         const q = input.value.trim().toLowerCase();
         const loc = locSelect?.value || '';
@@ -276,6 +313,8 @@
         const base = showFiles ? allTotal : declaredTotal;
         if (count) count.textContent = shown === base ? String(base) : `${shown} из ${base}`;
         if (empty) empty.hidden = shown > 0;
+
+        syncUrl();
     };
 
     // Debounce typing/paste so a burst runs one filter pass, not one per
@@ -322,7 +361,7 @@
         small: el => [dirsFirst(el), +el.dataset.size || 0],
     };
 
-    sortSelect?.addEventListener('change', () => {
+    const doSort = () => {
         const mode = sortSelect.value;
         const dir = mode === 'za' ? -1 : 1;
         const key = keys[mode] || keys.az;
@@ -338,7 +377,13 @@
                 })
                 .forEach(li => list.appendChild(li));
         });
-    });
+    };
+
+    sortSelect?.addEventListener('change', () => { doSort(); syncUrl(); });
+
+    // A sort mode restored from the URL needs to actually reorder the DOM;
+    // setting .value alone doesn't fire 'change'.
+    if (sortSelect && sortSelect.value !== 'az') doSort();
 })();
 
 /* ── Lightbox (smooth zoom on thumbnail click) ── */

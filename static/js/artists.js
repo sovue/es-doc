@@ -23,6 +23,27 @@
 
     if (controls) controls.hidden = false;
 
+    /* ── URL state: view/search/status/sort round-trip through the query
+       string, so a filtered view ("open artists, board view") is
+       bookmarkable and survives a reload. replaceState (not pushState) so
+       every keystroke doesn't add a back-button stop. ── */
+    const urlParams = new URLSearchParams(location.search);
+    const initialView = views[urlParams.get('view')] ? urlParams.get('view') : 'gallery';
+    if (search && urlParams.has('q')) search.value = urlParams.get('q');
+    if (statusSel && urlParams.has('status')) statusSel.value = urlParams.get('status');
+    if (sortSel && urlParams.has('sort')) sortSel.value = urlParams.get('sort');
+
+    let currentView = initialView;
+    function syncUrl() {
+        const p = new URLSearchParams();
+        if (currentView !== 'gallery') p.set('view', currentView);
+        if (search && search.value) p.set('q', search.value);
+        if (statusSel && statusSel.value) p.set('status', statusSel.value);
+        if (sortSel && sortSel.value && sortSel.value !== 'az') p.set('sort', sortSel.value);
+        const qs = p.toString();
+        history.replaceState(null, '', location.pathname + (qs ? '?' + qs : ''));
+    }
+
     /* ── External preview images: fall back to the monogram on error ── */
     root.querySelectorAll('.artist-preview-img').forEach(img => {
         const done = () => {
@@ -45,6 +66,7 @@
     /* ── View switching ── */
     function setView(v) {
         if (!views[v]) return;
+        currentView = v;
         Object.keys(views).forEach(k => { if (views[k]) views[k].hidden = k !== v; });
         viewBtns.forEach(b => {
             const on = b.dataset.view === v;
@@ -55,6 +77,7 @@
         // board is already grouped by status, so the control would sit there
         // doing nothing. Hide it rather than leave a dead control on screen.
         if (sortSel) sortSel.hidden = v === 'board';
+        syncUrl();
     }
     viewBtns.forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
 
@@ -86,6 +109,8 @@
 
         // Shared empty-state under all views.
         root.querySelectorAll('.artists-empty').forEach(e => { e.hidden = shown !== 0; });
+
+        syncUrl();
     }
 
     // Debounce typing/paste so a burst runs one filter pass, not one per
@@ -143,8 +168,9 @@
         });
     }
 
-    if (sortSel) sortSel.addEventListener('change', () => sortAll(sortSel.value));
+    if (sortSel) sortSel.addEventListener('change', () => { sortAll(sortSel.value); syncUrl(); });
 
-    setView('gallery');
+    setView(initialView);
+    if (sortSel && sortSel.value !== 'az') sortAll(sortSel.value);
     apply();
 })();
