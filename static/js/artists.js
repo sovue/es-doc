@@ -51,6 +51,10 @@
             b.setAttribute('aria-pressed', on ? 'true' : 'false');
             b.classList.toggle('view-btn--active', on);
         });
+        // Sort only reorders the gallery/table containers (see sortAll below);
+        // board is already grouped by status, so the control would sit there
+        // doing nothing. Hide it rather than leave a dead control on screen.
+        if (sortSel) sortSel.hidden = v === 'board';
     }
     viewBtns.forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
 
