@@ -617,11 +617,20 @@ a.res-file:focus-visible {
     color: color-mix(in oklab, var(--char) 55%, var(--text));
 }
 
+/* Dark lifts the character colours closer to full strength. Served two ways
+   so the theme toggle overrides the OS, mirroring vars.css: the media query
+   (guarded so a toggle-forced light OS opts out) and the explicit night
+   attribute. Keep the two blocks in sync. */
 @media (prefers-color-scheme: dark) {
-    .res-jump a[style],
-    .res-group-code[style] {
+    :root:not([data-theme="light"]) .res-jump a[style],
+    :root:not([data-theme="light"]) .res-group-code[style] {
         color: color-mix(in oklab, var(--char) 80%, var(--text));
     }
+}
+
+:root[data-theme="dark"] .res-jump a[style],
+:root[data-theme="dark"] .res-group-code[style] {
+    color: color-mix(in oklab, var(--char) 80%, var(--text));
 }
 
 .res-jump a:hover {
