@@ -86,23 +86,23 @@
                 </div>
 
                 <div class="artists-filters">
-                    <input type="search" id="artist-search" class="artist-search-input"
+                    <input type="search" id="artist-search" class="filter-input"
                            placeholder="Поиск по имени…" autocomplete="off" spellcheck="false"
                            aria-label="Поиск художника по имени">
-                    <select id="artist-status" aria-label="Статус заказов">
+                    <select id="artist-status" class="filter-select" aria-label="Статус заказов">
                         <option value="">Любой статус</option>
                         {%- for status, label, count in status_counts %}
                         <option value="{{ status }}">{{ label }} ({{ count }})</option>
                         {%- endfor %}
                     </select>
-                    <select id="artist-sort" aria-label="Сортировка">
+                    <select id="artist-sort" class="filter-select" aria-label="Сортировка">
                         <option value="az">А-Я</option>
                         <option value="za">Я-А</option>
                         <option value="open">Сначала открытые</option>
                     </select>
                 </div>
 
-                <p class="artists-count" aria-live="polite"></p>
+                <p class="artists-count filter-count" aria-live="polite"></p>
             </div>
 
             <!-- Gallery (default; the only view a no-JS visitor sees) -->

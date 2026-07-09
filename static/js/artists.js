@@ -95,6 +95,18 @@
     if (search) search.addEventListener('input', scheduleApply);
     if (statusSel) statusSel.addEventListener('change', apply);
 
+    // Escape clears the search (mirrors resources.js); the shared
+    // .filter-input styling drops the native cancel button in favour of this.
+    if (search) {
+        search.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && search.value) {
+                search.value = '';
+                apply();
+                e.stopPropagation();
+            }
+        });
+    }
+
     /* ── Sorting: reorder items inside every view's container ── */
     const collator = new Intl.Collator('ru', { sensitivity: 'base' });
     const statusRank = { open: 0, unknown: 1, closed: 2 };

@@ -132,38 +132,12 @@
     gap: 10px;
 }
 
-.res-filter input[type="search"],
-.res-filter select {
-    height: 34px;
-    padding: 0 10px;
-    background: var(--input-bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-family: inherit;
-    font-size: 0.875rem;
-    transition: border-color 0.15s var(--ease-out);
-}
-
-.res-filter input[type="search"] {
-    flex: 1 1 200px;
+/* Control styling (height, focus ring, cancel-button reset) comes from the
+   shared .filter-input/.filter-select in components.css. The search field
+   keeps a resources-specific max-width: this bar can carry more controls
+   (location, time, sort, toggles, volume) than the artists one. */
+.res-filter .filter-input {
     max-width: 360px;
-    min-width: 0;
-}
-
-.res-filter select:hover {
-    border-color: var(--text-soft);
-}
-
-.res-filter input[type="search"]:focus,
-.res-filter select:focus-visible {
-    outline: none;
-    border-color: var(--accent);
-}
-
-.res-filter input::-webkit-search-cancel-button {
-    -webkit-appearance: none;
-    appearance: none;
 }
 
 /* ── Toggles (undeclared files, NSFW) ────────────────────── */
@@ -333,10 +307,7 @@
 }
 
 .res-filter-count {
-    margin: 6px 0 0;
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    color: var(--text-soft);
+    margin-top: 6px;
 }
 
 .res-filter-empty {
@@ -1074,14 +1045,11 @@ video.fb-media {
         display: none;
     }
 
-    /* Touch comfort: lift the filter fields and the row action buttons to a
-       finger-sized target on phones. min-* (not fixed width/height) so the
-       labelled copy button keeps its text width and only grows if smaller. */
-    .res-filter input[type="search"],
-    .res-filter select {
-        height: 44px;
-    }
-
+    /* Touch comfort: lift the row action buttons to a finger-sized target on
+       phones (the filter fields get this from the shared .filter-input/
+       .filter-select mobile rule in components.css). min-* (not fixed
+       width/height) so the labelled copy button keeps its text width and
+       only grows if smaller. */
     .res-copy,
     .res-dl,
     .res-play {

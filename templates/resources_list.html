@@ -89,22 +89,22 @@
 
             <div class="res-filter" hidden>
                 <div class="res-filter-controls">
-                    <input type="search" id="res-filter-input" placeholder="Фильтр по имени…"
+                    <input type="search" id="res-filter-input" class="filter-input" placeholder="Фильтр по имени…"
                            autocomplete="off" spellcheck="false" aria-label="Фильтр по имени">
 
                     {% if category == 'bg' %}
-                    <select id="res-loc-select" aria-label="Локация">
+                    <select id="res-loc-select" class="filter-select" aria-label="Локация">
                         <option value="">Все локации</option>
                         {% for loc in bg_locations %}<option value="{{ loc }}">{{ loc }}</option>{% endfor %}
                     </select>
-                    <select id="res-time-select" aria-label="Время суток">
+                    <select id="res-time-select" class="filter-select" aria-label="Время суток">
                         <option value="">Любое время</option>
                         {% for key, label in bg_times %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
                     </select>
                     {% endif %}
 
                     {% if category_meta.media != 'sprites' %}
-                    <select id="res-sort-select" aria-label="Сортировка">
+                    <select id="res-sort-select" class="filter-select" aria-label="Сортировка">
                         <option value="az">А-Я</option>
                         <option value="za">Я-А</option>
                         {% if has_undeclared %}
@@ -140,7 +140,7 @@
                     </label>
                     {% endif %}
                 </div>
-                <p class="res-filter-count" aria-live="polite" data-total="{{ count }}" data-all="{{ count_all }}"></p>
+                <p class="res-filter-count filter-count" aria-live="polite" data-total="{{ count }}" data-all="{{ count_all }}"></p>
             </div>
 
             {% if category_meta.media == 'sprites' %}
