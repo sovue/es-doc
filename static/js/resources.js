@@ -278,7 +278,16 @@
         if (empty) empty.hidden = shown > 0;
     };
 
-    input.addEventListener('input', apply);
+    // Debounce typing/paste so a burst runs one filter pass, not one per
+    // character — a sprite page can carry a few hundred rows, and the filter
+    // touches every one.
+    let filterTimer = null;
+    const scheduleApply = () => {
+        clearTimeout(filterTimer);
+        filterTimer = setTimeout(apply, 80);
+    };
+
+    input.addEventListener('input', scheduleApply);
     locSelect?.addEventListener('change', apply);
     timeSelect?.addEventListener('change', apply);
 

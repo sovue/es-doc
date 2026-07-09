@@ -84,7 +84,15 @@
         root.querySelectorAll('.artists-empty').forEach(e => { e.hidden = shown !== 0; });
     }
 
-    if (search) search.addEventListener('input', apply);
+    // Debounce typing/paste so a burst runs one filter pass, not one per
+    // character; filtering touches every artist across all three views.
+    let filterTimer = null;
+    const scheduleApply = () => {
+        clearTimeout(filterTimer);
+        filterTimer = setTimeout(apply, 80);
+    };
+
+    if (search) search.addEventListener('input', scheduleApply);
     if (statusSel) statusSel.addEventListener('change', apply);
 
     /* ── Sorting: reorder items inside every view's container ── */
