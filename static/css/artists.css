@@ -379,6 +379,12 @@
         gap: 14px;
     }
 
+    .artist-card-head .artist-id {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
     .board-col {
         min-width: 200px;
     }
