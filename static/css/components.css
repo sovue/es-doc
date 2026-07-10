@@ -128,11 +128,18 @@
     z-index: 10;
 }
 
-/* align-items: stretch so child links fill the full 52px tap height */
+/* align-items: stretch so child links fill the full 52px tap height.
+   A fixed gap, not justify-content: space-between — space-between
+   redistributes all leftover row width as inter-item gaps, so on wide
+   viewports the logo/search/links/toggle drift apart into disconnected
+   islands. A flat gap keeps every pair a consistent, deliberate distance;
+   .nav-search still grows to fill spare width (flex: 1 1 auto, capped at
+   max-width) same as before, and any width left over after that cap just
+   trails past the toggle instead of inflating the gaps between items. */
 .site-nav {
     display: flex;
     align-items: stretch;
-    justify-content: space-between;
+    gap: 32px;
     padding: 0 48px;
     min-height: 52px;
 }
@@ -210,7 +217,6 @@
     position: relative;
     flex: 1 1 auto;
     max-width: 360px;
-    margin: 0 24px;
     display: flex;
     align-items: center;
 }
@@ -368,7 +374,6 @@
     justify-content: center;
     width: 44px;
     height: 44px;
-    margin-left: auto;
     padding: 0;
     background: none;
     border: 0;
@@ -397,10 +402,9 @@
     align-items: center;
     justify-content: center;
     flex: none;
-    width: 38px;
-    height: 38px;
+    width: 44px;
+    height: 44px;
     align-self: center;
-    margin-left: 4px;
     padding: 0;
     background: none;
     border: 0;
@@ -1028,8 +1032,25 @@ a.section-row:focus-visible .section-arrow {
 
 /* ── Responsive ──────────────────────────────────────────── */
 
+/* Narrow desktop/tablet: the full search bar is still inline here (the
+   icon-sheet swap happens at 640px below), so a full 32px gap on every
+   pair leaves too little room for it to shrink before the row overflows.
+   Dropping the "/" focus hint early reclaims a little more of that room;
+   it's a nice-to-have affordance, not essential at this width. */
+@media (max-width: 800px) {
+    .site-nav {
+        gap: 12px;
+        padding: 0 32px;
+    }
+
+    .nav-search-kbd {
+        display: none;
+    }
+}
+
 @media (max-width: 640px) {
     .site-nav {
+        gap: 12px;
         padding: 0 20px;
     }
 
@@ -1097,6 +1118,7 @@ a.section-row:focus-visible .section-arrow {
 
 @media (max-width: 400px) {
     .site-nav {
+        gap: 4px;
         padding: 0 16px;
     }
 
@@ -1109,7 +1131,7 @@ a.section-row:focus-visible .section-arrow {
 
     .theme-toggle {
         width: 34px;
-        margin-left: 0;
+        height: 34px;
     }
 
     .section-desc {
