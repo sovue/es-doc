@@ -49,12 +49,15 @@ if (navigator.clipboard) {
     });
 }
 
-/* ── Adding tooltips for special comments (placeholders in code) ── */
-let placeholder_delimiter_old = '|';
-let placeholder_delimiter_new = '';
-
+/* ── Adding tooltips for placeholder values in code (`|Название лейбла|`) ──
+   The lexer also tags TODO/FIXME-style codetags as the same Comment.Special
+   token (span.cs), for its own dotted-underline treatment — filter to spans
+   that actually look like a |placeholder| so a stray TODO comment doesn't
+   get mislabeled as "replace this value". */
 document.querySelectorAll("span.cs").forEach(el => {
-    el.textContent = el.textContent.replaceAll(placeholder_delimiter_old, placeholder_delimiter_new);
+    const text = el.textContent;
+    if (text.length < 2 || text[0] !== '|' || text[text.length - 1] !== '|') return;
+    el.textContent = text.slice(1, -1);
     el.title = "Это значение необходимо заменить на своё!";
 });
 

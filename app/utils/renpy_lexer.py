@@ -142,6 +142,17 @@ _SAY_GUARD = "|".join(
     + ("True", "False", "None")
 )
 
+# Docs convention: `|Название лейбла|` marks a value the reader must supply
+# themselves (channel names, label names, file paths, …) — not real Ren'Py
+# syntax. A previous version matched any `\|...\|` pair unconditionally, which
+# also fired on genuine Python bitwise-or (`flags | A | B`), since two real
+# `|` operators on one line look identical to a pair of delimiters. The fix:
+# require both inner edges to be non-space. A real `|` operator always has
+# whitespace on both sides (`flags | A`), while this placeholder convention
+# never does (`|Название|`), so the two can't be confused position-by-position
+# even when Python delegation doesn't already shield the line.
+_PLACEHOLDER = r"\|\S(?:[^|\n]*\S)?\|"
+
 
 def _string_state(quote, tok):
     """Rules for the interior of a Ren'Py say/UI string. Ren'Py strings carry
@@ -167,10 +178,12 @@ def _string_state(quote, tok):
         # interpolation closed on this line -> parse; lone `[` -> unbalanced
         (r"(?=\[[^\]\n]*\])\[", String.Interpol, "interp"),
         (r"\[", Error),
+        # `|placeholder|` reads the same inside a string as outside it.
+        (_PLACEHOLDER, Comment.Special),
         (quote, tok, "#pop"),
         # end of line before the closing quote -> unterminated string
         (r"$", Error, "#pop"),
-        (r"[^" + quote + r"\\{\[%\n]+", tok),
+        (r"[^" + quote + r"\\{\[%|\n]+", tok),
         (r".", tok),
     ]
 
@@ -267,6 +280,11 @@ class RenPyLexer(RegexLexer):
             (r"\b[0-9]+[eE][+\-]?[0-9]+\b", Number.Float),
             (r"\b0[xX][0-9a-fA-F]+\b", Number.Hex),
             (r"\b[0-9]+\b", Number.Integer),
+
+            # `|placeholder|` — see _PLACEHOLDER above. Must come before the
+            # operator rule below, which would otherwise claim a bare `|` as
+            # bitwise-or first.
+            (_PLACEHOLDER, Comment.Special),
 
             (r"\b(and|or|not|in|is)\b", Operator.Word),
             (r"(\*\*|//|<<|>>|[-+*/%&|^~<>=!]=?|~)", Operator),
