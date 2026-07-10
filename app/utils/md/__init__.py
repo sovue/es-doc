@@ -81,6 +81,22 @@ def render_thanks(src):
         html = '<ul class="thanks-list">' + html[4:]
     return html
 
+def _plain_text(children):
+    """Flatten a heading's inline children into plain text, dropping the
+    markdown formatting markers themselves (bold/italic/code-span syntax)
+    instead of leaving their `*`/`` ` `` characters in place. Used anywhere
+    a heading is shown as plain text: <title>, the search index, tree/
+    breadcrumb titles — none of which render HTML."""
+    out = []
+    for t in children or []:
+        if t.type in ('text', 'code_inline'):
+            out.append(t.content)
+        elif t.type in ('softbreak', 'hardbreak'):
+            out.append(' ')
+        elif t.children:
+            out.append(_plain_text(t.children))
+    return ''.join(out)
+
 def outline(src):
     """Structured headings for the search index: the doc title (h1) plus every
     h2/h3 with the same slug the renderer assigns, so anchors line up."""
@@ -92,14 +108,15 @@ def outline(src):
     for idx, token in enumerate(tokens):
         if token.type != 'heading_open':
             continue
-        text = tokens[idx + 1].content
+        inline = tokens[idx + 1]
+        text = _plain_text(inline.children)
         level = int(token.tag[1])
         if level == 1:
             title = text
         elif level in (2, 3):
             headings.append({
-                'text': re.sub(r'[`]', '', text),
-                'slug': slugify(text, tokens[idx].map),
+                'text': text,
+                'slug': slugify(inline.content, tokens[idx].map),
                 'level': level,
             })
 
@@ -118,9 +135,16 @@ def render(src):
 
     for idx, token in enumerate(tokens):
         if token.type == 'heading_open':
+            inline = tokens[idx + 1]
             if int(token.tag[1]) == 1:
-                title = tokens[idx + 1].content
+                title = _plain_text(inline.children)
             else:
-                nav += f'<li class="{(token.tag)}"><a href="#{slugify(tokens[idx + 1].content, tokens[idx].map)}">{re.sub(r'[`]', '', tokens[idx + 1].content)}</a></li>'
+                # Rendered inline HTML (not raw source), so *emphasis* and
+                # `code` in a heading show up formatted in the sidebar TOC
+                # exactly as they do in the heading itself, not as literal
+                # markdown syntax characters.
+                heading_html = MD.renderer.renderInline(inline.children, MD.options, {})
+                slug = slugify(inline.content, tokens[idx].map)
+                nav += f'<li class="{(token.tag)}"><a href="#{slug}">{heading_html}</a></li>'
 
     return title, nav, MD.render(src)
