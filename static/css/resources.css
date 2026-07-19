@@ -558,6 +558,46 @@ a.res-file:focus-visible {
     border-color: var(--accent);
 }
 
+/* ── Characters (speaking cast) ──────────────────────────── */
+
+/* The swatch shows the character's in-game name color for the current
+   theme: the game's day value on paper, the night value by the lake. */
+.res-swatch {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    background: var(--char-day);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+/* narrator/th have no name color of their own — an empty, dashed frame
+   says "no color" honestly instead of faking a gray. */
+.res-swatch--none {
+    background: none;
+    border-style: dashed;
+}
+
+/* Night swatches follow the same two-way theme plumbing as the sprite
+   group colors below — keep the two blocks in sync. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .res-swatch {
+        background: var(--char-night);
+    }
+
+    :root:not([data-theme="light"]) .res-swatch--none {
+        background: none;
+    }
+}
+
+:root[data-theme="dark"] .res-swatch {
+    background: var(--char-night);
+}
+
+:root[data-theme="dark"] .res-swatch--none {
+    background: none;
+}
+
 /* ── Sprite groups ───────────────────────────────────────── */
 
 .res-jump {

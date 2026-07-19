@@ -42,6 +42,11 @@ CATEGORIES = {
         'usage': 'show dv smile pioneer2 at left',
         'media': 'sprites',
     },
+    'characters': {
+        'desc': 'Говорящие персонажи (Character) и коды их реплик',
+        'usage': 'dv "Привет!"',
+        'media': 'characters',
+    },
     'anim': {
         'desc': 'Кадры анимаций и спецэффектов',
         'usage': 'show anim blink_down',

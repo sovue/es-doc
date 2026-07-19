@@ -1,3 +1,4 @@
+import ast
 import re
 import yaml
 from urllib.parse import quote
@@ -13,6 +14,7 @@ CATEGORY_TITLES = {
     'bg': 'Фоны',
     'cg': 'Арты',
     'sprites': 'Спрайты',
+    'characters': 'Персонажи',
     'anim': 'Эффекты и анимации',
     'sfx': 'Звуки',
     'ambience': 'Эмбиенты',
@@ -425,6 +427,64 @@ def _group_sprites(names, composable):
     } for code in ordered]
 
 
+# ── Characters (media.rpy): dialogue codes, display names, name colors ──
+
+# $ colors['dv'] = {'night': (210, 139, 16, 255), …, 'day': (255, 170, 0, 255), …}
+# (the odd `colors[ 'sh']` spacing in media.rpy is real, hence \s*)
+RE_CHAR_COLOR = re.compile(r"^\s*\$ colors\[\s*'(\w+)'\s*\]\s*=\s*(\{.*\})", re.M)
+# $ names['dv'] = translation_new["dv"]
+RE_CHAR_NAME = re.compile(r"^\s*\$ names\[\s*'(\w+)'\s*\]\s*=\s*translation_new\[\s*\"(\w+)\"\s*\]", re.M)
+# $ store.names_list.append('dv') — the game builds one DynamicCharacter per
+# entry, so this list IS the speaking cast; its order is the doc's order.
+RE_CHAR_APPEND = re.compile(r"^\s*\$ store\.names_list\.append\(\s*'(\w+)'\s*\)", re.M)
+# "dv" : "Алиса" rows of translation_ru in tl/None/translation.rpy
+RE_TL_PAIR = re.compile(r'"([^"]+)"\s*:\s*"([^"]*)"')
+
+# names_list entries with no names[]/colors[] declaration of their own.
+CHAR_AUTO_DESCS = {
+    'narrator': 'Рассказчик — текст от автора, выводится без имени.',
+    'th': 'Мысли Семёна — выводятся в обрамлении «~ … ~».',
+}
+
+
+def _parse_characters(root, described):
+    """The speaking cast from media.rpy: every store.names_list entry the game
+    turns into a (Dynamic)Character, with its Russian display name and its
+    name colors by time of day. These are the codes a mod's dialogue lines
+    use (`dv "Привет!"`), so they belong in the reference next to sprites."""
+    path = root / 'media.rpy'
+    if not path.exists():
+        return []
+
+    text = path.read_text('utf-8')
+
+    colors = {}
+    for code, literal in RE_CHAR_COLOR.findall(text):
+        try:
+            colors[code] = ast.literal_eval(literal)
+        except (ValueError, SyntaxError):
+            logger.warning(f'Unparsable colors[] literal for character "{code}"; skipping its colors.')
+
+    # Display names resolve through the Russian translation table, the same
+    # one the game itself uses for translation_new.
+    tl_path = root / 'tl' / 'None' / 'translation.rpy'
+    tl = dict(RE_TL_PAIR.findall(tl_path.read_text('utf-8'))) if tl_path.exists() else {}
+    names = {code: tl.get(key, key) for code, key in RE_CHAR_NAME.findall(text)}
+
+    items = []
+    for code in RE_CHAR_APPEND.findall(text):
+        auto = names.get(code) or CHAR_AUTO_DESCS.get(code)
+        item = _item(
+            code, code,
+            desc=described.get('characters', {}).get(code) or auto or PLACEHOLDER_DESC,
+        )
+        rgba = colors.get(code) or {}
+        for field, key in (('color', 'day'), ('color_night', 'night')):
+            item[field] = '#%02X%02X%02X' % rgba[key][:3] if key in rgba else None
+        items.append(item)
+    return items
+
+
 def _build_search_items(collection):
     """Flat corpus rows for the site-wide search, one per original resource.
     `kind: res` lets the search dropdown split them from doc results."""
@@ -460,6 +520,9 @@ def parse_resources():
     # sprites.rpy was already parsed by parse_sprites(); these names are
     # composable on demand via /resource/sprite/.
     original['sprites'] = _group_sprites(CONFIG.sprite_layers, composable=True)
+    # The speaking cast lives in the original collection only — a community
+    # collection has no media.rpy, so it simply doesn't get the tab.
+    original['characters'] = _parse_characters(CONFIG.res_path, described)
 
     # An optional community collection: a `community` folder next to `game`
     # in the assets root, holding resources.rpy / sprites.rpy in the same
