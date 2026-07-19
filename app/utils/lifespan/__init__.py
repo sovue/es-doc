@@ -5,9 +5,10 @@ from fastapi import FastAPI
 from ..logging import root_logger
 
 from .artists_cache import parse_artists
-from .docs_cache import cache_docs, worker_cache_docs
+from .docs_cache import cache_docs
 from .literature_cache import parse_literature
 from .news_cache import parse_news
+from .refresh import worker_refresh_caches
 from .resources_cache import parse_resources
 from .sprites_cache import parse_sprites, SPRITES_PATH
 
@@ -55,7 +56,10 @@ async def lifespan(app: FastAPI):
     except Exception:
         logger.exception('Initial cache build failed; caches start empty until the next refresh.')
 
-    worker = asyncio.create_task(worker_cache_docs())
+    # One periodic worker refreshes every cache from here on: content edits
+    # on disk (docs, yaml lists, game resources) reach the site without a
+    # restart (see refresh.py).
+    worker = asyncio.create_task(worker_refresh_caches())
 
     yield
 

@@ -1,4 +1,4 @@
-import asyncio, re
+import re
 
 from ..config import CONFIG
 from ..docs import build_index, build_items, build_tree
@@ -8,11 +8,8 @@ from ..logging import root_logger
 
 logger = root_logger.getChild('lifespan').getChild('docs-cache')
 
-async def worker_cache_docs():
-    logger.info('Cache update worker started.')
-    while True:
-        await asyncio.sleep(60 * CONFIG.config.get('cache-update-delay', 1))
-        await asyncio.to_thread(cache_docs)
+# Periodic refresh lives in refresh.py's worker, which calls cache_docs
+# on every tick alongside the other cache watchers.
 
 def cache_docs(silent=False):
     path = CONFIG.docs_path
