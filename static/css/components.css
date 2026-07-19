@@ -901,14 +901,18 @@ a.section-row:focus-visible .section-arrow {
     line-height: 1.5;
 }
 
+/* Linked entries follow the body-link convention (accent red, underline
+   on hover) so they read as clickable next to the plain-text rows, which
+   stay ink. Ink-at-rest here made links indistinguishable from text. */
 .lit-row a {
-    color: var(--text);
+    color: var(--accent);
     text-decoration: none;
     transition: color 0.15s var(--ease-out);
 }
 
 .lit-row a:hover {
-    color: var(--accent);
+    color: var(--accent-hover);
+    text-decoration: underline;
 }
 
 .lit-row a:focus-visible {
