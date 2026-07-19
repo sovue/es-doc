@@ -183,6 +183,9 @@ Full 1px `--border-tan` border with a `--cream-paper` fill, set in PT Serif ital
 ### Code
 Inline code is `--sunset` text on the warm code panel, small radius. Fenced blocks sit on the always-dark `--code-panel` with a 1px border and a per-token syntax palette. On copy, sentinel whitespace glyphs are swapped back to spaces so pasted code runs.
 
+### Home Hero Slideshow
+The homepage hero carries the camp itself: four game backgrounds crossfading on a slow 32s cycle (~2.5s fades), day shots in light theme and their night variants in dark. The photos are set dressing, never content — a paper wash keeps the title column on near-solid `--bg`, and the image dissolves into the page below rather than ending on a hard edge. Reduced motion collapses it to one quiet still. Images are served as 1600px WebP downscales (`/resource/hero/`), composed lazily like thumbs.
+
 ### Character Swatch
 On the Персонажи resources page, a 36px bordered square carrying the character's in-game name color — the game's *day* value in light theme, the *night* value in dark (same two-way theme plumbing as the sprite group colors). Characters with no name color (narrator, `th`) get an empty dashed frame, never a fake gray fill.
 

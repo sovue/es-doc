@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse
 from . import main_router
 from ..utils.config import CONFIG
 from ..utils.lifespan.artist_img_cache import cache_file as artist_img_file, fetch_and_cache as fetch_artist_img, is_cached as artist_img_cached
+from ..utils.lifespan.hero_cache import hero_file, is_heroed, make_hero
 from ..utils.lifespan.sprites_cache import compose_sprite, is_composed, sprite_file
 from ..utils.lifespan.thumbs_cache import is_thumbed, make_thumb, thumb_file
 from ..utils.lifespan.tint_cache import compose_tint, is_tinted, tinted_file
@@ -122,6 +123,25 @@ async def thumb_page(kind, name, request: Request):
                     raise HTTPException(500, f'Не удалось создать превью "{name}".')
 
     return FileResponse(str(thumb_file(kind, name)), media_type='image/webp', headers=CACHE_HEADERS)
+
+@router.get('/hero/{name}')
+async def hero_page(name, request: Request):
+    """Hero-sized bg downscales for the homepage slideshow — same lazy
+    compose-once-then-serve pipeline as thumbs, only wider."""
+
+    if not is_heroed(name):
+        async with compose_lock:
+            if not is_heroed(name):
+                try:
+                    await asyncio.to_thread(make_hero, name)
+                except FileNotFoundError:
+                    raise HTTPException(404, f'Фон "{name}" не существует.')
+                except Exception:
+                    logger.exception(f'Hero-scaling bg "{name}" failed.')
+                    raise HTTPException(500, f'Не удалось подготовить фон "{name}".')
+
+    return FileResponse(str(hero_file(name)), media_type='image/webp', headers=CACHE_HEADERS)
+
 
 def _confined_file(base, resource):
     # Resolve and confine to the base folder: {resource:path} accepts ".."

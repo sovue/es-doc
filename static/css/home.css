@@ -4,6 +4,102 @@
    Search now lives in the site header (components.css), not the hero.
    ===================================================================== */
 
+/* ── Hero background slideshow ───────────────────────────── */
+
+/* The camp itself behind the title: four game backgrounds crossfading on a
+   slow cycle. The photos are set dressing, not content — the wash below
+   keeps the title column on near-solid paper. */
+
+.page-hero--home {
+    position: relative;
+    overflow: hidden;
+}
+
+.page-hero--home .page-hero-inner {
+    position: relative;
+    z-index: 1;
+}
+
+/* The image set per theme: day shots under the sun, night shots by the
+   lake. Served two ways so the theme toggle overrides the OS, mirroring
+   vars.css — keep the two dark blocks in sync. */
+.hero-bg {
+    position: absolute;
+    inset: 0;
+    --hero-1: url('/resource/hero/ext_beach_day');
+    --hero-2: url('/resource/hero/ext_square_day');
+    --hero-3: url('/resource/hero/ext_road_day');
+    --hero-4: url('/resource/hero/ext_island_day');
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .hero-bg {
+        --hero-1: url('/resource/hero/ext_beach_night');
+        --hero-2: url('/resource/hero/ext_square_night');
+        --hero-3: url('/resource/hero/ext_road_night');
+        --hero-4: url('/resource/hero/ext_island_night');
+    }
+}
+
+:root[data-theme="dark"] .hero-bg {
+    --hero-1: url('/resource/hero/ext_beach_night');
+    --hero-2: url('/resource/hero/ext_square_night');
+    --hero-3: url('/resource/hero/ext_road_night');
+    --hero-4: url('/resource/hero/ext_island_night');
+}
+
+.hero-bg-slide {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    animation: hero-fade 32s linear infinite;
+}
+
+.hero-bg-slide:nth-child(1) { background-image: var(--hero-1); }
+.hero-bg-slide:nth-child(2) { background-image: var(--hero-2); animation-delay: 8s; }
+.hero-bg-slide:nth-child(3) { background-image: var(--hero-3); animation-delay: 16s; }
+.hero-bg-slide:nth-child(4) { background-image: var(--hero-4); animation-delay: 24s; }
+
+/* Each slide owns a quarter of the 32s cycle, with ~2.5s crossfades into
+   its neighbours (8% of the cycle in, 25%→33% out). */
+@keyframes hero-fade {
+    0% { opacity: 0; }
+    8% { opacity: 1; }
+    25% { opacity: 1; }
+    33% { opacity: 0; }
+    100% { opacity: 0; }
+}
+
+/* The readability wash: near-solid paper behind the title column, the
+   photo breathing on the right, and a dissolve into the page below so the
+   hero never ends on a hard photographic edge. */
+.hero-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(to right,
+            var(--bg) 0%,
+            color-mix(in srgb, var(--bg) 60%, transparent) 55%,
+            color-mix(in srgb, var(--bg) 40%, transparent) 100%),
+        linear-gradient(to bottom,
+            color-mix(in srgb, var(--bg) 25%, transparent) 55%,
+            var(--bg) 100%);
+}
+
+/* Reduced motion: one quiet still instead of a slideshow. */
+@media (prefers-reduced-motion: reduce) {
+    .hero-bg-slide {
+        animation: none;
+    }
+
+    .hero-bg-slide:first-child {
+        opacity: 1;
+    }
+}
+
 /* ── Contributors strip below page-main ──────────────────── */
 
 .home-contributors {
