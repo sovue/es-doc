@@ -122,7 +122,7 @@ A warm-paper palette lit by golden-hour sun, with pioneer red as its single loud
 - **Code Panel** (`#241B12`, dark `#12161E`): Always warm-dark. The syntax-highlight palette is tuned once for this panel and serves both themes.
 
 ### Semantic
-- **Info** (`#215D70`, dark `#86C0DA`): Deep sky-blue for `:::info` callouts. Carries the callout text, border, and icon; `--info-bg` / `--info-bg1` are its faint gradient bands. Reads as "note", never alarm.
+- **Info** (`#215D70`, dark `#86C0DA`): Deep sky-blue for `:::info` callouts. Carries the callout's border, icon, and `<strong>`, not the body text, which stays ink so the note reads as ordinary prose; `--info-bg` / `--info-bg1` are its faint gradient bands. Reads as "note", never alarm.
 - **Warning** (`#A81824`, dark `#F46974`): A deeper red than the link accent, so caution stays distinct from ordinary interactive red.
 
 ### Named Rules
@@ -175,7 +175,7 @@ The header's centerpiece: a bordered input group that highlights its border on `
 The primary grouping affordance, a bordered list of rows, never a card grid. Baseline-aligned flex rows with a pioneer-red arrow that fades in on hover/focus. The docs index nests these into a tree with a 1px `--border-tan` left-indent guide (structural, not a decorative stripe). Names truncate with ellipsis; the arrow stays pinned right.
 
 ### Callouts (Info / Warning)
-Full-width note blocks with a top+bottom hairline in the semantic color and a faint vertical gradient band behind. **Info** is deep sky-blue and calm; **Warning** is a deeper red than links. Both lead with a 32px `currentColor` icon (`class="icon"`) so the two types read at a glance and match in size. No side-stripe; the gradient band and paired borders carry the emphasis.
+Full-width note blocks with a top+bottom hairline in the semantic color and a faint vertical gradient band behind. **Info** is deep sky-blue and calm; **Warning** is a deeper red than links. Both lead with a 32px `currentColor` icon (`class="icon"`) so the two types read at a glance and match in size. No side-stripe; the gradient band and paired borders carry the emphasis. The `.info-content` / `.warning-content` body stays ink (`--text`) so the note reads as ordinary prose; only the border, icon, and `<strong>` take the semantic colour. (A callout whose whole paragraph is coloured is the wrapper missing its `color: var(--text)` reset.)
 
 ### Blockquote
 Full 1px `--border-tan` border with a `--cream-paper` fill, set in PT Serif italic (the brand's quote voice). Never an accent side-stripe; the fill alone separates it from body text.

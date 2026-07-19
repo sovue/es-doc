@@ -540,6 +540,15 @@ pre code .w { color: var(--code-whitespace); }
     background: linear-gradient(0deg, var(--warning-bg) 5%, var(--warning-bg1) 25%, var(--warning-bg1) 75%, var(--warning-bg) 95%);
 }
 
+/* The body reads as ordinary ink prose, like every other paragraph on the
+   page; the semantic colour lives only in the border, icon, and <strong>.
+   Without this the .info-content / .warning-content wrapper inherits
+   --info / --warning from its container and the *whole* paragraph renders
+   blue/red, fighting the ink-on-paper body style (and diverging from the
+   design-system callout spec, which sets the body back to --text). */
+.info-content,
+.warning-content { color: var(--text); }
+
 .info strong { color: var(--info); }
 .warning strong { color: var(--warning); }
 
