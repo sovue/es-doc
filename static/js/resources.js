@@ -413,6 +413,7 @@
             }
 
             img.src = link.href;
+            img.alt = link.dataset.zoom || '';
             name.textContent = link.dataset.zoom;
             raw.href = link.href;
             dl.href = link.href;

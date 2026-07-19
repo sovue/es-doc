@@ -87,16 +87,16 @@
 
             <div class="res-filter" hidden>
                 <div class="res-filter-controls">
-                    <input type="search" id="res-filter-input" placeholder="Фильтр по имени…"
+                    <input type="search" id="res-filter-input" class="filter-input" placeholder="Фильтр по имени…"
                            autocomplete="off" spellcheck="false" aria-label="Фильтр по имени">
-                    <select id="res-sort-select" aria-label="Сортировка">
+                    <select id="res-sort-select" class="filter-select" aria-label="Сортировка">
                         <option value="az">А-Я</option>
                         <option value="za">Я-А</option>
                         <option value="big">Сначала большие</option>
                         <option value="small">Сначала маленькие</option>
                     </select>
                 </div>
-                <p class="res-filter-count" aria-live="polite" data-total="{{ total }}" data-all="{{ total }}"></p>
+                <p class="res-filter-count filter-count" aria-live="polite" data-total="{{ total }}" data-all="{{ total }}"></p>
             </div>
 
             <ul class="res-list" role="list">

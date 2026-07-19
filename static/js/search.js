@@ -41,6 +41,15 @@
 
     function announce(msg) { if (status) status.textContent = msg; }
 
+    // Russian plural agreement for the result count (1 результат, 2 результата,
+    // 5 результатов) — the naive "результата(ов)" fallback was never correct.
+    function results(n) {
+        var d = n % 10, dd = n % 100;
+        if (d === 1 && dd !== 11) return n + ' результат';
+        if (d >= 2 && d <= 4 && (dd < 10 || dd >= 20)) return n + ' результата';
+        return n + ' результатов';
+    }
+
     function render(query) {
         var q = query.toLowerCase();   // lowercased for substring highlighting
         if (!matches.length) {
@@ -73,7 +82,7 @@
         }
         list.innerHTML = html;
         open();
-        announce(matches.length + (matches.length === 1 ? ' результат' : ' результата(ов)'));
+        announce(results(matches.length));
     }
 
     // ── Query ────────────────────────────────────────────────
@@ -141,6 +150,9 @@
     });
 
     list.addEventListener('mousedown', function (e) {
+        // Left button only — a right-click (context menu) or middle-click must
+        // not navigate.
+        if (e.button !== 0) return;
         // mousedown (not click) so input blur doesn't close the list first
         var li = e.target.closest('.nav-search-option');
         if (!li) return;

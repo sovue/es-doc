@@ -842,9 +842,12 @@ a.res-file:focus-visible {
 }
 
 /* Folders read at a glance, like in every file manager — the warm relief
-   orange, not the red spotlight. */
+   orange, not the red spotlight. Mixed toward ink so it clears the 3:1
+   non-text floor on sand paper (raw --sunset is only 1.99:1 there); at night
+   the mix lands lighter against the dark bg, staying well clear. Same
+   toward-ink treatment the sprite character colours use. */
 .fb-ico--dir {
-    color: var(--sunset);
+    color: color-mix(in oklab, var(--sunset) 55%, var(--text));
 }
 
 .fb-link {

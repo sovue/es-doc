@@ -136,8 +136,8 @@ pre code {
 }
 
 .code-copy.copied {
-    color: var(--pine);
-    border-color: var(--pine);
+    color: var(--code-success);
+    border-color: var(--code-success);
 }
 
 .code-copy.copied svg:first-child {

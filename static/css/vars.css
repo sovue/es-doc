@@ -57,6 +57,14 @@
     --code-number: #FF6B9D;
     --code-operator: #D7796B;
     --code-whitespace: #FFF2;
+    /* Success green for the "copied" state ON the panel. It's --pine at its
+       *night* value: the panel is always night (Warm-Dark Panel Rule), so it
+       takes the same lifted green the paper uses in dark mode. That ties the
+       code-copy check and the paper copy-path check into one green — identical
+       at night, same hue by day (the panel just can't use the dark day-pine,
+       which is invisible here at 2.83:1). Verified ≥4.5:1 on both panel
+       backgrounds, so one value serves both themes (no dark override). */
+    --code-success: #8FB07A;
 
     --bg-sidebar: #FBF6E9;
     --bg-table-head: #F0E5CF;
@@ -131,7 +139,7 @@
 
         --sunset: #F5A878;
         --sky: #6F8EA3;
-        --pine: #6E8B5C;
+        --pine: #8FB07A;      /* lifted for night — clears AA on its own 14% tint (open-status pill) */
 
         --border: #3A4254;
 
@@ -181,7 +189,7 @@
 
     --sunset: #F5A878;
     --sky: #6F8EA3;
-    --pine: #6E8B5C;
+    --pine: #8FB07A;      /* lifted for night — clears AA on its own 14% tint (open-status pill) */
 
     --border: #3A4254;
 
