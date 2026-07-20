@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Request
-from fastapi.responses import PlainTextResponse
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import FileResponse, PlainTextResponse
 import re
 from urllib.parse import quote
 
@@ -27,6 +27,20 @@ def _next_doc(doc):
         if node['slug'] == doc and i + 1 < len(flat):
             return flat[i + 1]
     return None
+
+@router.get('/img/{file}')
+async def image(file, request: Request):
+    # Article illustrations live in docs/img next to the .md files, so a doc
+    # and its images travel together in the assets repo. Registered before
+    # /{doc} so "img" is never taken for a doc slug. Single-segment {file}
+    # can't traverse, but confine anyway — same discipline as /resource/raw.
+    path = (CONFIG.docs_path / 'img' / file).resolve()
+
+    if not path.is_relative_to(CONFIG.docs_path.resolve()) or not path.is_file():
+        raise HTTPException(404, f'Изображения "{file}" не существует.')
+
+    return FileResponse(str(path), headers={'Cache-Control': 'public, max-age=86400'})
+
 
 @router.get('/{doc}')
 async def page(doc, request: Request):
