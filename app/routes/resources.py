@@ -209,7 +209,7 @@ async def browser(request: Request, path=''):
             'name': target.name,
             'code': f'"{rel}"',
             'raw': f'/resource/raw/{quote(rel)}',
-            'sub': ' · '.join(sub),
+            'sub': ' / '.join(sub),
             'view': view,
         })
 
@@ -235,11 +235,11 @@ async def browser(request: Request, path=''):
                 'raw': f'/resource/raw/{quote(erel)}',
                 'href': f'/resources/browser/{quote(erel)}',
                 'size': size,
-                'sub': f'{KIND_LABELS[kind]} · {_human_size(size)}',
+                'sub': f'{KIND_LABELS[kind]} / {_human_size(size)}',
                 'kind': kind,
             })
 
-    stats = ' · '.join(filter(None, [
+    stats = ' / '.join(filter(None, [
         _plural(len(dirs), 'папка', 'папки', 'папок') if dirs else '',
         _plural(len(files), 'файл', 'файла', 'файлов') if files else '',
         _human_size(sum(f['size'] for f in files)) if files else '',

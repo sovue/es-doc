@@ -543,7 +543,7 @@ def _build_search_items(collection):
                 continue
             row = {
                 'label': item['code'],
-                'context': CATEGORY_TITLES[category] if not group else f'{CATEGORY_TITLES[category]} · {group["title"]}',
+                'context': CATEGORY_TITLES[category] if not group else f'{CATEGORY_TITLES[category]} / {group["title"]}',
                 'url': f'/resources/original/{category}#{quote(item["rid"])}',
                 'kind': 'res',
             }

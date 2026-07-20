@@ -175,7 +175,7 @@
                     <div class="res-meta">
                         {{ name_line(item) }}
                         {% if item.desc %}<span class="res-desc">{{ item.desc }}</span>{% endif %}
-                        {% if item.color %}<span class="res-file">цвет имени: день {{ item.color }} · ночь {{ item.color_night }}</span>{% endif %}
+                        {% if item.color %}<span class="res-file">цвет имени: день {{ item.color }} / ночь {{ item.color_night }}</span>{% endif %}
                     </div>
                     {{ res.copy_button(item.code) }}
                 </li>
