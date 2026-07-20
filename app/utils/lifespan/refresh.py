@@ -42,7 +42,13 @@ def _refresh_resources():
 # Paths are lazy so CONFIG is read at tick time, not import time.
 WATCHERS = [
     ('sprites.rpy',
-     lambda: [CONFIG.res_path / 'sprites.rpy'],
+     lambda: [
+         CONFIG.res_path / 'sprites.rpy',
+         # Declares sprites too (parsed by parse_sprites), so it lives in
+         # this watcher rather than the resources one — the sprite re-parse
+         # already chains into a resources re-parse.
+         CONFIG.res_path / 'scenario' / 'zhenya.rpy',
+     ],
      _refresh_sprites),
     ('resources',
      lambda: [

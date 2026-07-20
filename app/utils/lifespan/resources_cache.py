@@ -37,6 +37,9 @@ SPRITE_CHARS = {
     'el': {'title': 'Электроник', 'color': '#FFFF00'},
     'sh': {'title': 'Шурик', 'color': '#FFF226'},
     'pi': {'title': 'Пионер', 'color': '#E60101'},
+    # Declared in scenario/zhenya.rpy (store.colors['pi2']['day']), where the
+    # Женя scenario's extra sprites come from.
+    'pi2': {'title': 'Пионер', 'color': '#B7B7B7'},
 }
 
 # Wardrobe blocks, in display order; sprites sort by outfit → emotion →
@@ -207,6 +210,15 @@ RE_AMBIENCE = re.compile(r'^\s*\$ (ambience_\w+)\s*=\s*"([^"]+)"', re.M)
 RE_SFX = re.compile(r'^\s*\$ (sfx_\w+)\s*=\s*"([^"]+)"', re.M)
 # Same declaration shape sprites_cache.py composes from.
 RE_SPRITE = re.compile(r'image ([\w ]+)\b[\s\S]+?im.Composite\(', re.M | re.U)
+# image blood = "zhenya/images/blood.png" — file-backed declarations without
+# a category prefix. Only the extra sources are scanned with this (the main
+# resources.rpy keeps its curated bg/cg/anim split); the game shows these
+# full-screen, so they land in the effects category under their bare name.
+RE_IMAGE_PLAIN = re.compile(r'^\s*image ([\w ]+?)\s*=\s*"([^"]+\.(?:png|jpe?g|webp))"', re.M | re.I)
+
+# Declaration files parsed into the collection besides resources.rpy — the
+# Женя scenario ships inside the game with its own init block of resources.
+EXTRA_RPY = ('scenario/zhenya.rpy',)
 
 # Shown when neither descriptions.yaml nor the auto-describer has an answer.
 PLACEHOLDER_DESC = 'Описание уточняется.'
@@ -223,14 +235,16 @@ NSFW_CG_PREFIXES = (
     'd7_un_hentai', 'miku_h', 'uvao_h',
 )
 
-# Where each file-backed category's assets live, for the undeclared-file scan.
+# Where each file-backed category's assets live, for the undeclared-file
+# scan. The Женя scenario keeps its files in zhenya/: its leftover overlays
+# scan as effects, its by-path-played sounds as sfx.
 CATEGORY_DIRS = {
-    'bg': ('images/bg', {'.jpg', '.png', '.webp'}),
-    'cg': ('images/cg', {'.jpg', '.png', '.webp'}),
-    'anim': ('images/anim', {'.jpg', '.png', '.webp'}),
-    'music': ('sound/music', {'.ogg', '.mp3', '.wav'}),
-    'ambience': ('sound/ambiences', {'.ogg', '.mp3', '.wav'}),
-    'sfx': ('sound/sfx', {'.ogg', '.mp3', '.wav'}),
+    'bg': (('images/bg',), {'.jpg', '.png', '.webp'}),
+    'cg': (('images/cg',), {'.jpg', '.png', '.webp'}),
+    'anim': (('images/anim', 'zhenya/images'), {'.jpg', '.png', '.webp'}),
+    'music': (('sound/music',), {'.ogg', '.mp3', '.wav'}),
+    'ambience': (('sound/ambiences',), {'.ogg', '.mp3', '.wav'}),
+    'sfx': (('sound/sfx', 'zhenya/sounds'), {'.ogg', '.mp3', '.wav'}),
 }
 
 
@@ -276,11 +290,12 @@ def _parse_rpy(root, raw_base, described):
     this root's files (None → files are not served: no raw/thumb links)."""
     collection = {'bg': [], 'cg': [], 'anim': [], 'music': [], 'ambience': [], 'sfx': []}
 
-    path = root / 'resources.rpy'
-    if not path.exists():
+    # resources.rpy plus the extra in-game declaration files (see EXTRA_RPY);
+    # a root without resources.rpy still keeps its empty-state behaviour.
+    if not (root / 'resources.rpy').exists():
         return collection
-
-    text = path.read_text('utf-8')
+    sources = [root / 'resources.rpy'] + [root / extra for extra in EXTRA_RPY]
+    texts = [(p.read_text('utf-8'), p.name != 'resources.rpy') for p in sources if p.exists()]
 
     def desc_for(kind, name, auto=None):
         return described.get(kind, {}).get(name) or auto or PLACEHOLDER_DESC
@@ -288,15 +303,25 @@ def _parse_rpy(root, raw_base, described):
     # Tint entries carry their own (file, r, g, b); plain and complex
     # declarations carry None for both. Tint is listed before the complex
     # catch-all so `seen` lets the catch-all skip what tint already handled.
-    image_entries = (
-        [(k, n, f, None) for k, n, f in RE_IMAGE.findall(text)]
-        + [(k, n, f, (float(r), float(g), float(b)))
-           for k, n, f, r, g, b in RE_IMAGE_TINT.findall(text)]
-        + [(k, n, None, None) for k, n in RE_IMAGE_COMPLEX.findall(text)]
-    )
+    # The last element is the copyable code — None means the usual
+    # "<kind> <name>"; uncategorized extras are shown under their bare name,
+    # which is exactly what a mod's `show` line takes.
+    image_entries = []
+    for text, is_extra in texts:
+        image_entries += (
+            [(k, n, f, None, None) for k, n, f in RE_IMAGE.findall(text)]
+            + [(k, n, f, (float(r), float(g), float(b)), None)
+               for k, n, f, r, g, b in RE_IMAGE_TINT.findall(text)]
+            + [(k, n, None, None, None) for k, n in RE_IMAGE_COMPLEX.findall(text)]
+        )
+        if is_extra:
+            image_entries += [
+                ('anim', n, f, None, n) for n, f in RE_IMAGE_PLAIN.findall(text)
+                if n.split()[0] not in ('bg', 'cg', 'anim')
+            ]
 
     seen = set()
-    for kind, name, file, tint in image_entries:
+    for kind, name, file, tint, code in image_entries:
         if (kind, name) in seen:
             continue
         seen.add((kind, name))
@@ -315,7 +340,7 @@ def _parse_rpy(root, raw_base, described):
         else:
             raw = f'{raw_base}/{quote(file)}' if exists else None
         collection[kind].append(_item(
-            name, f'{kind} {name}', file,
+            name, code or f'{kind} {name}', file,
             raw=raw,
             thumb=f'/resource/thumb/{kind}/{quote(name)}' if exists else None,
             desc=desc_for(kind, name, auto_desc),
@@ -329,7 +354,10 @@ def _parse_rpy(root, raw_base, described):
     # nothing to preview, nothing to play, just a dead row. A declaration
     # whose file never made it into the decompiled dump is dropped outright
     # rather than shown as a row no one can do anything with.
-    for name, file in {n: f for n, f in RE_MUSIC.findall(text)}.items():
+    music = {}
+    for text, _ in texts:
+        music.update(dict(RE_MUSIC.findall(text)))
+    for name, file in music.items():
         if raw_base and not (root / file).exists():
             continue
         collection['music'].append(_item(
@@ -339,7 +367,10 @@ def _parse_rpy(root, raw_base, described):
         ))
 
     for regex, kind in ((RE_AMBIENCE, 'ambience'), (RE_SFX, 'sfx')):
-        for name, file in {n: f for n, f in regex.findall(text)}.items():
+        sounds = {}
+        for text, _ in texts:
+            sounds.update(dict(regex.findall(text)))
+        for name, file in sounds.items():
             if raw_base and not (root / file).exists():
                 continue
             collection[kind].append(_item(
@@ -366,30 +397,39 @@ def _append_undeclared(root, collection, raw_base, described):
         item['file'].lower() for items in collection.values()
         for item in items if item['file']
     }
+    # Sprite layer files count as referenced too: the sprite folders are not
+    # scanned at all, so a layer that happens to sit in a scanned folder
+    # (zhenya/images holds one) shouldn't surface as its own row either.
+    declared_files |= {
+        layer.lower() for layers in CONFIG.sprite_layers.values() for layer in layers
+    }
 
-    for kind, (folder, exts) in CATEGORY_DIRS.items():
-        directory = root / folder
-        if kind not in collection or not directory.is_dir():
+    for kind, (folders, exts) in CATEGORY_DIRS.items():
+        if kind not in collection:
             continue
         names = {i['name'] for i in collection[kind]}
         image = kind in ('bg', 'cg', 'anim')
-        for file in sorted(directory.iterdir()):
-            rel = f'{folder}/{file.name}'
-            if not file.is_file() or file.suffix.lower() not in exts or rel.lower() in declared_files:
+        for folder in folders:
+            directory = root / folder
+            if not directory.is_dir():
                 continue
-            # A file stem may collide with a declared name (kostry.ogg vs
-            # music_list["kostry"]); keep names unique per category.
-            name = file.stem if file.stem not in names else f'{file.stem} (файл)'
-            names.add(name)
-            collection[kind].append(_item(
-                name, f'"{rel}"', rel,
-                raw=f'{raw_base}/{quote(rel)}',
-                thumb=f'/resource/thumb/{kind}/{quote(name)}' if image else None,
-                # Hand-written descriptions apply here too (keyed by the file
-                # stem in descriptions.yaml).
-                desc=described.get(kind, {}).get(name) or UNDECLARED_DESC,
-                declared=False,
-            ))
+            for file in sorted(directory.iterdir()):
+                rel = f'{folder}/{file.name}'
+                if not file.is_file() or file.suffix.lower() not in exts or rel.lower() in declared_files:
+                    continue
+                # A file stem may collide with a declared name (kostry.ogg vs
+                # music_list["kostry"]); keep names unique per category.
+                name = file.stem if file.stem not in names else f'{file.stem} (файл)'
+                names.add(name)
+                collection[kind].append(_item(
+                    name, f'"{rel}"', rel,
+                    raw=f'{raw_base}/{quote(rel)}',
+                    thumb=f'/resource/thumb/{kind}/{quote(name)}' if image else None,
+                    # Hand-written descriptions apply here too (keyed by the
+                    # file stem in descriptions.yaml).
+                    desc=described.get(kind, {}).get(name) or UNDECLARED_DESC,
+                    declared=False,
+                ))
 
 
 def _sprite_sort_key(name):
@@ -451,12 +491,14 @@ def _parse_characters(root, described):
     """The speaking cast from media.rpy: every store.names_list entry the game
     turns into a (Dynamic)Character, with its Russian display name and its
     name colors by time of day. These are the codes a mod's dialogue lines
-    use (`dv "Привет!"`), so they belong in the reference next to sprites."""
-    path = root / 'media.rpy'
-    if not path.exists():
+    use (`dv "Привет!"`), so they belong in the reference next to sprites.
+    The extra sources declare theirs the same way (the Женя scenario adds
+    pi2-pi4 and uv2), so they parse from the same combined text."""
+    if not (root / 'media.rpy').exists():
         return []
 
-    text = path.read_text('utf-8')
+    sources = [root / 'media.rpy'] + [root / extra for extra in EXTRA_RPY]
+    text = '\n'.join(p.read_text('utf-8') for p in sources if p.exists())
 
     colors = {}
     for code, literal in RE_CHAR_COLOR.findall(text):

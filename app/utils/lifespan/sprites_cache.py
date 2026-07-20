@@ -10,14 +10,28 @@ logger = root_logger.getChild('lifespan').getChild('sprites-cache')
 
 SPRITES_PATH = ROOT / 'temp' / 'sprites'
 
+def _sprite_sources():
+    # sprites.rpy plus the Женя scenario, which declares a few more composite
+    # sprites of the same shape inside its init block.
+    return [CONFIG.res_path / 'sprites.rpy', CONFIG.res_path / 'scenario' / 'zhenya.rpy']
+
 def parse_sprites():
     # Only the cheap part runs at startup: mapping sprite names to their layer
     # files. Actual compositing happens lazily in compose_sprite(), so startup
     # is instant and only sprites that are actually viewed cost CPU.
     sprites = {}
 
-    for sprite in re.findall(r'image ([\w ]+)\b[\s\S]+?im.Composite\(\n?\(\d+,\d+\),\s?(.+)\),?\n', (CONFIG.res_path / 'sprites.rpy').read_text(), re.M | re.U):
+    for sprite in re.findall(r'image ([\w ]+)\b[\s\S]+?im.Composite\(\n?\(\d+,\d+\),\s?(.+)\),?\n', (CONFIG.res_path / 'sprites.rpy').read_text('utf-8'), re.M | re.U):
         sprites[sprite[0]] = re.findall(r'\"([\w\\/.]+)\"', sprite[1], re.M | re.U)
+
+    # The extra sources mix composite declarations with plain single-file
+    # ones, so anchor on ConditionSwitch: the loose sprites.rpy pattern would
+    # pair a plain declaration's name with the next composite's layers.
+    for extra in _sprite_sources()[1:]:
+        if not extra.exists():
+            continue
+        for sprite in re.findall(r'image ([\w ]+?)\s*=\s*ConditionSwitch\([\s\S]+?im.Composite\(\n?\(\d+,\d+\),\s?(.+)\),?\n', extra.read_text('utf-8'), re.M | re.U):
+            sprites[sprite[0]] = re.findall(r'\"([\w\\/.]+)\"', sprite[1], re.M | re.U)
 
     CONFIG.sprite_layers = sprites
     logger.info(f'{len(sprites)} sprite combinations found.')
@@ -27,9 +41,10 @@ def sprite_file(name):
 
 def is_composed(name):
     # The disk cache survives restarts; a cached sprite is only stale if
-    # sprites.rpy changed after it was composed.
+    # a declaration source changed after it was composed.
     path = sprite_file(name)
-    return path.is_file() and path.stat().st_mtime >= (CONFIG.res_path / 'sprites.rpy').stat().st_mtime
+    newest = max(p.stat().st_mtime for p in _sprite_sources() if p.exists())
+    return path.is_file() and path.stat().st_mtime >= newest
 
 def compose_sprite(name):
 
