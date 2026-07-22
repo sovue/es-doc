@@ -598,6 +598,37 @@ a.res-file:focus-visible {
     background: none;
 }
 
+/* Small inline dots next to the day/night hex values in the "цвет имени"
+   line — the big swatch above only ever shows the current theme's value, so
+   these are the only way to compare both without toggling the site theme. */
+.res-chip {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    margin-right: 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    vertical-align: 1px;
+}
+
+/* The day/night hex values are themselves .res-copy buttons (chip + text
+   IS the button, no separate icon needed) — this only overrides the 36px
+   icon-square footprint for something that sits inline in running text.
+   Hover (--accent) and copied (--pine) states still come from .res-copy;
+   .res-hex only touches layout. */
+.res-hex {
+    display: inline-flex;
+    align-items: center;
+    width: auto;
+    height: auto;
+    padding: 1px 5px 1px 4px;
+    margin: 0 1px;
+    border-radius: var(--radius-xs);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-soft);
+}
+
 /* ── Sprite groups ───────────────────────────────────────── */
 
 .res-jump {

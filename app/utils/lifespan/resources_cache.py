@@ -503,7 +503,6 @@ CHAR_AUTO_DESCS = {
     'th': 'Мысли Семёна — выводятся в обрамлении «~ … ~».',
 }
 
-
 def _parse_characters(root, described):
     """The speaking cast from media.rpy: every store.names_list entry the game
     turns into a (Dynamic)Character, with its Russian display name and its

@@ -169,13 +169,25 @@
             {% elif category_meta.media == 'characters' %}
             <ul class="res-list" role="list">
                 {% for item in items %}
-                <li class="res-row" id="{{ item.rid }}" data-name="{{ item.name }}">
-                    <span class="res-swatch{% if not item.color %} res-swatch--none{% endif %}"
-                          {%- if item.color %} style="--char-day: {{ item.color }}; --char-night: {{ item.color_night or item.color }}"{% endif %} aria-hidden="true"></span>
+                <li class="res-row" id="{{ item.rid }}" data-name="{{ item.name }}"
+                    {%- if item.color %} style="--char-day: {{ item.color }}; --char-night: {{ item.color_night or item.color }}"{% endif %}>
+                    <span class="res-swatch{% if not item.color %} res-swatch--none{% endif %}" aria-hidden="true"></span>
                     <div class="res-meta">
                         {{ name_line(item) }}
                         {% if item.desc %}<span class="res-desc">{{ item.desc }}</span>{% endif %}
-                        {% if item.color %}<span class="res-file">цвет имени: день {{ item.color }} / ночь {{ item.color_night }}</span>{% endif %}
+                        {% if item.color %}
+                        <span class="res-file">
+                            цвет имени:
+                            <button type="button" class="res-copy res-hex" data-copy="{{ item.color }}"
+                                    aria-label="Скопировать: {{ item.color }}" hidden>
+                                <span class="res-chip" style="background: {{ item.color }}" aria-hidden="true"></span>день {{ item.color }}
+                            </button> /
+                            <button type="button" class="res-copy res-hex" data-copy="{{ item.color_night }}"
+                                    aria-label="Скопировать: {{ item.color_night }}" hidden>
+                                <span class="res-chip" style="background: {{ item.color_night }}" aria-hidden="true"></span>ночь {{ item.color_night }}
+                            </button>
+                        </span>
+                        {% endif %}
                     </div>
                     {{ res.copy_button(item.code) }}
                 </li>
