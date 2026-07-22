@@ -467,6 +467,23 @@ def _group_sprites(names, composable):
     } for code in ordered]
 
 
+def _crosslist_character_images(collection):
+    """A handful of `anim` items are bare full-screen images of a known
+    sprite character — "mz irl" (the Женя scenario's real-photo reveal,
+    `image mz irl = "zhenya/images/mz_irl.png"`) rather than a pose built
+    from layers — so they can't be composed like a real sprite, but browsing
+    by character should still surface them. Cross-list them into that
+    character's Спрайты group too, reusing the anim tab's own raw/thumb
+    links (no separate compose route needed) instead of moving them and
+    losing that serving path."""
+    groups = {g['code']: g for g in collection['sprites']}
+    for item in collection['anim']:
+        group = groups.get(item['name'].split()[0])
+        if group:
+            group['sprites'].append(item)
+            group['sprites'].sort(key=lambda i: _sprite_sort_key(i['name']))
+
+
 # ── Characters (media.rpy): dialogue codes, display names, name colors ──
 
 # $ colors['dv'] = {'night': (210, 139, 16, 255), …, 'day': (255, 170, 0, 255), …}
@@ -562,6 +579,7 @@ def parse_resources():
     # sprites.rpy was already parsed by parse_sprites(); these names are
     # composable on demand via /resource/sprite/.
     original['sprites'] = _group_sprites(CONFIG.sprite_layers, composable=True)
+    _crosslist_character_images(original)
     # The speaking cast lives in the original collection only — a community
     # collection has no media.rpy, so it simply doesn't get the tab.
     original['characters'] = _parse_characters(CONFIG.res_path, described)
