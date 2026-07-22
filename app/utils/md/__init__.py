@@ -62,6 +62,7 @@ MD.add_render_rule('fence', render_fence)
 MD.block.ruler.before('fence', 'table', table_block)
 MD.block.ruler.before('fence', 'info', template('info'))
 MD.block.ruler.before('fence', 'warning', template('warning'))
+MD.block.ruler.before('fence', 'tip', template('tip'))
 
 MD.add_render_rule('heading_open', render_heading_open)
 
@@ -73,6 +74,9 @@ MD.add_render_rule('info_close', dummy_rule('</div></div>'))
 
 MD.add_render_rule('warning_open', dummy_rule(f'<div class="warning">{SVG["warning"]}<div class="warning-content">'))
 MD.add_render_rule('warning_close', dummy_rule('</div></div>'))
+
+MD.add_render_rule('tip_open', dummy_rule(f'<div class="tip">{SVG["tip"]}<div class="tip-content">'))
+MD.add_render_rule('tip_close', dummy_rule('</div></div>'))
 
 def render_thanks(src):
     html = MD.render(src)

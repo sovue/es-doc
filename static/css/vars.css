@@ -108,6 +108,14 @@
     --info: #215D70;
     --info-bg: #3E93B52A;
     --info-bg1: #3E93B514;
+
+    /* Tip reuses --pine, the reserved nature/success hue (DESIGN.md §Tertiary):
+       already verified AA as text/border on cream paper (resources.css,
+       artists.css open-status pill), so no separate deepened shade is needed
+       the way --info deepens --sky. Mirrors the warning/info gradient bands. */
+    --tip: #4F6B3E;
+    --tip-bg: #4F6B3E2A;
+    --tip-bg1: #4F6B3E14;
 }
 
 /* ── Dark (Night at camp — by the lake) ───────────────────────
@@ -167,6 +175,11 @@
         --info: #86C0DA;
         --info-bg: #5FA6C833;
         --info-bg1: #5FA6C81A;
+
+        /* Tip lifted for night — same value --pine already uses at night. */
+        --tip: #8FB07A;
+        --tip-bg: #8FB07A33;
+        --tip-bg1: #8FB07A1A;
     }
 }
 
@@ -217,4 +230,9 @@
     --info: #86C0DA;
     --info-bg: #5FA6C833;
     --info-bg1: #5FA6C81A;
+
+    /* Tip lifted for night — same value --pine already uses at night. */
+    --tip: #8FB07A;
+    --tip-bg: #8FB07A33;
+    --tip-bg1: #8FB07A1A;
 }

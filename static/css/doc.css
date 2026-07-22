@@ -514,10 +514,11 @@ pre code .ow { color: var(--code-operator); }
 
 pre code .w { color: var(--code-whitespace); }
 
-/* ── Warning & Info ──────────────────────────────────────── */
+/* ── Warning, Info & Tip ──────────────────────────────────── */
 
 .info,
-.warning {
+.warning,
+.tip {
     padding: 16px;
     margin: 32px 0;
     display: flex;
@@ -540,20 +541,44 @@ pre code .w { color: var(--code-whitespace); }
     background: linear-gradient(0deg, var(--warning-bg) 5%, var(--warning-bg1) 25%, var(--warning-bg1) 75%, var(--warning-bg) 95%);
 }
 
+.tip {
+    color: var(--tip);
+    border-top: 1px solid var(--tip);
+    border-bottom: 1px solid var(--tip);
+    background: linear-gradient(0deg, var(--tip-bg) 5%, var(--tip-bg1) 25%, var(--tip-bg1) 75%, var(--tip-bg) 95%);
+}
+
 /* The body reads as ordinary ink prose, like every other paragraph on the
    page; the semantic colour lives only in the border, icon, and <strong>.
-   Without this the .info-content / .warning-content wrapper inherits
-   --info / --warning from its container and the *whole* paragraph renders
-   blue/red, fighting the ink-on-paper body style (and diverging from the
-   design-system callout spec, which sets the body back to --text). */
+   Without this the .info-content / .warning-content / .tip-content wrapper
+   inherits --info / --warning / --tip from its container and the *whole*
+   paragraph renders blue/red/green, fighting the ink-on-paper body style
+   (and diverging from the design-system callout spec, which sets the body
+   back to --text). */
 .info-content,
-.warning-content { color: var(--text); }
+.warning-content,
+.tip-content { color: var(--text); }
+
+/* Content is a full block-level parse (paragraphs, lists, code, ...), not a
+   single inline blob, so a callout with ordinary prose still needs its first/
+   last child's own margin collapsed — otherwise the global `p { margin: 1em 0 }`
+   pushes the first line away from the top-aligned icon and pads the bottom of
+   the box beyond the intended 16px. */
+.info-content > :first-child,
+.warning-content > :first-child,
+.tip-content > :first-child { margin-top: 0; }
+
+.info-content > :last-child,
+.warning-content > :last-child,
+.tip-content > :last-child { margin-bottom: 0; }
 
 .info strong { color: var(--info); }
 .warning strong { color: var(--warning); }
+.tip strong { color: var(--tip); }
 
 .info .icon,
-.warning .icon {
+.warning .icon,
+.tip .icon {
     width: 32px;
     height: 32px;
     margin-right: 12px;
@@ -563,6 +588,7 @@ pre code .w { color: var(--code-whitespace); }
 
 .info .icon { color: var(--info); }
 .warning .icon { color: var(--warning); }
+.tip .icon { color: var(--tip); }
 
 /* ── Responsive ──────────────────────────────────────────── */
 

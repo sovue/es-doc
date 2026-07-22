@@ -63,6 +63,9 @@ components:
   callout-warning:
     backgroundColor: "{colors.warning-bg}"
     textColor: "{colors.warning}"
+  callout-tip:
+    backgroundColor: "{colors.tip-bg}"
+    textColor: "{colors.tip}"
   search-box:
     backgroundColor: "{colors.cream-paper}"
     textColor: "{colors.ink}"
@@ -124,6 +127,7 @@ A warm-paper palette lit by golden-hour sun, with pioneer red as its single loud
 ### Semantic
 - **Info** (`#215D70`, dark `#86C0DA`): Deep sky-blue for `:::info` callouts. Carries the callout's border, icon, and `<strong>`, not the body text, which stays ink so the note reads as ordinary prose; `--info-bg` / `--info-bg1` are its faint gradient bands. Reads as "note", never alarm.
 - **Warning** (`#A81824`, dark `#F46974`): A deeper red than the link accent, so caution stays distinct from ordinary interactive red.
+- **Tip** (`#4F6B3E`, dark `#8FB07A`): `:::tip` callouts reuse `--pine` directly rather than a deepened shade, since it already clears AA as text/border on cream paper. Reads as a friendly, encouraging aside.
 
 ### Named Rules
 **The Galstuk Rule.** Pioneer red appears on ≤10% of any screen. Its rarity is the point; a whole sidebar or a full row of red breaks it. Emphasis inside a red-tinted surface leans on weight, not more red.
@@ -174,8 +178,8 @@ The header's centerpiece: a bordered input group that highlights its border on `
 ### Section Row & Doc Tree
 The primary grouping affordance, a bordered list of rows, never a card grid. Baseline-aligned flex rows with a pioneer-red arrow that fades in on hover/focus. The docs index nests these into a tree with a 1px `--border-tan` left-indent guide (structural, not a decorative stripe). Names truncate with ellipsis; the arrow stays pinned right.
 
-### Callouts (Info / Warning)
-Full-width note blocks with a top+bottom hairline in the semantic color and a faint vertical gradient band behind. **Info** is deep sky-blue and calm; **Warning** is a deeper red than links. Both lead with a 32px `currentColor` icon (`class="icon"`) so the two types read at a glance and match in size. No side-stripe; the gradient band and paired borders carry the emphasis. The `.info-content` / `.warning-content` body stays ink (`--text`) so the note reads as ordinary prose; only the border, icon, and `<strong>` take the semantic colour. (A callout whose whole paragraph is coloured is the wrapper missing its `color: var(--text)` reset.)
+### Callouts (Info / Warning / Tip)
+Full-width note blocks with a top+bottom hairline in the semantic color and a faint vertical gradient band behind. **Info** is deep sky-blue and calm; **Warning** is a deeper red than links; **Tip** is `--pine` forest green, a friendly aside. All three lead with a 32px `currentColor` icon (`class="icon"`) so the types read at a glance and match in size. No side-stripe; the gradient band and paired borders carry the emphasis. The `.info-content` / `.warning-content` / `.tip-content` body stays ink (`--text`) so the note reads as ordinary prose; only the border, icon, and `<strong>` take the semantic colour. (A callout whose whole paragraph is coloured is the wrapper missing its `color: var(--text)` reset.)
 
 ### Blockquote
 Full 1px `--border-tan` border with a `--cream-paper` fill, set in PT Serif italic (the brand's quote voice). Never an accent side-stripe; the fill alone separates it from body text.
