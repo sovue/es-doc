@@ -102,21 +102,29 @@ const fromPoints = points => t => {
 
 const TAU = Math.PI * 2;
 
-// Plot geometry, in CSS pixels.
+/* Plot geometry, in CSS pixels. The curve keeps the top-left of the square;
+   the value track runs down the right edge (same vertical mapping as the
+   plot, so its marker sits at exactly the height the curve is at) and the
+   time scale runs along the bottom. Together they read as what a warper
+   does: time in along the bottom, value out along the right. */
 const PAD_X = 14;
-const PAD_TOP = 12;
-const TRACK_GAP = 16;
-const TRACK_H = 12;
+const PAD_TOP = 14;
+const TRACK_W = 9;      // the value track's tick width
+const TRACK_GAP = 14;
+const AXIS_H = 26;      // time scale: line, ticks, end labels
+const TICK = 3.5;
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-const palette = { line: '#000', curve: '#000', mark: '#000' };
+const palette = { line: '#000', curve: '#000', mark: '#000', mono: 'monospace' };
 
 const readPalette = () => {
     const style = getComputedStyle(document.documentElement);
     palette.line = style.getPropertyValue('--border').trim();
     palette.curve = style.getPropertyValue('--text-soft').trim();
     palette.mark = style.getPropertyValue('--accent').trim();
+    // Scale labels are the page's own mono face, not a canvas default.
+    palette.mono = style.getPropertyValue('--font-mono').trim() || 'monospace';
 };
 
 // Hairlines land on a device pixel instead of straddling two of them.
@@ -261,15 +269,15 @@ class WarperCanvas {
         if (!ctx || !w || !h) return;
 
         const left = PAD_X;
-        const right = w - PAD_X;
+        const right = w - PAD_X - TRACK_GAP - TRACK_W;
         const top = PAD_TOP;
-        const base = h - TRACK_H - TRACK_GAP;
-        const trackY = h - TRACK_H / 2;
+        const base = h - AXIS_H;
+        const trackX = w - PAD_X - TRACK_W / 2;
+        const axisY = h - AXIS_H + 8;
         const span = this.hi - this.lo;
 
         const px = t => left + t * (right - left);
         const py = v => base - (v - this.lo) / span * (base - top);
-        const tx = v => left + (v - this.lo) / span * (right - left);
 
         ctx.clearRect(0, 0, w, h);
         ctx.lineCap = 'round';
@@ -308,26 +316,57 @@ class WarperCanvas {
 
         ctx.stroke();
 
-        /* The track under the plot is the same motion as the curve, but as
-           actual travel: ticks mark the start and the target. */
+        /* Value track, down the right edge: the same motion as the curve but
+           as actual travel. Its ticks sit on the two guide levels, so start
+           and target line up with the lines they belong to. */
         ctx.strokeStyle = palette.line;
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(left, snap(trackY));
-        ctx.lineTo(right, snap(trackY));
+        ctx.moveTo(snap(trackX), top);
+        ctx.lineTo(snap(trackX), base);
 
         for (const v of [0, 1]) {
-            ctx.moveTo(snap(tx(v)), trackY - 4);
-            ctx.lineTo(snap(tx(v)), trackY + 4);
+            ctx.moveTo(trackX - TRACK_W / 2, snap(py(v)));
+            ctx.lineTo(trackX + TRACK_W / 2, snap(py(v)));
         }
 
         ctx.stroke();
 
+        /* Time scale along the bottom: quarters of the interpolation's
+           duration, 0 to 1. Reading the two together is the whole point —
+           time moves evenly down here while the value up there doesn't. */
+        ctx.beginPath();
+        ctx.moveTo(left, snap(axisY));
+        ctx.lineTo(right, snap(axisY));
+
+        for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+            const x = snap(px(t));
+            ctx.moveTo(x, snap(axisY));
+            ctx.lineTo(x, snap(axisY) + (t === 0 || t === 1 ? TICK + 2 : TICK));
+        }
+
+        ctx.stroke();
+
+        ctx.fillStyle = palette.curve;
+        ctx.font = `9px ${palette.mono}`;
+        ctx.textBaseline = 'top';
+
+        ctx.textAlign = 'left';
+        ctx.fillText('0', left, axisY + TICK + 5);
+        ctx.textAlign = 'right';
+        ctx.fillText('1', right, axisY + TICK + 5);
+
         if (!this.active) {
             // At rest the preview stays ink-quiet: pioneer red shows up only
             // on the one curve you're pointing at (DESIGN.md, Galstuk Rule).
+            ctx.strokeStyle = palette.line;
+
             ctx.beginPath();
-            ctx.arc(tx(0), trackY, 3, 0, TAU);
+            ctx.arc(trackX, py(0), 3, 0, TAU);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(px(0), axisY, 3, 0, TAU);
             ctx.stroke();
             return;
         }
@@ -350,12 +389,18 @@ class WarperCanvas {
 
         ctx.fillStyle = palette.mark;
 
+        // On the curve, on the value track, and on the time scale — one
+        // moment shown three ways.
         ctx.beginPath();
         ctx.arc(px(t), py(value), 3.5, 0, TAU);
         ctx.fill();
 
         ctx.beginPath();
-        ctx.arc(tx(value), trackY, 4, 0, TAU);
+        ctx.arc(trackX, py(value), 4, 0, TAU);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(px(t), axisY, 4, 0, TAU);
         ctx.fill();
     }
 }

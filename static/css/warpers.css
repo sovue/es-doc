@@ -183,10 +183,13 @@
     min-width: 0;
 }
 
+/* Square on purpose: time along the bottom and value up the right side get
+   the same length, so the curve isn't stretched into looking gentler or
+   sharper than it is. */
 .wp-plot {
     display: block;
     width: 100%;
-    aspect-ratio: 8 / 5;
+    aspect-ratio: 1 / 1;
     background: var(--bg-light);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
@@ -201,21 +204,23 @@
     border-color: var(--accent);
 }
 
+/* The name is what people come here to take away, so it reads at body size
+   rather than as a caption under the plot. */
 .wp-name {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-family: var(--font-mono);
-    font-size: 0.8rem;
+    font-size: 1rem;
     color: var(--text);
 }
 
 /* warpers.js upgrades the plain label into this button when there's a
    clipboard to copy into; without JS the name stays plain text. */
 .wp-name--copy {
-    padding: 3px 7px;
-    margin-left: -7px;
+    padding: 4px 8px;
+    margin-left: -8px;
     background: none;
     border: 1px solid transparent;
     border-radius: var(--radius-xs);

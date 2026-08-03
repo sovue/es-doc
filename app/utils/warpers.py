@@ -33,7 +33,7 @@ SPECIAL = [
 # The other two variants are that curve mirrored, so one formula per row is
 # enough — see the note under the column headings.
 FAMILIES = [
-    ('Синус', '', '1 − cos(t · π/2)',
+    ('Sine', '', '1 − cos(t · π/2)',
      'Мягкое сглаживание на косинусе. Единственная тройка без суффикса и разумный выбор по умолчанию.'),
     ('Quad', '_quad', 't²',
      'Самая сдержанная из степенных: заметно живее линейного, но без драмы.'),
