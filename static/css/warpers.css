@@ -167,6 +167,76 @@
     outline-offset: 2px;
 }
 
+/* ── Generator ───────────────────────────────────────────── */
+
+.wp-lab-formula {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    max-width: 760px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.wp-lab-formula-fields {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px 16px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.wp-lab-formula-fields .wp-lab-field {
+    flex: 1 1 220px;
+}
+
+.wp-lab-field--name {
+    flex: 0 1 160px;
+}
+
+/* Formulas are code: they read in the mono face, like every other literal
+   on the site. */
+#wp-lab-expr,
+#wp-lab-name {
+    font-family: var(--font-mono);
+}
+
+#wp-lab-expr[aria-invalid],
+#wp-lab-name[aria-invalid] {
+    border-color: var(--warning);
+}
+
+/* One line that's the hint most of the time and the parser's complaint when
+   there is one — same slot either way, so nothing jumps as you type. */
+.wp-lab-note {
+    flex-basis: 100%;
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--text-soft);
+}
+
+.wp-lab-note.is-error {
+    color: var(--warning);
+}
+
+.wp-lab-curve {
+    display: block;
+    flex: 0 0 auto;
+    width: 148px;
+    aspect-ratio: 1 / 1;
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s var(--ease-out);
+}
+
+.wp-lab-curve:hover {
+    border-color: var(--accent);
+}
+
 .wp-lab-code {
     max-width: 760px;
     margin-top: 16px;
@@ -265,6 +335,28 @@
     font-size: 0.75rem;
 }
 
+/* warpers.js promotes the chip to a copy control; the ring is inset so
+   nothing shifts when it appears. What it hands over is the code form
+   (`t ** 2`), not the typeset one it displays. */
+.wp-formula[role="button"] {
+    cursor: pointer;
+    transition: box-shadow 0.15s var(--ease-out), color 0.15s var(--ease-out);
+}
+
+.wp-formula[role="button"]:hover {
+    box-shadow: inset 0 0 0 1px var(--code-inline);
+}
+
+.wp-formula[role="button"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.wp-formula.copied {
+    color: var(--code-success);
+    box-shadow: inset 0 0 0 1px var(--code-success);
+}
+
 .wp-family-note {
     flex-basis: 100%;
     max-width: 62ch;
@@ -303,6 +395,24 @@
 .wp-cell:focus-within .wp-plot,
 .wp-cell:target .wp-plot {
     border-color: var(--accent);
+}
+
+/* The plot is also the formula's copy control (promoted by warpers.js, so a
+   no-JS page keeps a plain picture). */
+.wp-plot[role="button"] {
+    cursor: pointer;
+}
+
+.wp-plot:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* After the hover rule above, and one step more specific, so the confirmation
+   still reads while the cursor is on the plot that was just copied. */
+.wp-cell:hover .wp-plot.copied,
+.wp-cell .wp-plot.copied {
+    border-color: var(--pine);
 }
 
 /* The name is what people come here to take away, so it reads at body size
@@ -392,6 +502,11 @@
        this button stands next to. */
     .wp-lab-play {
         height: 44px;
+    }
+
+    /* The curve drops under its own fields rather than squeezing them. */
+    .wp-lab-formula {
+        flex-wrap: wrap;
     }
 }
 

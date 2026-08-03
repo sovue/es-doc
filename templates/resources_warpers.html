@@ -14,9 +14,10 @@
    aria-hidden: the curve has no textual equivalent, and everything it says is
    already in the family note beside it. Built-in curves are looked up by name
    in warpers.js; community ones ship their sampled points instead. #}
-{% macro preview(name, desc='', points=none) %}
+{% macro preview(name, desc='', points=none, source='') %}
 <div class="wp-cell" id="{{ name }}">
     <canvas class="wp-plot" aria-hidden="true"
+            {%- if source %} data-formula="{{ source }}"{% endif %}
             {%- if points %} data-points="{{ points|join(',') }}"{% else %} data-warper="{{ name }}"{% endif %}></canvas>
     <span class="wp-name" data-copy="{{ name }}">{{ name }}</span>
     {%- if desc %}
@@ -87,13 +88,14 @@
                     <label class="wp-lab-field">
                         <span class="wp-lab-label">Варпер</span>
                         <select class="filter-select" id="wp-lab-warper">
+                            <option value="" data-custom="1">своя формула…</option>
                             {%- if builtin %}
                             <optgroup label="Особые">
-                                {% for name, desc in special %}<option value="{{ name }}">{{ name }}</option>{% endfor %}
+                                {% for name, desc, source in special %}<option value="{{ name }}">{{ name }}</option>{% endfor %}
                             </optgroup>
                             {%- for fam in families %}
                             <optgroup label="{{ fam.title }}">
-                                {% for name in fam.names %}<option value="{{ name }}"{% if name == 'easeout_cubic' %} selected{% endif %}>{{ name }}</option>{% endfor %}
+                                {% for cell in fam.cells %}<option value="{{ cell.name }}"{% if cell.name == 'easeout_cubic' %} selected{% endif %}>{{ cell.name }}</option>{% endfor %}
                             </optgroup>
                             {%- endfor %}
                             {%- else %}
@@ -125,6 +127,29 @@
                         </svg>
                         Проиграть
                     </button>
+                </div>
+
+                {# The generator: shown only while «своя формула» is picked.
+                   The curve redraws on every keystroke; the stage waits for
+                   Enter or «Проиграть» so typing doesn't strobe the frame. #}
+                <div class="wp-lab-formula" hidden>
+                    <div class="wp-lab-formula-fields">
+                        <label class="wp-lab-field">
+                            <span class="wp-lab-label">Формула от t</span>
+                            <input class="filter-input" id="wp-lab-expr" type="text"
+                                   spellcheck="false" autocomplete="off" autocapitalize="off"
+                                   value="t * t * (2.4 * t - 1.4)">
+                        </label>
+                        <label class="wp-lab-field wp-lab-field--name">
+                            <span class="wp-lab-label">Имя варпера</span>
+                            <input class="filter-input" id="wp-lab-name" type="text"
+                                   spellcheck="false" autocomplete="off" autocapitalize="off"
+                                   value="my_warper">
+                        </label>
+                        <p class="wp-lab-note" id="wp-lab-note" role="status" aria-live="polite"></p>
+                    </div>
+
+                    <canvas class="wp-lab-curve" aria-hidden="true"></canvas>
                 </div>
 
                 <div class="code-block wp-lab-code">
@@ -164,7 +189,8 @@
 
                 <p class="wp-hint">
                     Наведите курсор на график — точка проедет по кривой и по шкале под ней.
-                    Нажмите на имя, чтобы скопировать его.
+                    Нажмите на имя, чтобы скопировать имя, а на график или на формулу —
+                    чтобы скопировать саму формулу.
                 </p>
             </section>
 
@@ -197,7 +223,7 @@
                 </p>
 
                 <div class="wp-specials">
-                    {% for name, desc in special %}{{ preview(name, desc) }}{% endfor %}
+                    {% for name, desc, source in special %}{{ preview(name, desc, source=source) }}{% endfor %}
                 </div>
             </section>
 
@@ -222,10 +248,10 @@
                     {% for fam in families %}
                     <div class="wp-row-label">
                         <h3 class="wp-family">{{ fam.title }}</h3>
-                        {% if fam.formula %}<code class="wp-formula">{{ fam.formula }}</code>{% endif %}
+                        {% if fam.formula %}<code class="wp-formula" data-formula="{{ fam.source }}">{{ fam.formula }}</code>{% endif %}
                         <p class="wp-family-note">{{ fam.note }}</p>
                     </div>
-                    {% for name in fam.names %}{{ preview(name) }}{% endfor %}
+                    {% for cell in fam.cells %}{{ preview(cell.name, source=cell.source) }}{% endfor %}
                     {% endfor %}
 
                 </div>
@@ -262,7 +288,7 @@
 
                 <div class="wp-specials">
                     {% for item in community %}
-                    {% call preview(item.name, item.desc or '', item.points) %}
+                    {% call preview(item.name, item.desc or '', item.points, item.expr) %}
                     {%- if item.author %}
                     <span class="wp-cell-by">автор:
                         {%- if item.url %} <a href="{{ item.url }}">{{ item.author }}</a>
