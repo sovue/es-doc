@@ -1,0 +1,303 @@
+/* =====================================================================
+   Warper reference (/warpers) — the naming legend and the preview matrix.
+
+   The page is a lookup table: ten families × three prefixes, plus three
+   special cases. The previews repeat because the data repeats, so they
+   carry no card chrome of their own — a 1px frame around the plot, the
+   name under it, nothing else. Column and row labels do the explaining.
+   ===================================================================== */
+
+/* Wider than the site's prose column: the matrix is four columns of plots.
+   Tighter on top for the same reason .page-main--res is — tabs and the
+   category strip already sit above it. */
+.wp-main {
+    padding: 28px 48px 56px;
+    max-width: 1100px;
+}
+
+.wp-section + .wp-section {
+    margin-top: 64px;
+}
+
+/* Running text stays inside a comfortable measure even though the matrix
+   below it spans the full 1100px column. */
+.wp-prose {
+    max-width: 68ch;
+}
+
+.wp-prose p {
+    margin: 1em 0;
+    line-height: 1.7;
+    color: var(--text);
+}
+
+.wp-prose p:first-of-type {
+    margin-top: 0;
+}
+
+.wp-prose .code-block {
+    margin: 22px 0;
+}
+
+.wp-section-note {
+    margin: -4px 0 28px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-soft);
+}
+
+/* How to drive the previews — a quiet aside under the usage samples, not a
+   callout box: it explains the page's controls, not the subject. */
+.wp-hint {
+    font-size: 0.875rem;
+    color: var(--text-soft);
+}
+
+/* Attribution under a community warper. The name above it stays the copy
+   button; this line is the only place the contributor is credited. */
+.wp-cell-by {
+    font-size: 0.8rem;
+    color: var(--text-soft);
+}
+
+.wp-cell-by a {
+    color: var(--accent);
+    text-decoration: none;
+    transition: color 0.15s var(--ease-out);
+}
+
+.wp-cell-by a:hover {
+    color: var(--accent-hover);
+    text-decoration: underline;
+}
+
+.wp-cell-by a:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+}
+
+/* ── Naming legend ───────────────────────────────────────── */
+
+.wp-legend {
+    margin: 0;
+    border-top: 1px solid var(--border);
+}
+
+.wp-legend-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.wp-legend dt {
+    flex-shrink: 0;
+}
+
+.wp-legend dd {
+    margin: 0;
+    color: var(--text-soft);
+    line-height: 1.6;
+}
+
+.wp-legend b {
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* ── Matrix ──────────────────────────────────────────────── */
+
+.wp-matrix {
+    display: grid;
+    grid-template-columns: 210px repeat(3, minmax(0, 1fr));
+    gap: 44px 28px;
+    align-items: start;
+}
+
+.wp-specials {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 32px 28px;
+}
+
+/* Column heading sits on the baseline of the first row of plots. */
+.wp-col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    align-self: end;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.wp-col-name {
+    font-size: 0.8rem;
+}
+
+.wp-col-desc {
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: var(--text-soft);
+}
+
+.wp-row-label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 12px;
+}
+
+.wp-family {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text);
+}
+
+.wp-formula {
+    font-size: 0.75rem;
+}
+
+.wp-family-note {
+    flex-basis: 100%;
+    max-width: 62ch;
+    margin: 10px 0 0;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--text-soft);
+}
+
+/* ── Preview cell ────────────────────────────────────────── */
+
+.wp-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+}
+
+.wp-plot {
+    display: block;
+    width: 100%;
+    aspect-ratio: 8 / 5;
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s var(--ease-out);
+}
+
+/* The frame warms with the curve you're pointing at — the marker inside is
+   drawn in the same accent, and only ever on one preview at a time. */
+.wp-cell:hover .wp-plot,
+.wp-cell:focus-within .wp-plot,
+.wp-cell:target .wp-plot {
+    border-color: var(--accent);
+}
+
+.wp-name {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--text);
+}
+
+/* warpers.js upgrades the plain label into this button when there's a
+   clipboard to copy into; without JS the name stays plain text. */
+.wp-name--copy {
+    padding: 3px 7px;
+    margin-left: -7px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+    transition: color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
+}
+
+.wp-name--copy:hover {
+    color: var(--accent);
+    border-color: var(--border);
+}
+
+.wp-name--copy:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.wp-name--copy.copied {
+    color: var(--pine);
+    border-color: var(--pine);
+}
+
+.wp-name--copy.copied::after {
+    content: " ✓";
+}
+
+.wp-cell-desc {
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--text-soft);
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+/* Below the full matrix width the label column would squeeze the plots, so
+   the family label becomes a heading over its own row of three. The prefix
+   headings go with it — the legend above already carries what they mean. */
+@media (max-width: 1000px) {
+    .wp-matrix {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 20px 24px;
+    }
+
+    .wp-corner,
+    .wp-col {
+        display: none;
+    }
+
+    .wp-row-label {
+        grid-column: 1 / -1;
+        margin-top: 22px;
+    }
+}
+
+@media (max-width: 700px) {
+    .wp-matrix,
+    .wp-specials {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .wp-main {
+        padding: 24px 20px 40px;
+    }
+}
+
+@media (max-width: 460px) {
+    .wp-matrix,
+    .wp-specials {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .wp-cell {
+        max-width: 320px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wp-plot,
+    .wp-name--copy,
+    .wp-cell-by a {
+        transition: none;
+    }
+}

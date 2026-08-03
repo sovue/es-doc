@@ -10,6 +10,7 @@ from ..utils.config import CONFIG
 from ..utils.file import templates
 from ..utils.lifespan.resources_cache import BG_TIME_LABELS, CATEGORY_TITLES
 from ..utils.md import highlight_code
+from ..utils import warpers as warpers_util
 
 router = APIRouter(prefix='/resources')
 
@@ -52,6 +53,15 @@ CATEGORIES = {
         'usage': 'show anim blink_down',
         'media': 'image',
     },
+    # The one category that isn't scanned out of game/: warpers belong to the
+    # engine, so the original collection's list is static (utils/warpers.py)
+    # and the community's is data-driven (CONFIG.warpers). See STATIC below.
+    'warpers': {
+        'title': 'Варперы',
+        'desc': 'Кривые сглаживания для анимаций ATL',
+        'usage': 'easeout_cubic 1.5 xalign 1.0',
+        'media': 'warpers',
+    },
     'sfx': {
         'desc': 'Одиночные звуки для канала sound',
         'usage': 'play sound sfx_dinner_horn_processed',
@@ -70,7 +80,17 @@ CATEGORIES = {
 }
 
 for slug, meta in CATEGORIES.items():
-    meta['title'] = CATEGORY_TITLES[slug]
+    if slug in CATEGORY_TITLES:
+        meta['title'] = CATEGORY_TITLES[slug]
+
+
+# Categories whose items don't come from the assets scan, per collection.
+# The original's warpers are the engine's own set; the community's are
+# whatever warpers.yaml holds — an empty section until it does.
+def _static(collection):
+    if collection == 'original':
+        return {'warpers': warpers_util.NAMES}
+    return {'warpers': CONFIG.warpers}
 
 
 def _count(category, items):
@@ -78,13 +98,17 @@ def _count(category, items):
     # sit behind their toggle and are not part of the headline numbers.
     if category == 'sprites':
         return sum(len(group['sprites']) for group in items)
+    if category == 'warpers':
+        return len(items)
     return sum(1 for i in items if i['declared'])
 
 
 def _collection_or_404(collection):
     if collection not in COLLECTIONS or collection not in CONFIG.resources:
         raise HTTPException(404, f'Коллекция "{collection}" не существует.')
-    return CONFIG.resources[collection]
+    # Static categories sit alongside the scanned ones, so everything past
+    # this point can treat one collection as a single {category: items} map.
+    return {**CONFIG.resources[collection], **_static(collection)}
 
 
 def _hub(request, collection):
@@ -263,6 +287,31 @@ async def listing(collection, category, request: Request):
         raise HTTPException(404, f'Раздел "{category}" не существует.')
 
     items = data[category]
+
+    # The switcher is shared by every category page, warpers included.
+    switcher = [
+        {'slug': slug, 'count': _count(slug, data[slug]), **CATEGORIES[slug]}
+        for slug in CATEGORIES if slug in data
+    ]
+
+    if category == 'warpers':
+        return templates.TemplateResponse(request, 'resources_warpers.html', {
+            'collection': collection,
+            'collection_meta': COLLECTIONS[collection],
+            'category': category,
+            'category_meta': CATEGORIES[category],
+            'categories': switcher,
+            'count': len(items),
+            # The engine's own set is a fixed matrix of families; the
+            # community's is a flat list of contributed curves.
+            'builtin': collection == 'original',
+            'columns': warpers_util.COLUMNS,
+            'special': warpers_util.SPECIAL,
+            'families': warpers_util.families(),
+            'samples': warpers_util.samples(),
+            'community': items if collection != 'original' else [],
+        })
+
     # The other collection's tab keeps the category when it exists there,
     # falling back to that collection's hub.
     other = 'community' if collection == 'original' else 'original'
@@ -281,10 +330,7 @@ async def listing(collection, category, request: Request):
         'collection_meta': COLLECTIONS[collection],
         'category': category,
         'category_meta': CATEGORIES[category],
-        'categories': [
-            {'slug': slug, 'count': _count(slug, data[slug]), **CATEGORIES[slug]}
-            for slug in CATEGORIES if slug in data
-        ],
+        'categories': switcher,
         'items': items,
         'count': _count(category, items),
         'count_all': (len(items) if category != 'sprites'

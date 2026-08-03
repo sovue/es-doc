@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% import "partials/res_macros.html" as res %}
+
+{% set page_title = category_meta.title + ' — ' + collection_meta.title + ' — ES Doc' %}
+{% set body_class = 'bg-solid' %}
+{% set active = 'resources' %}
+{% set extra_css = ['/static/css/resources.css', '/static/css/code.css', '/static/css/warpers.css'] %}
+{# docs.js carries the copy button on fenced code and the whitespace dots;
+   warpers.js draws the curves and upgrades the names into copy buttons. #}
+{% set with_docs_js = true %}
+{% set with_warpers_js = true %}
+
+{# A preview is the graph plus the name you came here to copy. The canvas is
+   aria-hidden: the curve has no textual equivalent, and everything it says is
+   already in the family note beside it. Built-in curves are looked up by name
+   in warpers.js; community ones ship their sampled points instead. #}
+{% macro preview(name, desc='', points=none) %}
+<div class="wp-cell" id="{{ name }}">
+    <canvas class="wp-plot" aria-hidden="true"
+            {%- if points %} data-points="{{ points|join(',') }}"{% else %} data-warper="{{ name }}"{% endif %}></canvas>
+    <span class="wp-name" data-copy="{{ name }}">{{ name }}</span>
+    {%- if desc %}
+    <span class="wp-cell-desc">{{ desc }}</span>
+    {%- endif %}
+    {{- caller() if caller else '' }}
+</div>
+{%- endmacro %}
+
+{% block content %}
+<div class="page">
+
+    <main id="main-content">
+
+        <section class="page-hero page-hero--tight">
+            <div class="page-hero-inner">
+                <a href="/resources/{% if collection != 'original' %}{{ collection }}{% endif %}" class="page-back">
+                    <span aria-hidden="true">←</span> {{ collection_meta.title }}</a>
+                <h1 class="page-title">{{ category_meta.title }}</h1>
+                <p class="page-lead">
+                    {{ category_meta.desc }}.
+                    Пример использования: <code class="res-usage">{{ category_meta.usage }}</code>
+                </p>
+            </div>
+        </section>
+
+        {{ res.tabs(collection) }}
+
+        <nav class="res-cats" aria-label="Разделы коллекции «{{ collection_meta.title }}»">
+            <ul role="list">
+                {% for cat in categories %}
+                <li>
+                    <a href="/resources/{{ collection }}/{{ cat.slug }}"{% if cat.slug == category %} aria-current="page"{% endif %}>
+                        {{ cat.title }}<span class="res-cat-count">{{ cat.count }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </nav>
+
+        <div class="wp-main">
+
+            {% if builtin %}
+
+            <section class="wp-section wp-prose" aria-labelledby="wp-usage-label">
+                <h2 class="authors-list-label" id="wp-usage-label">Где они стоят</h2>
+
+                <p>
+                    Варпер решает, как значение идёт от начального к конечному за отведённое
+                    время: равномерно, с разгоном, с замахом или с отскоками. В ATL его имя
+                    открывает строку интерполяции: за ним идёт длительность в секундах, а
+                    дальше свойства, которые нужно к ней привести.
+                </p>
+
+                {{ samples.atl|safe }}
+
+                <p>
+                    Если имя приходит параметром или лежит в переменной, его подставляют
+                    через <code>warp</code>:
+                </p>
+
+                {{ samples.warp|safe }}
+
+                <p>
+                    Переходы принимают тот же набор через модуль <code>_warper</code> —
+                    так замедляют или ускоряют само затухание:
+                </p>
+
+                {{ samples.transition|safe }}
+
+                <p class="wp-hint">
+                    Наведите курсор на график — точка проедет по кривой и по шкале под ней.
+                    Нажмите на имя, чтобы скопировать его.
+                </p>
+            </section>
+
+            <section class="wp-section wp-prose" aria-labelledby="wp-naming-label">
+                <h2 class="authors-list-label" id="wp-naming-label">Как читаются имена</h2>
+
+                <dl class="wp-legend">
+                    {% for prefix, short, long in columns %}
+                    <div class="wp-legend-row">
+                        <dt><code>{{ prefix }}…</code></dt>
+                        <dd><b>{{ short }}</b> — {{ long }}.</dd>
+                    </div>
+                    {% endfor %}
+                </dl>
+
+                <p>
+                    Это обратно тому, что те же слова значат в CSS и After Effects. В Ren'Py имя
+                    описывает не форму кривой, а точку, из которой движение выезжает или в которую
+                    въезжает: <code>easeout</code> выезжает из начальной, <code>easein</code>
+                    въезжает в конечную. Если анимация тормозит не там, где вы ждали — почти
+                    наверняка перепутаны именно эти два префикса.
+                </p>
+            </section>
+
+            <section class="wp-section" aria-labelledby="wp-special-label">
+                <h2 class="authors-list-label" id="wp-special-label">Особые</h2>
+                <p class="wp-section-note wp-prose">
+                    Не сглаживание: эти три задают не форму движения, а момент, когда значение
+                    вообще меняется.
+                </p>
+
+                <div class="wp-specials">
+                    {% for name, desc in special %}{{ preview(name, desc) }}{% endfor %}
+                </div>
+            </section>
+
+            <section class="wp-section" aria-labelledby="wp-families-label">
+                <h2 class="authors-list-label" id="wp-families-label">Семейства</h2>
+                <p class="wp-section-note wp-prose">
+                    Каждое семейство существует в трёх вариантах. Формула дана для
+                    <code>easeout_</code>: две другие кривые получаются из неё отражением,
+                    поэтому и выглядят зеркально.
+                </p>
+
+                <div class="wp-matrix">
+
+                    <div class="wp-corner" aria-hidden="true"></div>
+                    {% for prefix, short, long in columns %}
+                    <div class="wp-col">
+                        <code class="wp-col-name">{{ prefix }}…</code>
+                        <span class="wp-col-desc">{{ long }}</span>
+                    </div>
+                    {% endfor %}
+
+                    {% for fam in families %}
+                    <div class="wp-row-label">
+                        <h3 class="wp-family">{{ fam.title }}</h3>
+                        {% if fam.formula %}<code class="wp-formula">{{ fam.formula }}</code>{% endif %}
+                        <p class="wp-family-note">{{ fam.note }}</p>
+                    </div>
+                    {% for name in fam.names %}{{ preview(name) }}{% endfor %}
+                    {% endfor %}
+
+                </div>
+            </section>
+
+            <section class="wp-section wp-prose" aria-labelledby="wp-custom-label">
+                <h2 class="authors-list-label" id="wp-custom-label">Свой варпер</h2>
+
+                <p>
+                    Варпер — обычная функция: получает <code>t</code> от 0.0 до 1.0 и возвращает
+                    долю пройденного пути. Декоратор регистрирует её под собственным именем, после
+                    чего она доступна в ATL наравне со встроенными.
+                </p>
+
+                {{ samples.custom|safe }}
+
+                <p>
+                    Возвращать можно и значения за пределами отрезка 0.0 — 1.0: именно так
+                    устроены <code>back</code>, <code>elastic</code> и <code>bounce</code>,
+                    которые сначала промахиваются мимо цели, а потом приходят к ней.
+                    Написали удачный — его место в
+                    <a href="/resources/community/warpers">варперах сообщества</a>.
+                </p>
+            </section>
+
+            {% elif community %}
+
+            <section class="wp-section" aria-labelledby="wp-community-label">
+                <h2 class="authors-list-label" id="wp-community-label">Варперы сообщества</h2>
+                <p class="wp-section-note wp-prose">
+                    Кривые, написанные мододелами. Каждую нужно объявить у себя в моде через
+                    <code>@renpy.atl_warper</code> — встроенными в игру они не являются.
+                </p>
+
+                <div class="wp-specials">
+                    {% for item in community %}
+                    {% call preview(item.name, item.desc or '', item.points) %}
+                    {%- if item.author %}
+                    <span class="wp-cell-by">автор:
+                        {%- if item.url %} <a href="{{ item.url }}">{{ item.author }}</a>
+                        {%- else %} {{ item.author }}{% endif %}</span>
+                    {%- endif %}
+                    {% endcall %}
+                    {% endfor %}
+                </div>
+            </section>
+
+            {% else %}
+
+            <div class="res-empty">
+                <p class="res-empty-title">Кастомных варперов пока нет.</p>
+                <p>Здесь будут кривые, написанные мододелами — те, которых нет в движке.
+                   Написали свой и он пригодился не только вам —
+                   <a href="https://github.com/sovue/es-doc/issues">расскажите нам</a>,
+                   и он встанет сюда рядом с
+                   <a href="/resources/original/warpers">встроенными</a>.</p>
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </main>
+
+    {% include "partials/footer.html" %}
+
+</div>
+
+<p class="sr-only" role="status" aria-live="polite" id="code-copy-status"></p>
+{% endblock %}

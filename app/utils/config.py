@@ -77,6 +77,12 @@ class _ConfigContainer():
         # {name, items: [{title, url}]}.
         self.literature = []
 
+        # Community-made warpers, parsed from warpers.yaml at startup (see
+        # utils/lifespan/warpers_cache.py). List of dicts:
+        # {name, desc, author, url, expr, points}. The engine's own warpers
+        # aren't here: they're static, in utils/warpers.py.
+        self.warpers = []
+
         self.docs_path: Path = None
         self.res_path: Path = None
 

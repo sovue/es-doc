@@ -193,6 +193,10 @@ The homepage hero carries the camp itself: four game backgrounds crossfading on 
 ### Character Swatch
 On the Персонажи resources page, a 36px bordered square carrying the character's in-game name color — the game's *day* value in light theme, the *night* value in dark (same two-way theme plumbing as the sprite group colors). Characters with no name color (narrator, `th`) get an empty dashed frame, never a fake gray fill. The "цвет имени: день / ночь" line under the name repeats both values as text, each led by a small color chip, so both can be compared without toggling the site theme. Name and code stay plain ink: this is a reference page for 40+ characters, and their raw in-game colors are largely undimmed neon (`#FFFF00`, `#4EFF00`, `#FF3200`, …) tuned for a dark dialogue box — recoloring the running text in all of them read as a rainbow list, at odds with the one-accent-color discipline everywhere else on the site. The swatch and chips carry the color; the text doesn't.
 
+### Warper Preview
+
+In the «Варперы» section of «Ресурсов» (the engine's own set under the original collection, community-contributed ones under the other), a small plot of one Ren'Py easing curve: a 1px `--border-tan` frame over `--cream-paper`, a solid hairline at the start value, a dashed one at the target (the only way to see that back/elastic/bounce overshoot), the curve itself in `--ink-soft`, and a travel track below it with ticks at start and target. The whole preview stays ink-quiet at rest, with a hollow marker parked at the start; pioneer red appears only on the curve currently hovered or focused, as the traced portion plus the two markers, so a page of 33 previews still spends its red once (the Galstuk Rule). Colours are read from the CSS custom properties at runtime and re-read on theme change, since canvas can't inherit them. The reference is a matrix, ten families × three prefixes, so the previews repeat deliberately: they carry no card chrome, only the plot and the name, and the row/column labels do the explaining. Reduced motion parks the marker at the target instead of animating it there.
+
 ## 6. Do's and Don'ts
 
 ### Do:

@@ -18,7 +18,8 @@
 <script src="/static/js/theme.js" defer></script>
 {% if with_contributors_js %}<script src="/static/js/contributors.js" defer></script>
 {% endif %}
-{% if active == "docs" %}<script src="/static/js/docs.js" defer></script>
+{% if active == "docs" or with_docs_js %}<script src="/static/js/docs.js" defer></script>
+{% endif %}{% if with_warpers_js %}<script src="/static/js/warpers.js" defer></script>
 {% endif %}
 {% if active == "resources" %}<script src="/static/js/resources.js" defer></script>
 {% endif %}{% if active == "artists" %}<script src="/static/js/artists.js" defer></script>

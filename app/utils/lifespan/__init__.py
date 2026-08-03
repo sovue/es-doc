@@ -11,6 +11,7 @@ from .news_cache import parse_news
 from .refresh import worker_refresh_caches
 from .resources_cache import parse_resources
 from .sprites_cache import parse_sprites, SPRITES_PATH
+from .warpers_cache import parse_warpers
 
 logger = root_logger.getChild('lifespan')
 
@@ -48,6 +49,11 @@ async def lifespan(app: FastAPI):
         await asyncio.to_thread(parse_literature)
     except Exception:
         logger.exception('Parsing literature.yaml failed; /literature will be empty until restart.')
+
+    try:
+        await asyncio.to_thread(parse_warpers)
+    except Exception:
+        logger.exception('Parsing warpers.yaml failed; the community warper section will be empty until restart.')
 
     # Populate the caches before the app starts serving so the first request
     # never races an empty tree or search corpus.

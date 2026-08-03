@@ -1,0 +1,193 @@
+/* =====================================================================
+   Code panels — the warm-dark block, its copy button, and the syntax
+   palette. Extracted from doc.css when a second page (the warper
+   reference) started rendering the same `.code-block` markup: one
+   definition, two consumers, no drift between them.
+
+   Loaded via extra_css by every template that renders fenced code
+   (doc.html, warpers.html) and paired with docs.js, which reveals the
+   copy button and swaps the lexer's whitespace spans for visible dots.
+
+   Selectors stay bare (`pre`, `code`) rather than scoped: this file is
+   only loaded on pages whose only code is prose code, same as when the
+   rules lived in doc.css.
+   ===================================================================== */
+
+code {
+    background: var(--code-bg);
+
+    padding: 0.15em 0.4em;
+    border-radius: var(--radius-code);
+
+    font-family: var(--font-mono);
+
+    color: var(--code-inline);
+}
+
+pre {
+    background: var(--code-bg);
+
+    padding: 16px;
+    overflow-x: auto;
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-block);
+}
+
+pre code {
+    background: none;
+    padding: 0;
+    /* Base ink for the panel. Unclassified tokens (punctuation — colons,
+       brackets, commas) would otherwise inherit the paper --text and vanish
+       on the warm-dark panel; syntax classes below override this. */
+    color: var(--code-name);
+}
+
+/* The copy button sits pinned to the block's corner, independent of the
+   pre's own horizontal scroll. Colors are code-panel-tuned (--code-comment
+   at rest, --code-inline on hover/copied), not the paper accent — the
+   panel stays warm-dark in both themes, so paper-tuned colors would fight
+   it (DESIGN.md's Warm-Dark Panel Rule). */
+.code-block {
+    position: relative;
+}
+
+.code-copy {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--code-comment);
+    cursor: pointer;
+    transition: color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
+}
+
+.code-copy:hover,
+.code-copy:focus-visible {
+    color: var(--code-inline);
+    border-color: var(--code-inline);
+}
+
+.code-copy:focus-visible {
+    outline: 2px solid var(--code-inline);
+    outline-offset: 2px;
+}
+
+/* Each button holds two icons; the second (check) shows once copied. */
+.code-copy svg + svg {
+    display: none;
+}
+
+.code-copy.copied {
+    color: var(--code-success);
+    border-color: var(--code-success);
+}
+
+.code-copy.copied svg:first-child {
+    display: none;
+}
+
+.code-copy.copied svg + svg {
+    display: block;
+}
+
+/* ── Syntax palette ──────────────────────────────────────── */
+
+pre code .k,
+pre code .kc,
+pre code .kd,
+pre code .kn,
+pre code .kp,
+pre code .kr,
+pre code .kt { color: var(--code-keyword); }
+
+pre code .kt { color: var(--code-type); }
+
+pre code .s,
+pre code .sa,
+pre code .sb,
+pre code .sc,
+pre code .dl,
+pre code .s1,
+pre code .s2,
+pre code .sd,
+pre code .sh,
+pre code .sx { color: var(--code-string); }
+
+/* Ren'Py string internals — dynamic bits lifted out of the literal purple so
+   they read against the prose: {text tags} and [interpolation] take the accent
+   colour, \escapes / {{ [[ %% take the operator colour. */
+pre code .nt,
+pre code .si { color: var(--code-class); }
+
+pre code .se { color: var(--code-operator); }
+
+/* Unbalanced text tag / interpolation bracket, or an unterminated string —
+   flagged by the lexer so authors spot a broken `{b}`…`{/b}` or stray `[`. */
+pre code .err {
+    color: var(--code-number);
+    text-decoration: underline wavy var(--code-number);
+    text-underline-offset: 2px;
+}
+
+pre code .c,
+pre code .c1,
+pre code .ch,
+pre code .cm,
+pre code .cp { color: var(--code-comment); }
+
+pre code .cs {
+    color: var(--code-operator);
+    text-decoration: underline dotted;
+    cursor: help;
+}
+
+pre code .n,
+pre code .na,
+pre code .nb,
+pre code .nc,
+pre code .nd,
+pre code .ne,
+pre code .nf,
+pre code .ni,
+pre code .nl,
+pre code .nn,
+pre code .nx { color: var(--code-name); }
+
+pre code .nf { color: var(--code-func); }
+
+pre code .nc { color: var(--code-class); }
+
+pre code .m,
+pre code .mb,
+pre code .mf,
+pre code .mh,
+pre code .mi,
+pre code .mo { color: var(--code-number); }
+
+pre code .o,
+pre code .ow { color: var(--code-operator); }
+
+pre code .w { color: var(--code-whitespace); }
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 400px) {
+    pre {
+        border-radius: var(--radius-code);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .code-copy {
+        transition: none;
+    }
+}

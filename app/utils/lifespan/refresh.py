@@ -9,6 +9,7 @@ from .literature_cache import parse_literature
 from .news_cache import parse_news
 from .resources_cache import parse_resources
 from .sprites_cache import parse_sprites
+from .warpers_cache import parse_warpers
 
 logger = root_logger.getChild('lifespan').getChild('refresh')
 
@@ -62,6 +63,10 @@ WATCHERS = [
     ('artists.yaml', lambda: [_assets_root() / 'artists.yaml'], parse_artists),
     ('news.yaml', lambda: [_assets_root() / 'news.yaml'], parse_news),
     ('literature.yaml', lambda: [_assets_root() / 'literature.yaml'], parse_literature),
+    # Watched even though the file doesn't exist yet: _stamp treats a create
+    # like an edit, so the first community warper goes live on the next tick
+    # without a restart.
+    ('warpers.yaml', lambda: [_assets_root() / 'warpers.yaml'], parse_warpers),
 ]
 
 
