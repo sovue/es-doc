@@ -59,6 +59,81 @@
 
         <div class="wp-main">
 
+            {# Ships [hidden] and revealed by warpers.js: the whole thing is
+               a JS control surface, and a dead frame with dead selects is
+               worse than no section at all. #}
+            {% if backgrounds and (builtin or community) %}
+            <section class="wp-section wp-lab" aria-labelledby="wp-lab-label" hidden>
+                <h2 class="authors-list-label" id="wp-lab-label">Попробовать</h2>
+                <p class="wp-section-note wp-prose">
+                    Возьмите фон из игры, накиньте на него варпер и смотрите, что выйдет.
+                    Под кадром собирается тот самый код, который это делает.
+                </p>
+
+                <div class="wp-lab-stage">
+                    <img class="wp-lab-img" alt="" decoding="async">
+                </div>
+
+                <div class="wp-lab-controls">
+                    <label class="wp-lab-field">
+                        <span class="wp-lab-label">Фон</span>
+                        <select class="filter-select" id="wp-lab-bg">
+                            {% for bg in backgrounds %}
+                            <option value="{{ bg.raw }}" data-name="{{ bg.name }}">{{ bg.name }}</option>
+                            {%- endfor %}
+                        </select>
+                    </label>
+
+                    <label class="wp-lab-field">
+                        <span class="wp-lab-label">Варпер</span>
+                        <select class="filter-select" id="wp-lab-warper">
+                            {%- if builtin %}
+                            <optgroup label="Особые">
+                                {% for name, desc in special %}<option value="{{ name }}">{{ name }}</option>{% endfor %}
+                            </optgroup>
+                            {%- for fam in families %}
+                            <optgroup label="{{ fam.title }}">
+                                {% for name in fam.names %}<option value="{{ name }}"{% if name == 'easeout_cubic' %} selected{% endif %}>{{ name }}</option>{% endfor %}
+                            </optgroup>
+                            {%- endfor %}
+                            {%- else %}
+                            {% for item in community %}
+                            <option value="{{ item.name }}" data-points="{{ item.points|join(',') }}">{{ item.name }}</option>
+                            {%- endfor %}
+                            {%- endif %}
+                        </select>
+                    </label>
+
+                    <label class="wp-lab-field">
+                        <span class="wp-lab-label">Свойство</span>
+                        <select class="filter-select" id="wp-lab-prop">
+                            <option value="xalign">xalign</option>
+                            <option value="zoom">zoom</option>
+                            <option value="alpha">alpha</option>
+                        </select>
+                    </label>
+
+                    <label class="wp-lab-field wp-lab-field--time">
+                        <span class="wp-lab-label">Секунды</span>
+                        <input class="filter-input" id="wp-lab-time" type="number"
+                               min="0.2" max="10" step="0.1" value="1.5" inputmode="decimal">
+                    </label>
+
+                    <button type="button" class="wp-lab-play">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+                            <path d="M3 1.9a.6.6 0 0 1 .9-.52l6 3.6a.6.6 0 0 1 0 1.04l-6 3.6a.6.6 0 0 1-.9-.52z"/>
+                        </svg>
+                        Проиграть
+                    </button>
+                </div>
+
+                <div class="code-block wp-lab-code">
+                    {{ code_copy_button|safe }}
+                    <pre><code class="language-renpy" id="wp-lab-snippet"></code></pre>
+                </div>
+            </section>
+            {% endif %}
+
             {% if builtin %}
 
             <section class="wp-section wp-prose" aria-labelledby="wp-usage-label">

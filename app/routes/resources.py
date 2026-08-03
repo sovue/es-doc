@@ -9,7 +9,7 @@ from . import main_router
 from ..utils.config import CONFIG
 from ..utils.file import templates
 from ..utils.lifespan.resources_cache import BG_TIME_LABELS, CATEGORY_TITLES
-from ..utils.md import highlight_code
+from ..utils.md import highlight_code, CODE_COPY_BUTTON
 from ..utils import warpers as warpers_util
 
 router = APIRouter(prefix='/resources')
@@ -295,6 +295,15 @@ async def listing(collection, category, request: Request):
     ]
 
     if category == 'warpers':
+        # The sandbox at the top of the page animates a real background, so it
+        # borrows the original collection's bg list — declared, non-NSFW and
+        # actually present on disk. Both collections' warpers get to drive it.
+        backgrounds = [
+            {'name': i['name'], 'code': i['code'], 'raw': i['raw']}
+            for i in CONFIG.resources.get('original', {}).get('bg', [])
+            if i['declared'] and i['raw'] and not i['nsfw']
+        ]
+
         return templates.TemplateResponse(request, 'resources_warpers.html', {
             'collection': collection,
             'collection_meta': COLLECTIONS[collection],
@@ -310,6 +319,8 @@ async def listing(collection, category, request: Request):
             'families': warpers_util.families(),
             'samples': warpers_util.samples(),
             'community': items if collection != 'original' else [],
+            'backgrounds': backgrounds,
+            'code_copy_button': CODE_COPY_BUTTON,
         })
 
     # The other collection's tab keeps the category when it exists there,

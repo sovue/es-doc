@@ -515,3 +515,142 @@ if (navigator.clipboard) {
         label.replaceWith(button);
     });
 }
+
+/* ── Sandbox: a real background driven by the chosen warper ── */
+
+/* The graphs say what a curve does; this says what it feels like. Same
+   warper table, applied to an actual game background instead of a plot —
+   and the ATL that would do it in a mod is written out underneath, so the
+   answer to "how do I get this" is on screen already. */
+(function () {
+    const lab = document.querySelector('.wp-lab');
+    if (!lab) return;
+
+    const image = lab.querySelector('.wp-lab-img');
+    const background = lab.querySelector('#wp-lab-bg');
+    const warperPick = lab.querySelector('#wp-lab-warper');
+    const property = lab.querySelector('#wp-lab-prop');
+    const seconds = lab.querySelector('#wp-lab-time');
+    const playButton = lab.querySelector('.wp-lab-play');
+    const snippet = lab.querySelector('#wp-lab-snippet');
+
+    // The stage overscans the image so a warper that overshoots (back,
+    // elastic, bounce) never drags an edge into frame. PAN is how far each
+    // way the pan travels, in % of the stage.
+    const COVER = 1.4;
+    const PAN = 12;
+
+    // Start and end values, as ATL would write them for each property.
+    const RANGE = {
+        xalign: ['0.0', '1.0'],
+        zoom: ['1.0', '1.4'],
+        alpha: ['0.0', '1.0'],
+    };
+
+    const warper = () => {
+        const option = warperPick.selectedOptions[0];
+
+        if (!option) return Warpers.linear;
+
+        return option.dataset.points
+            ? fromPoints(option.dataset.points.split(',').map(Number))
+            : Warpers[option.value] || Warpers.linear;
+    };
+
+    const duration = () => Math.min(Math.max(parseFloat(seconds.value) || 1.5, 0.2), 10);
+
+    const apply = value => {
+        if (property.value === 'alpha') {
+            image.style.opacity = Math.min(Math.max(value, 0), 1);
+            image.style.transform = 'scale(1.02)';
+            return;
+        }
+
+        image.style.opacity = '';
+
+        // Both keep a base scale above 1: an undershooting curve would
+        // otherwise pull the image off its own edge for a frame.
+        image.style.transform = property.value === 'zoom'
+            ? `scale(${(1.05 + 0.4 * value).toFixed(4)})`
+            : `translateX(${(PAN - 2 * PAN * value).toFixed(3)}%) scale(${COVER})`;
+    };
+
+    let frame = null;
+
+    const run = () => {
+        cancelAnimationFrame(frame);
+
+        const curve = warper();
+        const ms = duration() * 1000;
+        const start = performance.now();
+
+        apply(curve(0));
+
+        const step = now => {
+            const t = Math.min((now - start) / ms, 1);
+            apply(curve(t));
+            if (t < 1) frame = requestAnimationFrame(step);
+            else frame = null;
+        };
+
+        frame = requestAnimationFrame(step);
+    };
+
+    // Token classes match the Ren'Py lexer's, so the generated line is
+    // coloured exactly like the hand-written samples further down the page.
+    const token = (cls, text) => {
+        const span = document.createElement('span');
+        span.className = cls;
+        span.textContent = text;
+        return span;
+    };
+
+    const write = () => {
+        const name = background.selectedOptions[0]?.dataset.name || '';
+        const [from, to] = RANGE[property.value];
+
+        // Indents are the lexer's whitespace spans, dots and all, so the
+        // generated line reads like the hand-written samples below it.
+        // docs.js swaps the dots back to spaces on copy.
+        const indent = () => token('w', '∙∙∙∙');
+
+        snippet.textContent = '';
+        snippet.append(
+            token('k', 'show'), ' ', token('n', 'bg'), ' ', token('n', name), ':\n', indent(),
+            token('n', property.value), ' ', token('m', from), '\n', indent(),
+            token('kt', warperPick.value), ' ', token('m', String(duration())), ' ',
+            token('n', property.value), ' ', token('m', to),
+        );
+    };
+
+    const update = animate => {
+        write();
+        if (animate) run();
+        else apply(warper()(1));
+    };
+
+    background.addEventListener('change', () => {
+        image.src = background.value;
+        image.alt = background.selectedOptions[0]?.dataset.name || '';
+        update(!reduceMotion.matches);
+    });
+
+    for (const control of [warperPick, property]) {
+        // Auto-replay is the point of the control: you change the curve and
+        // see it. Under reduced motion it settles into the end state instead,
+        // and the Play button stays as the explicit way to ask for motion.
+        control.addEventListener('change', () => update(!reduceMotion.matches));
+    }
+
+    seconds.addEventListener('input', write);
+    playButton.addEventListener('click', () => {
+        write();
+        run();
+    });
+
+    image.src = background.value;
+    image.alt = background.selectedOptions[0]?.dataset.name || '';
+    update(false);
+
+    lab.hidden = false;
+})();

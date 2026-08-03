@@ -77,6 +77,107 @@
     border-radius: var(--radius-xs);
 }
 
+/* ── Sandbox ─────────────────────────────────────────────── */
+
+/* The stage is a window onto a game background, so it takes the game's own
+   16:9 and clips: the image inside is overscanned and moves under it. */
+.wp-lab-stage {
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    max-width: 760px;
+    background: var(--bg-light);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+
+.wp-lab-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Every frame is written by warpers.js; no CSS transition may smooth
+       over it, or the curve on screen stops being the curve you picked. */
+    transition: none;
+}
+
+.wp-lab-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px 16px;
+    max-width: 760px;
+    margin-top: 16px;
+}
+
+.wp-lab-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    flex: 1 1 180px;
+}
+
+.wp-lab-field--time {
+    flex: 0 1 110px;
+}
+
+/* components.css gives .filter-input `flex: 1 1 200px` for the horizontal
+   filter bars it was built for. Here the label sits above the control, so
+   the field is a column — and that 200px basis becomes a 200px *height*,
+   overriding the input's own. Hand the height back. */
+.wp-lab-field .filter-input {
+    flex: none;
+}
+
+.wp-lab-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+}
+
+/* The page's one call to action, so it carries the accent at rest — the
+   previews only spend red under the cursor, leaving the spotlight free. */
+.wp-lab-play {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 16px;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: none;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: color 0.15s var(--ease-out), background-color 0.15s var(--ease-out);
+}
+
+.wp-lab-play:hover {
+    color: var(--bg);
+    background: var(--accent);
+}
+
+.wp-lab-play:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.wp-lab-code {
+    max-width: 760px;
+    margin-top: 16px;
+}
+
+/* The generated line is short and fixed-height; no scrollbar should flicker
+   in and out as the warper name changes length. */
+.wp-lab-code pre {
+    overflow-x: auto;
+}
+
 /* ── Naming legend ───────────────────────────────────────── */
 
 .wp-legend {
@@ -286,6 +387,12 @@
     .wp-main {
         padding: 24px 20px 40px;
     }
+
+    /* Match the 44px touch height components.css gives the filter controls
+       this button stands next to. */
+    .wp-lab-play {
+        height: 44px;
+    }
 }
 
 @media (max-width: 460px) {
@@ -302,7 +409,8 @@
 @media (prefers-reduced-motion: reduce) {
     .wp-plot,
     .wp-name--copy,
-    .wp-cell-by a {
+    .wp-cell-by a,
+    .wp-lab-play {
         transition: none;
     }
 }
