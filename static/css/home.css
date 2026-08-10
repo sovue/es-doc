@@ -36,7 +36,7 @@
     :root:not([data-theme="light"]) .hero-bg {
         --hero-1: url('/resource/hero/ext_beach_night');
         --hero-2: url('/resource/hero/ext_square_night');
-        --hero-3: url('/resource/hero/ext_road_night');
+        --hero-3: url('/resource/hero/ext_road_night2');
         --hero-4: url('/resource/hero/ext_island_night');
     }
 }
@@ -44,7 +44,7 @@
 :root[data-theme="dark"] .hero-bg {
     --hero-1: url('/resource/hero/ext_beach_night');
     --hero-2: url('/resource/hero/ext_square_night');
-    --hero-3: url('/resource/hero/ext_road_night');
+    --hero-3: url('/resource/hero/ext_road_night2');
     --hero-4: url('/resource/hero/ext_island_night');
 }
 
