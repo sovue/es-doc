@@ -1,6 +1,13 @@
 <header class="site-header">
     <nav class="site-nav" aria-label="Основная навигация">
-        <a class="nav-logo" href="/">ES Doc</a>
+        {# The favicon doubles as the header mark: one file, one already-cached
+           route, and the tab icon matches the wordmark next to it. Swapping in
+           another logo is a one-file replace. alt="" — the wordmark beside it
+           already names the link. #}
+        <a class="nav-logo" href="/">
+            <img class="nav-logo-mark" src="/favicon.webp" alt="" width="24" height="24" decoding="async">
+            <span class="nav-logo-text">ES Doc</span>
+        </a>
 
         <!-- Mobile-only: opens the search bar as a full-width sheet under the header -->
         <button type="button" class="nav-search-toggle" aria-label="Открыть поиск"

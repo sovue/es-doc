@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% set page_title = 'Поддержать проект — ES Doc' %}
+{% set body_class = 'bg-solid' %}
+
+{% block content %}
+<div class="page">
+
+    <main id="main-content">
+
+        <section class="page-hero">
+            <div class="page-hero-inner">
+                <a href="/" class="page-back"><span aria-hidden="true">←</span> На главную</a>
+                <h1 class="page-title">Поддержать проект</h1>
+                <p class="page-lead">
+                    ES Doc собирают несколько человек в свободное время, а сервер и хранилище
+                    ресурсов игры оплачиваются из своего кармана. Помочь можно деньгами или
+                    руками.
+                </p>
+            </div>
+        </section>
+
+        <div class="page-main">
+
+            <section class="contributors-section" aria-labelledby="support-money-label">
+                <h2 class="authors-list-label" id="support-money-label">Деньгами</h2>
+
+                {% if platforms %}
+                <ul class="sections-list" role="list">
+                    {% for p in platforms %}
+                    <li>
+                        <a href="{{ p.url }}" class="section-row">
+                            <span class="section-name">{{ p.name }}</span>
+                            {% if p.note %}<span class="section-desc">{{ p.note }}</span>{% endif %}
+                            <span class="section-arrow" aria-hidden="true">→</span>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="res-empty">
+                    <p class="res-empty-title">Площадки для донатов ещё настраиваем.</p>
+                    <p>Загляните позже. Пока помочь можно способами ниже.</p>
+                </div>
+                {% endif %}
+            </section>
+
+            <section class="contributors-section" aria-labelledby="support-time-label">
+                <h2 class="authors-list-label" id="support-time-label">Временем</h2>
+                <ul class="sections-list" role="list">
+
+                    <li>
+                        <a href="https://github.com/sovue/es-doc/issues" class="section-row">
+                            <span class="section-name">Сообщить об ошибке</span>
+                            <span class="section-arrow" aria-hidden="true">→</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="https://github.com/sovue/es-doc" class="section-row">
+                            <span class="section-name">Прислать правку</span>
+                            <span class="section-arrow" aria-hidden="true">→</span>
+                        </a>
+                    </li>
+
+                </ul>
+            </section>
+
+        </div>
+
+    </main>
+
+    {% include "partials/footer.html" %}
+
+</div>
+{% endblock %}

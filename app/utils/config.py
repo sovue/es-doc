@@ -9,6 +9,7 @@ class _ConfigContainer():
     _DEFAULT_CONFIG = {
         'cache-update-delay': 5,
         'assets-path': '',
+        'support': [],
         'http-errors': {
             'default': 'Во время загрузки страницы произошла ошибка. Попробуйте повторить запрос позже. Если проблема сохраняется — сообщите администрации.',
             400: [
@@ -85,6 +86,17 @@ class _ConfigContainer():
 
         self.docs_path: Path = None
         self.res_path: Path = None
+
+    @property
+    def support(self) -> list:
+        """Donation platforms for /support, straight from config.yaml.
+
+        Lives in the app config rather than the assets repo (like news or
+        literature) because it's the project's own identity, not curated
+        content. Absent or empty is a valid state — the page falls back to
+        the non-monetary ways to help instead of showing a dead link.
+        """
+        return self.config.get('support') or []
 
     def setup(self, path):
 

@@ -147,6 +147,7 @@
 .nav-logo {
     display: flex;
     align-items: center;
+    gap: 9px;
     font-family: var(--font-mono);
     font-weight: 700;
     font-size: 0.95rem;
@@ -155,6 +156,17 @@
     text-decoration: none;
     white-space: nowrap;
     transition: color 0.15s var(--ease-out);
+}
+
+/* The star's points reach its box edges, so a square of the wordmark's own
+   height would read optically smaller than the type beside it. 24px against
+   Consolas' ~10.5px cap height lands the mark on the wordmark's weight
+   without overpowering it, and still leaves 14px of air in the 52px bar.
+   flex: none so the lockup never squeezes when the search bar grows. */
+.nav-logo-mark {
+    width: 24px;
+    height: 24px;
+    flex: none;
 }
 
 .nav-logo:hover {
@@ -475,11 +487,14 @@
     color: var(--text-soft);
 }
 
+/* Wraps now that the row carries icons and the support button too; without
+   it the line overflows below ~700px. row-gap only matters once it does. */
 .site-footer p {
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 20px;
+    flex-wrap: wrap;
+    gap: 4px 20px;
 }
 
 .site-footer a {
@@ -501,9 +516,59 @@
     border-radius: var(--radius-xs);
 }
 
-.footer-github {
+/* The icon links are their own cluster: no gap of their own, so the 6px of
+   padding on each side leaves 12px between glyphs against the row's 20px.
+   That reads as one group of "where to find us" rather than three more
+   items in the list. */
+.footer-socials {
+    display: inline-flex;
+    align-items: center;
+}
+
+.footer-icon {
     padding: 6px;
     line-height: 0;
+}
+
+/* A bordered control, not a red fill: the footer sits under every page,
+   and a pioneer-red button here would spend the Galstuk Rule's one
+   spotlight on all of them at once. Border + surface tint make it read as
+   a control; the accent arrives on hover, where it's earned. */
+/* Scoped through .site-footer so it outranks the `.site-footer a` soft-ink
+   default above; a bare .footer-support loses to it on specificity. */
+.site-footer .footer-support {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 15px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    color: var(--text);
+    font-weight: 600;
+    transition: color 0.15s var(--ease-out),
+                border-color 0.15s var(--ease-out);
+}
+
+/* Text and border warm to accent; the surface stays put. Lifting it to
+   --bg-elevated on hover pushed the dark-mode pair (#F2606C on #2A3142)
+   down to 4.12:1 — under AA for 14px semibold. Held at --bg-surface it's
+   4.87 dark / 5.26 light, and it matches .to-top, which hovers the same
+   way. */
+.site-footer .footer-support:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* The shared footer focus rule tightens links to --radius-xs; on a bordered
+   control that snaps the corners from 4px to 2px the moment it's focused.
+   Hold the button's own radius so the ring traces the shape it already has. */
+.site-footer .footer-support:focus-visible {
+    border-radius: var(--radius-sm);
+}
+
+.footer-support svg {
+    flex: none;
 }
 
 /* ── Back to top ─────────────────────────────────────────── */
@@ -660,10 +725,17 @@ a.section-row:focus-visible {
     opacity: 1;
 }
 
+/* Pinned right by its own auto margin rather than by .section-desc's flex: 1,
+   so a row without a description still parks the arrow at the edge instead of
+   tucking it against the name. Rows that do have one are unaffected — the desc
+   has already eaten the free space, leaving the auto margin nothing to take.
+   This also fixes ≤400px, where .section-desc is display: none site-wide and
+   every arrow was sliding in next to its label. */
 .section-arrow {
     font-size: 0.875rem;
     color: var(--accent);
     flex-shrink: 0;
+    margin-left: auto;
     opacity: 0;
     transition: opacity 0.15s var(--ease-out);
 }
@@ -1090,9 +1162,17 @@ a.section-row:focus-visible .section-arrow {
     }
 
     .site-footer {
-        /* Extra right padding clears the fixed to-top button (44px + 16px
-           offset), which otherwise sits over the footer's last line here. */
-        padding: 20px 76px 20px 20px;
+        /* Right gutter keeps the row out of the fixed to-top button's lane
+           (44px at a 16px offset here). Without it there's a ~40px band of
+           viewport widths where the line still fits whole and the support
+           button's right edge ends up under it. */
+        padding: 20px 64px 20px 20px;
+    }
+
+    /* 20px of column gap would push the icons past that gutter at 375px and
+       cost a third line; 16px leaves the links and icons together on one. */
+    .site-footer p {
+        column-gap: 16px;
     }
 
     .page-hero {
@@ -1124,6 +1204,26 @@ a.section-row:focus-visible .section-arrow {
     .site-nav {
         gap: 4px;
         padding: 0 16px;
+    }
+
+    /* The bar is already full at 375px (logo + search toggle + two links +
+       theme toggle). The mark alone is ~28px narrower than the full lockup,
+       so dropping the wordmark here buys width back instead of spending it.
+       Hidden the sr-only way, not display: none, so the link keeps its
+       accessible name — the mark's alt is empty by design. */
+    .nav-logo-text {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+    }
+
+    .nav-logo {
+        gap: 0;
     }
 
     /* Four items share the bar since «Ресурсы» joined; the theme toggle
