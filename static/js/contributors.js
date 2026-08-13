@@ -14,11 +14,17 @@
         })
         .catch(function () {
             box.dataset.state = 'error';
-            var link = document.createElement('a');
-            link.href = 'https://github.com/sovue/es-doc/graphs/contributors';
-            link.textContent = 'открыть список на GitHub';
-            status.textContent = 'Не удалось загрузить список. Можно ';
-            status.appendChild(link);
+            // Список общий для обоих репозиториев, поэтому и в запасном варианте
+            // ведём на оба — иначе половина людей просто пропадёт.
+            var repos = ['es-doc', 'es-doc-assets'];
+            status.textContent = 'Не удалось загрузить список. Можно открыть его на GitHub: ';
+            repos.forEach(function (repo, i) {
+                var link = document.createElement('a');
+                link.href = 'https://github.com/sovue/' + repo + '/graphs/contributors';
+                link.textContent = repo;
+                if (i) status.appendChild(document.createTextNode(', '));
+                status.appendChild(link);
+            });
             status.appendChild(document.createTextNode('.'));
         });
 })();
