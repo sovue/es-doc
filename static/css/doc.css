@@ -354,81 +354,159 @@ img {
     opacity: 1;
 }
 
-/* ── Warning, Info & Tip ──────────────────────────────────── */
+/* ── Callouts (info · warning · attention · tip) ──────────
+   Four boxes that differ only in hue, so the shape is written once and each
+   name just declares its three colours. A fifth callout is one more line
+   here plus a `template()` registration in md/__init__.py. */
+
+.info      { --callout: var(--info);      --callout-bg: var(--info-bg);      --callout-bg1: var(--info-bg1); }
+.warning   { --callout: var(--warning);   --callout-bg: var(--warning-bg);   --callout-bg1: var(--warning-bg1); }
+.attention { --callout: var(--attention); --callout-bg: var(--attention-bg); --callout-bg1: var(--attention-bg1); }
+.tip       { --callout: var(--tip);       --callout-bg: var(--tip-bg);       --callout-bg1: var(--tip-bg1); }
 
 .info,
 .warning,
+.attention,
 .tip {
-    padding: 16px;
+    /* 12px vertical, not 16: most callouts here are a single sentence, and
+       once the icon stops setting the height (see .icon below) the old padding
+       is most of what's left of the box. */
+    padding: 12px 16px;
     margin: 32px 0;
     display: flex;
     /* top-align: on a multi-line callout the icon sits with the first line
        instead of floating in the vertical middle of a long paragraph. */
     align-items: flex-start;
-}
 
-.info {
-    color: var(--info);
-    border-top: 1px solid var(--info);
-    border-bottom: 1px solid var(--info);
-    background: linear-gradient(0deg, var(--info-bg) 5%, var(--info-bg1) 25%, var(--info-bg1) 75%, var(--info-bg) 95%);
-}
-
-.warning {
-    color: var(--warning);
-    border-top: 1px solid var(--warning);
-    border-bottom: 1px solid var(--warning);
-    background: linear-gradient(0deg, var(--warning-bg) 5%, var(--warning-bg1) 25%, var(--warning-bg1) 75%, var(--warning-bg) 95%);
-}
-
-.tip {
-    color: var(--tip);
-    border-top: 1px solid var(--tip);
-    border-bottom: 1px solid var(--tip);
-    background: linear-gradient(0deg, var(--tip-bg) 5%, var(--tip-bg1) 25%, var(--tip-bg1) 75%, var(--tip-bg) 95%);
+    color: var(--callout);
+    border-top: 1px solid var(--callout);
+    border-bottom: 1px solid var(--callout);
+    background: linear-gradient(0deg, var(--callout-bg) 5%, var(--callout-bg1) 25%, var(--callout-bg1) 75%, var(--callout-bg) 95%);
 }
 
 /* The body reads as ordinary ink prose, like every other paragraph on the
    page; the semantic colour lives only in the border, icon, and <strong>.
-   Without this the .info-content / .warning-content / .tip-content wrapper
-   inherits --info / --warning / --tip from its container and the *whole*
-   paragraph renders blue/red/green, fighting the ink-on-paper body style
-   (and diverging from the design-system callout spec, which sets the body
-   back to --text). */
+   Without this the *-content wrapper inherits --callout from its container
+   and the *whole* paragraph renders blue/red/yellow/green, fighting the
+   ink-on-paper body style (and diverging from the design-system callout
+   spec, which sets the body back to --text). */
 .info-content,
 .warning-content,
+.attention-content,
 .tip-content { color: var(--text); }
 
 /* Content is a full block-level parse (paragraphs, lists, code, ...), not a
    single inline blob, so a callout with ordinary prose still needs its first/
    last child's own margin collapsed — otherwise the global `p { margin: 1em 0 }`
    pushes the first line away from the top-aligned icon and pads the bottom of
-   the box beyond the intended 16px. */
+   the box beyond the intended padding. */
 .info-content > :first-child,
 .warning-content > :first-child,
+.attention-content > :first-child,
 .tip-content > :first-child { margin-top: 0; }
 
 .info-content > :last-child,
 .warning-content > :last-child,
+.attention-content > :last-child,
 .tip-content > :last-child { margin-bottom: 0; }
 
-.info strong { color: var(--info); }
-.warning strong { color: var(--warning); }
-.tip strong { color: var(--tip); }
+.info strong,
+.warning strong,
+.attention strong,
+.tip strong { color: var(--callout); }
 
 .info .icon,
 .warning .icon,
+.attention .icon,
 .tip .icon {
-    width: 32px;
-    height: 32px;
+    /* Sized to one line of body text (1.7 line-height on 1rem) rather than the
+       old fixed 32px. A single-sentence callout is now as tall as the sentence
+       plus its padding, and the nudge parks the glyph on the optical centre of
+       that first line instead of its top edge. */
+    width: 24px;
+    height: 24px;
+    margin-top: calc((1.7em - 24px) / 2);
     margin-right: 12px;
     /* Never let the flex row squeeze the icon on long callouts. */
     flex-shrink: 0;
+
+    color: var(--callout);
 }
 
-.info .icon { color: var(--info); }
-.warning .icon { color: var(--warning); }
-.tip .icon { color: var(--tip); }
+/* ── Article-status banners (stub · wip · outdated) ───────
+   Page-level, not inline: these say something about the *article*, so they
+   read as a closed card above the prose rather than as another callout inside
+   it. Blockquote's frame-and-paper treatment, but with the frame itself in
+   the status colour — a full border, never a side-stripe (DESIGN.md §06). */
+
+.banner-stub     { --banner: var(--attention); }
+.banner-wip      { --banner: var(--info); }
+.banner-outdated { --banner: var(--warning); }
+
+.banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+
+    margin: 24px 0 28px;
+    padding: 14px 16px;
+
+    border: 1px solid var(--banner);
+    border-radius: var(--radius-code);
+
+    background: var(--bg-light);
+}
+
+/* Almost always the first thing on the page — no top gap above it, and the
+   H1 that follows already zeroes its own top margin. */
+.content > .banner:first-child {
+    margin-top: 0;
+}
+
+.banner .icon {
+    width: 22px;
+    height: 22px;
+    margin-top: calc((1.35em - 22px) / 2);
+    flex-shrink: 0;
+
+    color: var(--banner);
+}
+
+.banner-title {
+    margin: 0;
+
+    /* Serif, like every other heading-shaped thing on the page — this is the
+       banner's own title, not a sentence of prose. */
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 1.05rem;
+    line-height: 1.35;
+
+    color: var(--banner);
+}
+
+.banner-note {
+    color: var(--text-soft);
+    font-size: 0.925rem;
+}
+
+.banner-note > :first-child { margin-top: 0.35em; }
+.banner-note > :last-child { margin-bottom: 0; }
+
+/* ── Disambiguation hatnote ───────────────────────────────
+   One indented italic line above the article, in the same PT Serif voice
+   blockquotes use — but bare, with no frame, so it reads as an aside the eye
+   can skip rather than as content in its own right. */
+
+.hatnote {
+    margin: 0 0 24px;
+    padding-left: 1.8em;
+
+    color: var(--text-soft);
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 0.95rem;
+}
 
 /* ── Responsive ──────────────────────────────────────────── */
 

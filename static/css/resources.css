@@ -107,7 +107,9 @@
 .res-usage {
     font-family: var(--font-mono);
     font-size: 0.85em;
-    background: var(--code-bg);
+    /* Inline chip, not a panel — same token prose's `code` uses, so it keeps
+       its own tan on the light theme instead of dissolving into the card. */
+    background: var(--code-bg-inline);
     color: var(--code-inline);
     padding: 2px 7px;
     border-radius: var(--radius-code);

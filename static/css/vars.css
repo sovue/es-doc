@@ -7,9 +7,11 @@
    lake, served via prefers-color-scheme. Brand relief colors (--sunset,
    --sky, --pine) are exposed for future components.
 
-   Code panels stay warm-dark in BOTH modes on purpose: it keeps the
-   hardcoded syntax-highlight palette in doc.css legible and reads as
-   "film, not glass" against warm paper.
+   Code panels used to stay warm-dark in BOTH modes, sharing one syntax
+   palette. They now follow the theme like every other surface: cream paper
+   with ink-dark tokens by day, film-dark with the original lifted tokens by
+   night. That means the --code-* family is a full light/dark pair like the
+   rest of this file — a token added to one side must be added to the other.
    ===================================================================== */
 :root {
     color-scheme: light dark;
@@ -39,32 +41,36 @@
     /* ── Lines ────────────────────────────────────────────── */
     --border: #D9C7A4;
 
-    /* ── Code (warm-dark panel in both modes — see header) ── */
-    --code-bg: #241B12;
+    /* ── Code (Light · a sheet of print on the desk) ───────── */
+    /* The fenced panel is a shade brighter than the paper around it and leans
+       on its 1px border, the way blockquotes do; inline code needs to read as a
+       chip inside a line of prose, so it takes a deeper tan of its own. */
+    --code-bg: #FDF9EE;
+    --code-bg-inline: #EFE3C8;
     --input-bg: #FBF6E9;
-    --code-inline: var(--sunset);
+    --code-inline: #8F4A1B;
+    /* A link whose whole label is `code` keeps the chip but takes link ink;
+       --accent lands at 4.45:1 on the chip, just shy of AA, so the deeper
+       hover red carries it instead. */
+    --code-link: #A81824;
 
-    /* Syntax highlighting — tuned for the always-dark code panel, so a single
-       set serves both themes (no dark override). All verified ≥4.5:1 on the
-       panel backgrounds (#241B12 light / #12161E dark). */
-    --code-keyword: #FF9933;
-    --code-type: #66CCFF;
-    --code-string: #D8A0FF;
-    --code-comment: #8B949E;
-    --code-name: #E6EDF3;
-    --code-func: #9AA0A8;
-    --code-class: #FFB86C;
-    --code-number: #FF6B9D;
-    --code-operator: #D7796B;
-    --code-whitespace: #FFF2;
-    /* Success green for the "copied" state ON the panel. It's --pine at its
-       *night* value: the panel is always night (Warm-Dark Panel Rule), so it
-       takes the same lifted green the paper uses in dark mode. That ties the
-       code-copy check and the paper copy-path check into one green — identical
-       at night, same hue by day (the panel just can't use the dark day-pine,
-       which is invisible here at 2.83:1). Verified ≥4.5:1 on both panel
-       backgrounds, so one value serves both themes (no dark override). */
-    --code-success: #8FB07A;
+    /* Syntax highlighting, day set — the night set's hues rotated to ink
+       weights. All verified ≥4.5:1 on the light panel (#FDF9EE). */
+    --code-keyword: #9C4A06;
+    --code-type: #0B5A73;
+    --code-string: #6B3FA0;
+    --code-comment: #6B5847;
+    --code-name: #2B1F16;
+    --code-func: #4A5560;
+    --code-class: #8A5A12;
+    --code-number: #A81A5E;
+    --code-operator: #A6432F;
+    --code-whitespace: #2B1F1626;
+    /* Success green for the "copied" state on the panel — --pine deepened one
+       step so it clears AA on the light panel (plain --pine sits at 4.1:1
+       there). Same hue as the paper copy-path check, so the two confirmations
+       still read as one green. */
+    --code-success: #3F6B2C;
 
     --bg-sidebar: #FBF6E9;
     --bg-table-head: #F0E5CF;
@@ -109,6 +115,16 @@
     --info-bg: #3E93B52A;
     --info-bg1: #3E93B514;
 
+    /* Attention is the step between tip and warning: an ochre-yellow that says
+       "read this before you continue" without the alarm of pioneer red. Yellow
+       cannot carry text on cream at full saturation, so --attention is the
+       deepened ink (AA on the strongest gradient band) while the washes come
+       off the brighter #C89A12 the eye actually reads as yellow — the same
+       deepen-the-ink trick --info uses on --sky. */
+    --attention: #805407;
+    --attention-bg: #C89A122A;
+    --attention-bg1: #C89A1214;
+
     /* Tip reuses --pine, the reserved nature/success hue (DESIGN.md §Tertiary):
        already verified AA as text/border on cream paper (resources.css,
        artists.css open-status pill), so no separate deepened shade is needed
@@ -151,9 +167,26 @@
 
         --border: #3A4254;
 
+        /* Code, night set — the film-dark panel and the lifted syntax palette
+           this project shipped with. Inline code shares the panel here: on a
+           night-blue page it already reads as a chip without its own tan. */
         --code-bg: #12161E;
+        --code-bg-inline: var(--code-bg);
         --input-bg: #1F2532;
         --code-inline: var(--sunset);
+        --code-link: #F2606C;
+
+        --code-keyword: #FF9933;
+        --code-type: #66CCFF;
+        --code-string: #D8A0FF;
+        --code-comment: #8B949E;
+        --code-name: #E6EDF3;
+        --code-func: #9AA0A8;
+        --code-class: #FFB86C;
+        --code-number: #FF6B9D;
+        --code-operator: #D7796B;
+        --code-whitespace: #FFF2;
+        --code-success: #8FB07A;
 
         --bg-sidebar: #1A2030;
         --bg-table-head: #222A3A;
@@ -175,6 +208,12 @@
         --info: #86C0DA;
         --info-bg: #5FA6C833;
         --info-bg1: #5FA6C81A;
+
+        /* Attention lifted for night — a warm amber that clears AA on its own
+           strongest band (5.96:1) and stays clearly apart from --warning. */
+        --attention: #F0C05A;
+        --attention-bg: #E8B34A33;
+        --attention-bg1: #E8B34A1A;
 
         /* Tip lifted for night — same value --pine already uses at night. */
         --tip: #8FB07A;
@@ -206,9 +245,26 @@
 
     --border: #3A4254;
 
+    /* Code, night set — the film-dark panel and the lifted syntax palette
+       this project shipped with. Inline code shares the panel here: on a
+       night-blue page it already reads as a chip without its own tan. */
     --code-bg: #12161E;
+    --code-bg-inline: var(--code-bg);
     --input-bg: #1F2532;
     --code-inline: var(--sunset);
+    --code-link: #F2606C;
+
+    --code-keyword: #FF9933;
+    --code-type: #66CCFF;
+    --code-string: #D8A0FF;
+    --code-comment: #8B949E;
+    --code-name: #E6EDF3;
+    --code-func: #9AA0A8;
+    --code-class: #FFB86C;
+    --code-number: #FF6B9D;
+    --code-operator: #D7796B;
+    --code-whitespace: #FFF2;
+    --code-success: #8FB07A;
 
     --bg-sidebar: #1A2030;
     --bg-table-head: #222A3A;
@@ -230,6 +286,12 @@
     --info: #86C0DA;
     --info-bg: #5FA6C833;
     --info-bg1: #5FA6C81A;
+
+    /* Attention lifted for night — a warm amber that clears AA on its own
+       strongest band (5.96:1) and stays clearly apart from --warning. */
+    --attention: #F0C05A;
+    --attention-bg: #E8B34A33;
+    --attention-bg1: #E8B34A1A;
 
     /* Tip lifted for night — same value --pine already uses at night. */
     --tip: #8FB07A;
