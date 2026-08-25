@@ -8,6 +8,8 @@ import re
 from .slugs import slugify, render_heading_open
 from .table import table_block
 from .template import template
+from .banner import BANNERS, banner, render_banner_open, render_banner_close
+from .hatnote import hatnote, render_hatnote_open, render_hatnote_close
 from ..svg import SVG
 from ..renpy_lexer import RenPyLexer
 
@@ -49,9 +51,16 @@ def render_fence(self, tokens, idx, options, env):
 
     lang_class = f' class="{options.langPrefix}{lang_name}"' if lang_name else ''
 
+    # The button is parked over the panel's top-right corner, which on a
+    # one-line fence is the same row the code itself occupies: it covered the
+    # end of the line, and there was nothing to reveal by scrolling past it.
+    # A single line is also what a reader selects by hand in one gesture, so
+    # the button earns its corner only from two lines up.
+    multiline = token.content.strip('\n').count('\n') > 0
+
     return (
         '<div class="code-block">'
-        f'{CODE_COPY_BUTTON}'
+        f'{CODE_COPY_BUTTON if multiline else ""}'
         f'<pre><code{lang_class}>{highlighted}</code></pre>'
         '</div>\n'
     )
@@ -63,6 +72,15 @@ MD.block.ruler.before('fence', 'table', table_block)
 MD.block.ruler.before('fence', 'info', template('info'))
 MD.block.ruler.before('fence', 'warning', template('warning'))
 MD.block.ruler.before('fence', 'tip', template('tip'))
+MD.block.ruler.before('fence', 'attention', template('attention'))
+
+# Article-status banners and the disambiguation hatnote. Order among the
+# `:::` rules doesn't matter — every opener names itself — so they simply
+# follow the callouts.
+MD.block.ruler.before('fence', 'hatnote', hatnote)
+
+for _banner in BANNERS:
+    MD.block.ruler.before('fence', _banner, banner(_banner))
 
 MD.add_render_rule('heading_open', render_heading_open)
 
@@ -77,6 +95,18 @@ MD.add_render_rule('warning_close', dummy_rule('</div></div>'))
 
 MD.add_render_rule('tip_open', dummy_rule(f'<div class="tip">{SVG["tip"]}<div class="tip-content">'))
 MD.add_render_rule('tip_close', dummy_rule('</div></div>'))
+
+MD.add_render_rule('attention_open', dummy_rule(f'<div class="attention">{SVG["attention"]}<div class="attention-content">'))
+MD.add_render_rule('attention_close', dummy_rule('</div></div>'))
+
+# One renderer for all three banners — the box differs only by icon, heading
+# and tone, and banner.py reads each of those off the token.
+for _banner in BANNERS:
+    MD.add_render_rule(f'{_banner}_open', render_banner_open)
+    MD.add_render_rule(f'{_banner}_close', render_banner_close)
+
+MD.add_render_rule('hatnote_open', render_hatnote_open)
+MD.add_render_rule('hatnote_close', render_hatnote_close)
 
 def render_thanks(src):
     html = MD.render(src)

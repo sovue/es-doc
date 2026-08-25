@@ -1,8 +1,11 @@
 /* =====================================================================
-   Code panels — the warm-dark block, its copy button, and the syntax
-   palette. Extracted from doc.css when a second page (the warper
-   reference) started rendering the same `.code-block` markup: one
-   definition, two consumers, no drift between them.
+   Code panels — the block, its copy button, and the syntax palette.
+   Extracted from doc.css when a second page (the warper reference) started
+   rendering the same `.code-block` markup: one definition, two consumers,
+   no drift between them.
+
+   The panel follows the theme (cream sheet by day, film-dark at night); both
+   palettes live in vars.css, so nothing here branches on theme.
 
    Loaded via extra_css by every template that renders fenced code
    (doc.html, warpers.html) and paired with docs.js, which reveals the
@@ -14,7 +17,11 @@
    ===================================================================== */
 
 code {
-    background: var(--code-bg);
+    /* Its own token, not --code-bg: by day the fenced panel is nearly the same
+       cream as the paper and leans on its border, which an inline chip has no
+       room for, so the chip takes a deeper tan instead. At night both resolve
+       to the film-dark panel. */
+    background: var(--code-bg-inline);
 
     padding: 0.15em 0.4em;
     border-radius: var(--radius-code);
@@ -22,6 +29,23 @@ code {
     font-family: var(--font-mono);
 
     color: var(--code-inline);
+}
+
+/* A link whose whole label is inline code. The chip's own colour won over the
+   link's, so `[`код`](…)` rendered identically to a plain code span and the
+   only thing marking it as a link was the cursor. Link ink brings it back, and
+   the underline (faint at rest, full on interaction) means it doesn't rely on
+   colour alone to read as a link. */
+a code {
+    color: var(--code-link);
+    text-decoration: underline;
+    text-decoration-color: var(--border);
+    text-underline-offset: 2px;
+}
+
+a:hover code,
+a:focus-visible code {
+    text-decoration-color: currentColor;
 }
 
 pre {
@@ -38,18 +62,25 @@ pre code {
     background: none;
     padding: 0;
     /* Base ink for the panel. Unclassified tokens (punctuation — colons,
-       brackets, commas) would otherwise inherit the paper --text and vanish
-       on the warm-dark panel; syntax classes below override this. */
+       brackets, commas) would otherwise inherit the page's --text, which is
+       cream on the night panel; syntax classes below override this. */
     color: var(--code-name);
 }
 
 /* The copy button sits pinned to the block's corner, independent of the
    pre's own horizontal scroll. Colors are code-panel-tuned (--code-comment
-   at rest, --code-inline on hover/copied), not the paper accent — the
-   panel stays warm-dark in both themes, so paper-tuned colors would fight
-   it (DESIGN.md's Warm-Dark Panel Rule). */
+   at rest, --code-inline on hover/copied) rather than the paper accent, so
+   they track the panel's own light/dark pair instead of the page's. */
 .code-block {
     position: relative;
+}
+
+/* Keep the first line clear of the button. The button is only rendered on
+   multi-line fences (md/__init__.py) and only revealed once docs.js confirms
+   a clipboard, so this reserves the gutter exactly when something is actually
+   parked there — a no-JS page keeps the full width. */
+.code-block:has(.code-copy:not([hidden])) pre {
+    padding-right: 52px;
 }
 
 .code-copy {
@@ -99,7 +130,11 @@ pre code {
     display: block;
 }
 
-/* ── Syntax palette ──────────────────────────────────────── */
+/* ── Syntax palette ──────────────────────────────────────────
+   Two sets, both living in vars.css: ink weights on the cream panel by day,
+   the lifted film palette on the night panel. Every token is verified ≥4.5:1
+   against the panel background of its own theme, so the selectors below never
+   need a theme branch. */
 
 pre code .k,
 pre code .kc,
