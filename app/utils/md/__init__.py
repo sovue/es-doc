@@ -74,9 +74,10 @@ MD.block.ruler.before('fence', 'warning', template('warning'))
 MD.block.ruler.before('fence', 'tip', template('tip'))
 MD.block.ruler.before('fence', 'attention', template('attention'))
 
-# Article-status banners and the disambiguation hatnote. Order among the
-# `:::` rules doesn't matter — every opener names itself — so they simply
-# follow the callouts.
+# Article-status banners (`:::stub` / `:::wip` / `:::outdated`, `:::`-fenced
+# like the callouts above) and the disambiguation hatnote (`::about …`, its
+# own single-line syntax — see hatnote.py). Registration order doesn't
+# matter: every opener names itself.
 MD.block.ruler.before('fence', 'hatnote', hatnote)
 
 for _banner in BANNERS:

@@ -7,18 +7,22 @@ from markdown_it.rules_block import StateBlock
 # heading that says what *this* page is about and points at the page a reader
 # who wanted the other meaning is actually after.
 #
-#   :::about создании мода | портировании мода на Android | Портирование мода на Android с помощью ESTool
+#   ::about создании мода | портировании мода на Android | Портирование мода на Android с помощью ESTool
 #
 #   → Эта статья о создании мода; о портировании мода на Android см. …
+#
+# Double colon, not triple: unlike `:::info` / `:::stub` / … this is a single
+# physical line with no body and no closer, and `::about` looks that way on
+# sight instead of inviting an author to hunt for a `:::` to close it.
 #
 # Exactly three fields, `|`-separated: this article's subject, the other
 # subject, and where the other subject lives. Both subjects are written in the
 # prepositional case (о чём?) — the sentence supplies the same «о» for both, so
 # an author only has to get one case right. Anything else fails the block (the
-# raw `:::about` line stays visible in the page) rather than rendering a
+# raw `::about` line stays visible in the page) rather than rendering a
 # half-filled sentence — the same "a broken block should look broken" rule
 # template.py follows for a missing closer.
-OPEN_RE = re.compile(r'^:::\s*about(?:\s+(\S.*))?\s*$')
+OPEN_RE = re.compile(r'^::about(?:\s+(\S.*))?\s*$')
 
 # `[text](href)` anywhere in the field — the author wrote the link themselves
 # and gets to keep their own link text.
@@ -69,14 +73,6 @@ def hatnote(state: StateBlock, startLine: int, endLine: int, silent: bool):
     other = other.rstrip('.,;')
 
     nextLine = startLine + 1
-
-    # A lone `:::` on the next line is harmless leftover from writing the
-    # hatnote like the other blocks; swallow it instead of leaving it on
-    # the page as a stray paragraph.
-    if nextLine < endLine:
-        pos = state.bMarks[nextLine] + state.tShift[nextLine]
-        if state.src[pos:state.eMarks[nextLine]].strip() == ':::':
-            nextLine += 1
 
     token = state.push('hatnote_open', 'p', 1)
     token.map = [startLine, nextLine]

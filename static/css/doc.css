@@ -494,13 +494,18 @@ img {
 .banner-note > :last-child { margin-bottom: 0; }
 
 /* ── Disambiguation hatnote ───────────────────────────────
-   One indented italic line above the article, in the same PT Serif voice
-   blockquotes use — but bare, with no frame, so it reads as an aside the eye
-   can skip rather than as content in its own right. */
+   One italic line above the article, in the same PT Serif voice blockquotes
+   use, boxed in a plain --border frame so it reads as its own aside rather
+   than the first line of the article. Unlike blockquote it carries no fill —
+   a bare outline keeps it a step quieter than blockquote's painted card and
+   well short of a banner's status-coloured one. */
 
 .hatnote {
     margin: 0 0 24px;
-    padding-left: 1.8em;
+    padding: 10px 16px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-code);
 
     color: var(--text-soft);
     font-family: var(--font-serif);
