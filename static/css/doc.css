@@ -434,14 +434,16 @@ img {
 }
 
 /* ── Article-status banners (stub · wip · outdated) ───────
-   Page-level, not inline: these say something about the *article*, so they
-   read as a closed card above the prose rather than as another callout inside
-   it. Blockquote's frame-and-paper treatment, but with the frame itself in
-   the status colour — a full border, never a side-stripe (DESIGN.md §06). */
+   Page-level, not inline, but built from the same family as the callouts
+   above: a top+bottom hairline in the status colour over the same faint
+   gradient wash, reusing each status's existing -bg/-bg1 tint rather than
+   the card-with-radius treatment this used to have. What sets a banner apart
+   from a callout is its content, not its box — a serif title plus a note,
+   instead of one paragraph of prose. */
 
-.banner-stub     { --banner: var(--attention); }
-.banner-wip      { --banner: var(--info); }
-.banner-outdated { --banner: var(--warning); }
+.banner-stub     { --banner: var(--attention); --banner-bg: var(--attention-bg); --banner-bg1: var(--attention-bg1); }
+.banner-wip      { --banner: var(--info);      --banner-bg: var(--info-bg);      --banner-bg1: var(--info-bg1); }
+.banner-outdated { --banner: var(--warning);   --banner-bg: var(--warning-bg);   --banner-bg1: var(--warning-bg1); }
 
 .banner {
     display: flex;
@@ -451,10 +453,9 @@ img {
     margin: 24px 0 28px;
     padding: 14px 16px;
 
-    border: 1px solid var(--banner);
-    border-radius: var(--radius-code);
-
-    background: var(--bg-light);
+    border-top: 1px solid var(--banner);
+    border-bottom: 1px solid var(--banner);
+    background: linear-gradient(0deg, var(--banner-bg) 5%, var(--banner-bg1) 25%, var(--banner-bg1) 75%, var(--banner-bg) 95%);
 }
 
 /* Almost always the first thing on the page — no top gap above it, and the
@@ -464,9 +465,11 @@ img {
 }
 
 .banner .icon {
-    width: 22px;
-    height: 22px;
-    margin-top: calc((1.35em - 22px) / 2);
+    /* Same 24px the callout icons use (see .info .icon etc. above), sized to
+       the title's first line rather than the body's. */
+    width: 24px;
+    height: 24px;
+    margin-top: calc((1.35em - 24px) / 2);
     flex-shrink: 0;
 
     color: var(--banner);
