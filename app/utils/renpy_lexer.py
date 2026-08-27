@@ -223,6 +223,23 @@ class RenPyLexer(RegexLexer):
         "double_string": _string_state('"', String.Double),
         "single_string": _string_state("'", String.Single),
 
+        # Entered right after `$ ` (see the inline-Python rule below). Splits
+        # the rest of the line around `|placeholder|` first and hands only the
+        # pieces in between to Python's lexer, so the placeholder still reads
+        # as Comment.Special even when it sits inside a Python string literal
+        # (`renpy.notify("|Текст|")`) that Python's own lexer would otherwise
+        # swallow whole. A run with no pipes still goes through Python a chunk
+        # at a time; that only ever fragments a single operator that happens to
+        # contain `|` (`|=`) into two Operator tokens, which is invisible since
+        # both map to the same CSS class. No explicit end-of-line rule is
+        # needed — Pygments' own fallback resets to "root" on an unmatched
+        # `\n` (see RegexLexer.get_tokens_unprocessed).
+        "inline_python": [
+            (_PLACEHOLDER, Comment.Special),
+            (r"[^|\n]+", using(PythonLexer)),
+            (r"\|", Operator),
+        ],
+
         "root": [
             # ── Line-anchored rules first ──────────────────────────────────
             # These carry their own `^[ \t]*` indent capture, so they must be
@@ -239,9 +256,14 @@ class RenPyLexer(RegexLexer):
              bygroups(Whitespace, Keyword, Keyword, Keyword, Whitespace,
                       Punctuation, using(PythonLexer), using(PythonLexer))),
 
-            # Inline Python: `$ expr` — hand the expression to the Python lexer.
-            (r"^([ \t]*)(\$)([ \t]*)(.*)$",
-             bygroups(Whitespace, Keyword, Whitespace, using(PythonLexer))),
+            # Inline Python: `$ expr` — hand the expression to the Python lexer,
+            # via the "inline_python" state below rather than delegating the
+            # whole rest of the line in one `using()` call, so a `|placeholder|`
+            # inside it doesn't disappear into Python's own tokenizer (which
+            # has no idea about this doc-only convention and reads a bare `|`
+            # as bitwise-or).
+            (r"^([ \t]*)(\$)([ \t]*)",
+             bygroups(Whitespace, Keyword, Whitespace), "inline_python"),
 
             # `define`/`default x = <python>` — keyword, then Python for the RHS.
             (r"^([ \t]*)(define|default)\b(.*)$",
