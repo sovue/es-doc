@@ -9,6 +9,10 @@ from .slugs import heading_slugs, render_heading_open
 from .table import table_block
 from .template import template
 from .banner import BANNERS, banner, render_banner_open, render_banner_close
+from .details import (
+    details, render_details_close, render_details_open,
+    render_details_summary_close, render_details_summary_open,
+)
 from .hatnote import hatnote, render_hatnote_open, render_hatnote_close
 from .lines import gutter, split_lines
 from .refs import (
@@ -84,12 +88,14 @@ MD.block.ruler.before('fence', 'info', template('info'))
 MD.block.ruler.before('fence', 'warning', template('warning'))
 MD.block.ruler.before('fence', 'tip', template('tip'))
 MD.block.ruler.before('fence', 'attention', template('attention'))
+MD.block.ruler.before('fence', 'danger', template('danger'))
 
 # Article-status banners (`:::stub` / `:::wip` / `:::outdated`, `:::`-fenced
 # like the callouts above) and the disambiguation hatnote (`::about …`, its
 # own single-line syntax — see hatnote.py). Registration order doesn't
 # matter: every opener names itself.
 MD.block.ruler.before('fence', 'hatnote', hatnote)
+MD.block.ruler.before('fence', 'details', details)
 MD.block.ruler.before('fence', 'refs', ref_list)
 
 for _banner in BANNERS:
@@ -112,6 +118,9 @@ MD.add_render_rule('tip_close', dummy_rule('</div></div>'))
 MD.add_render_rule('attention_open', dummy_rule(f'<div class="attention">{SVG["attention"]}<div class="attention-content">'))
 MD.add_render_rule('attention_close', dummy_rule('</div></div>'))
 
+MD.add_render_rule('danger_open', dummy_rule(f'<div class="danger">{SVG["danger"]}<div class="danger-content">'))
+MD.add_render_rule('danger_close', dummy_rule('</div></div>'))
+
 # One renderer for all three banners — the box differs only by icon, heading
 # and tone, and banner.py reads each of those off the token.
 for _banner in BANNERS:
@@ -120,6 +129,13 @@ for _banner in BANNERS:
 
 MD.add_render_rule('hatnote_open', render_hatnote_open)
 MD.add_render_rule('hatnote_close', render_hatnote_close)
+
+# Collapsible section — not a callout: its opener line is a summary, not
+# a first paragraph, so it needs render rules of its own.
+MD.add_render_rule('details_open', render_details_open)
+MD.add_render_rule('details_summary_open', render_details_summary_open)
+MD.add_render_rule('details_summary_close', render_details_summary_close)
+MD.add_render_rule('details_close', render_details_close)
 
 # Manual footnotes: `текст^1` in prose, `1^: Источник` in the list.
 MD.inline.ruler.before('text', 'ref_mark', ref_mark)

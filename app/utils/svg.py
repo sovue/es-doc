@@ -10,6 +10,10 @@ SVG = {
     'warning':   (_IMG / 'warning.svg').read_text('utf-8'),
     'tip':       (_IMG / 'tip.svg').read_text('utf-8'),
     'attention': (_IMG / 'attention.svg').read_text('utf-8'),
+    # An octagon, not another triangle: danger and warning necessarily share a
+    # near-identical background wash (see vars.css), so the silhouette is what
+    # tells them apart at a glance.
+    'danger':    (_IMG / 'danger.svg').read_text('utf-8'),
 
     'stub':      (_IMG / 'attention.svg').read_text('utf-8'),
     'wip':       (_IMG / 'wip.svg').read_text('utf-8'),

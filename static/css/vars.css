@@ -107,6 +107,16 @@
     --warning-bg: #C8202E2A;
     --warning-bg1: #C8202E14;
 
+    /* Danger is warning turned up: the rung for a hard constraint («ВАЖНО»)
+       rather than a caution («ВНИМАНИЕ»). At the 16%/8% the callout washes use,
+       every red collapses to nearly the same tint — danger's strongest band is
+       #E7C6B8 against warning's #EDC9BA — so the distinction cannot live in
+       the background. It lives in the ink (deepest red of the set by day) and
+       in the icon, which is an octagon where warning is a triangle. */
+    --danger: #7E1220;
+    --danger-bg: #A3121F2A;
+    --danger-bg1: #A3121F14;
+
     /* Info is the calm counterpart to warning: a deep sky-blue (sibling of the
        --sky relief) so it reads as "note", never as alarm. --info carries the
        text/border/icon (deep enough for AA on the tinted panel); --info-bg /
@@ -204,6 +214,14 @@
         --warning-bg: #E8404E33;
         --warning-bg1: #E8404E1A;
 
+        /* Danger lifted for night. Nothing can go *darker* than warning on a
+           dark panel and stay legible, so severity reads as hotter and
+           brighter instead — 5.55:1 on its own strongest band, where
+           warning sits at 4.79:1. */
+        --danger: #FF8A93;
+        --danger-bg: #FF3B4733;
+        --danger-bg1: #FF3B471A;
+
         /* Info lifted for night — light sky-blue clears AA on the dark panel. */
         --info: #86C0DA;
         --info-bg: #5FA6C833;
@@ -281,6 +299,14 @@
     --warning: #F46974;     /* clears AA on the gradient's strongest band */
     --warning-bg: #E8404E33;
     --warning-bg1: #E8404E1A;
+
+    /* Danger lifted for night. Nothing can go *darker* than warning on a
+       dark panel and stay legible, so severity reads as hotter and
+       brighter instead — 5.55:1 on its own strongest band, where
+       warning sits at 4.79:1. */
+    --danger: #FF8A93;
+    --danger-bg: #FF3B4733;
+    --danger-bg1: #FF3B471A;
 
     /* Info lifted for night — light sky-blue clears AA on the dark panel. */
     --info: #86C0DA;

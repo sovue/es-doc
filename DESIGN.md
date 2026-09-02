@@ -21,6 +21,8 @@ colors:
   info-bg: "#3E93B52A"
   warning: "#A81824"
   warning-bg: "#C8202E2A"
+  danger: "#7E1220"
+  danger-bg: "#A3121F2A"
   attention: "#805407"
   attention-bg: "#C89A122A"
 typography:
@@ -66,6 +68,9 @@ components:
   callout-warning:
     backgroundColor: "{colors.warning-bg}"
     textColor: "{colors.warning}"
+  callout-danger:
+    backgroundColor: "{colors.danger-bg}"
+    textColor: "{colors.danger}"
   callout-attention:
     backgroundColor: "{colors.attention-bg}"
     textColor: "{colors.attention}"
@@ -133,6 +138,7 @@ A warm-paper palette lit by golden-hour sun, with pioneer red as its single loud
 ### Semantic
 - **Info** (`#215D70`, dark `#86C0DA`): Deep sky-blue for `:::info` callouts. Carries the callout's border, icon, and `<strong>`, not the body text, which stays ink so the note reads as ordinary prose; `--info-bg` / `--info-bg1` are its faint gradient bands. Reads as "note", never alarm.
 - **Warning** (`#A81824`, dark `#F46974`): A deeper red than the link accent, so caution stays distinct from ordinary interactive red.
+- **Danger** (`#7E1220`, dark `#FF8A93`): The top rung of the alarm ladder — `:::danger` is the hard constraint («ВАЖНО»: initialise the map exactly once, these modules are unsupported), where `:::warning` is a caution («ВНИМАНИЕ»: don't forget). At the 16%/8% alpha the callout washes use, every red collapses to nearly the same tint — danger's strongest band is `#E7C6B8` against warning's `#EDC9BA` — so the two **cannot** be told apart by their background, and the distinction is carried by the ink and by the icon, an octagon where warning is a triangle. By day danger is the deepest red of the set; at night nothing can go darker than warning and stay legible, so it goes hotter and brighter instead (5.55:1 on its own strongest band, where warning sits at 4.79:1).
 - **Attention** (`#805407`, dark `#F0C05A`): Ochre-yellow for `:::attention`, the step between tip and warning — "read this before you continue", without claiming something is about to break. Yellow can't carry text on cream at full saturation, so the token is the deepened ink while `--attention-bg` / `--attention-bg1` come off the brighter `#C89A12` the eye reads as yellow (the same trick `--info` plays on `--sky`).
 - **Tip** (`#4F6B3E`, dark `#8FB07A`): `:::tip` callouts reuse `--pine` directly rather than a deepened shade, since it already clears AA as text/border on cream paper. Reads as a friendly, encouraging aside.
 
@@ -201,12 +207,21 @@ This replaced a flat `{текст}-{номера строк}` scheme whose uniqu
 ### Section Row & Doc Tree
 The primary grouping affordance, a bordered list of rows, never a card grid. Baseline-aligned flex rows with a pioneer-red arrow that fades in on hover/focus. The docs index nests these into a tree with a 1px `--border-tan` left-indent guide (structural, not a decorative stripe). Names truncate with ellipsis; the arrow stays pinned right, and it's pinned by its own `margin-left: auto`, not by `.section-desc`'s `flex: 1`. The description is optional — some rows carry none, and at ≤400px it's hidden site-wide — so hanging the arrow's position on it left the arrow tucked against the name in exactly those cases.
 
-### Callouts (Info / Warning / Attention / Tip)
-Full-width note blocks with a top+bottom hairline in the semantic color and a faint vertical gradient band behind. **Info** is deep sky-blue and calm; **Warning** is a deeper red than links; **Attention** is ochre-yellow, the middle setting between the two; **Tip** is `--pine` forest green, a friendly aside. All four lead with a `currentColor` icon (`class="icon"`) so the types read at a glance and match in size. No side-stripe; the gradient band and paired borders carry the emphasis. The `*-content` body stays ink (`--text`) so the note reads as ordinary prose; only the border, icon, and `<strong>` take the semantic colour. (A callout whose whole paragraph is coloured is the wrapper missing its `color: var(--text)` reset.)
+### Callouts (Info / Warning / Danger / Attention / Tip)
+Full-width note blocks with a top+bottom hairline in the semantic color and a faint vertical gradient band behind. **Info** is deep sky-blue and calm; **Warning** is a deeper red than links; **Danger** is the rung above warning, for a hard constraint rather than a caution; **Attention** is ochre-yellow, the middle setting; **Tip** is `--pine` forest green, a friendly aside. All five lead with a `currentColor` icon (`class="icon"`) so the types read at a glance and match in size. No side-stripe; the gradient band and paired borders carry the emphasis. The `*-content` body stays ink (`--text`) so the note reads as ordinary prose; only the border, icon, and `<strong>` take the semantic colour. (A callout whose whole paragraph is coloured is the wrapper missing its `color: var(--text)` reset.)
 
 The icon is **24px, sized to one line of body text** (1.7 line-height on 1rem), nudged down by half the difference so it parks on that first line's optical centre. It used to be a fixed 32px, which set the height of the box: a one-sentence callout — which is most of them here — came out 64px tall, two thirds of it empty. With the icon out of the way the sentence sets the height and the same callout is 53px. Vertical padding is 12px for the same reason. Alignment stays `flex-start`, so on a long callout the icon still sits with the first line rather than drifting to the middle of the paragraph.
 
-The four boxes differ only in hue, so `doc.css` declares the shape once and each name contributes three custom properties (`--callout`, `--callout-bg`, `--callout-bg1`). A fifth callout is one line of CSS plus a `template()` registration in `md/__init__.py`.
+The five boxes differ only in hue, so `doc.css` declares the shape once and each name contributes three custom properties (`--callout`, `--callout-bg`, `--callout-bg1`). Another callout is that one line, its name added to the five selector lists that follow it, and a `template()` registration in `md/__init__.py`.
+
+Because two of the five are reds whose washes are indistinguishable, **the icon is load-bearing, not decoration**: warning's triangle and danger's octagon are what a reader actually tells apart at a glance. A new callout that reuses an existing hue needs a silhouette of its own.
+
+### Collapsible Section (`:::details`)
+`:::details Заголовок` … `:::` renders a native `<details>`/`<summary>`, closed by default. Native, not scripted: it needs no JavaScript, works on a no-JS page, and the browser's own find-in-page opens it when the match is inside — which a hand-rolled toggle would swallow. For material that would bury the page if it were always open: a long reference implementation, an aside two readers in ten will follow.
+
+It is deliberately **not** a callout. A callout says "this passage matters"; a disclosure says "there is more here if you want it", so it carries no semantic colour and takes blockquote's treatment instead — a 1px `--border` frame on `--cream-paper`, `--radius-code`. The summary is PT Serif bold in plain ink (it is the heading of the thing it hides) and warms to accent on hover. The UA's disclosure triangle is suppressed in favour of a CSS-drawn chevron that turns from pointing right to pointing down, drawn as a pseudo-element so it never lands in the summary's text content. The body's top rule only ever appears while the box is open, so it doubles as the seam between the summary and what it revealed.
+
+The opener's text is parsed as **inline markdown**, not escaped flat, because titles in these docs routinely name a function in `code`. With no title the summary falls back to «Подробнее» — a `<summary>` must never be empty, or it collapses to a bare marker with no hit area. A missing `:::` closer fails the block outright, as with the callouts; here the stakes are higher, since text swallowed into a disclosure would be *hidden* by default and the mistake that much easier to miss.
 
 ### Article-Status Banners (Stub / WIP / Outdated)
 `:::stub`, `:::wip` and `:::outdated` mark an article that isn't finished, isn't settled, or no longer matches the game. They are *about the page*, not about a passage in it, but visually they're built from the same family as the Info/Warning/Attention/Tip callouts below: a top+bottom hairline in the status colour over the same faint gradient wash, reusing each colour's existing `-bg` / `-bg1` tint. What sets a banner apart from a callout is its content, not its box — a serif title plus a note, in place of one paragraph of prose. Stub takes `--attention`, WIP `--info`, Outdated `--warning`.
