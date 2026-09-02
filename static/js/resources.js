@@ -36,6 +36,32 @@
     });
 })();
 
+/* ── File-viewer line links ──
+   The addressed line highlights itself from `:target` in CSS; this only
+   mirrors that onto the gutter number, which no selector can reach from the
+   code column. Purely cosmetic, so a no-JS page still gets the highlight. */
+(function () {
+    const gutter = document.querySelector('.fb-gutter');
+    if (!gutter) return;
+
+    let current = null;
+
+    const sync = () => {
+        if (current) current.classList.remove('is-target');
+        current = null;
+
+        // The id is `L42`; anything else in the fragment isn't ours.
+        const id = decodeURIComponent(location.hash.slice(1));
+        if (!/^L\d+$/.test(id)) return;
+
+        current = gutter.querySelector('a[href="#' + id + '"]');
+        if (current) current.classList.add('is-target');
+    };
+
+    sync();
+    window.addEventListener('hashchange', sync);
+})();
+
 /* ── Copy buttons ── */
 (function () {
     if (!navigator.clipboard) return;

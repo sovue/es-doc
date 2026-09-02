@@ -1000,10 +1000,74 @@ a.res-file:focus-visible {
     line-height: 1.55;
 }
 
+.fb-code {
+    /* Gutter and code as two columns; `white-space: pre` still drives the
+       line breaks inside each. */
+    display: flex;
+    gap: 16px;
+}
+
 .fb-code code {
     background: none;
     padding: 0;
     color: var(--code-name);
+    /* Never let the flex row squeeze the code into its own scrollbar — the
+       pre is what scrolls. */
+    flex: 1 0 auto;
+}
+
+/* ── Line numbers and per-line links ──────────────────────
+   Every line of a script is addressable as `#L42`, so a bug report or a chat
+   message can point at one line instead of "somewhere near the middle". The
+   gutter sits outside <code> so the numbers stay out of the file's copy
+   button and out of a hand-made selection (same rule as the docs' gutter,
+   see code.css) — but unlike that one these numbers are real links, so they
+   keep their place in the accessibility tree. */
+
+.fb-gutter {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    text-align: right;
+
+    /* Pinned while the code scrolls sideways underneath. */
+    position: sticky;
+    left: 0;
+    background: var(--code-bg);
+
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.fb-gutter a {
+    color: var(--code-comment);
+    text-decoration: none;
+    /* Matches the code column's line box exactly, so row N of the gutter sits
+       on row N of the file. */
+    line-height: inherit;
+}
+
+.fb-gutter a:hover,
+.fb-gutter a:focus-visible {
+    color: var(--code-inline);
+}
+
+/* The addressed line, highlighted straight from the URL fragment — no JS
+   needed for the highlight itself. The rows stay inline (the newline between
+   them lives outside the span, so `code.textContent` keeps its line breaks
+   for the copy button), which means the band covers the line's text rather
+   than the full panel width. */
+.fb-line:target {
+    background: var(--target-bg);
+    box-shadow: 0 0 0 2px var(--target-bg);
+    border-radius: 2px;
+}
+
+/* resources.js mirrors :target onto the gutter link, which CSS can't reach
+   from the code column. */
+.fb-gutter a.is-target {
+    color: var(--code-inline);
+    font-weight: 700;
 }
 
 .fb-code .k, .fb-code .kc, .fb-code .kd, .fb-code .kn,

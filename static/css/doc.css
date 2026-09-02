@@ -496,6 +496,62 @@ img {
 .banner-note > :first-child { margin-top: 0.35em; }
 .banner-note > :last-child { margin-bottom: 0; }
 
+/* ── Sources (manual footnotes) ───────────────────────────
+   `текст^1` in prose, `1^: Источник` in the list. Both halves are numbered by
+   hand, so nothing here renumbers anything: the styling only has to make the
+   marker small and skippable, and the list findable once you land on it. */
+
+.ref {
+    /* `sup` already lifts and shrinks; the extra space keeps the marker off
+       the word it follows without turning into a visible gap. */
+    margin-left: 0.15em;
+    font-size: 0.75em;
+}
+
+.ref a {
+    padding: 0 0.15em;
+    text-decoration: none;
+}
+
+.ref a:hover,
+.ref a:focus-visible {
+    text-decoration: underline;
+}
+
+.refs {
+    margin: 1.5em 0;
+    font-size: 0.925rem;
+}
+
+.ref-item {
+    display: flex;
+    gap: 0.5em;
+    margin: 0.5em 0;
+    color: var(--text-soft);
+}
+
+/* The back-link doubles as the entry's own number, mirroring the `1^:` the
+   author typed. Landing on it from a marker highlights the row, so the eye
+   finds the right line in a list of twenty. */
+.ref-item:target {
+    background: var(--target-bg);
+    border-radius: var(--radius-xs);
+    padding: 0.2em 0.4em;
+    margin: 0.3em -0.4em;
+}
+
+.ref-back {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    text-decoration: none;
+}
+
+.ref-back:hover,
+.ref-back:focus-visible {
+    text-decoration: underline;
+}
+
 /* ── Disambiguation hatnote ───────────────────────────────
    One italic line above the article, in the same PT Serif voice blockquotes
    use, boxed in a plain --border frame so it reads as its own aside rather

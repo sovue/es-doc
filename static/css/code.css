@@ -58,6 +58,34 @@ pre {
     border-radius: var(--radius-block);
 }
 
+/* ── Line numbers ─────────────────────────────────────────
+   The gutter is a sibling of <code>, never a child: both copy paths read
+   `code.textContent` (docs.js, resources.js), and numbers inside would paste
+   along with the code. `user-select: none` keeps them out of a hand-made
+   selection too, so the two ways of taking code off the page agree. */
+
+.code-block--numbered pre {
+    /* The two columns are laid out as a row; `white-space: pre` still governs
+       the line breaks inside each of them. */
+    display: flex;
+    gap: 16px;
+}
+
+.code-gutter {
+    flex-shrink: 0;
+    /* Right-aligned so the ones column lines up as the count crosses 10/100,
+       and pinned while the code scrolls sideways under it. */
+    text-align: right;
+    position: sticky;
+    left: 0;
+
+    color: var(--code-comment);
+    background: var(--code-bg);
+
+    user-select: none;
+    -webkit-user-select: none;
+}
+
 pre code {
     background: none;
     padding: 0;

@@ -5,11 +5,16 @@ from pygments.lexers import get_lexer_by_name
 from pygments.formatters import HtmlFormatter
 import re
 
-from .slugs import slugify, render_heading_open
+from .slugs import heading_slugs, render_heading_open
 from .table import table_block
 from .template import template
 from .banner import BANNERS, banner, render_banner_open, render_banner_close
 from .hatnote import hatnote, render_hatnote_open, render_hatnote_close
+from .lines import gutter, split_lines
+from .refs import (
+    ref_list, ref_mark, render_ref_item_close, render_ref_item_open,
+    render_ref_mark, render_refs_close, render_refs_open,
+)
 from ..svg import SVG
 from ..renpy_lexer import RenPyLexer
 
@@ -58,10 +63,16 @@ def render_fence(self, tokens, idx, options, env):
     # the button earns its corner only from two lines up.
     multiline = token.content.strip('\n').count('\n') > 0
 
+    # Line numbers ride along with the copy button, on the same reasoning:
+    # a one-line fence has nothing to count, and a lone "1" beside it is
+    # furniture. The gutter sits outside <code> so it stays out of what the
+    # copy button and a hand-made selection pick up (see lines.py).
+    numbers = gutter(len(split_lines(highlighted))) if multiline else ''
+
     return (
-        '<div class="code-block">'
+        f'<div class="code-block{" code-block--numbered" if multiline else ""}">'
         f'{CODE_COPY_BUTTON if multiline else ""}'
-        f'<pre><code{lang_class}>{highlighted}</code></pre>'
+        f'<pre>{numbers}<code{lang_class}>{highlighted}</code></pre>'
         '</div>\n'
     )
 
@@ -79,6 +90,7 @@ MD.block.ruler.before('fence', 'attention', template('attention'))
 # own single-line syntax — see hatnote.py). Registration order doesn't
 # matter: every opener names itself.
 MD.block.ruler.before('fence', 'hatnote', hatnote)
+MD.block.ruler.before('fence', 'refs', ref_list)
 
 for _banner in BANNERS:
     MD.block.ruler.before('fence', _banner, banner(_banner))
@@ -108,6 +120,14 @@ for _banner in BANNERS:
 
 MD.add_render_rule('hatnote_open', render_hatnote_open)
 MD.add_render_rule('hatnote_close', render_hatnote_close)
+
+# Manual footnotes: `текст^1` in prose, `1^: Источник` in the list.
+MD.inline.ruler.before('text', 'ref_mark', ref_mark)
+MD.add_render_rule('ref_mark', render_ref_mark)
+MD.add_render_rule('refs_open', render_refs_open)
+MD.add_render_rule('refs_close', render_refs_close)
+MD.add_render_rule('ref_item_open', render_ref_item_open)
+MD.add_render_rule('ref_item_close', render_ref_item_close)
 
 def render_thanks(src):
     html = MD.render(src)
@@ -139,6 +159,7 @@ def outline(src):
     headings = []
 
     tokens = MD.parse(src)
+    slugs = heading_slugs(tokens)
 
     for idx, token in enumerate(tokens):
         if token.type != 'heading_open':
@@ -151,7 +172,7 @@ def outline(src):
         elif level in (2, 3):
             headings.append({
                 'text': text,
-                'slug': slugify(inline.content, tokens[idx].map),
+                'slug': slugs[idx],
                 'level': level,
             })
 
@@ -167,6 +188,7 @@ def render(src):
     nav = ''
 
     tokens = MD.parse(src)
+    slugs = heading_slugs(tokens)
 
     for idx, token in enumerate(tokens):
         if token.type == 'heading_open':
@@ -179,7 +201,6 @@ def render(src):
                 # exactly as they do in the heading itself, not as literal
                 # markdown syntax characters.
                 heading_html = MD.renderer.renderInline(inline.children, MD.options, {})
-                slug = slugify(inline.content, tokens[idx].map)
-                nav += f'<li class="{(token.tag)}"><a href="#{slug}">{heading_html}</a></li>'
+                nav += f'<li class="{(token.tag)}"><a href="#{slugs[idx]}">{heading_html}</a></li>'
 
     return title, nav, MD.render(src)

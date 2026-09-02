@@ -10,6 +10,7 @@ from ..utils.config import CONFIG
 from ..utils.file import templates
 from ..utils.lifespan.resources_cache import BG_TIME_LABELS, CATEGORY_TITLES
 from ..utils.md import highlight_code, CODE_COPY_BUTTON
+from ..utils.md.lines import numbered_view
 from ..utils import warpers as warpers_util
 
 router = APIRouter(prefix='/resources')
@@ -192,9 +193,14 @@ def _file_view(target):
         text = target.read_text('utf-8', errors='replace')
         lang = VIEW_LANGS.get(target.suffix.lower())
         code = highlight_code(text, lang, None) if lang else ''
+        # Numbered here rather than in the template: the gutter's links and
+        # the code's per-line ids come from one split of the same highlighted
+        # HTML, or a `#L42` would point at the wrong line.
+        line_gutter, rows = numbered_view(code or html.escape(text))
         return {
             'mode': 'code',
-            'code': code or html.escape(text),
+            'gutter': line_gutter,
+            'code': rows,
             'lines': _plural(text.count('\n') + 1, 'строка', 'строки', 'строк'),
         }
 

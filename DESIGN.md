@@ -193,6 +193,11 @@ One 20px row, deliberately: this is a docs site, and the footer is wayfinding, n
 ### Search (combobox + listbox)
 The header's centerpiece: a bordered input group that highlights its border on `:focus-within`, dropping a `--paper-raised` listbox with the Modal shadow. Matched substrings are marked with **weight 700, not color** (keeping pioneer red rare). The highlighted/hovered option warms with the muted-accent tint; its context prefix lifts to full ink to hold AA on that lighter fill. Collapses to an icon-triggered full-width sheet at ≤640px. Fully keyboard-driven (WAI-ARIA combobox) and degrades to a navigable `<form>` without JS.
 
+### Heading Anchors
+Every heading below h1 carries a hover-revealed `#` anchor and a slug built from the **path of headings containing it**: an h2 is `{h2}`, an h3 under it `{h2}/{h3}`, an h4 under that `{h2}/{h3}/{h4}`. Two sections called «Плюсы» under different parents are therefore two different anchors, with no disambiguation needed; genuine collisions under one parent get `-2`, `-3` in document order.
+
+This replaced a flat `{текст}-{номера строк}` scheme whose uniqueness came from the heading's line numbers, which meant every anchor on a page moved the moment anyone inserted a paragraph above it. A path survives edits elsewhere in the document, and reads as a location rather than an accident. Slashes are legal in both `id` attributes and URL fragments; the TOC scroll-spy matches ids as strings, never as CSS selectors, so nothing needs escaping.
+
 ### Section Row & Doc Tree
 The primary grouping affordance, a bordered list of rows, never a card grid. Baseline-aligned flex rows with a pioneer-red arrow that fades in on hover/focus. The docs index nests these into a tree with a 1px `--border-tan` left-indent guide (structural, not a decorative stripe). Names truncate with ellipsis; the arrow stays pinned right, and it's pinned by its own `margin-left: auto`, not by `.section-desc`'s `flex: 1`. The description is optional — some rows carry none, and at ≤400px it's hidden site-wide — so hanging the arrow's position on it left the arrow tucked against the name in exactly those cases.
 
@@ -211,6 +216,11 @@ Each banner ships **its own wording**: a serif title in the status colour plus a
 ### Disambiguation Hatnote
 `::about A | Б | ссылка` renders the one italic line above an article that says what this page covers and where the other meaning lives — «Эта статья о A; о Б см. …». PT Serif italic in ink-soft, boxed in a plain `--border` frame. Double colon, not triple: unlike every other `:::name` block on this page, a hatnote is one physical line with no body and no closer, and the shorter marker makes that visible on sight instead of inviting an author to hunt for a `:::` to close it. The frame is unpainted (no `--bg-light` fill), a step quieter than blockquote's painted card and well short of a banner's status-coloured one — it reads as its own aside, not as content in its own right. Exactly three `|`-separated fields, both subjects in the prepositional case so the sentence's single «о» serves both. Anything else fails the block and leaves the raw `::about` line visible on the page — a half-filled sentence is worse than an obvious mistake.
 
+### Sources (manual footnotes)
+`текст^1` in prose and `1^: Источник` in the list, both numbered by hand — the marker's number *is* the list's number, and nothing renumbers, reorders or collects anything. The marker is a small superscript link in accent red; the list is ink-soft rows led by a mono back-link that mirrors the `1^:` the author typed, and the entry you arrive at highlights with the same `--target-bg` wash headings use, so the eye finds the right line in a list of twenty.
+
+A `^N` only becomes a marker if the page actually defines source N — markdown-it finishes block parsing before any inline parsing, so every entry is known by the time a marker is read. That keeps a page from ever carrying a `#ref-N` link that lands nowhere, and leaves prose like `t^2` alone on pages that cite nothing numbered 2. On a page that *does*, a literal caret is escaped the way markdown escapes any special character (`t\^2`) or, better, written as `code` — which is where DESIGN.md already puts formulas.
+
 ### Blockquote
 Full 1px `--border-tan` border with a `--cream-paper` fill, set in PT Serif italic (the brand's quote voice). Never an accent side-stripe; the fill alone separates it from body text.
 
@@ -220,6 +230,12 @@ Inline code is a chip: `--code-bg-inline` behind `--code-inline` text, small rad
 Fenced blocks sit on `--code-bg` with a 1px border and a per-token syntax palette, one palette per theme. On copy, sentinel whitespace glyphs are swapped back to spaces so pasted code runs.
 
 The copy button is rendered **only on fences of two or more lines**. On a one-line fence the button's corner is the same row the code occupies, so it covered the end of the line with nothing to scroll past it — and a single line is what a reader selects by hand in one gesture anyway. Where the button does exist, and only once `docs.js` has revealed it, the `pre` reserves a 52px right gutter so the first line never runs under it.
+
+**Line numbers** appear on the same fences the copy button does, and on every file in the resource browser's viewer. They live in a `.code-gutter` / `.fb-gutter` column that is a *sibling* of `<code>`, never a child: both copy paths read `code.textContent`, and numbers inside would paste along with the code. `user-select: none` keeps them out of a hand-made selection too, so the two ways of taking code off the page agree. The column is `position: sticky; left: 0` inside the `pre`, so it stays put while a long line scrolls sideways underneath, and it is right-aligned so the ones column holds as the count crosses 10 and 100. In the docs the numbers are inert and `aria-hidden`; nothing links to them, and a screen reader counting down the side of every snippet is noise.
+
+The split into rows relies on Pygments' `nowrap=True` output being span-balanced *per line* — a token spanning several lines is emitted as one closed span per line — so the highlighted HTML can simply be split on newlines (`md/lines.py`).
+
+**Line links.** In the resource browser's file viewer the numbers are real links, and every row carries `id="L42"`, so one line of a script can be pointed at directly (`…/browser/globals.rpy#L42`). The addressed row highlights from `:target` alone — no JS in the path — and `resources.js` only mirrors that onto the gutter number, which no selector can reach from the code column. Rows stay inline rather than `display: block`: the newline between them sits *outside* the row span, which is what keeps the line breaks in `code.textContent` for the file's copy button.
 
 ### Home Hero Slideshow
 The homepage hero carries the camp itself: four game backgrounds crossfading on a slow 32s cycle (~2.5s fades), day shots in light theme and their night variants in dark. The photos are set dressing, never content — a paper wash keeps the title column on near-solid `--bg`, and the image dissolves into the page below rather than ending on a hard edge. Reduced motion collapses it to one quiet still. Images are served as 1600px WebP downscales (`/resource/hero/`), composed lazily like thumbs.
