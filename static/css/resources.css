@@ -1011,6 +1011,12 @@ a.res-file:focus-visible {
     background: none;
     padding: 0;
     color: var(--code-name);
+    /* The panel above declares --font-mono, but the UA's own `code` rule sets
+       a generic `monospace` family that wins over the inherited one — this
+       page doesn't load code.css, which is where the site's `code` face is
+       otherwise set. Without this the file rendered in the browser's default
+       monospace while the gutter beside it used Consolas. */
+    font-family: inherit;
     /* Never let the flex row squeeze the code into its own scrollbar — the
        pre is what scrolls. */
     flex: 1 0 auto;

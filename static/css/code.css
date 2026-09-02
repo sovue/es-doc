@@ -56,6 +56,17 @@ pre {
 
     border: 1px solid var(--border);
     border-radius: var(--radius-block);
+
+    /* Face and size live on the panel, not on `code` alone. The line-number
+       gutter is a *sibling* of <code> (see below), so a font set only on
+       <code> left the gutter on the UA's own `pre` defaults — generic
+       monospace at 13px against the code's 16px Consolas. That is not just a
+       mismatched face: the two columns then step at different line-heights,
+       and every line pushed a number further from the line it numbers.
+       `inherit` keeps the panel at the prose size it already computed to, so
+       the code itself renders exactly as before. */
+    font-family: var(--font-mono);
+    font-size: inherit;
 }
 
 /* ── Line numbers ─────────────────────────────────────────
