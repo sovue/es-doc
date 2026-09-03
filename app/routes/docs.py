@@ -18,15 +18,16 @@ async def index(request: Request):
     # by the lifespan refresh (see utils/lifespan.py).
     return templates.TemplateResponse(request, 'docs_index.html', {'tree': CONFIG.docs_tree})
 
-def _next_doc(doc):
+def _siblings(doc):
     # Reading order is the tree flattened pre-order (see flatten_tree): the
-    # doc right after this one is "next". A doc absent from tree.yaml (or
-    # the last one in it) simply has no next.
+    # docs either side of this one are "previous" and "next". A doc absent
+    # from tree.yaml has neither; the first and last have one each.
     flat = flatten_tree(CONFIG.docs_tree)
     for i, node in enumerate(flat):
-        if node['slug'] == doc and i + 1 < len(flat):
-            return flat[i + 1]
-    return None
+        if node['slug'] == doc:
+            return (flat[i - 1] if i > 0 else None,
+                    flat[i + 1] if i + 1 < len(flat) else None)
+    return None, None
 
 @router.get('/img/{file}')
 async def image(file, request: Request):
@@ -69,8 +70,14 @@ async def page(doc, request: Request):
     if any(i in request.query_params for i in ['r', 'raw']):
         return PlainTextResponse(body)
 
+    prev_doc, next_doc = _siblings(doc)
+
     return templates.TemplateResponse(request, 'doc.html', {
-        'title': title or doc, 'body': body, 'nav': nav, 'doc': doc, 'next_doc': _next_doc(doc),
+        'title': title or doc, 'body': body, 'nav': nav, 'doc': doc,
+        'prev_doc': prev_doc, 'next_doc': next_doc,
+        # The whole docs tree, for the collapsed all-articles nav under the
+        # page's own table of contents.
+        'tree': CONFIG.docs_tree,
     })
 
 main_router.include_router(router)

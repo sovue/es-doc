@@ -196,6 +196,88 @@ img {
     font-weight: 600;
 }
 
+/* ── All articles (collapsed) ─────────────────────────────
+   The whole docs tree, tucked under the page's own contents. Closed by
+   default so the table of contents stays the first thing in the sidebar,
+   and given its own scroll box so opening it on a long tree scrolls inside
+   the disclosure instead of pushing the source links out of reach. */
+
+.sidebar-all {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+}
+
+.sidebar-all-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    cursor: pointer;
+    list-style: none;
+
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+
+    transition: color 0.15s var(--ease-out);
+}
+
+.sidebar-all-summary::-webkit-details-marker {
+    display: none;
+}
+
+/* Same CSS chevron the `:::details` disclosure uses, at label scale. */
+.sidebar-all-summary::before {
+    content: '';
+    flex-shrink: 0;
+
+    width: 0.4em;
+    height: 0.4em;
+
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(-45deg);
+
+    transition: transform 0.15s var(--ease-out);
+}
+
+.sidebar-all[open] > .sidebar-all-summary::before {
+    transform: rotate(45deg);
+}
+
+.sidebar-all-summary:hover,
+.sidebar-all-summary:focus-visible {
+    color: var(--accent);
+}
+
+.sidebar-all-tree {
+    /* Its own window: the sidebar is already a sticky viewport-height column,
+       so an open tree of forty articles has to scroll here rather than make
+       the whole column longer. */
+    max-height: 38vh;
+    overflow-y: auto;
+
+    margin: 10px 0 0;
+    padding-left: 0;
+}
+
+.sidebar-all-link {
+    display: block;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* The article you are on, marked the way the scroll-spy marks the current
+   heading — one spot of accent, not a filled row. */
+.sidebar-all-link.is-current {
+    color: var(--accent);
+    font-weight: 600;
+}
+
 /* Power-user affordance: the page-source block under the TOC — open the raw
    Markdown in place, or save it as «<страница>.md». Quiet by default. */
 .sidebar-source {
@@ -251,25 +333,102 @@ img {
     overflow-wrap: break-word;
 }
 
-/* ── Next article ────────────────────────────────────────── */
+/* ── Article pager (previous / next) ─────────────────────
+   Two links on one rule, weighted deliberately unequally: "next" is the one
+   a reader following the guide in order wants, so it keeps the serif title
+   and the accent arrow, while "previous" is a small ink-soft backstop. They
+   share a row; with only one of them present it takes its own side. */
 
-.doc-next {
+.doc-pager {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 20px;
+
     margin-top: 56px;
+    border-top: 1px solid var(--border);
+}
+
+/* Keeps "next" on the right when there is no "previous" to push it there. */
+.doc-pager > .doc-next-link:only-child {
+    margin-left: auto;
+}
+
+.doc-prev-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 0;
+    max-width: 42%;
+    text-decoration: none;
+}
+
+.doc-prev-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.doc-prev-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+}
+
+/* Sans and ink-soft where "next" is serif and ink — the whole point of the
+   pair is that they do not compete. */
+.doc-prev-title {
+    font-size: 0.875rem;
+    color: var(--text-soft);
+    /* One line: a long title here would rival the next-article headline. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color 0.15s var(--ease-out);
+}
+
+.doc-prev-arrow {
+    font-size: 0.9rem;
+    color: var(--text-soft);
+    flex-shrink: 0;
+    transition: transform 0.15s var(--ease-out), color 0.15s var(--ease-out);
+}
+
+.doc-prev-link:hover .doc-prev-title,
+.doc-prev-link:focus-visible .doc-prev-title,
+.doc-prev-link:hover .doc-prev-arrow,
+.doc-prev-link:focus-visible .doc-prev-arrow {
+    color: var(--accent);
+}
+
+.doc-prev-link:hover .doc-prev-arrow,
+.doc-prev-link:focus-visible .doc-prev-arrow {
+    transform: translateX(-3px);
+}
+
+.doc-prev-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+    border-radius: var(--radius-xs);
 }
 
 .doc-next-link {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 20px;
     padding: 20px 0;
-    border-top: 1px solid var(--border);
     text-decoration: none;
 }
 
 .doc-next-meta {
     display: flex;
     flex-direction: column;
+    align-items: flex-end;
     gap: 4px;
     min-width: 0;
 }
@@ -586,20 +745,18 @@ img {
 .banner-note > :last-child { margin-bottom: 0; }
 
 /* ── Sources (manual footnotes) ───────────────────────────
-   `текст^1` in prose, `1^: Источник` in the list. Both halves are numbered by
+   `текст^1` in prose, `1^ Источник` in the list. Both halves are numbered by
    hand, so nothing here renumbers anything: the styling only has to make the
    marker small and skippable, and the list findable once you land on it. */
 
 .ref {
-    /* `sup` already lifts and shrinks; the extra space keeps the marker off
-       the word it follows without turning into a visible gap. */
-    margin-left: 0.15em;
+    /* No left margin and no padding on the link: the marker sits flush
+       against the word it cites, the way a printed footnote does. */
     font-size: 0.75em;
     scroll-margin-top: 64px;
 }
 
 .ref a {
-    padding: 0 0.15em;
     text-decoration: none;
 }
 
@@ -619,6 +776,15 @@ img {
     margin: 0.5em 0;
     color: var(--text-soft);
 }
+
+/* An entry can hold several paragraphs (a blank line plus an indented
+   continuation), so the text side is a block container, not a span. */
+.ref-text > p {
+    margin: 0.4em 0;
+}
+
+.ref-text > :first-child { margin-top: 0; }
+.ref-text > :last-child { margin-bottom: 0; }
 
 /* The back-link doubles as the entry's own number, mirroring the `1^:` the
    author typed. Landing on it from a marker highlights the row, so the eye
@@ -760,8 +926,12 @@ img {
     .anchor,
     .doc-next-title,
     .doc-next-arrow,
+    .doc-prev-title,
+    .doc-prev-arrow,
     .details-summary,
-    .details-summary::before {
+    .details-summary::before,
+    .sidebar-all-summary,
+    .sidebar-all-summary::before {
         transition: none;
     }
 

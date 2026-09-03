@@ -4,12 +4,19 @@
    Controls ship with [hidden] in the markup and are revealed here, so a
    no-JS page stays a clean reference list. */
 
+/* Sentinel glyph the file viewer paints in place of the lexer's whitespace
+   spans. Anything that puts code on the clipboard has to swap it back, or the
+   pasted script is full of ∙ and won't run — shared here so the two copy
+   paths below can't drift apart again. */
+const WHITESPACE_GLYPH = '∙';
+const unglyph = text => text.replace(new RegExp(WHITESPACE_GLYPH, 'g'), ' ');
+
 /* ── File-viewer code whitespace handling (mirrors docs.js) ── */
 (function () {
     const code = document.querySelector('.fb-code');
     if (!code) return;
 
-    const whitespace = '∙';
+    const whitespace = WHITESPACE_GLYPH;
 
     code.querySelectorAll('span.w').forEach(el => {
         el.textContent = whitespace.repeat(el.textContent.length);
@@ -30,9 +37,7 @@
 
         e.preventDefault();
 
-        const text = sel.toString().replace(new RegExp(whitespace, 'g'), ' ');
-
-        e.clipboardData.setData('text/plain', text);
+        e.clipboardData.setData('text/plain', unglyph(sel.toString()));
     });
 })();
 
@@ -75,9 +80,14 @@
         btn.addEventListener('click', () => {
             // data-copy-from points at an element whose text is the payload
             // (the file viewer copies the whole script this way).
-            const value = btn.dataset.copyFrom
+            // The viewer's payload is the rendered code, which carries the
+            // sentinel whitespace glyphs — strip them so what lands on the
+            // clipboard is a script that actually runs. A plain data-copy
+            // value (a game path) never contains them, so this is safe for
+            // both branches.
+            const value = unglyph(btn.dataset.copyFrom
                 ? (document.querySelector(btn.dataset.copyFrom)?.textContent ?? '')
-                : btn.dataset.copy;
+                : btn.dataset.copy);
 
             navigator.clipboard.writeText(value).then(() => {
                 btn.classList.add('copied');

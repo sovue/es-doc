@@ -4,6 +4,19 @@
 {% set extra_css = ['/static/css/code.css', '/static/css/doc.css'] %}
 {% set active = 'docs' %}
 
+{% macro tree_node(node) %}
+<li>
+    <a href="/docs/{{ node.slug|urlencode }}"
+       class="sidebar-all-link{{ ' is-current' if node.slug == doc else '' }}"
+       {%- if node.slug == doc %} aria-current="page"{% endif %}>{{ node.title }}</a>
+    {% if node.children %}
+    <ul role="list">
+        {% for child in node.children %}{{ tree_node(child) }}{% endfor %}
+    </ul>
+    {% endif %}
+</li>
+{% endmacro %}
+
 {% block content %}
 <div class="page">
 
@@ -15,6 +28,20 @@
             <nav aria-label="Содержание"><ul>
                 {{ nav|safe }}
             </ul></nav>
+
+            {% if tree %}
+            {#- All articles, collapsed: the page's own contents stay the
+                first thing in the sidebar, and the wider tree is one click
+                away without pushing them off-screen. -#}
+            <details class="sidebar-all">
+                <summary class="sidebar-all-summary">Все статьи</summary>
+                <nav aria-label="Все статьи">
+                    <ul class="sidebar-all-tree" role="list">
+                        {% for node in tree %}{{ tree_node(node) }}{% endfor %}
+                    </ul>
+                </nav>
+            </details>
+            {% endif %}
             <div class="sidebar-source">
                 <span class="sidebar-source-label">Исходник страницы</span>
                 <div class="sidebar-source-links">
@@ -37,8 +64,21 @@
         <main class="content" id="main-content">
             {{ body|safe }}
 
-            {% if next_doc %}
-            <nav class="doc-next" aria-label="Следующая статья">
+            {% if prev_doc or next_doc %}
+            <nav class="doc-pager" aria-label="Соседние статьи">
+                {#- Previous is the quieter of the two: same row, but small
+                    and ink-soft, so «Следующая статья» keeps the eye. -#}
+                {% if prev_doc %}
+                <a href="/docs/{{ prev_doc.slug|urlencode }}" class="doc-prev-link">
+                    <span class="doc-prev-arrow" aria-hidden="true">←</span>
+                    <span class="doc-prev-meta">
+                        <span class="doc-prev-label">Предыдущая</span>
+                        <span class="doc-prev-title">{{ prev_doc.title }}</span>
+                    </span>
+                </a>
+                {% endif %}
+
+                {% if next_doc %}
                 <a href="/docs/{{ next_doc.slug|urlencode }}" class="doc-next-link">
                     <span class="doc-next-meta">
                         <span class="doc-next-label">Следующая статья</span>
@@ -46,6 +86,7 @@
                     </span>
                     <span class="doc-next-arrow" aria-hidden="true">→</span>
                 </a>
+                {% endif %}
             </nav>
             {% endif %}
         </main>
