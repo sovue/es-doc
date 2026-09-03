@@ -595,6 +595,7 @@ img {
        the word it follows without turning into a visible gap. */
     margin-left: 0.15em;
     font-size: 0.75em;
+    scroll-margin-top: 64px;
 }
 
 .ref a {
