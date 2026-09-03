@@ -30,10 +30,11 @@
             </ul></nav>
 
             {% if tree %}
-            {#- All articles, collapsed: the page's own contents stay the
-                first thing in the sidebar, and the wider tree is one click
-                away without pushing them off-screen. -#}
-            <details class="sidebar-all">
+            {#- All articles. Closed on a first visit, so the page's own
+                contents stay the first thing in the sidebar and the wider
+                tree is one click away without pushing them off-screen;
+                after that it reopens however the reader last left it. -#}
+            <details class="sidebar-all" id="sidebar-all">
                 <summary class="sidebar-all-summary">Все статьи</summary>
                 <nav aria-label="Все статьи">
                     <ul class="sidebar-all-tree" role="list">
@@ -41,6 +42,13 @@
                     </ul>
                 </nav>
             </details>
+            {#- Reapply the saved state before the first paint. Inline and
+                immediately after the element, not in head.html, because the
+                <details> has to exist for this to reach it — the theme script
+                can live in the head only because it sets an attribute on
+                <html>. Deferring it to docs.js would open the tree after the
+                sidebar had already painted shut. -#}
+            <script>(function(){try{if(localStorage.getItem('es-doc-all-articles')==='1')document.getElementById('sidebar-all').open=true;}catch(e){}})();</script>
             {% endif %}
             <div class="sidebar-source">
                 <span class="sidebar-source-label">Исходник страницы</span>
