@@ -52,6 +52,12 @@ pre {
     background: var(--code-bg);
 
     padding: 16px;
+
+    /* A fallback, not the mechanism: rendered blocks put their code in a
+       `.code-scroll` box that scrolls on its own, so the row inside the `pre`
+       always fits and this never engages. It catches a hand-written
+       `<pre><code>` (the warper lab has one) that has no scroll box of its
+       own, which would otherwise spill out of the panel. */
     overflow-x: auto;
 
     border: 1px solid var(--border);
@@ -75,23 +81,35 @@ pre {
    along with the code. `user-select: none` keeps them out of a hand-made
    selection too, so the two ways of taking code off the page agree. */
 
+/* The code, and only the code, scrolls sideways. Keeping the scrollport here
+   rather than on the `pre` is what keeps the gutter out of it: a gutter inside
+   the scrolling box has to be `position: sticky` to stay visible, and a
+   positioned element with an opaque background paints over its siblings — the
+   leftmost strip of every long line then sits *under* the numbers, unreachable
+   at any scroll offset. Two columns, one of which scrolls, has neither
+   problem. */
+.code-scroll {
+    display: block;
+    overflow-x: auto;
+    /* Lets the flex item shrink below its content width so it scrolls
+       internally instead of stretching the panel. */
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
 .code-block--numbered pre {
-    /* The two columns are laid out as a row; `white-space: pre` still governs
-       the line breaks inside each of them. */
+    /* Gutter and code as a row; `white-space: pre` still governs the line
+       breaks inside each of them. */
     display: flex;
     gap: 16px;
 }
 
 .code-gutter {
     flex-shrink: 0;
-    /* Right-aligned so the ones column lines up as the count crosses 10/100,
-       and pinned while the code scrolls sideways under it. */
+    /* Right-aligned so the ones column lines up as the count crosses 10/100. */
     text-align: right;
-    position: sticky;
-    left: 0;
 
     color: var(--code-comment);
-    background: var(--code-bg);
 
     user-select: none;
     -webkit-user-select: none;

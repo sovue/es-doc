@@ -14,7 +14,7 @@ from .details import (
     render_details_summary_close, render_details_summary_open,
 )
 from .hatnote import hatnote, render_hatnote_open, render_hatnote_close
-from .lines import gutter, split_lines
+from .lines import gutter, scroll_box, split_lines
 from .refs import (
     ref_list, ref_mark, render_ref_item_close, render_ref_item_open,
     render_ref_mark, render_refs_close, render_refs_open,
@@ -76,7 +76,7 @@ def render_fence(self, tokens, idx, options, env):
     return (
         f'<div class="code-block{" code-block--numbered" if multiline else ""}">'
         f'{CODE_COPY_BUTTON if multiline else ""}'
-        f'<pre>{numbers}<code{lang_class}>{highlighted}</code></pre>'
+        f'<pre>{numbers}{scroll_box(highlighted, lang_class)}</pre>'
         '</div>\n'
     )
 

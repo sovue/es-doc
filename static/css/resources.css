@@ -994,7 +994,6 @@ a.res-file:focus-visible {
     background: var(--code-bg);
     border: 1px solid var(--border);
     border-radius: var(--radius-block);
-    overflow-x: auto;
     font-family: var(--font-mono);
     font-size: 0.85rem;
     line-height: 1.55;
@@ -1017,9 +1016,6 @@ a.res-file:focus-visible {
        otherwise set. Without this the file rendered in the browser's default
        monospace while the gutter beside it used Consolas. */
     font-family: inherit;
-    /* Never let the flex row squeeze the code into its own scrollbar — the
-       pre is what scrolls. */
-    flex: 1 0 auto;
 }
 
 /* ── Line numbers and per-line links ──────────────────────
@@ -1036,13 +1032,21 @@ a.res-file:focus-visible {
     flex-shrink: 0;
     text-align: right;
 
-    /* Pinned while the code scrolls sideways underneath. */
-    position: sticky;
-    left: 0;
-    background: var(--code-bg);
-
+    /* Outside the scrolling box (see .code-scroll in code.css — the same
+       two-column split, and this page defines its own copy because it does not
+       load that file). The gutter used to be `position: sticky` *inside* the
+       scroller: the numbers stayed put, but being positioned and opaque they
+       painted over the code, so the first ~22px of every long line sat under
+       them and no amount of scrolling brought it back. */
     user-select: none;
     -webkit-user-select: none;
+}
+
+.fb-code .code-scroll {
+    display: block;
+    overflow-x: auto;
+    min-width: 0;
+    flex: 1 1 auto;
 }
 
 .fb-gutter a {
@@ -1063,6 +1067,13 @@ a.res-file:focus-visible {
    them lives outside the span, so `code.textContent` keeps its line breaks
    for the copy button), which means the band covers the line's text rather
    than the full panel width. */
+/* `#L42` scrolls the page, so the addressed line has to clear the 53px sticky
+   header — the same 64px the search-result rows and jump-nav headings on these
+   pages already use. */
+.fb-line {
+    scroll-margin-top: 64px;
+}
+
 .fb-line:target {
     background: var(--target-bg);
     box-shadow: 0 0 0 2px var(--target-bg);

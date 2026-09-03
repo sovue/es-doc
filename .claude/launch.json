@@ -4,8 +4,8 @@
     {
       "name": "es-doc",
       "runtimeExecutable": "pdm",
-      "runtimeArgs": ["run", "uvicorn", "app.app:app", "--host", "127.0.0.1", "--port", "8123"],
-      "port": 8123
+      "runtimeArgs": ["run", "uvicorn", "app.app:app", "--host", "127.0.0.1", "--port", "8321"],
+      "port": 8321
     }
   ]
 }

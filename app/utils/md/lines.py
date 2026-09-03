@@ -9,6 +9,15 @@ browser's file viewer.
 The gutter is always a sibling of `<code>`, never inside it. Both copy paths
 read `code.textContent` (docs.js, resources.js), and a gutter inside would
 paste line numbers along with the code.
+
+The code always sits in its own `.code-scroll` box, and that box — not the
+`<pre>` — is what scrolls sideways, which puts the gutter *outside* the
+scrolling area entirely. The gutter used to be a `position: sticky` column
+inside it: that pinned the numbers in place, but a positioned element with an
+opaque background paints over its siblings, so while the reader was scrolled
+right the leftmost ~22px of every long line sat underneath the numbers and
+could not be reached by scrolling at all. Two columns, one of which scrolls,
+keeps the numbers permanently visible *and* the whole line readable.
 """
 
 import html
@@ -25,6 +34,12 @@ def split_lines(code_html):
         lines.pop()
 
     return lines
+
+
+def scroll_box(code_html, lang_class=''):
+    """The code column: everything that scrolls sideways, and nothing else. The
+    gutter is deliberately not in here (see the module docstring)."""
+    return f'<span class="code-scroll"><code{lang_class}>{code_html}</code></span>'
 
 
 def gutter(count):
