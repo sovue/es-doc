@@ -24,13 +24,37 @@ from ..renpy_lexer import RenPyLexer
 
 dummy_rule = lambda s: lambda self, tokens, idx, options, env: s
 
+# docs.js already turns every `span.w` Pygments emits into visible dots, the
+# same way Ren'Py's own script linter marks whitespace. Pygments' stock Python
+# lexer barely uses that token though — not even for indentation, the one
+# whitespace a Python reader most needs to see — so a ```python fence has
+# almost nothing for it to grab onto. Rather than teach the lexer to tag
+# whitespace the way renpy_lexer.py does, wrap every run of spaces in the same
+# `span.w` Pygments itself uses: it comes out looking exactly like whitespace
+# highlighted anywhere else on the site (muted, not full-strength text) instead
+# of a wall of stark dots, and docs.js's copy handling already strips the
+# glyph out of a `span.w` wherever it finds one, so pasted code is unaffected.
+WHITESPACE_GLYPH = '∙'
+_TAG_RE = re.compile(r'(<[^>]*>)')
+_SPACE_RUN_RE = re.compile(r' +')
+
+def _dot_whitespace(html):
+    def dot_run(match):
+        return f'<span class="w">{WHITESPACE_GLYPH * len(match.group())}</span>'
+
+    return ''.join(
+        part if part.startswith('<') else _SPACE_RUN_RE.sub(dot_run, part)
+        for part in _TAG_RE.split(html)
+    )
+
 def highlight_code(code, lang, attrs):
     try:
         lexer = RenPyLexer() if lang == 'renpy' else get_lexer_by_name(lang)
     except Exception:
         return ''
 
-    return highlight(code, lexer, HtmlFormatter(nowrap=True))
+    html = highlight(code, lexer, HtmlFormatter(nowrap=True))
+    return _dot_whitespace(html) if lang == 'python' else html
 
 # Copy button markup, ships [hidden] and revealed by docs.js — mirrors the
 # progressive-enhancement pattern the resource listings use for their own
