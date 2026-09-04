@@ -456,7 +456,7 @@ img {
 }
 
 .doc-prev-link:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 4px;
     border-radius: var(--radius-xs);
 }
@@ -513,7 +513,7 @@ img {
 }
 
 .doc-next-link:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 4px;
     border-radius: var(--radius-xs);
 }
@@ -522,7 +522,9 @@ img {
 
 .heading {
     position: relative;
-    scroll-margin-top: 76px;
+    /* A heading is read with the line under it, so it clears the header
+       by a little more than a row does. */
+    scroll-margin-top: calc(var(--scroll-offset) + 12px);
 }
 
 .heading:target {
@@ -721,7 +723,7 @@ img {
 }
 
 .details-summary:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: -2px;
     border-radius: var(--radius-code);
 }
@@ -808,7 +810,7 @@ img {
     /* No left margin and no padding on the link: the marker sits flush
        against the word it cites, the way a printed footnote does. */
     font-size: 0.75em;
-    scroll-margin-top: 64px;
+    scroll-margin-top: var(--scroll-offset);
 }
 
 .ref a {

@@ -49,6 +49,11 @@ typography:
     fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.7
+  caption:
+    fontFamily: "Inter, system-ui, -apple-system, \"Segoe UI\", sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 400
+    lineHeight: 1.6
   label:
     fontFamily: "Consolas, \"Courier New\", monospace"
     fontSize: "0.75rem"
@@ -143,6 +148,11 @@ A warm-paper palette lit by golden-hour sun, with pioneer red as its single loud
 - **Danger** (`#7E1220`, dark `#FF8A93`): The top rung of the alarm ladder — `:::danger` is the hard constraint («ВАЖНО»: initialise the map exactly once, these modules are unsupported), where `:::warning` is a caution («ВНИМАНИЕ»: don't forget). Its band runs a half-step deeper and redder than warning's (day: L\* 87 at hue 29°, against 89 at 37°) — enough to separate the two side by side, nowhere near enough to name one on its own, so the ink and the icon still carry the distinction: an octagon where warning is a triangle. By day danger is the deepest red of the set; at night nothing can go darker than warning and stay legible, so it goes hotter and brighter instead (5.55:1 on its own strongest band, where warning sits at 4.79:1).
 - **Attention** (`#805407`, dark `#F0C05A`): Ochre-yellow for `:::attention`, the step between tip and warning — "read this before you continue", without claiming something is about to break. Yellow can't carry text on cream at full saturation, so the token is the deepened ink. Its bands are the one hue that shares the paper's own (90°), so they separate from it on chroma — 23 against the paper's 11 — rather than on hue.
 - **Tip** (`#4F6B3E`, dark `#8FB07A`): `:::tip` callouts reuse `--pine` directly rather than a deepened shade, since it already clears AA as text/border on cream paper. Reads as a friendly, encouraging aside. Its wash used to be `--pine` itself at 16%, which composited to hue 102° — four degrees off plain paper — and left the ink at 4.05:1 on its own band, under AA; the pale green band fixes both (126°, 4.83:1).
+
+### How the tokens are declared
+Every value that changes with the theme is one `light-dark(day, night)` pair in `vars.css`, inside an `@supports (color: light-dark(#000, #fff))` block; the plain light values above it are what a browser without the function keeps. The night set used to be written twice — once under `prefers-color-scheme`, once under the toggle's `[data-theme="dark"]` — and those two copies had to be edited in lockstep, which this file's own header called out as a bug waiting to happen. There is now nowhere for them to disagree.
+
+The toggle also sets `color-scheme` on the root, which is both what `light-dark()` reads and what the browser paints its own surfaces from, so forcing a theme now takes the scrollbars, form controls and caret with it instead of leaving them on the OS preference.
 
 ### Named Rules
 **The Galstuk Rule.** Pioneer red appears on ≤10% of any screen. Its rarity is the point; a whole sidebar or a full row of red breaks it. Emphasis inside a red-tinted surface leans on weight, not more red.
@@ -283,6 +293,19 @@ They share **one tab stop**, not one each. A 1 400-line file put 1 418 links in 
 ### Article Illustrations
 Screenshots inside an article ship `loading="lazy"` and `decoding="async"`, added by a render rule rather than by hand, since the author writes plain markdown. They are all below the fold — no article in the corpus opens with an image — so nothing about first paint depends on them, and a page like «Действия с изображениями» stops fetching a dozen screenshots at once. `img { max-width: 100% }` and the `--radius-block` corner come from the prose stylesheet; the images carry no dimensions of their own, which is the one thing left to fix if a page ever shifts as they arrive.
 
+### Shared Vocabulary
+Four things that existed in several places and now exist once. Each was extracted only after the copies had already drifted, which is the bar: duplication is cheaper than the wrong abstraction until it starts lying.
+
+**`syntax.css`** — one mapping from Pygments' token classes to the `--code-*` tokens, scoped to `pre` so it covers the docs' `pre > code`, the file viewer's `.fb-code` and the warper page's samples alike. It was two lists before, and they had drifted: the viewer painted Ren'Py's `{interpolation}` as a plain string, its `|placeholders|` as comments, and knew nothing of `.se` escapes or `.err` unbalanced brackets. Same lexer, same file, two colourings.
+
+**`--focus-ring`** (`2px solid var(--accent)`) — the ring was written out at 37 call sites. Offsets stay local, since a chip, a row and a full-bleed tab each need a different distance; a panel with its own palette retints the token rather than bypassing it (`.code-copy` takes `--code-inline`).
+
+**`--scroll-offset`** (`64px`) — how far an anchored target clears the 52px sticky header. Headings take `calc(var(--scroll-offset) + 12px)`: a heading is read together with the line under it.
+
+**`copyControl(element, getValue, {message, status})`** in `code.js` — every copy on the site does the same four things (write, flash `.copied`, announce in a live region, drop the flash after 1600ms), and four places had grown their own copy of it. The value is read at click time, because the viewer's payload is the DOM's text. Callers keep what is theirs: which element, what to announce, and the role/key handling for a control promoted from a span.
+
+Not extracted, deliberately: the uppercase Consolas section label appears in six places at four sizes, but the sizes are context-specific and a shared class would be overridden at every call site.
+
 ### Home Hero Slideshow
 The homepage hero carries the camp itself: four game backgrounds crossfading on a slow 32s cycle (~2.5s fades), day shots in light theme and their night variants in dark. The photos are set dressing, never content — a paper wash keeps the title column on near-solid `--bg`, and the image dissolves into the page below rather than ending on a hard edge. Reduced motion collapses it to one quiet still. Images are served as 1600px WebP downscales (`/resource/hero/`), composed lazily like thumbs.
 
@@ -300,6 +323,9 @@ Picking «своя формула» in the sandbox opens a formula field beside 
 ### Support Page
 
 `/support` splits the ask in two: «Деньгами», a list of donation platforms read from `config.yaml`, and «Временем», the two ways to help that cost nothing: report something, or send a patch. Both use the same `.section-row` vocabulary as `/news` and the docs index, so the page introduces no new component. Two rows, not three — a «Предложить материал» row pointed at `issues/new` while «Сообщить об ошибке» pointed at `issues`, which is the same act filed through a different door, and the reader has to stop and work out the difference. The rows carry no descriptions either: «Сообщить об ошибке» is already the whole instruction, and a caption spelling out what an error is reads as sanctimonious on a page that is asking the reader for something. The money list is config-driven and legitimately empty, in which case it falls back to the standard `.res-empty` block: a docs site should never point at a payment page that isn't set up yet, and the «Временем» half keeps the page useful in that state rather than reading as a stub. The platforms live in `config.yaml` rather than the assets repo (where news, artists and literature live) because they're the project's own identity, not curated content.
+
+### Font Specimen
+A font file in the resource browser previews itself: the viewer declares `@font-face { font-family: 'fb-specimen' }` over the raw file and sets four lines of Cyrillic, Latin and figures in it. That face is deliberately outside the type system — it is the artefact being inspected, not a voice the site speaks in, and it is the one place a font-family here names something DESIGN.md does not.
 
 ### Community Links («Прочие ссылки»)
 

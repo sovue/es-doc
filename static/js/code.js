@@ -5,11 +5,38 @@
    never inspects, and the file costs nothing on a page with none.
 
    Nothing here touches what gets copied. The whitespace dots are painted by
-   CSS over real spaces (md/__init__.py, code.css), so a selection, a copy
+   CSS over real spaces (md/__init__.py, syntax.css), so a selection, a copy
    button, or anything added later takes the code exactly as it stands. That
    used to be a sentinel `∙` glyph in the text, which meant every copy path had
    to remember to swap it back — and the one that forgot shipped a viewer whose
    button pasted `import∙random`. */
+
+/* One copy control, four call sites. Every "copy this" on the site does the
+   same four things — write to the clipboard, flash `.copied` on the control,
+   say so in a live region, drop the flash after 1600ms — and each place had
+   grown its own copy of that dance: the fence button, the inline chips, the
+   resource rows and the warper names. Four timers, four hard-coded delays,
+   four chances to announce something slightly different.
+
+   The value is read at click time (a function, not a string), because the
+   file viewer's payload is the DOM's text and the chips' is their own. Callers
+   keep what is genuinely theirs: which element, what to announce, and — for a
+   control promoted from a span — the role and key handling.
+
+   Exposed on `window` rather than imported: these are plain classic scripts,
+   loaded with `defer` in document order, and code.js comes first. Callers
+   guard for its absence, so a failed load costs a page its copy buttons and
+   nothing else. */
+window.copyControl = (element, getValue, { message, status, reset = 1600 } = {}) => {
+    let timer = null;
+
+    return () => navigator.clipboard.writeText(getValue()).then(() => {
+        element.classList.add('copied');
+        if (status) status.textContent = typeof message === 'function' ? message() : message;
+        clearTimeout(timer);
+        timer = setTimeout(() => element.classList.remove('copied'), reset);
+    }).catch(() => {});
+};
 
 (function () {
     if (!navigator.clipboard) return;
@@ -35,13 +62,9 @@
         const value = chip.textContent;
         if (!value.trim()) return;
 
-        let timer = null;
-        const copy = () => navigator.clipboard.writeText(value).then(() => {
-            chip.classList.add('copied');
-            if (status) status.textContent = 'Скопировано: ' + value;
-            clearTimeout(timer);
-            timer = setTimeout(() => chip.classList.remove('copied'), 1600);
-        }).catch(() => {});
+        const copy = window.copyControl(chip, () => value, {
+            message: 'Скопировано: ' + value, status,
+        });
 
         chip.classList.add('code-copyable');
         chip.setAttribute('role', 'button');
@@ -62,20 +85,13 @@
        never shows a button that can't do anything. */
     document.querySelectorAll('.code-copy').forEach(btn => {
         btn.hidden = false;
-        let timer = null;
 
-        btn.addEventListener('click', () => {
-            // The gutter is a sibling of <code>, never a child, so the line
-            // numbers are already out of what textContent picks up.
-            const code = btn.closest('.code-block')?.querySelector('code');
-            if (!code) return;
+        // The gutter is a sibling of <code>, never a child, so the line
+        // numbers are already out of what textContent picks up.
+        const code = () => btn.closest('.code-block')?.querySelector('code')?.textContent ?? '';
 
-            navigator.clipboard.writeText(code.textContent).then(() => {
-                btn.classList.add('copied');
-                if (status) status.textContent = 'Код скопирован.';
-                clearTimeout(timer);
-                timer = setTimeout(() => btn.classList.remove('copied'), 1600);
-            }).catch(() => {});
-        });
+        btn.addEventListener('click', window.copyControl(btn, code, {
+            message: 'Код скопирован.', status,
+        }));
     });
 })();

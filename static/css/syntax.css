@@ -1,0 +1,116 @@
+/* =====================================================================
+   Syntax palette — one mapping from Pygments' token classes to the
+   `--code-*` tokens, for every code panel on the site.
+
+   It used to exist twice: once as `pre code .x` in code.css for the docs and
+   the warper reference, once as `.fb-code .x` in resources.css for the file
+   viewer. Same lexer, same tokens, two lists — and they had drifted. The
+   viewer painted Ren'Py's `{interpolation}` as a plain string, its
+   placeholders as comments, and knew nothing about `.se` escapes, `.err`
+   unbalanced brackets or `.sd` docstrings. A reader comparing an article's
+   snippet with the same file in the browser saw two different colourings of
+   one language.
+
+   The selectors are scoped to `pre` rather than to either container: every
+   panel on the site is a `<pre>` (the docs wrap theirs in `<code>`, the viewer
+   puts `.fb-code` on the `pre` itself), and a token span exists nowhere else.
+   One list, both consumers, nothing left to drift.
+
+   Both palettes live in vars.css — ink weights on the cream panel by day, the
+   lifted film palette on the night panel, each verified ≥4.5:1 against the
+   panel of its own theme — so nothing here branches on theme.
+   ===================================================================== */
+
+/* Keywords, then the type keyword lifted out of them. */
+pre .k,
+pre .kc,
+pre .kd,
+pre .kn,
+pre .kp,
+pre .kr { color: var(--code-keyword); }
+
+pre .kt { color: var(--code-type); }
+
+pre .s,
+pre .sa,
+pre .sb,
+pre .sc,
+pre .dl,
+pre .s1,
+pre .s2,
+pre .sd,
+pre .sh,
+pre .sx { color: var(--code-string); }
+
+/* Ren'Py string internals — dynamic bits lifted out of the literal purple so
+   they read against the prose: {text tags} and [interpolation] take the accent
+   colour, \escapes / {{ [[ %% take the operator colour. */
+pre .nt,
+pre .si { color: var(--code-class); }
+
+pre .se { color: var(--code-operator); }
+
+/* Unbalanced text tag / interpolation bracket, or an unterminated string —
+   flagged by the lexer so authors spot a broken `{b}`…`{/b}` or stray `[`. */
+pre .err {
+    color: var(--code-number);
+    text-decoration: underline wavy var(--code-number);
+    text-underline-offset: 2px;
+}
+
+pre .c,
+pre .c1,
+pre .ch,
+pre .cm,
+pre .cp { color: var(--code-comment); }
+
+/* Codetags and `|placeholders|` — the one token that carries an affordance
+   rather than just a colour: docs.js hangs "replace this value" on it. */
+pre .cs {
+    color: var(--code-operator);
+    text-decoration: underline dotted;
+    cursor: help;
+}
+
+pre .n,
+pre .na,
+pre .nb,
+pre .nc,
+pre .nd,
+pre .ne,
+pre .nf,
+pre .ni,
+pre .nl,
+pre .nn,
+pre .nx { color: var(--code-name); }
+
+pre .nf { color: var(--code-func); }
+
+pre .nc { color: var(--code-class); }
+
+pre .m,
+pre .mb,
+pre .mf,
+pre .mh,
+pre .mi,
+pre .mo { color: var(--code-number); }
+
+pre .o,
+pre .ow { color: var(--code-operator); }
+
+/* ── Whitespace, drawn ──
+   The characters inside `span.w` are ordinary spaces (md/__init__.py only
+   tags the run); the dots are a background tiled one per character cell. That
+   keeps the DOM honest — copy and screen readers get the real code — and costs
+   nothing at the two places that used to have to undo a glyph.
+
+   `1ch` is the advance width of one character in a monospace face, so one tile
+   is exactly one space. `--code-whitespace` is the muted token the glyph
+   used, so nothing about the look changes. */
+pre .w {
+    background-image: radial-gradient(circle at 50% 50%,
+        var(--code-whitespace) 0 1.5px, transparent 1.6px);
+    background-size: 1ch 1lh;
+    background-position: 0 50%;
+    background-repeat: repeat-x;
+}

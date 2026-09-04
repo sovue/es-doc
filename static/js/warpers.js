@@ -748,17 +748,15 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', ref
    a mod's own `@renpy.atl_warper`. Nothing here is a control in the markup —
    without a clipboard the page stays a plain reference instead of growing
    buttons that can't do anything. */
-if (navigator.clipboard) {
+if (navigator.clipboard && window.copyControl) {
     const status = document.getElementById('code-copy-status');
 
     const copies = (element, value, label) => {
-        let timer = null;
-
-        const copy = () => navigator.clipboard.writeText(value).then(() => {
-            element.classList.add('copied');
-            if (status) status.textContent = `Скопировано: ${value}`;
-            clearTimeout(timer);
-            timer = setTimeout(() => element.classList.remove('copied'), 1600);
+        // The flash-and-announce half is code.js's `copyControl`, shared with
+        // the docs' fence button, the inline chips and the resource rows; what
+        // stays here is the promotion of a plain element into a control.
+        const copy = window.copyControl(element, () => value, {
+            message: `Скопировано: ${value}`, status,
         });
 
         element.title = label;

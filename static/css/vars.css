@@ -102,6 +102,17 @@
     --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
     --font-mono: Consolas, "Courier New", monospace;
 
+    /* One focus ring for the site: 2px of pioneer red, the width and colour
+       repeated at 37 call sites before it became a token. Offsets stay local —
+       a chip, a row and a full-bleed tab each need the ring at a different
+       distance — and a panel with its own palette can retint it (code.css). */
+    --focus-ring: 2px solid var(--accent);
+
+    /* Anchored scroll targets clear the 52px sticky header with room to spare:
+       headings take a wider berth than rows because a heading is read with the
+       line under it. */
+    --scroll-offset: 64px;
+
     /* Ease-out-quart — interactive transitions leave fast, settle soft. */
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -171,191 +182,96 @@
     --tip-bg1: #EAF3E1EB;
 }
 
-/* ── Dark (Night at camp — by the lake) ───────────────────────
-   Served two ways, so the theme toggle can override the system while
-   no-JS visitors still get the night scene from their OS preference:
-     1. prefers-color-scheme: dark   — the OS default, UNLESS the visitor
-        has forced light via the toggle (:not([data-theme="light"])).
-     2. [data-theme="dark"]          — the toggle's explicit night choice,
-        regardless of OS preference.
-   The two dark blocks below are identical and MUST stay in sync — a token
-   present in one but not the other is a bug (same discipline DESIGN.md sets
-   for the light/dark pair). Light lives once in :root above and shows through
-   whenever neither dark path applies. */
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-        --bg: #161B26;          /* deep night blue, not black */
-        --bg-light: #1F2532;
-        --bg-surface: #1F2532;
-        --bg-elevated: #2A3142;
+/* The toggle's choice also drives the UA's own surfaces — scrollbars, form
+   controls, the caret — which otherwise keep following the OS while the
+   page goes the other way, and are what `light-dark()` reads to decide
+   which half of each pair applies. */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
 
-        --text: #ECE2C9;        /* warm cream, not white */
-        --text-soft: #B5A88E;
+/* ── Night, in one place ──────────────────────────────────────
+   Every value that changes with the theme is declared once, as the second
+   half of a `light-dark()` pair. This file used to carry the night set
+   twice — once under `prefers-color-scheme`, once under the toggle's
+   `[data-theme="dark"]` — and the two had to be edited in lockstep; a
+   token added to one and forgotten in the other was a bug the reader only
+   found by switching themes. There is now nowhere for the two to disagree.
 
-        --accent: #F2606C;      /* pioneer red, lifted for night — passes AA as link text */
-        --accent-hover: #FF7A85;
-        --accent-muted: #5A3338;
-
-        --target-bg: #F2606C2E;
-
-        --sunset: #F5A878;
-        --sky: #6F8EA3;
-        --pine: #8FB07A;      /* lifted for night — clears AA on its own 14% tint (open-status pill) */
-
-        --border: #3A4254;
-
+   The `@supports` guard is the fallback, and it has to be a guard rather
+   than an earlier declaration: a custom property accepts any token
+   sequence, so a browser without `light-dark()` would store the function
+   happily and only fail where the value is *used* — every colour on the
+   page at once. Skipping the whole block instead leaves such a browser on
+   the light set above, which is the site's default anyway.
+   Support: Chrome 123, Firefox 120, Safari 17.5 (spring 2024). */
+@supports (color: light-dark(#000, #fff)) {
+    :root {
+        --bg: light-dark(#F4EAD6, #161B26); /* deep night blue, not black */
+        --bg-light: light-dark(#FBF6E9, #1F2532);
+        --bg-surface: light-dark(#FBF6E9, #1F2532);
+        --bg-elevated: light-dark(#FFFCF5, #2A3142);
+        --text: light-dark(#2B1F16, #ECE2C9); /* warm cream, not white */
+        --text-soft: light-dark(#6B5847, #B5A88E);
+        --accent: light-dark(#C8202E, #F2606C); /* pioneer red, lifted for night — passes AA as link text */
+        --accent-hover: light-dark(#A81824, #FF7A85);
+        --accent-muted: light-dark(#E8B5BA, #5A3338);
+        --target-bg: light-dark(#C8202E22, #F2606C2E);
+        --sunset: light-dark(#E89460, #F5A878);
+        --sky: light-dark(#8FB2C8, #6F8EA3);
+        --pine: light-dark(#4F6B3E, #8FB07A); /* lifted for night — clears AA on its own 14% tint (open-status pill) */
+        --border: light-dark(#D9C7A4, #3A4254);
         /* Code, night set — the film-dark panel and the lifted syntax palette
-           this project shipped with. Inline code shares the panel here: on a
-           night-blue page it already reads as a chip without its own tan. */
-        --code-bg: #12161E;
-        --code-bg-inline: var(--code-bg);
-        --input-bg: #1F2532;
-        --code-inline: var(--sunset);
-        --code-link: #F2606C;
-
-        --code-keyword: #FF9933;
-        --code-type: #66CCFF;
-        --code-string: #D8A0FF;
-        --code-comment: #8B949E;
-        --code-name: #E6EDF3;
-        --code-func: #9AA0A8;
-        --code-class: #FFB86C;
-        --code-number: #FF6B9D;
-        --code-operator: #D7796B;
-        --code-whitespace: #FFF2;
-        --code-success: #8FB07A;
-
-        --bg-sidebar: #1A2030;
-        --bg-table-head: #222A3A;
-
-        --surface-hover: rgb(236 226 201 / 0.05);
-
-    /* Night scrim runs deeper: the page behind it is already dark, so a 55%
-       ink wash would barely separate the dialog from it. */
-    --scrim: rgb(8 10 14 / 0.72);
-
+        this project shipped with. Inline code shares the panel here: on a
+        night-blue page it already reads as a chip without its own tan. */
+        --code-bg: light-dark(#FDF9EE, #12161E);
+        --code-bg-inline: light-dark(#EFE3C8, var(--code-bg));
+        --input-bg: light-dark(#FBF6E9, #1F2532);
+        --code-inline: light-dark(#8F4A1B, var(--sunset));
+        --code-link: light-dark(#A81824, #F2606C);
+        --code-keyword: light-dark(#9C4A06, #FF9933);
+        --code-type: light-dark(#0B5A73, #66CCFF);
+        --code-string: light-dark(#6B3FA0, #D8A0FF);
+        --code-comment: light-dark(#6B5847, #8B949E);
+        --code-name: light-dark(#2B1F16, #E6EDF3);
+        --code-func: light-dark(#4A5560, #9AA0A8);
+        --code-class: light-dark(#8A5A12, #FFB86C);
+        --code-number: light-dark(#A81A5E, #FF6B9D);
+        --code-operator: light-dark(#A6432F, #D7796B);
+        --code-whitespace: light-dark(#2B1F1626, #FFF2);
+        --code-success: light-dark(#3F6B2C, #8FB07A);
+        --bg-sidebar: light-dark(#FBF6E9, #1A2030);
+        --bg-table-head: light-dark(#F0E5CF, #222A3A);
+        --surface-hover: light-dark(rgb(43 31 22 / 0.05), rgb(236 226 201 / 0.05));
+        /* Night scrim runs deeper: the page behind it is already dark, so a 55%
+        ink wash would barely separate the dialog from it. */
+        --scrim: light-dark(rgb(43 31 22 / 0.55), rgb(8 10 14 / 0.72));
         /* Warm-tint shadows collapse to near-black depth at night. */
-        --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.35);
-        --shadow-modal: 0 16px 48px rgba(0, 0, 0, 0.5);
-
-        --selection-bg: var(--accent);
-        --selection-text: var(--bg);
-
-        --warning: #F46974;     /* clears AA on the gradient's strongest band */
-        --warning-bg: #E8404E33;
-        --warning-bg1: #E8404E1A;
-
+        --shadow-soft: 0 2px 12px light-dark(rgba(43, 31, 22, 0.06), rgba(0, 0, 0, 0.35));
+        --shadow-modal: 0 16px 48px light-dark(rgba(43, 31, 22, 0.14), rgba(0, 0, 0, 0.5));
+        --selection-bg: light-dark(var(--accent-muted), var(--accent));
+        --selection-text: light-dark(var(--text), var(--bg));
+        --warning: light-dark(#A81824, #F46974); /* clears AA on the gradient's strongest band */
+        --warning-bg: light-dark(#F8D8D2EB, #E8404E33);
+        --warning-bg1: light-dark(#FBEAE6EB, #E8404E1A);
         /* Danger lifted for night. Nothing can go *darker* than warning on a
-           dark panel and stay legible, so severity reads as hotter and
-           brighter instead — 5.55:1 on its own strongest band, where
-           warning sits at 4.79:1. */
-        --danger: #FF8A93;
-        --danger-bg: #FF3B4733;
-        --danger-bg1: #FF3B471A;
-
+        dark panel and stay legible, so severity reads as hotter and
+        brighter instead — 5.55:1 on its own strongest band, where
+        warning sits at 4.79:1. */
+        --danger: light-dark(#7E1220, #FF8A93);
+        --danger-bg: light-dark(#F6CFCCEB, #FF3B4733);
+        --danger-bg1: light-dark(#FBE3E1EB, #FF3B471A);
         /* Info lifted for night — light sky-blue clears AA on the dark panel. */
-        --info: #86C0DA;
-        --info-bg: #5FA6C833;
-        --info-bg1: #5FA6C81A;
-
+        --info: light-dark(#215D70, #86C0DA);
+        --info-bg: light-dark(#D6EAF4EB, #5FA6C833);
+        --info-bg1: light-dark(#E7F2F8EB, #5FA6C81A);
         /* Attention lifted for night — a warm amber that clears AA on its own
-           strongest band (5.96:1) and stays clearly apart from --warning. */
-        --attention: #F0C05A;
-        --attention-bg: #E8B34A33;
-        --attention-bg1: #E8B34A1A;
-
+        strongest band (5.96:1) and stays clearly apart from --warning. */
+        --attention: light-dark(#805407, #F0C05A);
+        --attention-bg: light-dark(#F7E4B8EB, #E8B34A33);
+        --attention-bg1: light-dark(#FBEFD4EB, #E8B34A1A);
         /* Tip lifted for night — same value --pine already uses at night. */
-        --tip: #8FB07A;
-        --tip-bg: #8FB07A33;
-        --tip-bg1: #8FB07A1A;
+        --tip: light-dark(#4F6B3E, #8FB07A);
+        --tip-bg: light-dark(#DDEBCEEB, #8FB07A33);
+        --tip-bg1: light-dark(#EAF3E1EB, #8FB07A1A);
     }
-}
-
-/* Explicit night, chosen via the toggle (wins over a light OS preference).
-   Identical to the prefers-color-scheme block above — keep the two in sync. */
-:root[data-theme="dark"] {
-    --bg: #161B26;          /* deep night blue, not black */
-    --bg-light: #1F2532;
-    --bg-surface: #1F2532;
-    --bg-elevated: #2A3142;
-
-    --text: #ECE2C9;        /* warm cream, not white */
-    --text-soft: #B5A88E;
-
-    --accent: #F2606C;      /* pioneer red, lifted for night — passes AA as link text */
-    --accent-hover: #FF7A85;
-    --accent-muted: #5A3338;
-
-    --target-bg: #F2606C2E;
-
-    --sunset: #F5A878;
-    --sky: #6F8EA3;
-    --pine: #8FB07A;      /* lifted for night — clears AA on its own 14% tint (open-status pill) */
-
-    --border: #3A4254;
-
-    /* Code, night set — the film-dark panel and the lifted syntax palette
-       this project shipped with. Inline code shares the panel here: on a
-       night-blue page it already reads as a chip without its own tan. */
-    --code-bg: #12161E;
-    --code-bg-inline: var(--code-bg);
-    --input-bg: #1F2532;
-    --code-inline: var(--sunset);
-    --code-link: #F2606C;
-
-    --code-keyword: #FF9933;
-    --code-type: #66CCFF;
-    --code-string: #D8A0FF;
-    --code-comment: #8B949E;
-    --code-name: #E6EDF3;
-    --code-func: #9AA0A8;
-    --code-class: #FFB86C;
-    --code-number: #FF6B9D;
-    --code-operator: #D7796B;
-    --code-whitespace: #FFF2;
-    --code-success: #8FB07A;
-
-    --bg-sidebar: #1A2030;
-    --bg-table-head: #222A3A;
-
-    --surface-hover: rgb(236 226 201 / 0.05);
-
-    /* Night scrim runs deeper: the page behind it is already dark, so a 55%
-       ink wash would barely separate the dialog from it. */
-    --scrim: rgb(8 10 14 / 0.72);
-
-    /* Warm-tint shadows collapse to near-black depth at night. */
-    --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.35);
-    --shadow-modal: 0 16px 48px rgba(0, 0, 0, 0.5);
-
-    --selection-bg: var(--accent);
-    --selection-text: var(--bg);
-
-    --warning: #F46974;     /* clears AA on the gradient's strongest band */
-    --warning-bg: #E8404E33;
-    --warning-bg1: #E8404E1A;
-
-    /* Danger lifted for night. Nothing can go *darker* than warning on a
-       dark panel and stay legible, so severity reads as hotter and
-       brighter instead — 5.55:1 on its own strongest band, where
-       warning sits at 4.79:1. */
-    --danger: #FF8A93;
-    --danger-bg: #FF3B4733;
-    --danger-bg1: #FF3B471A;
-
-    /* Info lifted for night — light sky-blue clears AA on the dark panel. */
-    --info: #86C0DA;
-    --info-bg: #5FA6C833;
-    --info-bg1: #5FA6C81A;
-
-    /* Attention lifted for night — a warm amber that clears AA on its own
-       strongest band (5.96:1) and stays clearly apart from --warning. */
-    --attention: #F0C05A;
-    --attention-bg: #E8B34A33;
-    --attention-bg1: #E8B34A1A;
-
-    /* Tip lifted for night — same value --pine already uses at night. */
-    --tip: #8FB07A;
-    --tip-bg: #8FB07A33;
-    --tip-bg1: #8FB07A1A;
 }

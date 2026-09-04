@@ -86,7 +86,7 @@
 
 .page-back:focus-visible {
     color: var(--accent);
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
 }
@@ -174,7 +174,7 @@
 }
 
 .nav-logo:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 3px;
     border-radius: var(--radius-xs);
     color: var(--accent-hover);
@@ -218,7 +218,7 @@
 
 .nav-links a:focus-visible {
     color: var(--text);
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: -3px;
     border-radius: var(--radius-xs);
 }
@@ -399,7 +399,7 @@
 }
 
 .nav-search-toggle:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: -4px;
     border-radius: var(--radius-sm);
     color: var(--accent);
@@ -431,7 +431,7 @@
 }
 
 .theme-toggle:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: -3px;
     color: var(--accent);
 }
@@ -511,7 +511,7 @@
 }
 
 .site-footer a:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
 }
@@ -611,7 +611,7 @@
 }
 
 .to-top:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
 }
 
@@ -643,7 +643,7 @@ a.section-row:focus-visible .section-name {
 }
 
 a.section-row:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
 }
@@ -754,7 +754,7 @@ a.section-row:focus-visible {
 }
 
 .doc-tree-row:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
 }
@@ -926,7 +926,7 @@ a.section-row:focus-visible .section-arrow {
 
 .author-socials a:focus-visible {
     color: var(--text);
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
 }
@@ -1031,7 +1031,7 @@ a.section-row:focus-visible .section-arrow {
 }
 
 .lit-row a:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
 }
@@ -1086,7 +1086,7 @@ a.section-row:focus-visible .section-arrow {
 }
 
 .gh-contributor:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
 }
 
@@ -1126,7 +1126,7 @@ a.section-row:focus-visible .section-arrow {
 }
 
 .thanks-list a:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
 }

@@ -64,7 +64,7 @@ a:focus-visible code {
 }
 
 .code-copyable:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 1px;
 }
 
@@ -179,6 +179,10 @@ pre code {
 }
 
 .code-copy {
+    /* The panel carries its own palette, so its focus ring follows the code
+       ink rather than the page accent — the token is retinted, not bypassed. */
+    --focus-ring: 2px solid var(--code-inline);
+
     position: absolute;
     top: 10px;
     right: 10px;
@@ -203,7 +207,7 @@ pre code {
 }
 
 .code-copy:focus-visible {
-    outline: 2px solid var(--code-inline);
+    outline: var(--focus-ring);
     outline-offset: 2px;
 }
 
@@ -225,103 +229,9 @@ pre code {
     display: block;
 }
 
-/* ── Syntax palette ──────────────────────────────────────────
-   Two sets, both living in vars.css: ink weights on the cream panel by day,
-   the lifted film palette on the night panel. Every token is verified ≥4.5:1
-   against the panel background of its own theme, so the selectors below never
-   need a theme branch. */
-
-pre code .k,
-pre code .kc,
-pre code .kd,
-pre code .kn,
-pre code .kp,
-pre code .kr,
-pre code .kt { color: var(--code-keyword); }
-
-pre code .kt { color: var(--code-type); }
-
-pre code .s,
-pre code .sa,
-pre code .sb,
-pre code .sc,
-pre code .dl,
-pre code .s1,
-pre code .s2,
-pre code .sd,
-pre code .sh,
-pre code .sx { color: var(--code-string); }
-
-/* Ren'Py string internals — dynamic bits lifted out of the literal purple so
-   they read against the prose: {text tags} and [interpolation] take the accent
-   colour, \escapes / {{ [[ %% take the operator colour. */
-pre code .nt,
-pre code .si { color: var(--code-class); }
-
-pre code .se { color: var(--code-operator); }
-
-/* Unbalanced text tag / interpolation bracket, or an unterminated string —
-   flagged by the lexer so authors spot a broken `{b}`…`{/b}` or stray `[`. */
-pre code .err {
-    color: var(--code-number);
-    text-decoration: underline wavy var(--code-number);
-    text-underline-offset: 2px;
-}
-
-pre code .c,
-pre code .c1,
-pre code .ch,
-pre code .cm,
-pre code .cp { color: var(--code-comment); }
-
-pre code .cs {
-    color: var(--code-operator);
-    text-decoration: underline dotted;
-    cursor: help;
-}
-
-pre code .n,
-pre code .na,
-pre code .nb,
-pre code .nc,
-pre code .nd,
-pre code .ne,
-pre code .nf,
-pre code .ni,
-pre code .nl,
-pre code .nn,
-pre code .nx { color: var(--code-name); }
-
-pre code .nf { color: var(--code-func); }
-
-pre code .nc { color: var(--code-class); }
-
-pre code .m,
-pre code .mb,
-pre code .mf,
-pre code .mh,
-pre code .mi,
-pre code .mo { color: var(--code-number); }
-
-pre code .o,
-pre code .ow { color: var(--code-operator); }
-
-/* ── Whitespace, drawn ──
-   The characters inside `span.w` are ordinary spaces (md/__init__.py only
-   tags the run); the dots are a background tiled one per character cell. That
-   keeps the DOM honest — copy and screen readers get the real code — and costs
-   nothing at the two places that used to have to undo a glyph.
-
-   `1ch` is the advance width of one character in a monospace face, so one tile
-   is exactly one space. `--code-whitespace` is the same muted token the glyph
-   used, so nothing about the look changes. */
-pre code .w {
-    background-image: radial-gradient(circle at 50% 50%,
-        var(--code-whitespace) 0 1.5px, transparent 1.6px);
-    background-size: 1ch 1lh;
-    background-position: 0 50%;
-    background-repeat: repeat-x;
-}
+/* The syntax palette and the whitespace dots live in syntax.css, shared with
+   the resource browser's file viewer — one mapping, every code panel, so the
+   two can no longer drift apart. */
 
 /* ── Responsive ──────────────────────────────────────────── */
 

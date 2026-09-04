@@ -38,7 +38,7 @@
 }
 
 .res-tab:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: -3px;
     border-radius: var(--radius-xs);
 }
@@ -82,7 +82,7 @@
 }
 
 .res-cats a:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: -3px;
     border-radius: var(--radius-xs);
 }
@@ -165,7 +165,7 @@
 }
 
 .res-toggle input:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
 }
 
@@ -184,7 +184,7 @@
 }
 
 .res-volume input:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 3px;
     border-radius: var(--radius-xs);
 }
@@ -245,7 +245,7 @@
 
 .res-nowplaying-stop:focus-visible,
 .res-nowplaying-pause:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
 }
 
@@ -295,7 +295,7 @@
 }
 
 .res-seek input:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 3px;
     border-radius: var(--radius-xs);
 }
@@ -336,7 +336,7 @@
     padding: 10px 0;
     border-bottom: 1px solid var(--border);
     /* Search-result anchors (#r-…) land below the sticky header. */
-    scroll-margin-top: 64px;
+    scroll-margin-top: var(--scroll-offset);
 }
 
 /* `content-visibility: auto` was tried here and taken back out: on the 1 164-row
@@ -388,7 +388,7 @@ a.res-thumb:hover {
 }
 
 a.res-thumb:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
 }
 
@@ -498,7 +498,7 @@ a.res-file:hover {
 }
 
 a.res-file:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
 }
@@ -534,7 +534,7 @@ a.res-file:focus-visible {
 .res-copy:focus-visible,
 .res-play:focus-visible,
 .res-dl:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
 }
 
@@ -693,7 +693,7 @@ a.res-file:focus-visible {
 }
 
 .res-jump a:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
 }
@@ -706,7 +706,7 @@ a.res-file:focus-visible {
 /* Jump-nav anchors land on the h2 (it carries the id) — keep it clear of
    the sticky header. */
 .res-group-title {
-    scroll-margin-top: 64px;
+    scroll-margin-top: var(--scroll-offset);
 }
 
 .res-group[hidden] {
@@ -805,7 +805,7 @@ a.res-file:focus-visible {
 
 .res-lightbox-raw:focus-visible,
 .res-lightbox-close:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
 }
@@ -904,7 +904,7 @@ a.res-file:focus-visible {
 }
 
 .fb-crumbs a:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
 }
@@ -951,7 +951,7 @@ a.res-file:focus-visible {
 }
 
 .fb-link:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
 }
@@ -997,7 +997,7 @@ a.res-file:focus-visible {
 }
 
 .fb-action:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
 }
@@ -1087,7 +1087,7 @@ a.res-file:focus-visible {
    header — the same 64px the search-result rows and jump-nav headings on these
    pages already use. */
 .fb-line {
-    scroll-margin-top: 64px;
+    scroll-margin-top: var(--scroll-offset);
 }
 
 .fb-line:target {
@@ -1103,31 +1103,8 @@ a.res-file:focus-visible {
     font-weight: 700;
 }
 
-.fb-code .k, .fb-code .kc, .fb-code .kd, .fb-code .kn,
-.fb-code .kp, .fb-code .kr { color: var(--code-keyword); }
-.fb-code .kt { color: var(--code-type); }
-.fb-code .s, .fb-code .sa, .fb-code .sb, .fb-code .sc, .fb-code .dl,
-.fb-code .s1, .fb-code .s2, .fb-code .sh, .fb-code .si, .fb-code .sx { color: var(--code-string); }
-.fb-code .c, .fb-code .c1, .fb-code .ch, .fb-code .cm,
-.fb-code .cp, .fb-code .cs { color: var(--code-comment); }
-.fb-code .n, .fb-code .na, .fb-code .nb, .fb-code .nd, .fb-code .ne,
-.fb-code .ni, .fb-code .nl, .fb-code .nn, .fb-code .nx { color: var(--code-name); }
-.fb-code .nf { color: var(--code-func); }
-.fb-code .nc { color: var(--code-class); }
-.fb-code .m, .fb-code .mb, .fb-code .mf, .fb-code .mh,
-.fb-code .mi, .fb-code .mo { color: var(--code-number); }
-.fb-code .o, .fb-code .ow { color: var(--code-operator); }
-/* Whitespace dots — the same painted treatment code.css gives the docs' code
-   panels, repeated here because the viewer carries its own palette and never
-   loads that file. The characters are real spaces; one dot is tiled per
-   character cell (1ch), so what a reader copies is the script itself. */
-.fb-code .w {
-    background-image: radial-gradient(circle at 50% 50%,
-        var(--code-whitespace) 0 1.5px, transparent 1.6px);
-    background-size: 1ch 1lh;
-    background-position: 0 50%;
-    background-repeat: repeat-x;
-}
+/* Syntax colours and whitespace dots come from syntax.css, shared with the
+   docs' code panels. */
 
 .fb-media {
     display: block;

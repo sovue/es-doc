@@ -72,7 +72,7 @@
 }
 
 .wp-cell-by a:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
 }
@@ -163,7 +163,7 @@
 }
 
 .wp-lab-play:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
 }
 
@@ -348,7 +348,7 @@
 }
 
 .wp-formula[role="button"]:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
 }
 
@@ -404,7 +404,7 @@
 }
 
 .wp-plot:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
 }
 
@@ -445,7 +445,7 @@
 }
 
 .wp-name--copy:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
 }
 

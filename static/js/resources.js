@@ -80,35 +80,27 @@
 
 /* ── Copy buttons ── */
 (function () {
-    if (!navigator.clipboard) return;
+    if (!navigator.clipboard || !window.copyControl) return;
 
     const status = document.getElementById('res-copy-status');
 
     document.querySelectorAll('.res-copy').forEach(btn => {
         btn.hidden = false;
-        let timer = null;
 
-        btn.addEventListener('click', () => {
-            // data-copy-from points at an element whose text is the payload
-            // (the file viewer copies the whole script this way); everything
-            // else carries the value itself. The viewer's whitespace is real
-            // spaces with dots painted over them, so the text needs no
-            // fixing up on the way out.
-            const value = btn.dataset.copyFrom
-                ? (document.querySelector(btn.dataset.copyFrom)?.textContent ?? '')
-                : btn.dataset.copy;
+        // data-copy-from points at an element whose text is the payload (the
+        // file viewer copies the whole script this way); everything else
+        // carries the value itself. The viewer's whitespace is real spaces
+        // with dots painted over them, so the text needs no fixing up.
+        const value = () => btn.dataset.copyFrom
+            ? (document.querySelector(btn.dataset.copyFrom)?.textContent ?? '')
+            : btn.dataset.copy;
 
-            navigator.clipboard.writeText(value).then(() => {
-                btn.classList.add('copied');
-                if (status) {
-                    status.textContent = btn.dataset.copyFrom
-                        ? 'Код файла скопирован.'
-                        : 'Скопировано: ' + value;
-                }
-                clearTimeout(timer);
-                timer = setTimeout(() => btn.classList.remove('copied'), 1600);
-            });
-        });
+        btn.addEventListener('click', window.copyControl(btn, value, {
+            status,
+            message: () => btn.dataset.copyFrom
+                ? 'Код файла скопирован.'
+                : 'Скопировано: ' + btn.dataset.copy,
+        }));
     });
 })();
 
