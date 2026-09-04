@@ -26,19 +26,21 @@ from ..renpy_lexer import RenPyLexer
 
 dummy_rule = lambda s: lambda self, tokens, idx, options, env: s
 
-# Every space inside a code panel is drawn as a dot, the way Ren'Py's own
-# script linter draws them: in a language where indentation *is* syntax, three
-# spaces where four belong is worth being able to see. The glyph goes out as a
-# `Whitespace` token, so it picks up that token's muted colour
-# (--code-whitespace) and reads as texture under the code rather than as
-# content. code.js swaps the glyphs back to spaces on the way to the clipboard,
-# so what a reader pastes is still a script that runs.
-WHITESPACE_GLYPH = '∙'
-
+# Every space inside a code panel shows as a dot, the way Ren'Py's own script
+# linter draws them: in a language where indentation *is* syntax, three spaces
+# where four belong is worth being able to see.
+#
+# The dots are *painted*, not typed. This filter only tags each run of spaces
+# as `Whitespace` so CSS has a `span.w` to hang a dotted background on
+# (code.css); the characters inside it stay ordinary spaces. An earlier version
+# swapped in a `∙` glyph instead, which meant every route off the page — the
+# copy button, a hand-made selection, anything added later — had to remember to
+# swap it back, and a screen reader read the bullets out loud. Painting keeps
+# the DOM honest: what you copy, and what a screen reader hears, is the code.
 _SPACES_RE = re.compile(r'( +)')
 
-class DotWhitespace(Filter):
-    """Re-tag every run of spaces as `Whitespace` carrying the glyph.
+class TagWhitespace(Filter):
+    """Re-tag every run of spaces as `Whitespace`, so CSS can mark it.
 
     A filter, not a pass over the highlighted HTML, because that is the only
     place the treatment can be uniform: lexers disagree wildly about whether
@@ -46,6 +48,10 @@ class DotWhitespace(Filter):
     untokenised entirely, the Ren'Py one tags some of its own — and a filter
     sees the token stream before any of that reaches the formatter. Whatever
     the lexer thought, spaces come out of here as spaces.
+
+    Newlines never end up inside a tagged run: they fall on the other side of
+    the split and keep their original token, so a dotted span is always one
+    line tall and its background tiles cleanly.
     """
 
     def filter(self, lexer, stream):
@@ -66,7 +72,7 @@ class DotWhitespace(Filter):
                 if not part:
                     continue
                 if part[0] == ' ':
-                    yield Whitespace, WHITESPACE_GLYPH * len(part)
+                    yield Whitespace, part
                 else:
                     yield ttype, part
 
@@ -78,7 +84,7 @@ def highlight_code(code, lang, attrs):
 
     # A fresh lexer per call (both branches construct one), so the filter is
     # never added twice to the same instance.
-    lexer.add_filter(DotWhitespace())
+    lexer.add_filter(TagWhitespace())
 
     return highlight(code, lexer, HtmlFormatter(nowrap=True))
 
@@ -153,9 +159,22 @@ def render_code_inline(self, tokens, idx, options, env):
 
     return f'<code>{code}</code>'
 
+# Article illustrations are screenshots of the game, several to a page and all
+# of them below the fold — an article that opens with an image is rare enough
+# that none of the corpus does. Deferring them costs nothing on arrival and
+# saves a page like «Действия с изображениями» from fetching a dozen at once.
+# The default renderer does the rest; this only adds the two attributes it has
+# no opinion about.
+def render_image(self, tokens, idx, options, env):
+    token = tokens[idx]
+    token.attrSet('loading', 'lazy')
+    token.attrSet('decoding', 'async')
+    return self.image(tokens, idx, options, env)
+
 MD = MarkdownIt('commonmark', {'highlight': highlight_code})
 MD.add_render_rule('fence', render_fence)
 MD.add_render_rule('code_inline', render_code_inline)
+MD.add_render_rule('image', render_image)
 
 MD.block.ruler.before('fence', 'table', table_block)
 MD.block.ruler.before('fence', 'info', template('info'))

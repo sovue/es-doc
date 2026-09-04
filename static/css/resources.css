@@ -339,6 +339,14 @@
     scroll-margin-top: 64px;
 }
 
+/* `content-visibility: auto` was tried here and taken back out: on the 1 164-row
+   sprite listing it made first paint *worse* (308ms against 144ms) — the rows
+   are cheap flex boxes and the containment bookkeeping costs more than the
+   layout it skips — and on a cold load the intrinsic-size estimate drifted
+   ~47 000px over 900 rows, landing every `#r-…` link from search far below the
+   row it names. If this page ever does need relief, it needs fewer rows
+   (paging), not a hint that lies about their height. */
+
 /* display:flex would win over the hidden attribute the filter sets */
 .res-row[hidden] {
     display: none;
@@ -744,7 +752,7 @@ a.res-file:focus-visible {
 }
 
 .res-lightbox::backdrop {
-    background: rgb(20 15 10 / 0.55);
+    background: var(--scrim);
 }
 
 .res-lightbox img {
@@ -756,12 +764,20 @@ a.res-file:focus-visible {
     margin: 0 auto;
 }
 
+/* The bar keeps --bg-surface while the dialog around it stays elevated, for
+   the same reason the footer's support control does (DESIGN.md §Site Footer):
+   accent text on --bg-elevated is 4.12:1 at night, under AA, and on
+   --bg-surface it is 4.87 dark / 5.26 light. The half-step down from the
+   dialog's own surface also seats the bar under the image instead of floating
+   on the same plane. */
 .res-lightbox-bar {
     display: flex;
     align-items: center;
     gap: 16px;
     padding: 10px 14px;
     border-top: 1px solid var(--border);
+    background: var(--bg-surface);
+    border-radius: 0 0 calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px);
 }
 
 .res-lightbox-name {
@@ -1101,7 +1117,17 @@ a.res-file:focus-visible {
 .fb-code .m, .fb-code .mb, .fb-code .mf, .fb-code .mh,
 .fb-code .mi, .fb-code .mo { color: var(--code-number); }
 .fb-code .o, .fb-code .ow { color: var(--code-operator); }
-.fb-code .w { color: var(--code-whitespace); }
+/* Whitespace dots — the same painted treatment code.css gives the docs' code
+   panels, repeated here because the viewer carries its own palette and never
+   loads that file. The characters are real spaces; one dot is tiled per
+   character cell (1ch), so what a reader copies is the script itself. */
+.fb-code .w {
+    background-image: radial-gradient(circle at 50% 50%,
+        var(--code-whitespace) 0 1.5px, transparent 1.6px);
+    background-size: 1ch 1lh;
+    background-position: 0 50%;
+    background-repeat: repeat-x;
+}
 
 .fb-media {
     display: block;

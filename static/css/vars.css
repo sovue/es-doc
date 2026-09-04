@@ -78,6 +78,10 @@
     /* Warm brown wash for interactive surface hovers on light paper. */
     --surface-hover: rgb(43 31 22 / 0.05);
 
+    /* The scrim behind a modal image. Ink by day rather than black: the same
+       warm near-black every other neutral is pulled toward. */
+    --scrim: rgb(43 31 22 / 0.55);
+
     /* Tinted accent surface + ink text — gentler than full red. */
     --selection-bg: var(--accent-muted);
     --selection-text: var(--text);
@@ -226,6 +230,10 @@
 
         --surface-hover: rgb(236 226 201 / 0.05);
 
+    /* Night scrim runs deeper: the page behind it is already dark, so a 55%
+       ink wash would barely separate the dialog from it. */
+    --scrim: rgb(8 10 14 / 0.72);
+
         /* Warm-tint shadows collapse to near-black depth at night. */
         --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.35);
         --shadow-modal: 0 16px 48px rgba(0, 0, 0, 0.5);
@@ -311,6 +319,10 @@
     --bg-table-head: #222A3A;
 
     --surface-hover: rgb(236 226 201 / 0.05);
+
+    /* Night scrim runs deeper: the page behind it is already dark, so a 55%
+       ink wash would barely separate the dialog from it. */
+    --scrim: rgb(8 10 14 / 0.72);
 
     /* Warm-tint shadows collapse to near-black depth at night. */
     --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.35);

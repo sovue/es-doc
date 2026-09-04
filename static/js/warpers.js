@@ -947,10 +947,10 @@ if (navigator.clipboard) {
         const name = background.selectedOptions[0]?.dataset.name || '';
         const [from, to] = RANGE[property.value];
 
-        // Indents are the lexer's whitespace spans, dots and all, so the
-        // generated line reads like the hand-written samples below it.
-        // code.js swaps the dots back to spaces on copy.
-        const indent = (times = 1) => token('w', '∙∙∙∙'.repeat(times));
+        // Indents go out as the lexer's own whitespace spans, so CSS paints
+        // the same dots over them as in the hand-written samples below — and
+        // what the reader copies is four real spaces per level.
+        const indent = (times = 1) => token('w', '    '.repeat(times));
 
         snippet.textContent = '';
 

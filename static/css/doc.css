@@ -597,11 +597,21 @@ img {
    and the *whole* paragraph renders blue/red/yellow/green, fighting the
    ink-on-paper body style (and diverging from the design-system callout
    spec, which sets the body back to --text). */
+/* `min-width: 0` is the load-bearing half of this rule. The content wrapper is
+   a flex item, so its default `min-width: auto` refuses to shrink below its
+   own min-content — and a callout can hold a fenced code block, whose
+   min-content is a line of code. On a phone that pushed the wrapper to five
+   times the viewport (1837px inside a 343px callout on /docs/screens), so the
+   browser zoomed the whole article out to fit. The code block has its own
+   scroll box; the wrapper just has to let it be narrow. */
 .info-content,
 .warning-content,
 .danger-content,
 .attention-content,
-.tip-content { color: var(--text); }
+.tip-content {
+    color: var(--text);
+    min-width: 0;
+}
 
 /* Content is a full block-level parse (paragraphs, lists, code, ...), not a
    single inline blob, so a callout with ordinary prose still needs its first/
@@ -990,7 +1000,8 @@ img {
         transition: none;
     }
 
-    .heading:target {
+    .heading:target,
+    .ref-item:target {
         animation: none;
     }
 }

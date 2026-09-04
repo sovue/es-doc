@@ -4,23 +4,35 @@
    Controls ship with [hidden] in the markup and are revealed here, so a
    no-JS page stays a clean reference list. */
 
-/* The file viewer's code carries the same whitespace glyphs as every other
-   code panel, and code.js handles them site-wide: it paints nothing (the
-   glyphs arrive in the HTML) and rewrites a hand-made selection on its way to
-   the clipboard. All this file still needs is its own copy button's payload,
-   which goes through the same helper — hence the fallback, so a failed load of
-   code.js costs the button its glyph-stripping, not its function. */
-const unglyph = text => (window.unglyphCode || (t => t))(text);
-
 /* ── File-viewer line links ──
    The addressed line highlights itself from `:target` in CSS; this only
    mirrors that onto the gutter number, which no selector can reach from the
-   code column. Purely cosmetic, so a no-JS page still gets the highlight. */
+   code column. Purely cosmetic, so a no-JS page still gets the highlight.
+
+   The gutter is also where the page's tab order used to go to die: day1.rpy
+   alone put 1 418 line numbers in it, so reaching anything below the code
+   meant 1 418 presses of Tab. They now share a single tab stop and move under
+   the arrow keys — the roving-tabindex pattern every long list of controls
+   uses — so the numbers stay reachable from the keyboard without owning the
+   page. Without JS every link keeps its natural tab stop, which is the
+   honest fallback: no script, no roving. */
 (function () {
     const gutter = document.querySelector('.fb-gutter');
     if (!gutter) return;
 
+    const links = [...gutter.querySelectorAll('a')];
     let current = null;
+    let roving = links[0] || null;
+
+    const rove = link => {
+        if (!link) return;
+        if (roving) roving.tabIndex = -1;
+        roving = link;
+        roving.tabIndex = 0;
+    };
+
+    links.forEach(link => { link.tabIndex = -1; });
+    if (roving) roving.tabIndex = 0;
 
     const sync = () => {
         if (current) current.classList.remove('is-target');
@@ -31,8 +43,36 @@ const unglyph = text => (window.unglyphCode || (t => t))(text);
         if (!/^L\d+$/.test(id)) return;
 
         current = gutter.querySelector('a[href="#' + id + '"]');
-        if (current) current.classList.add('is-target');
+        if (current) {
+            current.classList.add('is-target');
+            // Arriving at a line makes it the way back in, so the next Tab
+            // into the gutter starts where the reader actually is.
+            rove(current);
+        }
     };
+
+    const STEP = { ArrowDown: 1, ArrowUp: -1, PageDown: 10, PageUp: -10 };
+
+    gutter.addEventListener('keydown', event => {
+        const from = links.indexOf(document.activeElement);
+        if (from === -1) return;
+
+        let to = null;
+        if (event.key in STEP) to = from + STEP[event.key];
+        else if (event.key === 'Home') to = 0;
+        else if (event.key === 'End') to = links.length - 1;
+        else return;
+
+        event.preventDefault();
+        const link = links[Math.min(Math.max(to, 0), links.length - 1)];
+        rove(link);
+        link.focus();
+    });
+
+    // A click (or a browser-driven focus) moves the entry point with it.
+    gutter.addEventListener('focusin', event => {
+        if (links.includes(event.target)) rove(event.target);
+    });
 
     sync();
     window.addEventListener('hashchange', sync);
@@ -50,15 +90,13 @@ const unglyph = text => (window.unglyphCode || (t => t))(text);
 
         btn.addEventListener('click', () => {
             // data-copy-from points at an element whose text is the payload
-            // (the file viewer copies the whole script this way).
-            // The viewer's payload is the rendered code, which carries the
-            // sentinel whitespace glyphs — strip them so what lands on the
-            // clipboard is a script that actually runs. A plain data-copy
-            // value (a game path) never contains them, so this is safe for
-            // both branches.
-            const value = unglyph(btn.dataset.copyFrom
+            // (the file viewer copies the whole script this way); everything
+            // else carries the value itself. The viewer's whitespace is real
+            // spaces with dots painted over them, so the text needs no
+            // fixing up on the way out.
+            const value = btn.dataset.copyFrom
                 ? (document.querySelector(btn.dataset.copyFrom)?.textContent ?? '')
-                : btn.dataset.copy);
+                : btn.dataset.copy;
 
             navigator.clipboard.writeText(value).then(() => {
                 btn.classList.add('copied');
@@ -290,7 +328,12 @@ const unglyph = text => (window.unglyphCode || (t => t))(text);
         if (timeSelect?.value) p.set('time', timeSelect.value);
         if (sortSelect?.value && sortSelect.value !== 'az') p.set('sort', sortSelect.value);
         const qs = p.toString();
-        history.replaceState(null, '', location.pathname + (qs ? '?' + qs : ''));
+        // The fragment has to survive this. `apply()` runs once on load, so
+        // rebuilding the URL from pathname + query alone threw away the `#r-…`
+        // a search result had just arrived on — and the browser, mid-jump,
+        // stopped scrolling and left the reader at the top of 1 164 rows with
+        // no idea which one they came for.
+        history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
     }
 
     const apply = () => {

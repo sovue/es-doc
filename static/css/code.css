@@ -8,8 +8,8 @@
    palettes live in vars.css, so nothing here branches on theme.
 
    Loaded via extra_css by every template that renders fenced code
-   (doc.html, warpers.html) and paired with docs.js, which reveals the
-   copy button and swaps the lexer's whitespace spans for visible dots.
+   (doc.html, warpers.html) and paired with code.js, which reveals the copy
+   button and makes inline chips copyable.
 
    Selectors stay bare (`pre`, `code`) rather than scoped: this file is
    only loaded on pages whose only code is prose code, same as when the
@@ -36,6 +36,18 @@ code {
    only thing marking it as a link was the cursor. Link ink brings it back, and
    the underline (faint at rest, full on interaction) means it doesn't rely on
    colour alone to read as a link. */
+a code {
+    color: var(--code-link);
+    text-decoration: underline;
+    text-decoration-color: var(--border);
+    text-underline-offset: 2px;
+}
+
+a:hover code,
+a:focus-visible code {
+    text-decoration-color: currentColor;
+}
+
 /* ── Copyable inline chips (code.js) ──
    The chip already looks like a thing you can take; this only says it under
    the cursor, and confirms in the same green every other copy control on the
@@ -72,18 +84,6 @@ code {
     border: 1px solid var(--border);
     border-radius: var(--radius-full);
     vertical-align: 1px;
-}
-
-a code {
-    color: var(--code-link);
-    text-decoration: underline;
-    text-decoration-color: var(--border);
-    text-underline-offset: 2px;
-}
-
-a:hover code,
-a:focus-visible code {
-    text-decoration-color: currentColor;
 }
 
 pre {
@@ -306,7 +306,22 @@ pre code .mo { color: var(--code-number); }
 pre code .o,
 pre code .ow { color: var(--code-operator); }
 
-pre code .w { color: var(--code-whitespace); }
+/* ── Whitespace, drawn ──
+   The characters inside `span.w` are ordinary spaces (md/__init__.py only
+   tags the run); the dots are a background tiled one per character cell. That
+   keeps the DOM honest — copy and screen readers get the real code — and costs
+   nothing at the two places that used to have to undo a glyph.
+
+   `1ch` is the advance width of one character in a monospace face, so one tile
+   is exactly one space. `--code-whitespace` is the same muted token the glyph
+   used, so nothing about the look changes. */
+pre code .w {
+    background-image: radial-gradient(circle at 50% 50%,
+        var(--code-whitespace) 0 1.5px, transparent 1.6px);
+    background-size: 1ch 1lh;
+    background-position: 0 50%;
+    background-repeat: repeat-x;
+}
 
 /* ── Responsive ──────────────────────────────────────────── */
 
@@ -317,7 +332,8 @@ pre code .w { color: var(--code-whitespace); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .code-copy {
+    .code-copy,
+    .code-copyable {
         transition: none;
     }
 }

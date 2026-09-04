@@ -18,10 +18,8 @@
 <script src="/static/js/theme.js" defer></script>
 {#- Site-wide, like the three above: code panels turn up on docs pages, in the
     resource browser's viewer and on the warper page, several of them out of
-    markdown no template inspects, and code.js is what puts the spaces back
-    when any of it is copied. Inert on a page with no code. Loaded before the
-    per-page scripts so window.unglyphCode exists by the time resources.js
-    runs. -#}
+    markdown no template inspects, and code.js is what reveals their copy
+    button and makes inline chips copyable. Inert on a page with no code. -#}
 <script src="/static/js/code.js" defer></script>
 {% if with_contributors_js %}<script src="/static/js/contributors.js" defer></script>
 {% endif %}
