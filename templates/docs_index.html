@@ -5,6 +5,23 @@
 {% set active = 'docs' %}
 
 {% macro tree_node(node) %}
+{%- if node.kind == 'divider' %}
+{#- A rule between groups is for the eye only: `role="presentation"` keeps it
+    out of the item count, and hiding it keeps a screen reader from announcing
+    a separator between every group. -#}
+<li class="doc-tree-sep" role="presentation" aria-hidden="true"><hr></li>
+{%- elif node.kind == 'heading' %}
+<li class="doc-tree-group" role="presentation">
+    <span class="doc-tree-heading">{{ node.title }}</span>
+    {%- if node.children %}
+    {#- The label is decoration for sighted readers; the same words reach a
+        screen reader as the name of the list it heads. -#}
+    <ul class="doc-tree-nest" role="list" aria-label="{{ node.title }}">
+        {% for child in node.children %}{{ tree_node(child) }}{% endfor %}
+    </ul>
+    {%- endif %}
+</li>
+{%- else %}
 <li>
     <a href="/docs/{{ node.slug|urlencode }}" class="doc-tree-row">
         <span class="section-name">{{ node.title }}</span>
@@ -16,6 +33,7 @@
     </ul>
     {% endif %}
 </li>
+{%- endif %}
 {% endmacro %}
 
 {% block content %}

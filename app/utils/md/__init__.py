@@ -1,8 +1,10 @@
 from markdown_it import MarkdownIt
 from markdown_it.common.utils import escapeHtml, unescapeAll
 from pygments import highlight
+from pygments.filter import Filter
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters import HtmlFormatter
+from pygments.token import Whitespace
 import re
 
 from .slugs import heading_slugs, render_heading_open
@@ -24,28 +26,43 @@ from ..renpy_lexer import RenPyLexer
 
 dummy_rule = lambda s: lambda self, tokens, idx, options, env: s
 
-# docs.js already turns every `span.w` Pygments emits into visible dots, the
-# same way Ren'Py's own script linter marks whitespace. Pygments' stock Python
-# lexer barely uses that token though — not even for indentation, the one
-# whitespace a Python reader most needs to see — so a ```python fence has
-# almost nothing for it to grab onto. Rather than teach the lexer to tag
-# whitespace the way renpy_lexer.py does, wrap every run of spaces in the same
-# `span.w` Pygments itself uses: it comes out looking exactly like whitespace
-# highlighted anywhere else on the site (muted, not full-strength text) instead
-# of a wall of stark dots, and docs.js's copy handling already strips the
-# glyph out of a `span.w` wherever it finds one, so pasted code is unaffected.
+# Every space inside a code panel is drawn as a dot, the way Ren'Py's own
+# script linter draws them: in a language where indentation *is* syntax, three
+# spaces where four belong is worth being able to see. The glyph goes out as a
+# `Whitespace` token, so it picks up that token's muted colour
+# (--code-whitespace) and reads as texture under the code rather than as
+# content. code.js swaps the glyphs back to spaces on the way to the clipboard,
+# so what a reader pastes is still a script that runs.
 WHITESPACE_GLYPH = '∙'
-_TAG_RE = re.compile(r'(<[^>]*>)')
-_SPACE_RUN_RE = re.compile(r' +')
 
-def _dot_whitespace(html):
-    def dot_run(match):
-        return f'<span class="w">{WHITESPACE_GLYPH * len(match.group())}</span>'
+_SPACES_RE = re.compile(r'( +)')
 
-    return ''.join(
-        part if part.startswith('<') else _SPACE_RUN_RE.sub(dot_run, part)
-        for part in _TAG_RE.split(html)
-    )
+class DotWhitespace(Filter):
+    """Re-tag every run of spaces as `Whitespace` carrying the glyph.
+
+    A filter, not a pass over the highlighted HTML, because that is the only
+    place the treatment can be uniform: lexers disagree wildly about whether
+    whitespace is a token at all — Pygments' Python lexer leaves indentation
+    untokenised entirely, the Ren'Py one tags some of its own — and a filter
+    sees the token stream before any of that reaches the formatter. Whatever
+    the lexer thought, spaces come out of here as spaces.
+    """
+
+    def filter(self, lexer, stream):
+        for ttype, value in stream:
+            if ' ' not in value:
+                yield ttype, value
+                continue
+
+            # Only the spaces change hands; the text around them keeps its own
+            # token, so a string or a comment loses nothing but its blanks.
+            for part in _SPACES_RE.split(value):
+                if not part:
+                    continue
+                if part[0] == ' ':
+                    yield Whitespace, WHITESPACE_GLYPH * len(part)
+                else:
+                    yield ttype, part
 
 def highlight_code(code, lang, attrs):
     try:
@@ -53,8 +70,11 @@ def highlight_code(code, lang, attrs):
     except Exception:
         return ''
 
-    html = highlight(code, lexer, HtmlFormatter(nowrap=True))
-    return _dot_whitespace(html) if lang == 'python' else html
+    # A fresh lexer per call (both branches construct one), so the filter is
+    # never added twice to the same instance.
+    lexer.add_filter(DotWhitespace())
+
+    return highlight(code, lexer, HtmlFormatter(nowrap=True))
 
 # Copy button markup, ships [hidden] and revealed by docs.js — mirrors the
 # progressive-enhancement pattern the resource listings use for their own

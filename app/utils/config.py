@@ -73,6 +73,12 @@ class _ConfigContainer():
         # utils/lifespan/news_cache.py). List of dicts: {name, url, note}.
         self.news = []
 
+        # Everything on «Ресурсы сообщества» that isn't a scanned resource:
+        # archives, tool sites, packs hosted elsewhere. Parsed from links.yaml
+        # at startup (see utils/lifespan/links_cache.py). Same row shape as
+        # news: {name, url, note}.
+        self.links = []
+
         # Reading list, parsed from literature.yaml at startup (see
         # utils/lifespan/literature_cache.py). List of dicts:
         # {name, items: [{title, url}]}.

@@ -5,6 +5,20 @@
 {% set active = 'docs' %}
 
 {% macro tree_node(node) %}
+{%- if node.kind == 'divider' %}
+{#- Presentational, like its twin on /docs/ (docs_index.html): a rule between
+    groups is for the eye, not for a screen reader to announce. -#}
+<li class="sidebar-all-sep" role="presentation" aria-hidden="true"><hr></li>
+{%- elif node.kind == 'heading' %}
+<li class="sidebar-all-group" role="presentation">
+    <span class="sidebar-all-heading">{{ node.title }}</span>
+    {%- if node.children %}
+    <ul role="list" aria-label="{{ node.title }}">
+        {% for child in node.children %}{{ tree_node(child) }}{% endfor %}
+    </ul>
+    {%- endif %}
+</li>
+{%- else %}
 <li>
     <a href="/docs/{{ node.slug|urlencode }}"
        class="sidebar-all-link{{ ' is-current' if node.slug == doc else '' }}"
@@ -15,6 +29,7 @@
     </ul>
     {% endif %}
 </li>
+{%- endif %}
 {% endmacro %}
 
 {% block content %}

@@ -271,6 +271,51 @@ img {
     line-height: 1.4;
 }
 
+/* ── Grouping the tree (tree.yaml `---` and `heading:`) ──
+   The same two markers the /docs/ index draws (components.css), at sidebar
+   scale. The heading has to sit a step below «ВСЕ СТАТЬИ» that opens the tree,
+   or the two labels compete: same Consolas idiom, one size down and without
+   the tracking, so it reads as a group inside the list rather than a second
+   heading over it. */
+
+.sidebar-all-sep hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 10px 0;
+}
+
+.sidebar-all-heading {
+    display: block;
+    padding: 10px 0 2px;
+
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+}
+
+.sidebar-all-tree > li:first-child > .sidebar-all-heading,
+.sidebar-all-sep + .sidebar-all-group > .sidebar-all-heading {
+    padding-top: 0;
+}
+
+/* Same as on /docs/ (components.css): the group's articles keep the indent of
+   the rows around them, since the label — not an indent guide — is what says
+   they belong together. Two classes deep to outrank `.sidebar ul ul`, which
+   is what draws that guide for genuine sub-articles. */
+.sidebar .sidebar-all-group > ul {
+    padding-left: 0;
+    border-left: none;
+}
+
+/* The rule brings its own spacing; the 8px every sidebar li carries would
+   stack on top of it. */
+.sidebar-all-sep {
+    margin: 0;
+}
+
 /* The article you are on, marked the way the scroll-spy marks the current
    heading — one spot of accent, not a filled row. */
 .sidebar-all-link.is-current {

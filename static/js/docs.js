@@ -1,53 +1,6 @@
-/* ── Code whitespace handling ── */
-let whitespace = '∙';
-
-document.querySelectorAll('span.w').forEach(el => {
-    el.textContent = whitespace.repeat(el.textContent.length);
-});
-
-document.addEventListener('copy', e => {
-    const sel = window.getSelection();
-
-    if (!sel.rangeCount) return;
-
-    const node = sel.getRangeAt(0).commonAncestorContainer;
-
-    const pre = node.nodeType === 1
-        ? node.closest('pre')
-        : node.parentElement?.closest('pre');
-
-    if (!pre) return;
-
-    e.preventDefault();
-
-    const text = sel.toString().replace(new RegExp(whitespace, 'g'), ' ');
-
-    e.clipboardData.setData('text/plain', text);
-});
-
-/* ── Copy-code buttons ── */
-if (navigator.clipboard) {
-    const status = document.getElementById('code-copy-status');
-
-    document.querySelectorAll('.code-copy').forEach(btn => {
-        btn.hidden = false;
-        let timer = null;
-
-        btn.addEventListener('click', () => {
-            const code = btn.closest('.code-block')?.querySelector('code');
-            if (!code) return;
-
-            const text = code.textContent.replace(new RegExp(whitespace, 'g'), ' ');
-
-            navigator.clipboard.writeText(text).then(() => {
-                btn.classList.add('copied');
-                if (status) status.textContent = 'Код скопирован.';
-                clearTimeout(timer);
-                timer = setTimeout(() => btn.classList.remove('copied'), 1600);
-            });
-        });
-    });
-}
+/* Code panels — the whitespace glyphs, the copy button, both routes to the
+   clipboard — are code.js's job now, since they turn up on pages that never
+   load this file. What stays here is what only a doc page has. */
 
 /* ── Adding tooltips for placeholder values in code (`|Название лейбла|`) ──
    The lexer also tags TODO/FIXME-style codetags as the same Comment.Special

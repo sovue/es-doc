@@ -52,13 +52,48 @@ def build_items(index):
     return items
 
 
+# A rule between groups, written the way markdown writes a thematic break so
+# an author reading tree.yaml recognises it on sight.
+DIVIDER = '---'
+
+
+def _tidy(nodes):
+    """Drop rules with nothing to separate: leading, trailing, or two in a row.
+
+    Rules are written between groups, and a group can disappear from under one
+    — every doc in it renamed or missing — which would otherwise leave a rule
+    hanging against the top of the list or doubled up in the middle."""
+    out = []
+
+    for node in nodes:
+        if node['kind'] == 'divider' and (not out or out[-1]['kind'] == 'divider'):
+            continue
+        out.append(node)
+
+    while out and out[-1]['kind'] == 'divider':
+        out.pop()
+
+    return out
+
+
 def build_tree(index=None):
-    """Resolve `tree.yaml` (in the docs dir) into a nested [{slug, title,
-    children}] structure for the docs index. A node is a filename (string) or
-    {doc: filename, children: [...]}, nested to any depth — every node is a real
-    doc. Only docs named in the tree are returned; unplaced files and
-    unknown/typo'd slugs are simply omitted, so /docs/ lists exactly what
-    tree.yaml declares. Pass a prebuilt `index` to reuse a cache refresh's scan.
+    """Resolve `tree.yaml` (in the docs dir) into the nested structure both
+    docs navs render. Every node carries a `kind`:
+
+      - Имя файла                 → {kind: 'doc', slug, title, children}
+      - doc: Имя файла            → the same, with children of its own
+        children: [ ... ]
+      - ---                       → {kind: 'divider'}
+      - heading: Текст            → {kind: 'heading', title, children}
+
+    Nested to any depth. Docs are the only nodes that are pages; a divider is
+    a rule and a heading is a label, both there to group a long list into
+    something a reader can scan. Titles for docs come from the file itself; a
+    heading's is written in the tree, since it names no file.
+
+    Only docs named in the tree are returned; unplaced files and unknown or
+    typo'd slugs are simply omitted, so /docs/ lists exactly what tree.yaml
+    declares. Pass a prebuilt `index` to reuse a cache refresh's scan.
     """
     if index is None:
         index = build_index()
@@ -69,15 +104,32 @@ def build_tree(index=None):
         out = []
         for node in nodes or []:
             if isinstance(node, str):
+                if node.strip() == DIVIDER:
+                    out.append({'kind': 'divider'})
+                    continue
                 slug, children = node, []
             elif isinstance(node, dict):
+                if 'heading' in node:
+                    title = (node.get('heading') or '').strip()
+                    kids = walk(node.get('children'))
+                    # A heading that asked for children and got none labels
+                    # nothing — it goes wherever they went.
+                    if not title or ('children' in node and not kids):
+                        continue
+                    out.append({'kind': 'heading', 'title': title, 'children': kids})
+                    continue
                 slug, children = node.get('doc'), node.get('children')
             else:
                 continue
             if not slug or slug not in titles:
                 continue
-            out.append({'slug': slug, 'title': titles[slug], 'children': walk(children)})
-        return out
+            out.append({
+                'kind': 'doc',
+                'slug': slug,
+                'title': titles[slug],
+                'children': walk(children),
+            })
+        return _tidy(out)
 
     if not tree_path.exists():
         return []
@@ -93,11 +145,16 @@ def flatten_tree(tree):
     order: pre-order, parent before its children — the order a reader moving
     through the tree top to bottom would encounter each doc. Drops
     `children` from each row; only {slug, title} survives, since that's all
-    the "next article" link needs."""
+    the "next article" link needs.
+
+    Only docs are stops on that walk. A divider or a heading is furniture
+    between them — nothing to page to — but a heading's children are articles
+    like any others, so the walk goes through it rather than around it."""
     out = []
     for node in tree:
-        out.append({'slug': node['slug'], 'title': node['title']})
-        out.extend(flatten_tree(node['children']))
+        if node['kind'] == 'doc':
+            out.append({'slug': node['slug'], 'title': node['title']})
+        out.extend(flatten_tree(node.get('children') or []))
     return out
 
 

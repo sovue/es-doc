@@ -1172,6 +1172,33 @@ video.fb-media {
     text-decoration: underline;
 }
 
+/* ── Прочие ссылки (community hub) ───────────────────────
+   What the community shares that this site can't scan into a listing: an
+   archive, a tool, a pack hosted somewhere else. Same bordered `.sections-list`
+   rows as the categories above it and as /news — an outbound link is a row
+   like any other here — so the only thing this block adds is a title that
+   marks where the site's own listings end and the rest of the internet
+   begins. Serif title in the same voice as a resource group's, with the lead
+   in ink-soft under it. */
+
+.res-links {
+    margin-top: 48px;
+}
+
+.res-links-title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.res-links-lead {
+    margin: 6px 0 16px;
+    max-width: 55ch;
+    color: var(--text-soft);
+}
+
 /* ── Responsive ──────────────────────────────────────────── */
 
 @media (max-width: 640px) {

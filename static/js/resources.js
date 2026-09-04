@@ -4,42 +4,13 @@
    Controls ship with [hidden] in the markup and are revealed here, so a
    no-JS page stays a clean reference list. */
 
-/* Sentinel glyph the file viewer paints in place of the lexer's whitespace
-   spans. Anything that puts code on the clipboard has to swap it back, or the
-   pasted script is full of ∙ and won't run — shared here so the two copy
-   paths below can't drift apart again. */
-const WHITESPACE_GLYPH = '∙';
-const unglyph = text => text.replace(new RegExp(WHITESPACE_GLYPH, 'g'), ' ');
-
-/* ── File-viewer code whitespace handling (mirrors docs.js) ── */
-(function () {
-    const code = document.querySelector('.fb-code');
-    if (!code) return;
-
-    const whitespace = WHITESPACE_GLYPH;
-
-    code.querySelectorAll('span.w').forEach(el => {
-        el.textContent = whitespace.repeat(el.textContent.length);
-    });
-
-    document.addEventListener('copy', e => {
-        const sel = window.getSelection();
-
-        if (!sel.rangeCount) return;
-
-        const node = sel.getRangeAt(0).commonAncestorContainer;
-
-        const pre = node.nodeType === 1
-            ? node.closest('.fb-code')
-            : node.parentElement?.closest('.fb-code');
-
-        if (!pre) return;
-
-        e.preventDefault();
-
-        e.clipboardData.setData('text/plain', unglyph(sel.toString()));
-    });
-})();
+/* The file viewer's code carries the same whitespace glyphs as every other
+   code panel, and code.js handles them site-wide: it paints nothing (the
+   glyphs arrive in the HTML) and rewrites a hand-made selection on its way to
+   the clipboard. All this file still needs is its own copy button's payload,
+   which goes through the same helper — hence the fallback, so a failed load of
+   code.js costs the button its glyph-stripping, not its function. */
+const unglyph = text => (window.unglyphCode || (t => t))(text);
 
 /* ── File-viewer line links ──
    The addressed line highlights itself from `:target` in CSS; this only

@@ -949,7 +949,7 @@ if (navigator.clipboard) {
 
         // Indents are the lexer's whitespace spans, dots and all, so the
         // generated line reads like the hand-written samples below it.
-        // docs.js swaps the dots back to spaces on copy.
+        // code.js swaps the dots back to spaces on copy.
         const indent = (times = 1) => token('w', '∙∙∙∙'.repeat(times));
 
         snippet.textContent = '';

@@ -101,47 +101,70 @@
     /* Ease-out-quart — interactive transitions leave fast, settle soft. */
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
+    /* ── Callout washes, day set ──────────────────────────────
+       Each callout is an ink (`--x`, carrying border, icon and <strong>) plus
+       two gradient bands: `--x-bg` at the top and bottom edges, `--x-bg1`
+       through the middle.
+
+       The bands are near-opaque pale tints here, not thin films of the ink
+       colour, and that is the whole trick of making them read in daylight.
+       The paper is not neutral — #F4EAD6 is a yellow at chroma 11 — so a
+       saturated hue laid on at 8-16% lands wherever the paper's yellow drags
+       it: the old sky-blue info wash composited to hue 130°, a grey-green,
+       and tip's forest green to 102°, a khaki barely off the page colour. Five
+       callouts all sat inside one warm 50-130° arc, telling themselves apart
+       by lightness alone, and every one of them read as a panel borrowed from
+       the night theme. Mixing each hue toward white *first* and then laying it
+       on at 92% puts the hue back where it belongs (info 233°, tip 126°,
+       attention 90°, warning 37°, danger 29°) and lifts the strongest band
+       from L* 82-88 to L* 87-92 — a tint on the paper rather than a wash over
+       it. The remaining 8% is what keeps the page's own warmth underneath.
+
+       Night keeps the thin-film treatment: a dark page is already cool and
+       neutral enough that a translucent hue stays the hue it started as. */
+
     /* Warning leans on a deeper red so it reads as caution, distinct
        from the inline accent red of links and headings. */
     --warning: #A81824;
-    --warning-bg: #C8202E2A;
-    --warning-bg1: #C8202E14;
+    --warning-bg: #F8D8D2EB;
+    --warning-bg1: #FBEAE6EB;
 
     /* Danger is warning turned up: the rung for a hard constraint («ВАЖНО»)
-       rather than a caution («ВНИМАНИЕ»). At the 16%/8% the callout washes use,
-       every red collapses to nearly the same tint — danger's strongest band is
-       #E7C6B8 against warning's #EDC9BA — so the distinction cannot live in
-       the background. It lives in the ink (deepest red of the set by day) and
-       in the icon, which is an octagon where warning is a triangle. */
+       rather than a caution («ВНИМАНИЕ»). Its band is a half-step deeper and
+       redder than warning's (L* 87 at hue 29°, against 89 at 37°) — enough to
+       tell the two apart side by side, nowhere near enough to tell them apart
+       across a page, so the ink and the icon still carry the distinction: an
+       octagon where warning is a triangle. */
     --danger: #7E1220;
-    --danger-bg: #A3121F2A;
-    --danger-bg1: #A3121F14;
+    --danger-bg: #F6CFCCEB;
+    --danger-bg1: #FBE3E1EB;
 
     /* Info is the calm counterpart to warning: a deep sky-blue (sibling of the
        --sky relief) so it reads as "note", never as alarm. --info carries the
-       text/border/icon (deep enough for AA on the tinted panel); --info-bg /
-       --info-bg1 are the faint gradient bands, mirroring the warning washes. */
+       text/border/icon; the bands are the one cool tint in the set, and the
+       only place on a light page where the paper's warmth is deliberately
+       overruled rather than tinted. */
     --info: #215D70;
-    --info-bg: #3E93B52A;
-    --info-bg1: #3E93B514;
+    --info-bg: #D6EAF4EB;
+    --info-bg1: #E7F2F8EB;
 
     /* Attention is the step between tip and warning: an ochre-yellow that says
        "read this before you continue" without the alarm of pioneer red. Yellow
-       cannot carry text on cream at full saturation, so --attention is the
-       deepened ink (AA on the strongest gradient band) while the washes come
-       off the brighter #C89A12 the eye actually reads as yellow — the same
-       deepen-the-ink trick --info uses on --sky. */
+       cannot carry text on cream at full saturation, so --attention stays the
+       deepened ink; its bands are the one hue that shares the paper's own
+       (90°), so they lean on chroma — 23 against the paper's 11 — instead of
+       on hue to separate from it. */
     --attention: #805407;
-    --attention-bg: #C89A122A;
-    --attention-bg1: #C89A1214;
+    --attention-bg: #F7E4B8EB;
+    --attention-bg1: #FBEFD4EB;
 
-    /* Tip reuses --pine, the reserved nature/success hue (DESIGN.md §Tertiary):
-       already verified AA as text/border on cream paper (resources.css,
-       artists.css open-status pill), so no separate deepened shade is needed
-       the way --info deepens --sky. Mirrors the warning/info gradient bands. */
+    /* Tip reuses --pine, the reserved nature/success hue (DESIGN.md §Tertiary),
+       as ink. Its old wash was --pine itself at 16%, which landed at hue 102°,
+       four degrees off plain paper, and left the ink at 4.05:1 on its own band
+       — under AA. The pale green band fixes both: hue 126°, ink at 4.83:1. */
     --tip: #4F6B3E;
-    --tip-bg: #4F6B3E2A;
-    --tip-bg1: #4F6B3E14;
+    --tip-bg: #DDEBCEEB;
+    --tip-bg1: #EAF3E1EB;
 }
 
 /* ── Dark (Night at camp — by the lake) ───────────────────────

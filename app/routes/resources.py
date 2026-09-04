@@ -123,6 +123,10 @@ def _hub(request, collection):
         'collection_meta': COLLECTIONS[collection],
         'categories': categories,
         'total': sum(c['count'] for c in categories),
+        # Everything the community shares that isn't a file this site scans —
+        # archives, tool sites, packs hosted elsewhere (links.yaml). The
+        # original's resources all live in the game folder, so it has none.
+        'links': CONFIG.links if collection == 'community' else [],
     })
 
 

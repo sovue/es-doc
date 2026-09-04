@@ -6,6 +6,7 @@ from ..logging import root_logger
 
 from .artists_cache import parse_artists
 from .docs_cache import cache_docs
+from .links_cache import parse_links
 from .literature_cache import parse_literature
 from .news_cache import parse_news
 from .refresh import worker_refresh_caches
@@ -49,6 +50,11 @@ async def lifespan(app: FastAPI):
         await asyncio.to_thread(parse_literature)
     except Exception:
         logger.exception('Parsing literature.yaml failed; /literature will be empty until restart.')
+
+    try:
+        await asyncio.to_thread(parse_links)
+    except Exception:
+        logger.exception('Parsing links.yaml failed; the community links section will be empty until restart.')
 
     try:
         await asyncio.to_thread(parse_warpers)

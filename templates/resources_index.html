@@ -47,6 +47,29 @@
             </div>
             {% endif %}
 
+            {#- Not everything the community shares is a file this site can
+                scan and list: archives, тулзы, паки на других площадках. They
+                get their own list under the categories (links.yaml), outside
+                the `total` check above — a collection with nothing scanned yet
+                can still be worth visiting for what it points at. -#}
+            {% if links %}
+            <section class="res-links" aria-labelledby="res-links-title">
+                <h2 class="res-links-title" id="res-links-title">Прочие ссылки</h2>
+                <p class="res-links-lead">Материалы сообщества, которые живут за пределами этого сайта.</p>
+                <ul class="sections-list" role="list">
+                    {% for link in links %}
+                    <li>
+                        <a href="{{ link.url }}" class="section-row">
+                            <span class="section-name">{{ link.name }}</span>
+                            {% if link.note %}<span class="section-desc">{{ link.note }}</span>{% endif %}
+                            <span class="section-arrow" aria-hidden="true">→</span>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </section>
+            {% endif %}
+
         </div>
 
     </main>

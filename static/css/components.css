@@ -685,6 +685,49 @@ a.section-row:focus-visible {
     border-left: 1px solid var(--border);
 }
 
+/* ── Grouping the tree (tree.yaml `---` and `heading:`) ──
+   A long index needs to be scannable in chunks, and neither chunk marker is a
+   destination: the rule is a hairline between groups, the heading a quiet
+   Consolas label above one. Both stay pointedly quieter than the article rows
+   they organise — same reasoning as the sidebar's section labels, and the
+   Galstuk Rule keeps accent red for things you can actually click. */
+
+.doc-tree-sep hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    /* Wider than the gap between two rows, so the rule reads as the end of a
+       group rather than as one more row's underline. */
+    margin: 18px 0;
+}
+
+.doc-tree-heading {
+    display: block;
+    padding: 18px 0 6px;
+
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+}
+
+/* A heading opening the list has nothing above it to be spaced from. */
+.doc-tree > li:first-child > .doc-tree-heading,
+.doc-tree-sep + .doc-tree-group > .doc-tree-heading {
+    padding-top: 0;
+}
+
+/* Articles under a heading are not sub-articles of anything, so they keep the
+   indent level of the rows around them: the label above is what marks the
+   group. Left as a nested list they'd inherit the indent guide, which says
+   "these belong to the article above" — and there is no article above. */
+.doc-tree-group > .doc-tree-nest {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+}
+
 /* padding lifts the row to a ~47px tap target — the docs tree is the whole
    /docs/ index, so its rows deserve the same 44px comfort as the primary nav. */
 .doc-tree-row {
