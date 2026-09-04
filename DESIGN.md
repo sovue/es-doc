@@ -18,13 +18,15 @@ colors:
   code-chip: "#EFE3C8"
   table-head: "#F0E5CF"
   info: "#215D70"
-  info-bg: "#3E93B52A"
+  info-bg: "#D6EAF4EB"
   warning: "#A81824"
-  warning-bg: "#C8202E2A"
+  warning-bg: "#F8D8D2EB"
   danger: "#7E1220"
-  danger-bg: "#A3121F2A"
+  danger-bg: "#F6CFCCEB"
   attention: "#805407"
-  attention-bg: "#C89A122A"
+  attention-bg: "#F7E4B8EB"
+  tip: "#4F6B3E"
+  tip-bg: "#DDEBCEEB"
 typography:
   display:
     fontFamily: "PT Serif, Georgia, \"Times New Roman\", serif"
@@ -240,7 +242,7 @@ Each banner ships **its own wording**: a serif title in the status colour plus a
 `::about A | Б | ссылка` renders the one italic line above an article that says what this page covers and where the other meaning lives — «Эта статья о A; о Б см. …». PT Serif italic in ink-soft, boxed in a plain `--border` frame. Double colon, not triple: unlike every other `:::name` block on this page, a hatnote is one physical line with no body and no closer, and the shorter marker makes that visible on sight instead of inviting an author to hunt for a `:::` to close it. The frame is unpainted (no `--bg-light` fill), a step quieter than blockquote's painted card and well short of a banner's status-coloured one — it reads as its own aside, not as content in its own right. Exactly three `|`-separated fields, both subjects in the prepositional case so the sentence's single «о» serves both. Anything else fails the block and leaves the raw `::about` line visible on the page — a half-filled sentence is worse than an obvious mistake.
 
 ### Sources (manual footnotes)
-`текст^1` in prose and `1^: Источник` in the list, both numbered by hand — the marker's number *is* the list's number, and nothing renumbers, reorders or collects anything. The marker is a small superscript link in accent red; the list is ink-soft rows led by a mono back-link that mirrors the `1^:` the author typed, and the entry you arrive at highlights with the same `--target-bg` wash headings use, so the eye finds the right line in a list of twenty.
+`текст^1` in prose and `1^ Источник` in the list, both numbered by hand — the marker's number *is* the list's number, and nothing renumbers, reorders or collects anything. The marker is a small superscript link in accent red; the list is ink-soft rows led by a mono back-link that mirrors the `1^` the author typed, and the entry you arrive at highlights with the same `--target-bg` wash headings use, so the eye finds the right line in a list of twenty.
 
 A `^N` only becomes a marker if the page actually defines source N — markdown-it finishes block parsing before any inline parsing, so every entry is known by the time a marker is read. That keeps a page from ever carrying a `#ref-N` link that lands nowhere, and leaves prose like `t^2` alone on pages that cite nothing numbered 2. On a page that *does*, a literal caret is escaped the way markdown escapes any special character (`t\^2`) or, better, written as `code` — which is where DESIGN.md already puts formulas.
 

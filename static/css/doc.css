@@ -831,7 +831,7 @@ img {
 .ref-text > :first-child { margin-top: 0; }
 .ref-text > :last-child { margin-bottom: 0; }
 
-/* The back-link doubles as the entry's own number, mirroring the `1^:` the
+/* The back-link doubles as the entry's own number, mirroring the `1^` the
    author typed. Landing on it from a marker highlights the row, so the eye
    finds the right line in a list of twenty. */
 .ref-item:target {
