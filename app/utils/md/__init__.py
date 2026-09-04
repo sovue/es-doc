@@ -4,7 +4,7 @@ from pygments import highlight
 from pygments.filter import Filter
 from pygments.lexers import get_lexer_by_name
 from pygments.formatters import HtmlFormatter
-from pygments.token import Whitespace
+from pygments.token import Comment, Whitespace
 import re
 
 from .slugs import heading_slugs, render_heading_open
@@ -50,7 +50,13 @@ class DotWhitespace(Filter):
 
     def filter(self, lexer, stream):
         for ttype, value in stream:
-            if ' ' not in value:
+            # `|Имя персонажа|` is one token the page treats as one thing:
+            # docs.js strips its pipes and hangs "replace this" on what's left,
+            # and it can only recognise it while the whole marker is a single
+            # span. Splitting it around its space left two half-markers with
+            # their pipes showing. The label is prose to overwrite anyway —
+            # nobody counts its spaces — so it keeps them.
+            if ttype in Comment.Special or ' ' not in value:
                 yield ttype, value
                 continue
 
@@ -124,8 +130,32 @@ def render_fence(self, tokens, idx, options, env):
         '</div>\n'
     )
 
+# A hex colour written as inline code gets a dot of that colour in front of it,
+# the way the character listings show a name colour (resources_list.html). The
+# docs were doing it by hand — a raw `<b style="color: …">■ #A0C6D1 ■</b>` per
+# value — which no theme could follow and no reader could copy. Server-side, so
+# the swatch survives a page with no JS; the value beside it is what code.js
+# then makes copyable, like any other inline chip.
+COLOR_RE = re.compile(r'^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$')
+
+def render_code_inline(self, tokens, idx, options, env):
+    content = tokens[idx].content
+    code = escapeHtml(content)
+
+    # The regex above is the whole sanitiser: only `#` and hex digits ever
+    # reach the style attribute.
+    if COLOR_RE.match(content):
+        return (
+            f'<code class="code-color">'
+            f'<span class="code-swatch" style="background: {content}" aria-hidden="true"></span>'
+            f'{code}</code>'
+        )
+
+    return f'<code>{code}</code>'
+
 MD = MarkdownIt('commonmark', {'highlight': highlight_code})
 MD.add_render_rule('fence', render_fence)
+MD.add_render_rule('code_inline', render_code_inline)
 
 MD.block.ruler.before('fence', 'table', table_block)
 MD.block.ruler.before('fence', 'info', template('info'))

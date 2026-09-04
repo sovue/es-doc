@@ -36,6 +36,44 @@ code {
    only thing marking it as a link was the cursor. Link ink brings it back, and
    the underline (faint at rest, full on interaction) means it doesn't rely on
    colour alone to read as a link. */
+/* ── Copyable inline chips (code.js) ──
+   The chip already looks like a thing you can take; this only says it under
+   the cursor, and confirms in the same green every other copy control on the
+   site uses. No new resting state — a page of prose flickering with hoverable
+   boxes would read as a page of links. */
+
+.code-copyable {
+    cursor: pointer;
+    transition: color 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
+}
+
+.code-copyable:hover {
+    box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.code-copyable:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.code-copyable.copied {
+    color: var(--code-success);
+    box-shadow: inset 0 0 0 1px var(--code-success);
+}
+
+/* A hex colour carries a dot of itself, the way the character listings do
+   (.res-chip). Same size and shape, so the two read as one idea in two
+   places. */
+.code-swatch {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    margin-right: 5px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    vertical-align: 1px;
+}
+
 a code {
     color: var(--code-link);
     text-decoration: underline;

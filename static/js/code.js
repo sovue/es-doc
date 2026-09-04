@@ -47,6 +47,47 @@
 
     const status = document.getElementById('code-copy-status');
 
+    /* ── Inline chips ──
+       A fence isn't the only thing worth taking off the page: a colour, a
+       function name, a file path in running prose is exactly what a reader
+       came for, and until now the only way to take one was to select it by
+       hand. Every inline `code` in the article copies on click, the same
+       gesture the character listings already use for a name colour.
+
+       Promoted in place rather than wrapped in a <button>: the chip sits
+       inside a sentence, and a real button there brings its own font,
+       baseline and box to argue with. That means spelling out what a button
+       would have given for free — role, tab stop, keyboard activation — the
+       way warpers.js does for its own promoted controls. Skipped inside a
+       link, where the click already means "go there". */
+    document.querySelectorAll('.content code').forEach(chip => {
+        if (chip.closest('pre') || chip.closest('a')) return;
+
+        const value = chip.textContent;
+        if (!value.trim()) return;
+
+        let timer = null;
+        const copy = () => navigator.clipboard.writeText(value).then(() => {
+            chip.classList.add('copied');
+            if (status) status.textContent = 'Скопировано: ' + value;
+            clearTimeout(timer);
+            timer = setTimeout(() => chip.classList.remove('copied'), 1600);
+        }).catch(() => {});
+
+        chip.classList.add('code-copyable');
+        chip.setAttribute('role', 'button');
+        chip.setAttribute('tabindex', '0');
+        chip.setAttribute('aria-label', 'Скопировать: ' + value);
+        chip.title = 'Скопировать';
+
+        chip.addEventListener('click', copy);
+        chip.addEventListener('keydown', event => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            copy();
+        });
+    });
+
     document.querySelectorAll('.code-copy').forEach(btn => {
         btn.hidden = false;
         let timer = null;
@@ -62,7 +103,7 @@
                 if (status) status.textContent = 'Код скопирован.';
                 clearTimeout(timer);
                 timer = setTimeout(() => btn.classList.remove('copied'), 1600);
-            });
+            }).catch(() => {});
         });
     });
 })();
