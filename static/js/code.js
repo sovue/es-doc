@@ -50,12 +50,22 @@ window.copyControl = (element, getValue, { message, status, reset = 1600 } = {})
        hand. Every inline `code` in the article copies on click, the same
        gesture the character listings already use for a name colour.
 
-       Promoted in place rather than wrapped in a <button>: the chip sits
-       inside a sentence, and a real button there brings its own font,
-       baseline and box to argue with. That means spelling out what a button
-       would have given for free — role, tab stop, keyboard activation — the
-       way warpers.js does for its own promoted controls. Skipped inside a
-       link, where the click already means "go there". */
+       Mouse-only on purpose, and that used to be a `role="button"` +
+       `tabindex="0"` + `aria-label` promotion instead. An article runs 50+ of
+       these — on /docs/screens, 55 of them, three quarters of everything
+       focusable on the page — so making each one a tab stop meant a keyboard
+       reader pressed Tab 55 times to cross one article, and the aria-label
+       replaced the token's own text with "Скопировать: <token>", so a
+       screen reader announced "Скопировать modal True, Скопировать tag menu"
+       for a single sentence naming two properties. The verb was announced
+       for the button, not the word the sentence needed.
+
+       The text is still just as readable and just as selectable as any other
+       inline code — a keyboard or screen-reader user copies it the normal
+       way, by selecting text they can already read. What's lost is only the
+       one-click shortcut, and that shortcut stays for pointer users, who
+       have no substitute for it. Skipped inside a link, where the click
+       already means "go there". */
     document.querySelectorAll('.content code').forEach(chip => {
         if (chip.closest('pre') || chip.closest('a')) return;
 
@@ -67,17 +77,9 @@ window.copyControl = (element, getValue, { message, status, reset = 1600 } = {})
         });
 
         chip.classList.add('code-copyable');
-        chip.setAttribute('role', 'button');
-        chip.setAttribute('tabindex', '0');
-        chip.setAttribute('aria-label', 'Скопировать: ' + value);
         chip.title = 'Скопировать';
 
         chip.addEventListener('click', copy);
-        chip.addEventListener('keydown', event => {
-            if (event.key !== 'Enter' && event.key !== ' ') return;
-            event.preventDefault();
-            copy();
-        });
     });
 
     /* ── The copy button on fenced blocks ──
