@@ -65,8 +65,16 @@
                 sidebar had already painted shut. -#}
             <script>(function(){try{if(localStorage.getItem('es-doc-all-articles')==='1')document.getElementById('sidebar-all').open=true;}catch(e){}})();</script>
             {% endif %}
-            <div class="sidebar-source">
-                <span class="sidebar-source-label">Исходник страницы</span>
+            {#- Collapsed by default, same as "Все статьи" above it: this was
+                an always-open block that, on a narrow screen, pushed the
+                article's own <h1> as far as 425px down the page — a
+                power-user affordance outranking the content it describes.
+                Closed everywhere (not just on mobile) for the same reason
+                "Все статьи" is: one consistent rule beats a breakpoint-only
+                exception, and the desktop sidebar loses nothing essential,
+                just one click to a feature most readers never touch. -#}
+            <details class="sidebar-source">
+                <summary class="sidebar-source-label">Исходник страницы</summary>
                 <div class="sidebar-source-links">
                     <a href="?md">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -81,7 +89,7 @@
                         </svg>
                         Скачать</a>
                 </div>
-            </div>
+            </details>
         </aside>
 
         <main class="content" id="main-content">

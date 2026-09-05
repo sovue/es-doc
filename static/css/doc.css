@@ -14,20 +14,42 @@ h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-serif);
 
     font-weight: 700;
-    line-height: 1.2;
+    line-height: var(--lh-heading);
 }
 
 h1 {
     margin-top: 0px;
-    font-size: 2.4rem;
+    font-size: var(--fs-headline);
     border-bottom: 2px solid var(--border);
     padding-bottom: 0.3em;
 }
 
 h2 {
-    font-size: 1.8rem;
+    font-size: var(--fs-title);
     border-bottom: 1px solid var(--border);
     padding-bottom: 0.2em;
+}
+
+/* h3–h6 had no authored size at all and fell through to the browser’s own
+   stylesheet, which sizes them off the parent: h3 landed at 18.7px, h4 at
+   exactly the paragraph size, h5 at 13.3px and h6 at 10.7px — below the
+   Label step. Two of the longest guides in the assets repo carry 23 h3s and
+   15 h4s, so this was live: an h4 was separated from the paragraph under it
+   by face and weight alone. --fs-subtitle already existed for h3 and
+   DESIGN.md already promised it; nothing was ever bound to it. */
+h3 {
+    font-size: var(--fs-subtitle);
+}
+
+h4 {
+    font-size: var(--fs-lead);
+}
+
+/* Deep headings stop shrinking at the reading floor and separate on weight
+   and space instead. Nothing prose-shaped renders below --fs-body. */
+h5,
+h6 {
+    font-size: var(--fs-body);
 }
 
 p {
@@ -141,13 +163,21 @@ img {
    as the content's H1, so promoting it to <h2> would (a) duplicate the
    page title in the document outline and (b) put an h2 before the h1.
    Paragraph styled to read as the sidebar's section label. */
+/* --fs-lead, not --fs-title: this is wayfinding, not a headline. At the
+   title step the real article names did not fit —
+   «Распространённые ошибки…» overflowed the 196px content box by 81px
+   on its first word alone, and the longest title spent 214px of a sticky
+   column restating the H1 before the contents began. Hyphenation lets
+   Russian break where Russian breaks. */
 .sidebar-title {
     margin: 0 0 0.6em;
     color: var(--text);
     font-family: var(--font-serif);
-    font-size: 1.8rem;
+    font-size: var(--fs-lead);
+    hyphens: auto;
+    overflow-wrap: break-word;
     font-weight: 700;
-    line-height: 1.2;
+    line-height: var(--lh-heading);
     border-bottom: 1px solid var(--border);
     padding-bottom: 0.2em;
 }
@@ -217,7 +247,7 @@ img {
     list-style: none;
 
     font-family: var(--font-mono);
-    font-size: 0.7rem;
+    font-size: var(--fs-label);
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -267,8 +297,8 @@ img {
 
 .sidebar-all-link {
     display: block;
-    font-size: 0.85rem;
-    line-height: 1.4;
+    font-size: var(--fs-ui);
+    line-height: var(--lh-ui);
 }
 
 /* ── Grouping the tree (tree.yaml `---` and `heading:`) ──
@@ -289,7 +319,7 @@ img {
     padding: 10px 0 2px;
 
     font-family: var(--font-mono);
-    font-size: 0.68rem;
+    font-size: var(--fs-label);
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -324,7 +354,10 @@ img {
 }
 
 /* Power-user affordance: the page-source block under the TOC — open the raw
-   Markdown in place, or save it as «<страница>.md». Quiet by default. */
+   Markdown in place, or save it as «<страница>.md». Closed by default, same
+   disclosure as .sidebar-all right above it — a mono chevron label rather
+   than always-visible links, so this doesn't outrank the article itself on
+   a narrow screen (it used to push a real <h1> as far as 425px down). */
 .sidebar-source {
     margin-top: 24px;
     padding-top: 14px;
@@ -332,20 +365,57 @@ img {
 }
 
 .sidebar-source-label {
-    display: block;
-    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    cursor: pointer;
+    list-style: none;
+
     font-family: var(--font-mono);
-    font-size: 0.7rem;
+    font-size: var(--fs-label);
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-soft);
+
+    transition: color 0.15s var(--ease-out);
+}
+
+.sidebar-source-label::-webkit-details-marker {
+    display: none;
+}
+
+/* Same chevron as .sidebar-all-summary, at the same label scale — one
+   disclosure vocabulary for both collapsed sidebar sections. */
+.sidebar-source-label::before {
+    content: '';
+    flex-shrink: 0;
+
+    width: 0.4em;
+    height: 0.4em;
+
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(-45deg);
+
+    transition: transform 0.15s var(--ease-out);
+}
+
+.sidebar-source[open] > .sidebar-source-label::before {
+    transform: rotate(45deg);
+}
+
+.sidebar-source-label:hover,
+.sidebar-source-label:focus-visible {
+    color: var(--accent);
 }
 
 .sidebar-source-links {
     display: flex;
     flex-wrap: wrap;
     gap: 4px 16px;
+    margin-top: 8px;
 }
 
 .sidebar-source-links a {
@@ -353,7 +423,7 @@ img {
     align-items: center;
     gap: 6px;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: var(--fs-label);
     letter-spacing: 0.04em;
     color: var(--text-soft);
     text-decoration: none;
@@ -376,6 +446,77 @@ img {
     /* A long unbroken token (file path, URL, RenPy identifier) shouldn't force
        horizontal scroll on narrow screens. pre keeps its own overflow-x. */
     overflow-wrap: break-word;
+}
+
+/* ── The reading column ───────────────────────────────────────
+   `.content` takes whatever width the layout gives it, and the things a
+   reader looks at — code panels, tables, screenshots — want all of it. Prose
+   does not. At 1440px the paragraphs here were running 106 characters a line;
+   past roughly 75 the eye stops finding the start of the next line reliably
+   and starts re-reading the one it just left. DESIGN.md has claimed a 72ch
+   cap since the first draft — this is the rule that finally applies it.
+
+   Named element by element rather than capping `.content` itself, so the
+   default for anything new is still full width: a block has to be prose to
+   be narrowed, not the other way round. The headings come along so their
+   border rules end where the text ends; a 1069px rule over a 726px column
+   reads as text failing to fill its space. */
+/* 42rem is 72 characters of Russian at the body size. Inter’s `0` measures
+   10.09px at 16px, but Cyrillic lowercase averages 9.61px, so deriving the
+   cap from the digit put real Russian lines at a median of 73 characters and
+   a tail out to 84. rem rather than ch because `ch` resolves against each
+   element’s own font, so a 72ch heading is half again wider than a 72ch
+   paragraph and the column stops being a column. One rem value holds every
+   block to the same edge and still follows the reader’s root size. */
+:root { --measure: 42rem; }
+
+.content > h1,
+.content > h2,
+.content > h3,
+.content > h4,
+.content > h5,
+.content > h6,
+.content > p,
+.content > ul,
+.content > ol,
+.content > dl,
+.content > hr,
+.content > blockquote,
+.content > .info,
+.content > .warning,
+.content > .danger,
+.content > .attention,
+.content > .tip,
+.content > .banner,
+.content > .hatnote,
+.content > .refs,
+.content > .doc-pager {
+    max-width: var(--measure);
+}
+
+/* A 375px screen puts a Russian paragraph at a median of 30 characters a
+   line, well under the 45 the eye wants, and the body size cannot come down
+   to meet it — 1rem is the reading floor. Hyphenation is the only lever
+   left, and <html lang="ru"> means the browser already holds the dictionary.
+   Without it, overflow-wrap chops a long word mid-stem with no hyphen at
+   all. `pretty` cleans up the last line; `balance` keeps a wrapped heading
+   from stranding one word. */
+.content > p,
+.content > ul,
+.content > ol,
+.content > dl,
+.content > blockquote {
+    hyphens: auto;
+    text-wrap: pretty;
+}
+
+.content > h1,
+.content > h2,
+.content > h3,
+.content > h4,
+.content > h5,
+.content > h6 {
+    text-wrap: balance;
 }
 
 /* ── Article pager (previous / next) ─────────────────────
@@ -417,7 +558,7 @@ img {
 
 .doc-prev-label {
     font-family: var(--font-mono);
-    font-size: 0.65rem;
+    font-size: var(--fs-label);
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -427,7 +568,7 @@ img {
 /* Sans and ink-soft where "next" is serif and ink — the whole point of the
    pair is that they do not compete. */
 .doc-prev-title {
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     color: var(--text-soft);
     /* One line: a long title here would rival the next-article headline. */
     overflow: hidden;
@@ -437,7 +578,7 @@ img {
 }
 
 .doc-prev-arrow {
-    font-size: 0.9rem;
+    font-size: var(--fs-ui);
     color: var(--text-soft);
     flex-shrink: 0;
     transition: transform 0.15s var(--ease-out), color 0.15s var(--ease-out);
@@ -480,7 +621,7 @@ img {
 
 .doc-next-label {
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: var(--fs-label);
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -489,14 +630,14 @@ img {
 
 .doc-next-title {
     font-family: var(--font-serif);
-    font-size: 1.15rem;
+    font-size: var(--fs-lead);
     font-weight: 700;
     color: var(--text);
     transition: color 0.15s var(--ease-out);
 }
 
 .doc-next-arrow {
-    font-size: 1.1rem;
+    font-size: var(--fs-lead);
     color: var(--accent);
     flex-shrink: 0;
     transition: transform 0.15s var(--ease-out);
@@ -787,15 +928,15 @@ img {
        banner's own title, not a sentence of prose. */
     font-family: var(--font-serif);
     font-weight: 700;
-    font-size: 1.05rem;
-    line-height: 1.35;
+    font-size: var(--fs-body);
+    line-height: var(--lh-heading);
 
     color: var(--banner);
 }
 
 .banner-note {
     color: var(--text-soft);
-    font-size: 0.925rem;
+    font-size: var(--fs-ui);
 }
 
 .banner-note > :first-child { margin-top: 0.35em; }
@@ -824,7 +965,7 @@ img {
 
 .refs {
     margin: 1.5em 0;
-    font-size: 0.925rem;
+    font-size: var(--fs-ui);
 }
 
 .ref-item {
@@ -892,7 +1033,7 @@ img {
     color: var(--text-soft);
     font-family: var(--font-serif);
     font-style: italic;
-    font-size: 0.95rem;
+    font-size: var(--fs-ui);
 }
 
 /* ── Responsive ──────────────────────────────────────────── */
@@ -913,7 +1054,11 @@ img {
     }
 
     .sidebar-title {
-        font-size: 0.75rem;
+        /* The Label role in full: mono, or this is the only uppercase
+           tracked label on the site set in the display face. PT Serif has
+           no 600 master either, so it was resolving to 700. */
+        font-family: var(--font-mono);
+        font-size: var(--fs-label);
         font-weight: 600;
         letter-spacing: 0.08em;
         text-transform: uppercase;
@@ -926,6 +1071,21 @@ img {
     .sidebar nav {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+
+        /* Same edge cue as a code panel's overflow (code.css): a long
+           article's heading strip measured 2.6x its own width with nothing
+           to say so — the last visible link just looked like the last one.
+           The gutter's own gap gives this one a natural home for the fade;
+           a code panel has no gap so it borrows the padding box instead. */
+        background:
+            linear-gradient(to left, transparent, var(--bg-sidebar) 24px) 100% 0 / 24px 100% no-repeat local,
+            linear-gradient(to left, var(--fade-shadow), transparent 24px) 100% 0 / 24px 100% no-repeat scroll;
+    }
+
+    @media (prefers-contrast: more) {
+        .sidebar nav {
+            background: none;
+        }
     }
 
     .sidebar ul {
@@ -968,11 +1128,11 @@ img {
     }
 
     h1 {
-        font-size: 1.8rem;
+        font-size: var(--fs-title);
     }
 
     h2 {
-        font-size: 1.4rem;
+        font-size: var(--fs-subtitle);
     }
 }
 
