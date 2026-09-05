@@ -29,6 +29,7 @@ def build_index():
                 'slug': path.stem,
                 'title': data['title'] or path.stem,
                 'headings': data['headings'],
+                'code_terms': data['code_terms'],
             })
 
     return index
@@ -36,9 +37,13 @@ def build_index():
 
 def build_items(index):
     """Flatten the index into the flat corpus the ranking scores over: one row
-    per doc title, plus one per h2/h3 heading (carrying its doc's title as
-    context and the heading's own anchor). This is what the search endpoint
-    matches against."""
+    per doc title, one per h2/h3 heading (carrying its doc's title as context
+    and the heading's own anchor), and one per distinct inline code term the
+    doc contains (context set the same way; no anchor, since a term isn't
+    tied to one heading). The code rows are why `imagebutton` or `ATL` finds
+    the article that actually uses them instead of returning nothing — before
+    this, only titles and headings were searchable, and a modder's query is
+    almost always neither. This is what the search endpoint matches against."""
     items = []
     for d in index:
         items.append({'label': d['title'], 'doc': d['slug'], 'anchor': '', 'context': ''})
@@ -47,6 +52,13 @@ def build_items(index):
                 'label': h['text'],
                 'doc': d['slug'],
                 'anchor': h['slug'],
+                'context': d['title'],
+            })
+        for term in d.get('code_terms', []):
+            items.append({
+                'label': term,
+                'doc': d['slug'],
+                'anchor': '',
                 'context': d['title'],
             })
     return items

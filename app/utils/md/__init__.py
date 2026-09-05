@@ -7,7 +7,7 @@ from pygments.formatters import HtmlFormatter
 from pygments.token import Comment, Whitespace
 import re
 
-from .slugs import heading_slugs, render_heading_open
+from .slugs import heading_shift, heading_slugs, render_heading_open
 from .table import table_block
 from .template import template
 from .banner import BANNERS, banner, render_banner_open, render_banner_close
@@ -261,21 +261,55 @@ def _plain_text(children):
             out.append(_plain_text(t.children))
     return ''.join(out)
 
+def _code_terms(tokens):
+    """Every inline code span in the doc, deduped case-insensitively and
+    filtered to short, identifier-like tokens — the words a modder actually
+    types into search (`imagebutton`, `ATL`, `dissolve`), not a paragraph's
+    worth of literal text or a whole fenced code block. Fenced blocks are
+    deliberately excluded: their content is code to read, not a term to look
+    up, and indexing every token inside one would bury real matches in noise.
+    """
+    seen = set()
+    terms = []
+    for token in tokens:
+        if token.type != 'inline' or not token.children:
+            continue
+        for child in token.children:
+            if child.type != 'code_inline':
+                continue
+            text = child.content.strip()
+            if not (1 < len(text) <= 40) or '\n' in text or text.count(' ') > 3:
+                continue
+            key = text.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            terms.append(text)
+    return terms
+
+
 def outline(src):
-    """Structured headings for the search index: the doc title (h1) plus every
-    h2/h3 with the same slug the renderer assigns, so anchors line up."""
+    """Structured content for the search index: the doc title (h1), every
+    h2/h3 with the same slug the renderer assigns (so anchors line up), and
+    every distinct inline code term the doc contains."""
     title = ''
     headings = []
 
     tokens = MD.parse(src)
     slugs = heading_slugs(tokens)
+    # A uniform shift never changes a slug (see heading_shift's docstring),
+    # so this only affects which levels count as "h2/h3" below — the same
+    # promotion the renderer applies, kept in step so a heading that reads
+    # as an h2 on the page is also indexed as one.
+    shift = heading_shift(tokens)
 
     for idx, token in enumerate(tokens):
         if token.type != 'heading_open':
             continue
         inline = tokens[idx + 1]
         text = _plain_text(inline.children)
-        level = int(token.tag[1])
+        raw_level = int(token.tag[1])
+        level = raw_level if raw_level == 1 else raw_level - shift
         if level == 1:
             title = text
         elif level in (2, 3):
@@ -285,7 +319,7 @@ def outline(src):
                 'level': level,
             })
 
-    return {'title': title, 'headings': headings}
+    return {'title': title, 'headings': headings, 'code_terms': _code_terms(tokens)}
 
 
 def render(src):
@@ -298,11 +332,17 @@ def render(src):
 
     tokens = MD.parse(src)
     slugs = heading_slugs(tokens)
+    # Independent of the shift MD.render(src) below applies to its own,
+    # separately-parsed tokens — same source, so the same result — kept in
+    # step so the sidebar TOC's indent class matches the tag actually
+    # rendered on the page.
+    shift = heading_shift(tokens)
 
     for idx, token in enumerate(tokens):
         if token.type == 'heading_open':
             inline = tokens[idx + 1]
-            if int(token.tag[1]) == 1:
+            raw_level = int(token.tag[1])
+            if raw_level == 1:
                 title = _plain_text(inline.children)
             else:
                 # Rendered inline HTML (not raw source), so *emphasis* and
@@ -310,6 +350,6 @@ def render(src):
                 # exactly as they do in the heading itself, not as literal
                 # markdown syntax characters.
                 heading_html = MD.renderer.renderInline(inline.children, MD.options, {})
-                nav += f'<li class="{(token.tag)}"><a href="#{slugs[idx]}">{heading_html}</a></li>'
+                nav += f'<li class="h{raw_level - shift}"><a href="#{slugs[idx]}">{heading_html}</a></li>'
 
     return title, nav, MD.render(src)

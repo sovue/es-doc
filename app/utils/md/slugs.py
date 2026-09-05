@@ -55,7 +55,46 @@ def heading_slugs(tokens):
 
     return slugs
 
+def heading_shift(tokens):
+    """How far every heading below h1 should be promoted, if the outline
+    skips a level — a document whose headings open at h3 with nothing at h2,
+    say. Left alone, that reaches a screen reader's heading list as a literal
+    level jump (h1 straight to h3), where a sighted reader just sees "the
+    first subsection". Promoting brings the shallowest real heading up to h2
+    and carries everything under it the same distance, so the structure
+    navigated by level matches the one a reader perceives. A document that
+    already starts at h2 — most of them — shifts by zero.
+
+    A uniform shift never changes a slug: heading_slugs() only orders
+    headings by *relative* nesting (`sorted(path)`), and adding the same
+    constant to every level preserves that order exactly. So this only has
+    to run before a level is used for output (the tag name, the TOC's
+    indent class), never before slugs are computed."""
+    levels = [int(t.tag[1]) for t in tokens if t.type == 'heading_open' and t.tag != 'h1']
+    return max(0, min(levels) - 2) if levels else 0
+
+
+def _promote_headings(tokens):
+    """Apply heading_shift() directly to the token stream, once per render
+    pass: both the opening and closing tag of every non-h1 heading, so the
+    default close-tag renderer (which reads token.tag fresh, independent of
+    this rule) emits a matching pair."""
+    shift = heading_shift(tokens)
+    if shift:
+        for token in tokens:
+            if token.type in ('heading_open', 'heading_close') and token.tag != 'h1':
+                token.tag = f'h{int(token.tag[1]) - shift}'
+    return shift
+
+
 def render_heading_open(self, tokens, idx, options, env):
+    # Runs once per document: markdown-it hands every render rule the same
+    # `env` dict for one pass, so the first heading in the doc does the
+    # promotion for all of them and the rest see it already applied.
+    if not env.get('headings_promoted'):
+        _promote_headings(tokens)
+        env['headings_promoted'] = True
+
     token = tokens[idx]
     inline = tokens[idx + 1]
 
@@ -69,5 +108,13 @@ def render_heading_open(self, tokens, idx, options, env):
 
     return (
         f'<{token.tag} id="{slug}" class="heading">\n'
-        f'<a href="#{slug}" title="Получить ссылку на заголовок &#34;{inline.content}&#34;..." class="anchor">#</a>'
+        # `aria-hidden` + `tabindex="-1"`: this glyph sits *inside* the
+        # heading element, so without them a screen reader announces the
+        # heading itself as "#Заголовок" — the anchor's own text became part
+        # of the heading's name. Mouse users still see and click it exactly
+        # as before; a keyboard user reaches the same permalink through the
+        # heading's own id, the way "copy link to heading" works everywhere
+        # else it's implemented this way (GitHub, MDN).
+        f'<a href="#{slug}" title="Получить ссылку на заголовок &#34;{inline.content}&#34;..." '
+        f'class="anchor" aria-hidden="true" tabindex="-1">#</a>'
     )
