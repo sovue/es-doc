@@ -27,7 +27,7 @@
 
 .wp-prose p {
     margin: 1em 0;
-    line-height: 1.7;
+    line-height: var(--lh-prose);
     color: var(--text);
 }
 
@@ -41,22 +41,22 @@
 
 .wp-section-note {
     margin: -4px 0 28px;
-    font-size: 0.9rem;
-    line-height: 1.6;
+    font-size: var(--fs-ui);
+    line-height: var(--lh-prose);
     color: var(--text-soft);
 }
 
 /* How to drive the previews — a quiet aside under the usage samples, not a
    callout box: it explains the page's controls, not the subject. */
 .wp-hint {
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     color: var(--text-soft);
 }
 
 /* Attribution under a community warper. The name above it stays the copy
    button; this line is the only place the contributor is credited. */
 .wp-cell-by {
-    font-size: 0.8rem;
+    font-size: var(--fs-label);
     color: var(--text-soft);
 }
 
@@ -131,7 +131,7 @@
 
 .wp-lab-label {
     font-family: var(--font-mono);
-    font-size: 0.7rem;
+    font-size: var(--fs-label);
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -147,7 +147,7 @@
     height: 36px;
     padding: 0 16px;
     font-family: var(--font-sans);
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     font-weight: 600;
     color: var(--accent);
     background: none;
@@ -213,8 +213,8 @@
 .wp-lab-note {
     flex-basis: 100%;
     margin: 0;
-    font-size: 0.8rem;
-    line-height: 1.5;
+    font-size: var(--fs-label);
+    line-height: var(--lh-ui);
     color: var(--text-soft);
 }
 
@@ -271,7 +271,7 @@
 .wp-legend dd {
     margin: 0;
     color: var(--text-soft);
-    line-height: 1.6;
+    line-height: var(--lh-prose);
 }
 
 .wp-legend b {
@@ -306,12 +306,12 @@
 }
 
 .wp-col-name {
-    font-size: 0.8rem;
+    font-size: var(--fs-label);
 }
 
 .wp-col-desc {
-    font-size: 0.8rem;
-    line-height: 1.45;
+    font-size: var(--fs-label);
+    line-height: var(--lh-ui);
     color: var(--text-soft);
 }
 
@@ -325,14 +325,14 @@
 .wp-family {
     margin: 0;
     font-family: var(--font-serif);
-    font-size: 1.25rem;
+    font-size: var(--fs-lead);
     font-weight: 700;
-    line-height: 1.2;
+    line-height: var(--lh-heading);
     color: var(--text);
 }
 
 .wp-formula {
-    font-size: 0.75rem;
+    font-size: var(--fs-label);
 }
 
 /* warpers.js promotes the chip to a copy control; the ring is inset so
@@ -361,8 +361,8 @@
     flex-basis: 100%;
     max-width: 62ch;
     margin: 10px 0 0;
-    font-size: 0.85rem;
-    line-height: 1.55;
+    font-size: var(--fs-ui);
+    line-height: var(--lh-ui);
     color: var(--text-soft);
 }
 
@@ -423,7 +423,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     font-family: var(--font-mono);
-    font-size: 1rem;
+    font-size: var(--fs-body);
     color: var(--text);
 }
 
@@ -459,8 +459,8 @@
 }
 
 .wp-cell-desc {
-    font-size: 0.85rem;
-    line-height: 1.55;
+    font-size: var(--fs-ui);
+    line-height: var(--lh-ui);
     color: var(--text-soft);
 }
 

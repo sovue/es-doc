@@ -154,6 +154,29 @@ Every value that changes with the theme is one `light-dark(day, night)` pair in 
 
 The toggle also sets `color-scheme` on the root, which is both what `light-dark()` reads and what the browser paints its own surfaces from, so forcing a theme now takes the scrollbars, form controls and caret with it instead of leaving them on the OS preference.
 
+### Leading
+
+Four steps, for the same reason the sizes have nine: thirteen raw values were
+doing four jobs, and 1.5, 1.55 and 1.6 sat inside one pixel of each other.
+
+| Token | Value | Role |
+| --- | --- | --- |
+| `--lh-flat` | `1` | Glyphs and icons, where the line box is the glyph |
+| `--lh-heading` | `1.35` | Every heading and title-shaped thing |
+| `--lh-ui` | `1.5` | Dense chrome, table cells, short descriptions |
+| `--lh-prose` | `1.7` | Anything read at length |
+
+**The Cyrillic-Leading Rule.** Headings led at 1.2 until it was measured: PT
+Serif 700 at 38.4px has a 51px font box, and a 1.2 line box is 46px, so two-line
+headings overlapped their own em boxes. Russian exposes what Latin hides — Ё and
+Й carry marks above cap height while у, р, ц, щ and д descend, which left 2.5px
+between one line’s descenders and the next line’s diaereses. Leading on this
+site is budgeted for Cyrillic, not for a ratio borrowed from Latin setting.
+
+**The Hyphenation Rule.** Prose sets `hyphens: auto`, and `lang="ru"` on the
+document is what makes it work. At 375px a Russian paragraph runs about 30
+characters a line, far under the 45 the eye wants, and the body size cannot
+come down to meet it. Hyphenation is the only lever left.
 ### Named Rules
 **The Galstuk Rule.** Pioneer red appears on ≤10% of any screen. Its rarity is the point; a whole sidebar or a full row of red breaks it. Emphasis inside a red-tinted surface leans on weight, not more red.
 
@@ -169,16 +192,36 @@ The toggle also sets `color-scheme` on the root, which is both what `light-dark(
 
 **Display / Heading Font:** PT Serif (with Georgia, "Times New Roman", serif)
 **Body Font:** Inter (with system-ui, -apple-system, "Segoe UI", sans-serif)
-**Label / Mono Font:** Consolas ("Courier New", monospace)
+**Label / Mono Font:** ui-monospace / SF Mono / Consolas ("Courier New", monospace)
 
 Both webfonts are self-hosted, subset to Cyrillic + Latin, and served same-origin with `font-display: swap` to avoid a render-blocking third-party request. **Character:** PT Serif gives headings and pull-quotes an editorial, hand-set warmth; Inter keeps the running text and dense UI neutral and legible; Consolas marks anything structural or literal (wordmark, section labels, code).
 
-### Hierarchy
-- **Display** (PT Serif 700, `clamp(1.85rem, 4.5vw, 2.8rem)`, lh 1.15, tracking -0.01em): Landing/home and error page titles only.
-- **Headline** (PT Serif 700, `2.4rem`, lh 1.2): Doc page H1, with a 2px bottom border.
-- **Title** (PT Serif 700, `1.8rem`, lh 1.2): Doc page H2 (1px bottom border) and the sidebar document title.
-- **Body** (Inter 400/600, `1rem`, lh 1.7): Paragraphs, section names (600), everything the user reads at length. Prose capped at 72ch on doc pages.
-- **Label** (Consolas 600, `0.75rem`, tracking 0.1em, UPPERCASE): Section-directory headings, badges, author social links, the raw-source link. Signals meta/structure, not content.
+### The Scale
+
+Nine steps, and every `font-size` on the site is one of them, reached through
+its token rather than retyped. Two steps are fluid; the rest are fixed. No two
+steps sit closer than 2px, because a difference under that is not a hierarchy —
+it is a rounding error, and the site carried twenty-six sizes before this
+was true (0.9rem, 0.925rem and 0.95rem all did the same job, 0.8px apart).
+
+| Token | Value | Face / weight | Role |
+| --- | --- | --- | --- |
+| `--fs-display` | `clamp(1.85rem, 4.5vw, 2.8rem)` | PT Serif 700, tracking -0.01em | Home and error page titles only |
+| `--fs-page-title` | `clamp(1.6rem, 3.5vw, 2.2rem)` | PT Serif 700 | Section page titles (`/resources`, `/authors`, …) |
+| `--fs-headline` | `2.4rem` | PT Serif 700 | Article H1, with a 2px bottom border |
+| `--fs-title` | `1.8rem` | PT Serif 700 | Article H2, with a 1px bottom border |
+| `--fs-subtitle` | `1.4rem` | PT Serif 700 | Article H3, and H2 once the viewport is narrow |
+| `--fs-lead` | `1.25rem` | PT Serif 700 / Inter 600 | Article H4; group and card titles: resource groups, the next-article card, warper families; the sidebar document title, which is wayfinding rather than a headline |
+| `--fs-body` | `1rem` | Inter 400/600 | Prose, section names (600), everything read at length. Capped at 72ch on article pages. **The reading floor — nothing prose-shaped goes below it.** |
+| `--fs-ui` | `0.875rem` | Inter 400/600 | Dense chrome, table bodies, and secondary prose that is genuinely secondary: hatnotes, footnote lists, banner bodies |
+| `--fs-label` | `0.75rem` | Consolas 600, tracking 0.1em, UPPERCASE | Section-directory headings, badges, social links, the raw-source link, keyboard hints, flags. Signals meta and structure, never content. |
+
+**Two sanctioned exceptions**, both sizing a glyph rather than setting a text
+role, and both allowed to stay literal: `.artist-monogram` at `2.6rem` is an
+initial drawn to fill its avatar circle, and `.fb-specimen-lg` at `1.7rem` is
+the font specimen, where the size is the thing being shown. Relative `em`
+sizes (`.ref`, `.ref-back`, `.res-usage`) are also off the ramp on purpose:
+they follow whatever they are nested in.
 
 ### Named Rules
 **The Serif-Carries-Warmth Rule.** Headings are ink-colored, not accent-colored. PT Serif carries the warmth so pioneer red stays a spotlight (see the Galstuk Rule). A page full of red headings is drift.

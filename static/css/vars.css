@@ -96,11 +96,64 @@
     --radius-block: 12px;  /* code blocks and images */
     --shadow-soft: 0 2px 12px rgba(43, 31, 22, 0.06);
     --shadow-modal: 0 16px 48px rgba(43, 31, 22, 0.14);
+    /* The edge shadow on a horizontally-scrollable panel that still has more
+       content past it — a code block's clipped line, the mobile TOC's
+       overflowing strip. Same recipe as the two shadows above: ink at low
+       alpha by day, plain black at night. */
+    --fade-shadow: rgba(43, 31, 22, 0.15);
 
     /* ── Type families (DESIGN.md §03) ────────────────────── */
     --font-serif: "PT Serif", Georgia, "Times New Roman", serif;
     --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-    --font-mono: Consolas, "Courier New", monospace;
+    /* Consolas ships with Windows and Office only. Every macOS and iOS
+       reader used to fall through to Courier New, a thin typewriter face
+       that renders the Label role 9% wider and much lighter than intended
+       — and the Label role carries 38 selectors. ui-monospace picks up SF
+       Mono on Apple platforms and Cascadia/Consolas elsewhere, so the one
+       role with no webfont at least gets a comparable face everywhere. */
+    --font-mono: ui-monospace, "SF Mono", Consolas, "Courier New", monospace;
+
+    /* ── Type scale (DESIGN.md §03) ─────────────────────────
+       Seven fixed steps and two fluid ones, and every size on the site is
+       one of them. It used to be twenty-six: the ramp documented five and
+       the other twenty-one were whatever the page needed the day it was
+       written — which is how one site ends up with 0.9rem, 0.925rem and
+       0.95rem all doing the same job 0.8px apart. Nothing separates two
+       steps by less than 2px now, because a difference smaller than that
+       is not a hierarchy, it is a rounding error the reader pays for.
+
+       The bottom three carry almost everything: --fs-body for prose,
+       --fs-ui for chrome and secondary prose, --fs-label for anything
+       small, uppercase and mono. Reach further up only where a real
+       heading role starts. Two sizes deliberately sit off this ramp and
+       are named in DESIGN.md: the artist monogram and the font specimen,
+       both of which size a glyph rather than set a text role. */
+    --fs-display: clamp(1.85rem, 4.5vw, 2.8rem);   /* home + error titles */
+    --fs-page-title: clamp(1.6rem, 3.5vw, 2.2rem); /* section page titles */
+    --fs-headline: 2.4rem;    /* article H1 */
+    --fs-title: 1.8rem;       /* article H2, sidebar document title */
+    --fs-subtitle: 1.4rem;    /* H3, and H2 once the viewport is narrow */
+    --fs-lead: 1.25rem;       /* group and card titles */
+    --fs-body: 1rem;          /* prose — the reading floor, never smaller */
+    --fs-ui: 0.875rem;        /* dense chrome, tables, secondary prose */
+    --fs-label: 0.75rem;      /* uppercase mono labels, badges, micro chrome */
+
+    /* ── Leading ─────────────────────────────────────────
+       The same treatment the sizes got, for the same reason: thirteen raw
+       values doing four jobs, with 1.5, 1.55 and 1.6 landing inside a single
+       pixel of each other at body size.
+
+       --lh-heading is 1.35 and not the 1.2 that stood here, because this
+       site is written in Russian. PT Serif 700 at 38.4px has a font box of
+       40 ascent + 11 descent = 51px; a 1.2 line box is 46px, so consecutive
+       heading lines overlapped their own em boxes. Cyrillic makes that
+       visible where Latin hides it — Ё and Й carry marks above cap height
+       while у, р, ц, щ and д descend, so a two-line heading left 2.5px
+       between one line’s descenders and the next line’s diaereses. */
+    --lh-flat: 1;       /* glyphs and icons, where the box is the glyph */
+    --lh-heading: 1.35; /* every heading and title-shaped thing */
+    --lh-ui: 1.5;       /* dense chrome, table cells, short descriptions */
+    --lh-prose: 1.7;    /* anything read at length */
 
     /* One focus ring for the site: 2px of pioneer red, the width and colour
        repeated at 37 call sites before it became a token. Offsets stay local —
@@ -248,6 +301,7 @@
         /* Warm-tint shadows collapse to near-black depth at night. */
         --shadow-soft: 0 2px 12px light-dark(rgba(43, 31, 22, 0.06), rgba(0, 0, 0, 0.35));
         --shadow-modal: 0 16px 48px light-dark(rgba(43, 31, 22, 0.14), rgba(0, 0, 0, 0.5));
+        --fade-shadow: light-dark(rgba(43, 31, 22, 0.15), rgba(0, 0, 0, 0.35));
         --selection-bg: light-dark(var(--accent-muted), var(--accent));
         --selection-text: light-dark(var(--text), var(--bg));
         --warning: light-dark(#A81824, #F46974); /* clears AA on the gradient's strongest band */
