@@ -50,7 +50,7 @@
             </div>
 
             {% if view.mode == 'code' %}
-            <pre class="fb-code">{{ view.gutter|safe }}<span class="code-scroll"><code>{{ view.code|safe }}</code></span></pre>
+            <pre class="fb-code">{{ view.gutter|safe }}<span class="code-scroll" tabindex="0"><code>{{ view.code|safe }}</code></span></pre>
 
             {% elif view.mode == 'image' %}
             <img class="fb-media" src="{{ raw }}" alt="{{ name }}" decoding="async">

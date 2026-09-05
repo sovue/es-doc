@@ -133,6 +133,43 @@ pre {
        internally instead of stretching the panel. */
     min-width: 0;
     flex: 1 1 auto;
+
+    /* Keyboard focus on what used to be silent: this box has no visible
+       affordance of its own, so the ring is the only sign a keyboard user
+       has actually reached it (see the `tabindex` in lines.py for why it's
+       focusable at all). */
+    outline-offset: -2px;
+}
+
+.code-scroll:focus-visible {
+    outline: var(--focus-ring);
+}
+
+/* A clipped line used to give no sign of itself: the gutter numbers every
+   row, so a long line just ended at the panel's edge exactly like a short
+   one, and the only way to learn there was more was to already suspect it
+   and drag right. Two layers do the telling: one shadow pinned to the
+   panel's own right edge (`scroll` — stays put as the content moves), and
+   one the same color as the panel pinned to the *content's* right edge
+   (`local` — travels with the content), which slides over the shadow and
+   erases it exactly when there is nothing left to scroll to. A block that
+   already fits shows neither: the content-edge layer starts already at the
+   visible edge, with no shadow behind it to uncover. */
+.code-scroll {
+    background:
+        linear-gradient(to left, transparent, var(--code-bg) 24px) 100% 0 / 24px 100% no-repeat local,
+        linear-gradient(to left, var(--fade-shadow), transparent 24px) 100% 0 / 24px 100% no-repeat scroll,
+        var(--code-bg);
+}
+
+/* Decoration only, and the one axis this project already turns off in
+   reduced motion isn't relevant here — there's nothing moving on its own —
+   but a shadow of this kind is still worth skipping for anyone who has
+   turned off transparency effects at the OS level. */
+@media (prefers-contrast: more) {
+    .code-scroll {
+        background: var(--code-bg);
+    }
 }
 
 .code-block--numbered pre {

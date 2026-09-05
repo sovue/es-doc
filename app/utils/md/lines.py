@@ -38,8 +38,17 @@ def split_lines(code_html):
 
 def scroll_box(code_html, lang_class=''):
     """The code column: everything that scrolls sideways, and nothing else. The
-    gutter is deliberately not in here (see the module docstring)."""
-    return f'<span class="code-scroll"><code{lang_class}>{code_html}</code></span>'
+    gutter is deliberately not in here (see the module docstring).
+
+    `tabindex="0"` on a plain `<span>` looks unusual, but the alternative was
+    worse: an `overflow-x: auto` box with nothing focusable inside it (the
+    code itself isn't a control) is reachable by mouse or trackpad only —
+    Tab skips straight over it, and a keyboard-only reader has no way to
+    scroll to the rest of a clipped line at all. This is the same fix
+    browsers ship on `<pre>` by default; it's needed here because the
+    scrolling lives on `.code-scroll`, not on `<pre>` itself (see the module
+    docstring for why)."""
+    return f'<span class="code-scroll" tabindex="0"><code{lang_class}>{code_html}</code></span>'
 
 
 def gutter(count):
