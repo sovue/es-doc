@@ -55,7 +55,7 @@
 .page-eyebrow {
     margin: 0 0 14px;
     font-family: var(--font-mono);
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -71,7 +71,7 @@
     gap: 6px;
     margin: 0 0 14px;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: var(--fs-label);
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -94,21 +94,21 @@
 .page-title {
     margin: 0;
     font-family: var(--font-serif);
-    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    font-size: var(--fs-page-title);
     font-weight: 700;
-    line-height: 1.15;
+    line-height: var(--lh-heading);
     color: var(--text);
     letter-spacing: -0.01em;
 }
 
 .page-title--lg {
-    font-size: clamp(1.85rem, 4.5vw, 2.8rem);
+    font-size: var(--fs-display);
 }
 
 .page-lead {
     margin: 18px 0 0;
-    font-size: 1rem;
-    line-height: 1.7;
+    font-size: var(--fs-body);
+    line-height: var(--lh-prose);
     color: var(--text-soft);
     max-width: 55ch;
 }
@@ -138,10 +138,20 @@
    trails past the toggle instead of inflating the gaps between items. */
 .site-nav {
     display: flex;
+    flex-wrap: wrap;
     align-items: stretch;
     gap: 32px;
     padding: 0 48px;
     min-height: 52px;
+
+    /* Fits on one row at any ordinary width, but a fixed 32px gap between
+       four items stops shrinking once the search box (the only item that
+       shrinks at all — .nav-search below) hits zero, and enlarged text at
+       ~150%+ needed 8px this row didn't have. Wrap is the WCAG 1.4.10
+       answer to that: the last item that doesn't fit drops to a second
+       row instead of pushing past the viewport edge. Ordinary widths never
+       reach the wrap point, so this is inert until reflow actually needs
+       it. */
 }
 
 .nav-logo {
@@ -150,7 +160,7 @@
     gap: 9px;
     font-family: var(--font-mono);
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: var(--fs-ui);
     letter-spacing: 0.02em;
     color: var(--accent);
     text-decoration: none;
@@ -196,7 +206,7 @@
     display: flex;
     align-items: center;
     padding-inline: 16px;
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     color: var(--text-soft);
     text-decoration: none;
     white-space: nowrap;
@@ -262,7 +272,7 @@
     background: transparent;
     color: var(--text);
     font-family: inherit;
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     outline: none;
 }
 
@@ -281,8 +291,8 @@
 .nav-search-kbd {
     flex-shrink: 0;
     font-family: var(--font-mono);
-    font-size: 0.7rem;
-    line-height: 1;
+    font-size: var(--fs-label);
+    line-height: var(--lh-flat);
     color: var(--text-soft);
     border: 1px solid var(--border);
     border-radius: var(--radius-xs);
@@ -313,7 +323,7 @@
 .nav-search-option {
     padding: 8px 10px;
     border-radius: var(--radius-sm);
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     color: var(--text);
     cursor: pointer;
     white-space: nowrap;
@@ -346,7 +356,7 @@
 
 .nav-search-empty {
     padding: 10px;
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     color: var(--text-soft);
 }
 
@@ -356,7 +366,7 @@
     padding: 4px 6px 2px;
     border-top: 1px solid var(--border);
     font-family: var(--font-mono);
-    font-size: 0.7rem;
+    font-size: var(--fs-label);
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -483,7 +493,7 @@
 .site-footer {
     padding: 20px 48px;
     border-top: 1px solid var(--border);
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     color: var(--text-soft);
 }
 
@@ -649,7 +659,7 @@ a.section-row:focus-visible {
 }
 
 .section-name {
-    font-size: 1rem;
+    font-size: var(--fs-body);
     font-weight: 600;
     color: var(--text);
     min-width: 160px;
@@ -661,7 +671,7 @@ a.section-row:focus-visible {
 }
 
 .section-desc {
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     color: var(--text-soft);
     flex: 1;
     overflow: hidden;
@@ -705,7 +715,7 @@ a.section-row:focus-visible {
     padding: 18px 0 6px;
 
     font-family: var(--font-mono);
-    font-size: 0.7rem;
+    font-size: var(--fs-label);
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -775,7 +785,7 @@ a.section-row:focus-visible {
    This also fixes ≤400px, where .section-desc is display: none site-wide and
    every arrow was sliding in next to its label. */
 .section-arrow {
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     color: var(--accent);
     flex-shrink: 0;
     margin-left: auto;
@@ -801,7 +811,7 @@ a.section-row:focus-visible .section-arrow {
 }
 
 .section-wip-badge {
-    font-size: 0.75rem;
+    font-size: var(--fs-label);
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -817,7 +827,7 @@ a.section-row:focus-visible .section-arrow {
 .authors-list-label {
     margin: 0 0 20px;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: var(--fs-label);
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -869,16 +879,16 @@ a.section-row:focus-visible .section-arrow {
 }
 
 .author-name {
-    font-size: 1rem;
+    font-size: var(--fs-body);
     font-weight: 600;
     color: var(--text);
-    line-height: 1.3;
+    line-height: var(--lh-heading);
 }
 
 .author-role {
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     color: var(--text-soft);
-    line-height: 1.4;
+    line-height: var(--lh-ui);
 }
 
 .author-socials {
@@ -889,10 +899,10 @@ a.section-row:focus-visible .section-arrow {
     flex-wrap: wrap;
     gap: 0 14px;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: var(--fs-label);
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    line-height: 1;
+    line-height: var(--lh-flat);
 }
 
 .author-socials li {
@@ -942,7 +952,7 @@ a.section-row:focus-visible .section-arrow {
     height: 36px;
     padding: 0 12px;
     font-family: var(--font-sans);
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     color: var(--text);
     background: var(--input-bg);
     border: 1px solid var(--border);
@@ -976,7 +986,7 @@ a.section-row:focus-visible .section-arrow {
 .filter-count {
     margin: 0;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: var(--fs-label);
     letter-spacing: 0.04em;
     color: var(--text-soft);
 }
@@ -1011,9 +1021,9 @@ a.section-row:focus-visible .section-arrow {
 .lit-row {
     display: block;
     padding: 14px 0;
-    font-size: 1rem;
+    font-size: var(--fs-body);
     color: var(--text);
-    line-height: 1.5;
+    line-height: var(--lh-ui);
 }
 
 /* Linked entries follow the body-link convention (accent red, underline
@@ -1040,7 +1050,7 @@ a.section-row:focus-visible .section-arrow {
 
 .gh-contributors-status {
     margin: 0 0 12px;
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     color: var(--text-soft);
 }
 
@@ -1110,9 +1120,9 @@ a.section-row:focus-visible .section-arrow {
 .thanks-list > li {
     border-bottom: 1px solid var(--border);
     padding: 12px 0;
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     color: var(--text-soft);
-    line-height: 1.6;
+    line-height: var(--lh-prose);
 }
 
 .thanks-list a {
@@ -1281,8 +1291,30 @@ a.section-row:focus-visible .section-arrow {
         height: 34px;
     }
 
+    /* Used to be display: none at this width — 8 bare category names with
+       zero explanation is exactly the "confusing home page" a first-time
+       visitor on a phone (the likeliest way to arrive at all: a link from
+       Discord or VK, not a desktop bookmark) never gets past. The name and
+       arrow keep their row (order: 0 puts the arrow — last in the markup —
+       back next to the name instead of after where the description used to
+       sit); the description wraps onto its own full-width line below,
+       instead of being hidden or cut with an ellipsis that would have
+       eaten the actual explanation. */
+    .section-row {
+        flex-wrap: wrap;
+        row-gap: 2px;
+    }
+
+    .section-arrow {
+        order: 0;
+    }
+
     .section-desc {
-        display: none;
+        order: 1;
+        flex-basis: 100%;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
     }
 
     .author-row {

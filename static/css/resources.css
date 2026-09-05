@@ -20,7 +20,7 @@
 .res-tab {
     padding: 12px 2px;
     margin-right: 28px;
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     font-weight: 600;
     color: var(--text-soft);
     text-decoration: none;
@@ -62,7 +62,7 @@
     display: inline-block;
     padding: 10px 1px;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: var(--fs-label);
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -118,7 +118,7 @@
 
 .res-count {
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: var(--fs-label);
     font-weight: 400;
     color: var(--text-soft);
     flex-shrink: 0;
@@ -151,7 +151,7 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     color: var(--text-soft);
     cursor: pointer;
     user-select: none;
@@ -272,7 +272,7 @@
 .res-nowplaying-name {
     min-width: 0;
     font-family: var(--font-mono);
-    font-size: 0.8rem;
+    font-size: var(--fs-label);
     font-weight: 600;
     color: var(--text);
     overflow: hidden;
@@ -302,7 +302,7 @@
 
 .res-time {
     font-family: var(--font-mono);
-    font-size: 0.7rem;
+    font-size: var(--fs-label);
     color: var(--text-soft);
     font-variant-numeric: tabular-nums;
 }
@@ -400,7 +400,7 @@ a.res-thumb:focus-visible {
 .res-thumb--none {
     border-style: dashed;
     font-family: var(--font-mono);
-    font-size: 0.7rem;
+    font-size: var(--fs-label);
     color: var(--text-soft);
 }
 
@@ -421,15 +421,15 @@ a.res-thumb:focus-visible {
 
 .res-name {
     font-family: var(--font-mono);
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     font-weight: 600;
     color: var(--text);
     overflow-wrap: break-word;
 }
 
 .res-desc {
-    font-size: 0.875rem;
-    line-height: 1.5;
+    font-size: var(--fs-ui);
+    line-height: var(--lh-ui);
     color: var(--text-soft);
 }
 
@@ -442,7 +442,7 @@ a.res-thumb:focus-visible {
     border: 1px solid var(--border);
     border-radius: var(--radius-xs);
     font-family: var(--font-mono);
-    font-size: 0.7rem;
+    font-size: var(--fs-label);
     font-weight: 400;
     letter-spacing: 0.04em;
     color: var(--text-soft);
@@ -466,7 +466,7 @@ body:not(.nsfw-ok) .res-row[data-nsfw]:not(.res-revealed) a.res-thumb::after {
     align-items: center;
     justify-content: center;
     font-family: var(--font-mono);
-    font-size: 0.8rem;
+    font-size: var(--fs-label);
     font-weight: 600;
     letter-spacing: 0.08em;
     color: var(--text);
@@ -478,7 +478,7 @@ body:not(.nsfw-ok) .res-row[data-nsfw]:not(.res-revealed) a.res-thumb::after {
 
 .res-file {
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: var(--fs-label);
     color: var(--text-soft);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -635,7 +635,7 @@ a.res-file:focus-visible {
     margin: 0 1px;
     border-radius: var(--radius-xs);
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: var(--fs-label);
     color: var(--text-soft);
 }
 
@@ -657,7 +657,7 @@ a.res-file:focus-visible {
 .res-jump a {
     display: inline-block;
     padding-block: 6px;
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     font-weight: 600;
     color: var(--text-soft);
     text-decoration: none;
@@ -700,7 +700,7 @@ a.res-file:focus-visible {
 
 .res-jump code {
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: var(--fs-label);
 }
 
 /* Jump-nav anchors land on the h2 (it carries the id) — keep it clear of
@@ -719,9 +719,9 @@ a.res-file:focus-visible {
     gap: 12px;
     margin: 40px 0 10px;
     font-family: var(--font-serif);
-    font-size: 1.25rem;
+    font-size: var(--fs-lead);
     font-weight: 700;
-    line-height: 1.2;
+    line-height: var(--lh-heading);
     color: var(--text);
 }
 
@@ -731,7 +731,7 @@ a.res-file:focus-visible {
 
 .res-group-code {
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: var(--fs-label);
     font-weight: 400;
     color: var(--text-soft);
     border: 1px solid var(--border);
@@ -784,7 +784,7 @@ a.res-file:focus-visible {
     flex: 1;
     min-width: 0;
     font-family: var(--font-mono);
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     font-weight: 600;
     color: var(--text);
     overflow: hidden;
@@ -794,7 +794,7 @@ a.res-file:focus-visible {
 
 .res-lightbox-raw {
     flex-shrink: 0;
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     color: var(--accent);
     text-decoration: none;
 }
@@ -889,7 +889,7 @@ a.res-file:focus-visible {
     content: '›' / '';
     margin: 0 8px;
     color: var(--text-soft);
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
 }
 
 .fb-crumbs a {
@@ -916,7 +916,7 @@ a.res-file:focus-visible {
 
 .fb-stats {
     margin-left: auto;
-    font-size: 0.75rem;
+    font-size: var(--fs-label);
     color: var(--text-soft);
 }
 
@@ -963,7 +963,7 @@ a.res-file:focus-visible {
     padding: 0 10px;
     gap: 6px;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: var(--fs-label);
 }
 
 .res-copy--label span {
@@ -987,7 +987,7 @@ a.res-file:focus-visible {
 }
 
 .fb-action {
-    font-size: 0.875rem;
+    font-size: var(--fs-ui);
     color: var(--accent);
     text-decoration: none;
 }
@@ -1011,8 +1011,8 @@ a.res-file:focus-visible {
     border: 1px solid var(--border);
     border-radius: var(--radius-block);
     font-family: var(--font-mono);
-    font-size: 0.85rem;
-    line-height: 1.55;
+    font-size: var(--fs-ui);
+    line-height: var(--lh-ui);
 }
 
 .fb-code {
@@ -1137,7 +1137,7 @@ video.fb-media {
 
 .fb-specimen p {
     margin: 0;
-    line-height: 1.6;
+    line-height: var(--lh-prose);
 }
 
 .fb-specimen p + p {
@@ -1163,7 +1163,7 @@ video.fb-media {
 
 .res-empty p {
     margin: 0;
-    line-height: 1.7;
+    line-height: var(--lh-prose);
 }
 
 .res-empty a {
@@ -1191,15 +1191,36 @@ video.fb-media {
 .res-links-title {
     margin: 0;
     font-family: var(--font-serif);
-    font-size: 1.25rem;
+    font-size: var(--fs-lead);
     font-weight: 700;
-    line-height: 1.2;
+    line-height: var(--lh-heading);
 }
 
 .res-links-lead {
     margin: 6px 0 16px;
     max-width: 55ch;
     color: var(--text-soft);
+}
+
+/* This list reuses .section-row/.section-name from the home page's curated
+   "Разделы" index, which assumes a short, hand-written label — nowrap plus
+   an ellipsis is the right call there. A community-contributed link title
+   is neither short nor hand-tuned: "СБОРНИК ЦГ+БГ, СПРАЙТОВ, ВИДЕО И
+   АНИМАЦИЙ. 3 ФРАГМЕНТ" ran the row 533px wide in a 375px column and pushed
+   the whole page 210px into horizontal scroll, and truncating it would
+   have made the "3 ФРАГМЕНТ" the one part an ellipsis ate — exactly the
+   detail that tells two near-identical entries apart. The title *is* the
+   content here, so it wraps instead of hiding. */
+.res-links .section-name {
+    min-width: 0;
+    flex-shrink: 1;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+.res-links .section-row {
+    flex-wrap: wrap;
 }
 
 /* ── Responsive ──────────────────────────────────────────── */
