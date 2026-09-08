@@ -95,6 +95,17 @@
         <main class="content" id="main-content">
             {{ body|safe }}
 
+            {#- Below the article, above the pager: a reader checks how current
+                a modding guide is *after* reading it, when the question is
+                "does this still apply", not before, when it would only be
+                noise between them and the first paragraph. -#}
+            {% if modified %}
+            <p class="doc-modified">
+                Последнее изменение:
+                <time datetime="{{ modified_iso }}">{{ modified }}</time>
+            </p>
+            {% endif %}
+
             {% if prev_doc or next_doc %}
             <nav class="doc-pager" aria-label="Соседние статьи">
                 {#- Previous is the quieter of the two: same row, but small

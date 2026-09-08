@@ -4,6 +4,7 @@ import yaml
 from .config import CONFIG
 from .file import resolve
 from .md import outline
+from .modified import modified_map
 
 
 def _docs_dir():
@@ -11,7 +12,8 @@ def _docs_dir():
 
 
 def build_index():
-    """Scan the docs directory into a list of {slug, title, headings}, ordered
+    """Scan the docs directory into a list of {slug, title, headings,
+    code_terms, modified}, ordered
     by filename. Title falls back to the filename when a doc has no H1, matching
     how the doc page itself titles untitled docs. Built once per cache refresh
     (see app/utils/lifespan.py), not per request.
@@ -20,6 +22,11 @@ def build_index():
     index = []
 
     if docs_dir.is_dir():
+        # One lookup for the whole directory, not one per article — the git
+        # branch of this shells out, and 23 subprocesses per refresh is a
+        # different cost entirely (see modified.py).
+        modified = modified_map(docs_dir)
+
         for path in sorted(docs_dir.glob('*.md')):
             try:
                 data = outline(path.read_text('utf-8'))
@@ -30,6 +37,7 @@ def build_index():
                 'title': data['title'] or path.stem,
                 'headings': data['headings'],
                 'code_terms': data['code_terms'],
+                'modified': modified.get(path.name),
             })
 
     return index
@@ -37,7 +45,7 @@ def build_index():
 
 def build_items(index):
     """Flatten the index into the flat corpus the ranking scores over: one row
-    per doc title, one per h2/h3 heading (carrying its doc's title as context
+    per doc title, one per h2/h3/h4 heading (carrying its doc's title as context
     and the heading's own anchor), and one per distinct inline code term the
     doc contains (context set the same way; no anchor, since a term isn't
     tied to one heading). The code rows are why `imagebutton` or `ATL` finds

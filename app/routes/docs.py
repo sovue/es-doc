@@ -6,6 +6,7 @@ from urllib.parse import quote
 from . import main_router
 from ..utils.config import CONFIG
 from ..utils.docs import flatten_tree
+from ..utils.modified import format_ru
 from ..utils.file import templates, read_text
 from ..utils.md import render
 
@@ -72,9 +73,21 @@ async def page(doc, request: Request):
 
     prev_doc, next_doc = _siblings(doc)
 
+    # Read off the same cached index the tree and search are built from, so
+    # the date refreshes with everything else and costs no disk access here.
+    modified = next(
+        (d['modified'] for d in CONFIG.search_index if d['slug'] == doc),
+        None,
+    )
+
     return templates.TemplateResponse(request, 'doc.html', {
         'title': title or doc, 'body': body, 'nav': nav, 'doc': doc,
         'prev_doc': prev_doc, 'next_doc': next_doc,
+        # Both forms: one for the reader, one for <time datetime> so a machine
+        # reading the page gets an unambiguous date rather than a Russian
+        # month name it would have to parse.
+        'modified': format_ru(modified) if modified else None,
+        'modified_iso': modified.date().isoformat() if modified else None,
         # The whole docs tree, for the collapsed all-articles nav under the
         # page's own table of contents.
         'tree': CONFIG.docs_tree,
