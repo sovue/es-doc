@@ -3,7 +3,8 @@
 {% set page_title = 'ES Doc — Документация по моддингу Бесконечного Лета' %}
 {% set extra_css = ['/static/css/home.css'] %}
 {% set with_contributors_js = true %}
-{% set with_track_js = true %}
+{# No track configured, no player, so no player script either. #}
+{% set with_track_js = track %}
 {% set body_class = 'bg-solid' %}
 
 {% block content %}
@@ -39,11 +40,22 @@
                     autoplays — the button is the only thing that begins it.
 
                     The <audio> ships with native `controls` and track.js
-                    strips them once it has replaced them with the styled row
-                    below, so a reader with no JS still gets a working player
-                    rather than a dead button. -#}
-                <figure class="hero-track">
-                    <figcaption class="hero-track-label">Тема сайта</figcaption>
+                    strips them once it has replaced them with the styled
+                    controls below, so a reader with no JS still gets a working
+                    player rather than a dead button. Everything track.js owns
+                    ships `hidden` for the same reason — a seek bar that cannot
+                    seek is worse than no seek bar.
+
+                    The group's name is on `aria-label`, not on a visible
+                    caption: the row says what it is (a play button, an artist,
+                    a title) to anyone who can see it, and the label is there
+                    for anyone who can't.
+
+                    Track and credits come from config.yaml, so a fork that
+                    doesn't have this particular song drops `theme-track.src`
+                    and the player disappears with it. -#}
+                {% if track %}
+                <div class="hero-track" role="group" aria-label="Тема сайта">
 
                     <div class="hero-track-row">
                         <button type="button" class="hero-track-play" hidden
@@ -58,17 +70,47 @@
                         </button>
 
                         <audio class="hero-track-audio"
-                               src="/resource/community/music/progress.ogg"
+                               src="{{ track.src }}"
                                preload="none" controls></audio>
 
                         <p class="hero-track-name">
-                            <span class="hero-track-artist">140 kilograms of sex</span>
-                            <span class="hero-track-title">Progress</span>
+                            {% if track.artist %}<span class="hero-track-artist">{{ track.artist }}</span>{% endif %}
+                            <span class="hero-track-title">{{ track.title or track.src }}</span>
                         </p>
+
+                        {#- Mute is a button rather than a slider position, so
+                            silencing the track and coming back to it does not
+                            cost the reader their volume setting. -#}
+                        <div class="hero-track-volume" hidden>
+                            <button type="button" class="hero-track-mute" aria-label="Выключить звук">
+                                <svg class="hero-track-icon-loud" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                    <path d="M8.5 2.3 4.9 5.2H2.4a.7.7 0 0 0-.7.7v4.2c0 .4.3.7.7.7h2.5l3.6 2.9a.6.6 0 0 0 1-.5V2.8a.6.6 0 0 0-1-.5Z" fill="currentColor"/>
+                                    <path d="M11.3 5.4a3.4 3.4 0 0 1 0 5.2M13.2 3.4a6 6 0 0 1 0 9.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                                </svg>
+                                <svg class="hero-track-icon-muted" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                    <path d="M8.5 2.3 4.9 5.2H2.4a.7.7 0 0 0-.7.7v4.2c0 .4.3.7.7.7h2.5l3.6 2.9a.6.6 0 0 0 1-.5V2.8a.6.6 0 0 0-1-.5Z" fill="currentColor"/>
+                                    <path d="m11.4 6 3.2 4M14.6 6l-3.2 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                                </svg>
+                            </button>
+
+                            <input type="range" class="hero-track-slider hero-track-vol"
+                                   min="0" max="100" step="1" value="70"
+                                   aria-label="Громкость">
+                        </div>
+                    </div>
+
+                    {#- Disabled until metadata arrives, which `preload="none"`
+                        delays until the first press: a slider whose maximum is
+                        an unknown duration cannot seek anywhere honest. -#}
+                    <div class="hero-track-scrub" hidden>
+                        <input type="range" class="hero-track-slider hero-track-seek"
+                               min="0" max="0" step="0.1" value="0"
+                               aria-label="Перемотка" disabled>
 
                         <span class="hero-track-time" aria-hidden="true"></span>
                     </div>
-                </figure>
+                </div>
+                {% endif %}
 
             </div>
         </section>
