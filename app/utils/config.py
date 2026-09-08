@@ -7,7 +7,6 @@ from .logging import root_logger
 class _ConfigContainer():
 
     _DEFAULT_CONFIG = {
-        'cache-update-delay': 5,
         'assets-path': '',
         'support': [],
         'http-errors': {
@@ -43,7 +42,6 @@ class _ConfigContainer():
         self.config: dict = {}
         self.logger = root_logger.getChild('config')
 
-        self.page_cache = {}
         self.page_last_edited = 0
         # Derived caches refreshed alongside page_cache (see utils/lifespan.py):
         # search_index feeds tooling, search_items is the flat search corpus the
@@ -78,6 +76,12 @@ class _ConfigContainer():
         # at startup (see utils/lifespan/links_cache.py). Same row shape as
         # news: {name, url, note}.
         self.links = []
+
+        # Curated short links: {key: target url}, parsed from redirects.yaml
+        # at startup (see utils/lifespan/redirects_cache.py). Serves
+        # /redirect/<key>/ so a link printed in a readme survives its target
+        # moving.
+        self.redirects = {}
 
         # Reading list, parsed from literature.yaml at startup (see
         # utils/lifespan/literature_cache.py). List of dicts:

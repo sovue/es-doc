@@ -1,6 +1,8 @@
+from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
 
 from . import main_router
+from ..utils.config import CONFIG
 
 router = main_router
 
@@ -51,3 +53,31 @@ for _alias, _target in ALIASES.items():
             methods=['GET'],
             include_in_schema=False,
         )
+
+
+# ── Curated short links: /redirect/<key>/ ────────────────────────────────
+#
+# The aliases above are hard-coded because they are facts about this site's
+# own URL shape. These are the opposite: a table of outbound links kept in
+# the assets repo (redirects.yaml), edited by whoever maintains the content
+# and reloaded without a restart, like every other list the site reads.
+#
+# What it buys is a stable address for a moving target. A key printed in a
+# mod's readme or pasted into a chat — `es-doc.ru/redirect/estool/` — keeps
+# working when the tool moves to a new host, because the fix is one line in
+# a YAML file instead of an edit to every place the old URL was written.
+@router.get('/redirect/{key}', include_in_schema=False)
+@router.get('/redirect/{key}/', include_in_schema=False)
+async def short_link(key: str):
+    target = CONFIG.redirects.get(key.strip().lower())
+
+    if not target:
+        # A styled 404 through the app's own handler, not a bare error: an
+        # unknown key usually means a typo or a link that was retired, and
+        # the error page offers the three ways back that a reader needs.
+        raise HTTPException(404, f'Короткой ссылки "{key}" не существует.')
+
+    # 307, not 308: these targets are expected to move — that is the whole
+    # point of the indirection — so nothing downstream should cache the
+    # current destination as permanent.
+    return RedirectResponse(target, status_code=307)

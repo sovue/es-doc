@@ -9,6 +9,7 @@ from .docs_cache import cache_docs
 from .links_cache import parse_links
 from .literature_cache import parse_literature
 from .news_cache import parse_news
+from .redirects_cache import parse_redirects
 from .refresh import worker_refresh_caches
 from .resources_cache import parse_resources
 from .sprites_cache import parse_sprites, SPRITES_PATH
@@ -55,6 +56,11 @@ async def lifespan(app: FastAPI):
         await asyncio.to_thread(parse_links)
     except Exception:
         logger.exception('Parsing links.yaml failed; the community links section will be empty until restart.')
+
+    try:
+        await asyncio.to_thread(parse_redirects)
+    except Exception:
+        logger.exception('Parsing redirects.yaml failed; /redirect/<key>/ will 404 until restart.')
 
     try:
         await asyncio.to_thread(parse_warpers)
