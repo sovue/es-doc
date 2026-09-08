@@ -3,6 +3,7 @@ import re
 from markdown_it.rules_block import StateBlock
 
 from ..svg import SVG
+from . import containers
 
 # Page-level status banners for articles that aren't finished. Unlike the
 # `:::info` / `:::warning` callouts (template.py), these carry their own
@@ -28,6 +29,13 @@ BANNERS = {
         'часть примеров может больше не работать.',
     ),
 }
+
+# Counted as containers by everything that encloses them, even though a
+# banner keeps its own bounded scan below: from the outside it opens and
+# closes with the same markers as a callout, so an enclosing block has to
+# know not to take a banner's closer for its own.
+containers.register(*BANNERS)
+
 
 def render_banner_open(self, tokens, idx, options, env):
     kind = tokens[idx].meta['kind']

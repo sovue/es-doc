@@ -2,7 +2,11 @@ import re
 
 from markdown_it.rules_block import StateBlock
 
+from . import containers
+
 def template(name: str):
+    containers.register(name)
+
     # Accepts both the strict `:::name` marker and the more common
     # `::: name lead text` form (space after the fence, optional text on the
     # same line, treated as the block's opening paragraph).
@@ -18,24 +22,12 @@ def template(name: str):
 
         lead = (match.group(1) or '').strip()
 
-        # Scan for a closing `:::` on its own line. A missing closer fails
-        # the block entirely (falls back to plain paragraphs/list rendering)
-        # rather than silently swallowing the rest of the document into the
-        # callout box — the raw `:::tip` text left visible is the signal
-        # that something's wrong, easier to spot than a silently mis-scoped
-        # callout.
-        nextLine = startLine + 1
+        # Depth-aware (containers.find_closer): a `:::details` or a second
+        # callout nested in here closes on its own marker, not on this one.
+        # A missing closer fails the block entirely — see find_closer.
+        nextLine = containers.find_closer(state, startLine, endLine)
 
-        while nextLine < endLine:
-            pos = state.bMarks[nextLine] + state.tShift[nextLine]
-            maximum = state.eMarks[nextLine]
-
-            if state.src[pos:maximum].strip() == ':::':
-                break
-
-            nextLine += 1
-
-        if nextLine >= endLine:
+        if nextLine is None:
             return False
 
         if silent:

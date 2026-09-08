@@ -2,6 +2,8 @@ import re
 
 from markdown_it.rules_block import StateBlock
 
+from . import containers
+
 # A collapsible section — native `<details>`/`<summary>`, no JavaScript:
 #
 #   :::details Реализация функции `Snow` в игре
@@ -19,6 +21,8 @@ from markdown_it.rules_block import StateBlock
 # because titles in these docs routinely name a function in `code`.
 OPEN_RE = re.compile(r'^:::\s*details(?:\s+(\S.*))?\s*$')
 
+containers.register('details')
+
 # Shown when the author gives no title. A `<summary>` must never be empty —
 # an empty one collapses to a bare marker with no hit area to click.
 DEFAULT_SUMMARY = 'Подробнее'
@@ -32,19 +36,14 @@ def details(state: StateBlock, startLine: int, endLine: int, silent: bool):
     if not match:
         return False
 
-    # Same rule the callouts follow: a missing closer fails the block outright
-    # rather than swallowing the rest of the document into a collapsed box —
-    # where, unlike a callout, the swallowed text would be *hidden* by default
-    # and the mistake that much easier to miss.
-    nextLine = startLine + 1
+    # Same rule the callouts follow, through the same depth-aware scan: a
+    # missing closer fails the block outright rather than swallowing the rest
+    # of the document into a collapsed box — where, unlike a callout, the
+    # swallowed text would be *hidden* by default and the mistake that much
+    # easier to miss.
+    nextLine = containers.find_closer(state, startLine, endLine)
 
-    while nextLine < endLine:
-        pos = state.bMarks[nextLine] + state.tShift[nextLine]
-        if state.src[pos:state.eMarks[nextLine]].strip() == ':::':
-            break
-        nextLine += 1
-
-    if nextLine >= endLine:
+    if nextLine is None:
         return False
 
     if silent:
