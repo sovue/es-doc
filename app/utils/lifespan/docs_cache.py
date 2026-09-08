@@ -1,15 +1,14 @@
-import re
-
 from ..config import CONFIG
 from ..docs import build_index, build_items, build_tree
-from ..file import read_text
 
 from ..logging import root_logger
 
 logger = root_logger.getChild('lifespan').getChild('docs-cache')
 
-# Periodic refresh lives in refresh.py's worker, which calls cache_docs
-# on every tick alongside the other cache watchers.
+# Refresh is event-driven: refresh.py's file watcher calls this the moment
+# something under docs/ changes on disk, having first cleared
+# CONFIG.page_last_edited so the mtime guard below cannot veto a change the
+# OS already reported.
 
 def cache_docs(silent=False):
     path = CONFIG.docs_path
@@ -29,16 +28,18 @@ def cache_docs(silent=False):
         # Build everything off to the side, then swap with single assignments:
         # this runs in a worker thread while the event loop serves from the
         # old caches, so readers never see a half-rebuilt state.
-        page_cache = {}
-        for file in files:
-            page_cache[file.stem] = re.sub(r'^(#+ )|(- )|(> )|(```\w*)|(:::\w*)|(---)$', '', read_text(file), flags=re.MULTILINE).replace('\n\n', '\n')
-
+        #
+        # A `page_cache` of every article stripped of its markdown used to be
+        # built here as well — a regex pass over the whole corpus on every
+        # refresh, kept in memory, and read by nothing. The one caller that
+        # wants stripped text (`?s` on the doc route) does that strip per
+        # request, on the file it has already opened.
+        #
         # Rebuild the derived caches from the same refresh so /api/search and
         # /docs/ serve from memory instead of re-scanning the docs dir per
         # request. The tree reuses this scan's index rather than scanning again.
         index = build_index()
 
-        CONFIG.page_cache = page_cache
         CONFIG.search_index = index
         # Docs first, resources after: the search endpoint breaks score ties on
         # corpus order, and the dropdown splits the two kinds visually.

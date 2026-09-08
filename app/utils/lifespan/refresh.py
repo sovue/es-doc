@@ -1,4 +1,7 @@
 import asyncio
+from pathlib import Path
+
+from watchfiles import awatch
 
 from ..config import CONFIG
 from ..logging import root_logger
@@ -8,6 +11,7 @@ from .docs_cache import cache_docs
 from .links_cache import parse_links
 from .literature_cache import parse_literature
 from .news_cache import parse_news
+from .redirects_cache import parse_redirects
 from .resources_cache import parse_resources
 from .sprites_cache import parse_sprites
 from .warpers_cache import parse_warpers
@@ -22,7 +26,7 @@ def _assets_root():
 def _resync_search():
     # Rebuilt resource rows must reach the merged search corpus even when no
     # doc changed; forcing the docs cache stale makes the cache_docs pass at
-    # the end of the same worker tick re-merge everything.
+    # the end of the same batch re-merge everything.
     CONFIG.page_last_edited = 0
 
 
@@ -39,73 +43,115 @@ def _refresh_resources():
     _resync_search()
 
 
-# Every startup parse that used to live "until restart" gets a watcher:
-# name → the source files whose mtimes betray a change → the re-parse.
-# Paths are lazy so CONFIG is read at tick time, not import time.
-WATCHERS = [
-    ('sprites.rpy',
-     lambda: [
-         CONFIG.res_path / 'sprites.rpy',
-         # Declares sprites too (parsed by parse_sprites), so it lives in
-         # this watcher rather than the resources one — the sprite re-parse
-         # already chains into a resources re-parse.
-         CONFIG.res_path / 'scenario' / 'zhenya.rpy',
-     ],
-     _refresh_sprites),
-    ('resources',
-     lambda: [
-         CONFIG.res_path / 'resources.rpy',
-         CONFIG.res_path / 'media.rpy',
-         _assets_root() / 'descriptions.yaml',
-         _assets_root() / 'community' / 'resources.rpy',
-         _assets_root() / 'community' / 'sprites.rpy',
-     ],
-     _refresh_resources),
-    ('artists.yaml', lambda: [_assets_root() / 'artists.yaml'], parse_artists),
-    ('news.yaml', lambda: [_assets_root() / 'news.yaml'], parse_news),
-    ('literature.yaml', lambda: [_assets_root() / 'literature.yaml'], parse_literature),
-    # Watched before it exists, like warpers.yaml below: the first link goes
-    # live on the next tick instead of waiting for a restart.
-    ('links.yaml', lambda: [_assets_root() / 'links.yaml'], parse_links),
-    # Watched even though the file doesn't exist yet: _stamp treats a create
-    # like an edit, so the first community warper goes live on the next tick
-    # without a restart.
-    ('warpers.yaml', lambda: [_assets_root() / 'warpers.yaml'], parse_warpers),
-]
+def _refresh_docs():
+    # Unconditional, unlike the plain cache_docs() call this replaced. That
+    # one re-read the directory only when some `*.md` mtime had moved, which
+    # silently excluded every non-markdown file in it — tree.yaml above all.
+    # Editing the tree changed what /docs/ should list and nothing noticed
+    # until the next restart. The watcher already knows a file under docs/
+    # changed, so the mtime scan has nothing left to decide.
+    CONFIG.page_last_edited = 0
+    cache_docs()
 
 
-def _stamp(paths):
-    # Which files exist and when they last changed — a create or delete
-    # changes the tuple just like an edit does.
-    return tuple((str(p), p.stat().st_mtime) for p in paths() if p.exists())
+def _under(directory: Path):
+    """Match a path inside `directory`, at any depth."""
+    directory = directory.resolve()
+    return lambda path: path == directory or directory in path.parents
+
+
+def _one_of(*paths: Path):
+    """Match one of these exact files."""
+    targets = {p.resolve() for p in paths}
+    return lambda path: path in targets
+
+
+def _watchers():
+    """`(name, matches, refresh)` for every cache fed from disk.
+
+    Built at worker start rather than at import, because every path here is
+    read off CONFIG, which is only populated once the config file has been
+    loaded.
+    """
+    assets = _assets_root()
+    res = CONFIG.res_path
+
+    return [
+        ('sprites.rpy', _one_of(
+            res / 'sprites.rpy',
+            # Declares sprites too (parsed by parse_sprites), so it lives in
+            # this watcher rather than the resources one — the sprite re-parse
+            # already chains into a resources re-parse.
+            res / 'scenario' / 'zhenya.rpy',
+        ), _refresh_sprites),
+
+        ('resources', _one_of(
+            res / 'resources.rpy',
+            res / 'media.rpy',
+            assets / 'descriptions.yaml',
+            assets / 'community' / 'resources.rpy',
+            assets / 'community' / 'sprites.rpy',
+        ), _refresh_resources),
+
+        ('artists.yaml', _one_of(assets / 'artists.yaml'), parse_artists),
+        ('news.yaml', _one_of(assets / 'news.yaml'), parse_news),
+        ('literature.yaml', _one_of(assets / 'literature.yaml'), parse_literature),
+        ('links.yaml', _one_of(assets / 'links.yaml'), parse_links),
+        ('redirects.yaml', _one_of(assets / 'redirects.yaml'), parse_redirects),
+        ('warpers.yaml', _one_of(assets / 'warpers.yaml'), parse_warpers),
+
+        # Everything under docs/: the articles themselves, tree.yaml, and the
+        # images they embed. Docs go last in this list on purpose — see the
+        # dispatch loop.
+        ('docs', _under(CONFIG.docs_path), _refresh_docs),
+    ]
 
 
 async def worker_refresh_caches():
-    """One periodic loop for every cache: re-parse a source when its files
-    change on disk, then let cache_docs do its own mtime-driven refresh.
-    Replaces a server restart as the way content edits reach the site."""
-    logger.info('Cache refresh worker started.')
+    """Re-parse a cache the moment the files behind it change on disk.
 
-    stamps = {name: _stamp(paths) for name, paths, _ in WATCHERS}
+    This used to be a polling loop that re-stat'd a fixed list of files once a
+    minute, so an edit was live somewhere between instantly and a minute later,
+    and a file nobody had thought to list was never noticed at all. `awatch`
+    subscribes to the OS instead (ReadDirectoryChangesW, inotify, kqueue), so
+    the cost is one handle rather than a stat per file per tick, and the whole
+    assets tree is covered by watching its root — including files added after
+    this code was written.
 
-    while True:
-        await asyncio.sleep(60 * CONFIG.config.get('cache-update-delay', 1))
+    awatch's own debounce does the coalescing: a `git pull` that rewrites forty
+    articles arrives as one batch, not forty refreshes. Anything that raises is
+    logged and dropped, keeping the previous cache and the watch alive — a
+    malformed YAML saved mid-edit must not take the watcher down with it.
+    """
+    assets = _assets_root()
+    watchers = _watchers()
 
-        for name, paths, refresh in WATCHERS:
-            stamp = _stamp(paths)
-            if stamp == stamps[name]:
-                continue
-            logger.info(f'Change detected in {name}; refreshing its cache...')
-            try:
-                await asyncio.to_thread(refresh)
-                stamps[name] = stamp
-            except Exception:
-                # Keep the old cache and the old stamp: the next tick retries.
-                logger.exception(f'Refreshing {name} failed; keeping the previous cache.')
+    logger.info(f'Cache refresh worker started; watching {assets}')
 
-        # Docs last, so a resources refresh in this same tick is merged into
-        # the search corpus right away (see _resync_search).
-        try:
-            await asyncio.to_thread(cache_docs)
-        except Exception:
-            logger.exception('Docs cache refresh failed; keeping the previous cache.')
+    try:
+        async for batch in awatch(assets, recursive=True):
+            changed = {Path(path).resolve() for _change, path in batch}
+
+            # In declaration order, which puts docs last: a resources re-parse
+            # in this same batch marks the search corpus stale (_resync_search),
+            # and the docs pass is what merges it back in.
+            for name, matches, refresh in watchers:
+                if not any(matches(path) for path in changed):
+                    continue
+
+                logger.info(f'Change detected in {name}; refreshing its cache...')
+
+                try:
+                    await asyncio.to_thread(refresh)
+                except Exception:
+                    logger.exception(f'Refreshing {name} failed; keeping the previous cache.')
+
+    except asyncio.CancelledError:
+        logger.info('Cache refresh worker stopped.')
+        raise
+
+    except Exception:
+        # The watch itself died — an unreadable assets root, a platform
+        # backend failure. Say so loudly: from here on the site serves
+        # whatever it last parsed, and only a restart will change that.
+        logger.exception('File watcher stopped unexpectedly; caches are now frozen until restart.')
