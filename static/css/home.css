@@ -102,9 +102,15 @@
 
 /* ── Contributors strip below page-main ──────────────────── */
 
+/* The credits close the same column the sections list runs in, so they take
+   --column and centre with it — the rule above them then reads as a divider
+   inside that column rather than a line trailing off the left of the screen. */
 .home-contributors {
     padding: 40px 48px 48px;
-    max-width: 760px;
+    max-width: var(--column);
+    margin-inline: auto;
+    width: 100%;
+    box-sizing: border-box;
     border-top: 1px solid var(--border);
 }
 
@@ -114,4 +120,111 @@
     .home-contributors {
         padding: 32px 20px 40px;
     }
+}
+
+/* ── The theme track ──────────────────────────────────────────
+   A quiet row under the hero lead: label, one button, the name, a clock.
+   The site's own music is worth offering and not worth a widget — no
+   waveform, no seek bar, nothing that would compete with the title above
+   it for the first screen.
+
+   `.hero-track-audio` is visible until track.js confirms it can replace
+   the native controls (`.is-enhanced`), so a reader with no JS gets the
+   browser's player instead of a row that does nothing. */
+.hero-track {
+    margin: 28px 0 0;
+}
+
+.hero-track-label {
+    display: block;
+    margin-bottom: 10px;
+
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+}
+
+.hero-track-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hero-track.is-enhanced .hero-track-audio {
+    display: none;
+}
+
+.hero-track-play {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+
+    /* 44px of hit area for a 16px glyph: this is the one control in the hero,
+       and on a phone it sits where a thumb lands. */
+    width: 44px;
+    height: 44px;
+    padding: 0;
+
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    color: var(--accent);
+    cursor: pointer;
+
+    transition: color 0.15s var(--ease-out), border-color 0.15s var(--ease-out),
+                background-color 0.15s var(--ease-out);
+}
+
+.hero-track-play:hover {
+    border-color: var(--accent);
+    background: var(--bg-elevated);
+}
+
+.hero-track-play:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 3px;
+}
+
+/* One button, two glyphs: whichever the press will *do* next. */
+.hero-track-icon-pause,
+.hero-track.is-playing .hero-track-icon-play {
+    display: none;
+}
+
+.hero-track.is-playing .hero-track-icon-pause {
+    display: block;
+}
+
+.hero-track-name {
+    margin: 0;
+    min-width: 0;
+    line-height: var(--lh-ui);
+}
+
+/* Artist above, title below — the title is what a reader is looking for, so
+   it takes the ink and the artist stays a credit. */
+.hero-track-artist {
+    display: block;
+    font-size: var(--fs-label);
+    color: var(--text-soft);
+}
+
+.hero-track-title {
+    display: block;
+    font-size: var(--fs-ui);
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* Empty until the reader presses play: with `preload="none"` the duration is
+   genuinely unknown before then, and a placeholder 0:00 would be a guess. */
+.hero-track-time {
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-variant-numeric: tabular-nums;
+    color: var(--text-soft);
 }

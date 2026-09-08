@@ -26,6 +26,7 @@
     button and makes inline chips copyable. Inert on a page with no code. -#}
 <script src="/static/js/code.js" defer></script>
 {% if with_contributors_js %}<script src="/static/js/contributors.js" defer></script>
+{% endif %}{% if with_track_js %}<script src="/static/js/track.js" defer></script>
 {% endif %}
 {% if active == "docs" or with_docs_js %}<script src="/static/js/docs.js" defer></script>
 {% endif %}{% if with_warpers_js %}<script src="/static/js/warpers.js" defer></script>

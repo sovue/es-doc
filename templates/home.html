@@ -3,6 +3,7 @@
 {% set page_title = 'ES Doc — Документация по моддингу Бесконечного Лета' %}
 {% set extra_css = ['/static/css/home.css'] %}
 {% set with_contributors_js = true %}
+{% set with_track_js = true %}
 {% set body_class = 'bg-solid' %}
 
 {% block content %}
@@ -30,6 +31,44 @@
                     Ищите по разделам через поиск вверху или начните с
                     <a href="/docs/">документации</a>.
                 </p>
+
+                {#- The site's theme, under the hero it scores. `preload="none"`
+                    is load-bearing, not tidiness: the track is 11.8 MB, and
+                    preloading it would cost every visitor a game's worth of
+                    bytes for audio most of them will never start. Nothing
+                    autoplays — the button is the only thing that begins it.
+
+                    The <audio> ships with native `controls` and track.js
+                    strips them once it has replaced them with the styled row
+                    below, so a reader with no JS still gets a working player
+                    rather than a dead button. -#}
+                <figure class="hero-track">
+                    <figcaption class="hero-track-label">Тема сайта</figcaption>
+
+                    <div class="hero-track-row">
+                        <button type="button" class="hero-track-play" hidden
+                                aria-label="Включить тему сайта">
+                            <svg class="hero-track-icon-play" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                <path d="M5 3.4v9.2a.6.6 0 0 0 .92.5l7-4.6a.6.6 0 0 0 0-1l-7-4.6A.6.6 0 0 0 5 3.4Z" fill="currentColor"/>
+                            </svg>
+                            <svg class="hero-track-icon-pause" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                                <rect x="4" y="3" width="3.2" height="10" rx="1" fill="currentColor"/>
+                                <rect x="8.8" y="3" width="3.2" height="10" rx="1" fill="currentColor"/>
+                            </svg>
+                        </button>
+
+                        <audio class="hero-track-audio"
+                               src="/resource/community/music/progress.ogg"
+                               preload="none" controls></audio>
+
+                        <p class="hero-track-name">
+                            <span class="hero-track-artist">140 kilograms of sex</span>
+                            <span class="hero-track-title">Progress</span>
+                        </p>
+
+                        <span class="hero-track-time" aria-hidden="true"></span>
+                    </div>
+                </figure>
 
             </div>
         </section>
