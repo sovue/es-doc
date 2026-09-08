@@ -163,9 +163,9 @@ KIND_LABELS = {
 # text. The Ren'Py lexer is the same one the docs' code fences use.
 VIEW_LANGS = {'.rpy': 'renpy', '.py': 'python', '.json': 'json', '.yaml': 'yaml', '.md': 'markdown'}
 
-# sprites.rpy is 800+ KB — a highlighted DOM that size helps nobody on the
-# target hardware. Bigger files point at raw/download instead.
-VIEW_TEXT_LIMIT = 512 * 1024
+# `file-view-max-bytes`: sprites.rpy is 800+ KB, and a highlighted DOM that
+# size helps nobody on the target hardware. Bigger files point at raw/download
+# instead.
 
 
 def _plural(n, one, few, many):
@@ -192,7 +192,7 @@ def _file_view(target):
     kind = FILE_KINDS.get(target.suffix.lower(), 'other')
 
     if kind in ('code', 'text'):
-        if target.stat().st_size > VIEW_TEXT_LIMIT:
+        if target.stat().st_size > CONFIG.setting('file-view-max-bytes'):
             return {'mode': 'toobig'}
         text = target.read_text('utf-8', errors='replace')
         lang = VIEW_LANGS.get(target.suffix.lower())

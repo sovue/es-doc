@@ -2,12 +2,12 @@ import os, re, time
 from PIL import Image
 
 from ..config import CONFIG
-from ..file import ROOT
 from ..logging import root_logger
 
 logger = root_logger.getChild('lifespan').getChild('sprites-cache')
 
-SPRITES_PATH = ROOT / 'temp' / 'sprites'
+def sprites_path():
+    return CONFIG.cache_path / 'sprites'
 
 def _sprite_sources():
     # sprites.rpy plus the Женя scenario, which declares a few more composite
@@ -36,7 +36,7 @@ def parse_sprites():
     logger.info(f'{len(sprites)} sprite combinations found.')
 
 def sprite_file(name):
-    return SPRITES_PATH / f'{name}.webp'
+    return sprites_path() / f'{name}.webp'
 
 def is_composed(name):
     # The disk cache survives restarts; a cached sprite is only stale if
@@ -62,7 +62,7 @@ def compose_sprite(name):
     # compose is in flight never sees a half-written file.
     path = sprite_file(name)
     tmp = path.with_suffix('.webp.tmp')
-    img.save(tmp, 'WEBP', quality=90)
+    img.save(tmp, 'WEBP', quality=CONFIG.setting('images.sprite-quality'))
     os.replace(tmp, path)
 
     logger.info(f'Sprite "{name}" composed in {time.time() - starttime:.4f}s')

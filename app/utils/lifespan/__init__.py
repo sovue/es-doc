@@ -12,7 +12,7 @@ from .news_cache import parse_news
 from .redirects_cache import parse_redirects
 from .refresh import worker_refresh_caches
 from .resources_cache import parse_resources
-from .sprites_cache import parse_sprites, SPRITES_PATH
+from .sprites_cache import parse_sprites, sprites_path
 from .warpers_cache import parse_warpers
 
 logger = root_logger.getChild('lifespan')
@@ -24,7 +24,7 @@ async def lifespan(app: FastAPI):
     # The sprite cache is kept across restarts on purpose: composing every
     # sprite again on each launch is minutes of CPU on the target machine.
     # Stale entries are detected per-sprite against sprites.rpy's mtime.
-    SPRITES_PATH.mkdir(parents=True, exist_ok=True)
+    sprites_path().mkdir(parents=True, exist_ok=True)
 
     try:
         await asyncio.to_thread(parse_sprites)

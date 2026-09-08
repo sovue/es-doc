@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 import httpx
 
 from . import main_router
+from ..utils.config import CONFIG
 from ..utils.docs import search
 from ..utils.logging import root_logger
 
@@ -15,26 +16,29 @@ logger = root_logger.getChild('api')
 
 
 @router.get('/api/search')
-async def search_api(q: str = '', limit: int = 8):
+async def search_api(q: str = '', limit: int | None = None):
     """Server-side type-ahead: rank the cached search corpus against `q` and
     return the top matches ([{label, doc, anchor, context}]). The matching,
     scoring and ranking that used to run in the browser now run here; the
     corpus itself is kept warm by the lifespan cache refresh."""
-    limit = max(1, min(limit, 25))
+    # `limit=None` rather than a literal default in the signature: the default
+    # is a setting, and a signature default would freeze it at import time,
+    # before config.yaml is read.
+    if limit is None:
+        limit = CONFIG.setting('search.default-limit')
+    limit = max(1, min(limit, CONFIG.setting('search.max-limit')))
     return JSONResponse(search(q, limit))
 
-# Контрибьюторы собираются из всех репозиториев проекта и показываются одним
-# общим списком: сайт и ассеты игры делают одни и те же люди.
-_GH_REPOS = ('sovue/es-doc', 'sovue/es-doc-assets')
-_UA = 'es-doc/contributors-widget (+https://github.com/sovue/es-doc)'
-_TTL = 300  # GitHub allows 60 unauth requests/hour; cache for 5 minutes
-
+# Контрибьюторы собираются из всех репозиториев проекта (`contributors.repos`)
+# и показываются одним общим списком: сайт и ассеты игры делают одни и те же
+# люди. Ответ кэшируется на `contributors.ttl` секунд — GitHub разрешает 60
+# анонимных запросов в час.
 _cache: dict[str, object] = {'at': 0.0, 'html': ''}
 
 
-def _sized_avatar(url: str, size: int = 96) -> str:
+def _sized_avatar(url: str) -> str:
     sep = '&' if '?' in url else '?'
-    return f'{url}{sep}s={size}'
+    return f"{url}{sep}s={CONFIG.setting('contributors.avatar-size')}"
 
 
 def _render(users: list[dict]) -> str:
@@ -84,25 +88,25 @@ def _merge(responses: list[list[dict]]) -> list[dict]:
     )
 
 
-_PER_PAGE = 100
-_MAX_PAGES = 5  # 500 человек: страховка от бесконечного цикла, а не реальный предел
-
-
 async def _fetch(client: httpx.AsyncClient, repo: str) -> list[dict]:
     """Все контрибьюторы репозитория. GitHub отдаёт их по 30 на страницу, так
-    что берём по 100 и идём до конца — иначе длинный список молча обрежется."""
+    что берём по `contributors.per-page` и идём до конца — иначе длинный список
+    молча обрежется. `contributors.max-pages` — страховка от бесконечного
+    цикла, а не реальный предел."""
+    per_page = CONFIG.setting('contributors.per-page')
+
     users: list[dict] = []
-    for page in range(1, _MAX_PAGES + 1):
+    for page in range(1, CONFIG.setting('contributors.max-pages') + 1):
         resp = await client.get(
             f'https://api.github.com/repos/{repo}/contributors',
-            params={'per_page': _PER_PAGE, 'page': page},
+            params={'per_page': per_page, 'page': page},
         )
         resp.raise_for_status()
         data = resp.json()
         if not isinstance(data, list) or not data:
             break
         users.extend(u for u in data if isinstance(u, dict))
-        if len(data) < _PER_PAGE:
+        if len(data) < per_page:
             break
     return users
 
@@ -110,18 +114,23 @@ async def _fetch(client: httpx.AsyncClient, repo: str) -> list[dict]:
 @router.get('/api/contributors')
 async def contributors():
     now = monotonic()
-    if _cache['html'] and (now - float(_cache['at'])) < _TTL:
+    if _cache['html'] and (now - float(_cache['at'])) < CONFIG.setting('contributors.ttl'):
         return HTMLResponse(str(_cache['html']))
 
-    async with httpx.AsyncClient(timeout=5.0, headers={'User-Agent': _UA}) as client:
+    repos = CONFIG.setting('contributors.repos')
+
+    async with httpx.AsyncClient(
+        timeout=CONFIG.setting('contributors.timeout'),
+        headers={'User-Agent': CONFIG.setting('contributors.user-agent')},
+    ) as client:
         results = await gather(
-            *(_fetch(client, repo) for repo in _GH_REPOS), return_exceptions=True
+            *(_fetch(client, repo) for repo in repos), return_exceptions=True
         )
 
     users: list[list[dict]] = []
     # strict: gather returns exactly one result per repo, so a mismatch would
     # mean the pairing below had silently gone out of step.
-    for repo, result in zip(_GH_REPOS, results, strict=True):
+    for repo, result in zip(repos, results, strict=True):
         if isinstance(result, BaseException):
             # A failed repo is expected traffic, not an incident: GitHub
             # rate-limits unauthenticated callers at 60/hour and the widget

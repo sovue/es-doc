@@ -21,14 +21,14 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .config import CONFIG
 from .logging import root_logger
 
 logger = root_logger.getChild('modified')
 
-# Long enough for a cold repo on a slow disk, short enough that a hung git
-# never holds a cache refresh open. The refresh runs in a worker thread, so
-# this blocks that thread and not the event loop.
-_GIT_TIMEOUT = 15
+# `git-timeout` is long enough for a cold repo on a slow disk, short enough
+# that a hung git never holds a cache refresh open. The refresh runs in a
+# worker thread, so this blocks that thread and not the event loop.
 
 MONTHS_RU = (
     'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
@@ -54,7 +54,7 @@ def _git_dates(directory: Path) -> dict[str, datetime]:
             ['git', '-C', str(directory), 'log', '--pretty=format:%cI',
              '--name-only', '--no-renames', '--', '.'],
             capture_output=True, text=True, encoding='utf-8',
-            timeout=_GIT_TIMEOUT, check=True,
+            timeout=CONFIG.setting('git-timeout'), check=True,
         )
     except (OSError, subprocess.SubprocessError) as error:
         # Not a repo, no git, or a repo with no commits yet. All three mean

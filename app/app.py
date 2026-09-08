@@ -13,8 +13,9 @@ CONFIG.setup('config.yaml')
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
 # Compress text responses (HTML/CSS/JS). Skips already-compressed woff2 and
-# small payloads; GZipMiddleware leaves the binary font route untouched.
-app.add_middleware(GZipMiddleware, minimum_size=500)
+# payloads under `gzip-min-size`, below which the header costs more than the
+# compression saves; GZipMiddleware leaves the binary font route untouched.
+app.add_middleware(GZipMiddleware, minimum_size=CONFIG.setting('gzip-min-size'))
 app.include_router(main_router)
 
 @app.exception_handler(HTTPException)

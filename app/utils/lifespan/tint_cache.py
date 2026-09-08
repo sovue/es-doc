@@ -1,15 +1,16 @@
 import os, time
 from PIL import Image
 
-from ..file import ROOT
+from ..config import CONFIG
 from ..logging import root_logger
 
 logger = root_logger.getChild('lifespan').getChild('tint-cache')
 
-TINT_PATH = ROOT / 'temp' / 'tinted'
+def tinted_path():
+    return CONFIG.cache_path / 'tinted'
 
 def tinted_file(kind, name):
-    return TINT_PATH / kind / f'{name}.webp'
+    return tinted_path() / kind / f'{name}.webp'
 
 def is_tinted(kind, name, source):
     # The disk cache survives restarts; a cached tint is only stale if the
@@ -44,7 +45,7 @@ def compose_tint(kind, name, source, tint):
     # Write to a temp name and swap it in, so a request that arrives while a
     # compose is in flight never sees a half-written file.
     tmp = path.with_suffix('.webp.tmp')
-    img.save(tmp, 'WEBP', quality=90)
+    img.save(tmp, 'WEBP', quality=CONFIG.setting('images.tint-quality'))
     os.replace(tmp, path)
 
     logger.info(f'Tinted image "{kind} {name}" composed in {time.time() - starttime:.4f}s')

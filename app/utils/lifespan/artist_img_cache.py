@@ -6,28 +6,31 @@ import os
 import httpx
 from PIL import Image
 
-from ..file import ROOT
+from ..config import CONFIG
 from ..logging import root_logger
 
 logger = root_logger.getChild('lifespan').getChild('artist-img')
 
-ARTIST_IMG_PATH = ROOT / 'temp' / 'artist_img'
+# `images.artist.max-side` caps the stored image: artist previews and logos are
+# shown small, so there's no point keeping a multi-megapixel original. The
+# user-agent and referer are there because fetching server-side is what
+# sidesteps the browser's ORB block, and some hosts (VK's userapi CDN) also
+# check the referer before serving a hotlink.
 
-# Some hosts (VK's userapi CDN) refuse hotlinks or serve responses the browser
-# blocks via ORB. Fetching server-side sidesteps ORB entirely; a Referer helps
-# with the hotlink checks.
-_UA = 'es-doc/artist-images (+https://github.com/sovue/es-doc)'
-_HEADERS = {'User-Agent': _UA, 'Referer': 'https://vk.com/'}
+def artist_img_path():
+    return CONFIG.cache_path / 'artist_img'
 
-# Cap the stored image; artist previews/logos are shown small, so there's no
-# point keeping a multi-megapixel original.
-_MAX_SIDE = (1200, 1200)
+def _headers():
+    return {
+        'User-Agent': CONFIG.setting('images.artist.user-agent'),
+        'Referer': CONFIG.setting('images.artist.referer'),
+    }
 
 def cache_file(url):
     # Keyed by the URL, so editing a link in artists.yaml naturally points at a
     # fresh cache entry instead of serving the stale image.
     digest = hashlib.sha1(url.encode('utf-8')).hexdigest()
-    return ARTIST_IMG_PATH / f'{digest}.webp'
+    return artist_img_path() / f'{digest}.webp'
 
 def is_cached(url):
     return cache_file(url).is_file()
@@ -35,20 +38,24 @@ def is_cached(url):
 def _encode(data, path):
     # Re-encoding through Pillow also validates the bytes: an HTML error page or
     # an ORB-style block won't decode, so we fail loudly instead of caching junk.
+    side = CONFIG.setting('images.artist.max-side')
+
     with Image.open(io.BytesIO(data)) as img:
         img = img.convert('RGBA') if img.mode in ('RGBA', 'P', 'LA') else img.convert('RGB')
-        img.thumbnail(_MAX_SIDE)
+        img.thumbnail((side, side))
 
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix('.webp.tmp')
-    img.save(tmp, 'WEBP', quality=85)
+    img.save(tmp, 'WEBP', quality=CONFIG.setting('images.artist.quality'))
     os.replace(tmp, path)
 
 async def fetch_and_cache(url):
     """Download an external artist image, normalise it to WebP and cache it on
     disk. Raises on network failure or undecodable content; the caller turns
     that into a 502 and the page's <img> fallback drops the image."""
-    async with httpx.AsyncClient(timeout=10.0, headers=_HEADERS, follow_redirects=True) as client:
+    timeout = CONFIG.setting('images.artist.timeout')
+
+    async with httpx.AsyncClient(timeout=timeout, headers=_headers(), follow_redirects=True) as client:
         resp = await client.get(url)
         resp.raise_for_status()
         data = resp.content

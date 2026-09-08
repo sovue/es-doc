@@ -2,7 +2,6 @@ import os
 from PIL import Image
 
 from ..config import CONFIG
-from ..file import ROOT
 from ..logging import root_logger
 
 from .sprites_cache import sprite_file
@@ -10,15 +9,16 @@ from .tint_cache import tinted_file
 
 logger = root_logger.getChild('lifespan').getChild('thumbs-cache')
 
-THUMBS_PATH = ROOT / 'temp' / 'thumbs'
+# `images.thumb.box` is the square a thumbnail is fitted into: at the default
+# 320 a bg/cg lands at 320×180 and a sprite at ~213×320. They are displayed at
+# half that or less, so they stay crisp on high-DPI screens while weighing a
+# few KB each.
 
-# Fits within a 320px box: bgs/cgs land at 320×180, sprites at ~213×320.
-# Displayed at half size or less, so they stay crisp on high-DPI screens
-# while weighing a few KB each.
-THUMB_BOX = (320, 320)
+def thumbs_path():
+    return CONFIG.cache_path / 'thumbs'
 
 def thumb_file(kind, name):
-    return THUMBS_PATH / kind / f'{name}.webp'
+    return thumbs_path() / kind / f'{name}.webp'
 
 def _source_file(kind, name):
     # Sprite thumbs derive from the composed sprite in temp/sprites; tinted
@@ -52,13 +52,15 @@ def make_thumb(kind, name):
     path = thumb_file(kind, name)
     path.parent.mkdir(parents=True, exist_ok=True)
 
+    box = CONFIG.setting('images.thumb.box')
+
     with Image.open(source) as img:
         thumb = img.convert('RGBA') if img.mode in ('RGBA', 'P', 'LA') else img.convert('RGB')
-        thumb.thumbnail(THUMB_BOX)
+        thumb.thumbnail((box, box))
 
     # Same swap-in trick as composed sprites: never expose a half-written file.
     tmp = path.with_suffix('.webp.tmp')
-    thumb.save(tmp, 'WEBP', quality=80)
+    thumb.save(tmp, 'WEBP', quality=CONFIG.setting('images.thumb.quality'))
     os.replace(tmp, path)
 
     return path

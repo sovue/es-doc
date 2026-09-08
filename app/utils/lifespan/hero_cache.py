@@ -2,20 +2,19 @@ import os
 from PIL import Image
 
 from ..config import CONFIG
-from ..file import ROOT
 from ..logging import root_logger
 
 logger = root_logger.getChild('lifespan').getChild('hero-cache')
 
-HERO_PATH = ROOT / 'temp' / 'hero'
+# `images.hero.width` is wide enough for a full-bleed hero on a desktop screen
+# while landing around a tenth of the original JPG's weight; the readability
+# overlay on top hides any resampling softness anyway.
 
-# Wide enough for a full-bleed hero on a desktop screen while landing around
-# a tenth of the original JPG's weight; the readability overlay on top hides
-# any resampling softness anyway.
-HERO_WIDTH = 1600
+def hero_path():
+    return CONFIG.cache_path / 'hero'
 
 def hero_file(name):
-    return HERO_PATH / f'{name}.webp'
+    return hero_path() / f'{name}.webp'
 
 def _source_file(name):
     # Only plain declared-or-undeclared bg files qualify — a hero image is a
@@ -40,17 +39,19 @@ def make_hero(name):
         # Unknown names surface as a clean 404 in the route, not a 500.
         raise FileNotFoundError(f'No bg source for "{name}"')
 
-    HERO_PATH.mkdir(parents=True, exist_ok=True)
+    hero_path().mkdir(parents=True, exist_ok=True)
+
+    width = CONFIG.setting('images.hero.width')
 
     with Image.open(source) as img:
         img = img.convert('RGB')
-        if img.width > HERO_WIDTH:
-            img = img.resize((HERO_WIDTH, round(img.height * HERO_WIDTH / img.width)), Image.LANCZOS)
+        if img.width > width:
+            img = img.resize((width, round(img.height * width / img.width)), Image.LANCZOS)
 
         # Same swap-in trick as sprites/thumbs: never expose a half-written file.
         path = hero_file(name)
         tmp = path.with_suffix('.webp.tmp')
-        img.save(tmp, 'WEBP', quality=75)
+        img.save(tmp, 'WEBP', quality=CONFIG.setting('images.hero.quality'))
         os.replace(tmp, path)
 
     return path

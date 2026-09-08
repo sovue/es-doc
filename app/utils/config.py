@@ -4,11 +4,87 @@ from pathlib import Path
 from .file import ROOT, resolve
 from .logging import root_logger
 
+# Returned by the lookup below when a key is absent, so that `None` stays a
+# legitimate configured value rather than a synonym for "not set".
+_MISSING = object()
+
 class _ConfigContainer():
 
     _DEFAULT_CONFIG = {
         'assets-path': '',
         'support': [],
+
+        # Where the derived-image caches live (composed sprites, thumbnails,
+        # tints, hero downscales, fetched artist images). Relative paths anchor
+        # to ROOT, like assets-path. `temp/` is what .gitignore excludes, so
+        # moving this off the default means excluding the new location too.
+        'cache-path': 'temp',
+
+        # The site's own theme, offered on the home page. Empty `src` removes
+        # the player from the page entirely — this is one specific track by one
+        # specific author, not a site feature that has to exist.
+        'theme-track': {
+            'src': '/resource/community/music/progress.ogg',
+            'artist': '140 kilograms of sex',
+            'title': 'Progress',
+        },
+
+        # Operational tunables, read through CONFIG.setting() at the point of
+        # use. Everything here was a literal buried in the module that happened
+        # to need it; what qualified for the move is a number or string that an
+        # operator might reasonably want different on their own box. Domain
+        # vocabularies (the Ren'Py lexer's keywords, the resource taxonomy, the
+        # callout registry) deliberately stayed in code — they are the shape of
+        # the data, not settings.
+        'settings': {
+            # Below this, compressing costs more than it saves.
+            'gzip-min-size': 500,
+            # Cache-Control for immutable assets: raw game files, composed
+            # images, article illustrations. A day, in seconds.
+            'static-max-age': 86400,
+            # Seconds a `git log` may run before the date lookup gives up and
+            # falls back to file mtimes (utils/modified.py).
+            'git-timeout': 15,
+            # Above this many bytes the resource browser offers a download
+            # instead of highlighting the file in the page.
+            'file-view-max-bytes': 512 * 1024,
+
+            'search': {
+                'default-limit': 8,
+                'max-limit': 25,
+            },
+
+            # The contributors strip on the home page, fetched from GitHub's
+            # unauthenticated API (60 requests/hour, hence the cache).
+            'contributors': {
+                'repos': ['sovue/es-doc', 'sovue/es-doc-assets'],
+                'user-agent': 'es-doc/contributors-widget (+https://github.com/sovue/es-doc)',
+                'ttl': 300,
+                'timeout': 5.0,
+                'per-page': 100,
+                'max-pages': 5,
+                'avatar-size': 96,
+            },
+
+            # Every derived image the site produces. Quality is WebP's 0–100.
+            'images': {
+                'hero': {'width': 1600, 'quality': 75},
+                'thumb': {'box': 320, 'quality': 80},
+                'sprite-quality': 90,
+                'tint-quality': 90,
+                'artist': {
+                    'max-side': 1200,
+                    'quality': 85,
+                    'timeout': 10.0,
+                    # Some hosts (VK's userapi CDN) refuse hotlinks or serve
+                    # responses the browser blocks via ORB; a Referer helps
+                    # with the hotlink checks.
+                    'user-agent': 'es-doc/artist-images (+https://github.com/sovue/es-doc)',
+                    'referer': 'https://vk.com/',
+                },
+            },
+        },
+
         'http-errors': {
             'default': 'Во время загрузки страницы произошла ошибка. Попробуйте повторить запрос позже. Если проблема сохраняется — сообщите администрации.',
             400: [
@@ -96,6 +172,56 @@ class _ConfigContainer():
 
         self.docs_path: Path = None
         self.res_path: Path = None
+        self.cache_path: Path = None
+
+    def setting(self, path: str):
+        """One tunable, by dotted path — `CONFIG.setting('images.hero.width')`.
+
+        Looks in the loaded config first, then in `_DEFAULT_CONFIG`, so a
+        config.yaml written before a setting existed keeps working: the
+        operator's file overrides what it mentions and inherits the rest. That
+        also means nothing here is ever required to be present, which is why
+        the callers can read a setting without a guard.
+
+        Read at the point of use, not at import: routes and caches are imported
+        before `setup()` runs, so a module-level constant built from this would
+        capture the defaults and silently ignore config.yaml.
+        """
+        for source in (self.config.get('settings'), self._DEFAULT_CONFIG['settings']):
+
+            value = source
+
+            for key in path.split('.'):
+                if not isinstance(value, dict) or key not in value:
+                    value = _MISSING
+                    break
+                value = value[key]
+
+            if value is not _MISSING:
+                return value
+
+        # Only reachable by asking for a name that isn't in the defaults
+        # either — a typo in a call site, not a configuration problem.
+        raise KeyError(f'Unknown setting: {path}')
+
+    @property
+    def theme_track(self) -> dict:
+        """The home page's theme track, or an empty mapping if `src` is unset.
+
+        The template renders nothing at all in that case, so a fork that
+        doesn't have this particular song doesn't have to carry a player
+        pointing at a missing file.
+        """
+        # Falls back to the default like `setting()` does, so a config.yaml
+        # written before this key existed still gets the player. Removing it is
+        # then explicit — `theme-track: {src: ''}` — rather than something that
+        # happens by omission.
+        track = self.config.get('theme-track')
+
+        if track is None:
+            track = self._DEFAULT_CONFIG['theme-track']
+
+        return track if track.get('src') else {}
 
     @property
     def support(self) -> list:
@@ -135,5 +261,9 @@ class _ConfigContainer():
 
         self.docs_path = assets_path / 'docs'
         self.res_path = assets_path / 'game'
+
+        # Derived-image caches. Resolved here rather than at each cache
+        # module's import, which happens before this method runs.
+        self.cache_path = resolve(self.config.get('cache-path') or self._DEFAULT_CONFIG['cache-path'])
 
 CONFIG = _ConfigContainer()
