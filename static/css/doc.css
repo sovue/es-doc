@@ -139,8 +139,15 @@ img {
 /* min-height now lives on the parent .page (components.css), which uses
    flex: 1 to stretch .layout to absorb available space — so the footer
    below it can floor to the viewport bottom on short doc pages. */
+/* Sidebar and article travel together: centring the pair on the shell keeps
+   the contents column attached to the text it belongs to, where centring the
+   text alone would have left the sidebar pinned to the window edge with a gap
+   between them. */
 .layout {
     display: flex;
+    width: 100%;
+    max-width: var(--shell);
+    margin-inline: auto;
 }
 
 .sidebar {
@@ -191,12 +198,21 @@ img {
     margin: 8px 0;
 }
 
+/* The contents list is flat markup — one <ul>, one <li> per heading — and
+   the indent is what carries the depth. h4 had no step of its own, so a
+   fourth-level heading sat flush with the h2s and read as a top-level
+   section; the articles that use them (code_examples has 15) looked like
+   they had twice as many sections as they do. */
 .sidebar li.h2 {
     margin-left: 0px;
 }
 
 .sidebar li.h3 {
     margin-left: 24px;
+}
+
+.sidebar li.h4 {
+    margin-left: 48px;
 }
 
 .sidebar ul ul {
@@ -524,6 +540,20 @@ img {
    a reader following the guide in order wants, so it keeps the serif title
    and the accent arrow, while "previous" is a small ink-soft backstop. They
    share a row; with only one of them present it takes its own side. */
+
+/* Metadata, not content: the Label role's mono and tracking say "this is the
+   page talking about itself", the same voice as «ИСХОДНИК СТРАНИЦЫ» in the
+   sidebar. Sits close under the last paragraph so it reads as belonging to
+   the article it dates, and the pager's own 56px rule separates it from what
+   comes next. */
+.doc-modified {
+    margin: 40px 0 0;
+
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    letter-spacing: 0.04em;
+    color: var(--text-soft);
+}
 
 .doc-pager {
     display: flex;

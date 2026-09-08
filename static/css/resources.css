@@ -8,7 +8,12 @@
 
 .res-tabs {
     display: flex;
-    padding: 0 48px;
+
+    /* The padding does the centring instead of a max-width, so the rule under
+       the tabs still crosses the whole window while the tabs themselves line
+       up with the column below them. max() keeps the 48px gutter on screens
+       narrower than the column. */
+    padding-inline: max(48px, (100% - var(--column)) / 2);
     border-bottom: 1px solid var(--border);
     /* Three tabs no longer fit a phone; scroll like the category switcher. */
     overflow-x: auto;
@@ -54,7 +59,10 @@
     display: flex;
     gap: 22px;
     margin: 0;
-    padding: 0 48px;
+    /* Same centring as .res-tabs above, for the same reason: the strip's
+       border runs the full window, its chips line up with the column. */
+    padding-inline: max(48px, (100% - var(--column)) / 2);
+    padding-block: 0;
     list-style: none;
 }
 
@@ -95,13 +103,18 @@
 
 /* ── Listing shell ───────────────────────────────────────── */
 
-/* Rows carry a thumbnail + name + actions, so they earn a wider column
-   than prose pages. Tighter top padding than the site default: this page
-   already stacks tabs and a category strip above it, so the full 56px
-   rhythm reads as an extra gap rather than breathing room. */
+/* Rows carry a thumbnail + name + actions, so they earn a wider column than
+   prose pages — widening the shared --column rather than opting out of it,
+   so the tab strip and category nav above follow the same number. Tighter
+   top padding than the site default: this page already stacks tabs and a
+   category strip above it, so the full 56px rhythm reads as an extra gap
+   rather than breathing room. */
 .page-main--res {
-    max-width: 920px;
     padding-top: 28px;
+}
+
+.page:has(.page-main--res) {
+    --column: 920px;
 }
 
 .res-usage {
@@ -1227,7 +1240,7 @@ video.fb-media {
 
 @media (max-width: 640px) {
     .res-tabs {
-        padding: 0 20px;
+        padding-inline: 20px;
     }
 
     .res-tab {
@@ -1235,7 +1248,7 @@ video.fb-media {
     }
 
     .res-cats ul {
-        padding: 0 20px;
+        padding-inline: 20px;
     }
 
     .res-row {

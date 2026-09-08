@@ -86,6 +86,21 @@
     --selection-bg: var(--accent-muted);
     --selection-text: var(--text);
 
+    /* ── Page width ───────────────────────────────────────────
+       Everything on this site used to start at a 48px left gutter and end
+       wherever its own max-width ran out, which on a 1920px monitor left
+       the right 60% of the screen empty and the page hugging one edge —
+       the layout of a 1280px design shown on a screen nobody tested it at.
+
+       Two axes now, because the site has two kinds of page and one number
+       cannot serve both. `--shell` bounds the bands that genuinely use the
+       width they are given: the header, and an article's sidebar-plus-text
+       layout. `--column` bounds the single-column pages, where the limit
+       is reading comfort and not the monitor. Both centre, so extra width
+       becomes a margin on each side instead of a void on the right. */
+    --shell: 1400px;
+    --column: 760px;
+
     /* ── Elevation (DESIGN.md §04) — flat by default, warm-tinted lift ── */
     --radius-xs: 2px;      /* focus rings, badges, skip-link corner */
     --radius-sm: 4px;      /* compact controls (search box) */
