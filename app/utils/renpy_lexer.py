@@ -15,6 +15,8 @@ Keyword and property lists are lifted from the vscode-language-renpy grammar
 renpy.atl.
 """
 
+import re
+
 from pygments.lexer import RegexLexer, words, include, bygroups, using
 from pygments.lexers.python import PythonLexer
 from pygments.token import (
@@ -152,6 +154,12 @@ _SAY_GUARD = "|".join(
 # never does (`|Название|`), so the two can't be confused position-by-position
 # even when Python delegation doesn't already shield the line.
 _PLACEHOLDER = r"\|\S(?:[^|\n]*\S)?\|"
+
+# The same pattern, compiled, for the filter that gives every *other* lexer
+# this marker too (md/__init__.py, TagPlaceholders). Exported from here rather
+# than restated there, so the convention keeps exactly one definition and the
+# reasoning above governs Python and shell blocks as much as Ren'Py ones.
+PLACEHOLDER_RE = re.compile(_PLACEHOLDER)
 
 
 def _string_state(quote, tok):

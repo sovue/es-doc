@@ -22,7 +22,7 @@ from .refs import (
     render_ref_mark, render_refs_close, render_refs_open,
 )
 from ..svg import SVG
-from ..renpy_lexer import RenPyLexer
+from ..renpy_lexer import PLACEHOLDER_RE, RenPyLexer
 
 dummy_rule = lambda s: lambda self, tokens, idx, options, env: s
 
@@ -76,14 +76,50 @@ class TagWhitespace(Filter):
                 else:
                     yield ttype, part
 
+class TagPlaceholders(Filter):
+    """Re-tag `|подставь сюда|` as `Comment.Special` in whatever language.
+
+    The Ren'Py lexer has marked these since it was written (renpy_lexer.py,
+    `_PLACEHOLDER`): a value the reader is meant to replace with their own,
+    drawn with a dotted underline and a tooltip saying so (docs.js). Every
+    other language in the corpus — the Python blocks, the shell one-liners,
+    the JSON — had the same need and no marker, so a placeholder there was
+    just italic-less text the reader could copy by mistake.
+
+    Runs off the same regex as the lexer, not a second one, so the two can
+    never drift into disagreeing about what a placeholder looks like. Tokens
+    the lexer already tagged are passed through untouched: re-splitting them
+    would only fragment a span that is already correct.
+    """
+
+    def filter(self, lexer, stream):
+        for ttype, value in stream:
+            if ttype in Comment.Special or '|' not in value:
+                yield ttype, value
+                continue
+
+            last = 0
+            for match in PLACEHOLDER_RE.finditer(value):
+                if match.start() > last:
+                    yield ttype, value[last:match.start()]
+                yield Comment.Special, match.group(0)
+                last = match.end()
+
+            if last < len(value):
+                yield ttype, value[last:]
+
+
 def highlight_code(code, lang, attrs):
     try:
         lexer = RenPyLexer() if lang == 'renpy' else get_lexer_by_name(lang)
     except Exception:
         return ''
 
-    # A fresh lexer per call (both branches construct one), so the filter is
-    # never added twice to the same instance.
+    # A fresh lexer per call (both branches construct one), so the filters are
+    # never added twice to the same instance. Placeholders first: TagWhitespace
+    # passes `Comment.Special` through whole, so a marker tagged here keeps its
+    # spaces instead of being split around them.
+    lexer.add_filter(TagPlaceholders())
     lexer.add_filter(TagWhitespace())
 
     return highlight(code, lexer, HtmlFormatter(nowrap=True))
@@ -171,10 +207,41 @@ def render_image(self, tokens, idx, options, env):
     token.attrSet('decoding', 'async')
     return self.image(tokens, idx, options, env)
 
+# A link that leaves the site opens in a new tab, and one that stays never
+# does. Deciding it here rather than in the markup means no author has to
+# remember: `[текст](https://renpy.org/doc)` and `[текст](/docs/screens)` are
+# written exactly the same way and behave the way each should.
+#
+# Leaving is worth the new tab because these articles are reference material
+# read *while* doing something else — following a link to the Ren'Py manual
+# mid-example should not cost the reader the place they were holding in the
+# example. Staying is worth *not* opening one, because a tab per internal
+# link is how a reader ends up with eleven copies of the same site and no
+# working Back button.
+#
+# `rel` is not optional decoration: `noopener` severs the `window.opener`
+# handle the new page would otherwise get over this one, and `noreferrer`
+# keeps the reader's exact page off a third party's referer log. A protocol
+# -relative `//host/path` counts as leaving too — it is an absolute URL that
+# merely inherits the scheme.
+_EXTERNAL_RE = re.compile(r'^(?:[a-z][a-z0-9+.-]*:)?//', re.I)
+
+
+def render_link_open(self, tokens, idx, options, env):
+    token = tokens[idx]
+    href = token.attrGet('href') or ''
+
+    if _EXTERNAL_RE.match(href):
+        token.attrSet('target', '_blank')
+        token.attrSet('rel', 'noopener noreferrer')
+
+    return self.renderToken(tokens, idx, options, env)
+
 MD = MarkdownIt('commonmark', {'highlight': highlight_code})
 MD.add_render_rule('fence', render_fence)
 MD.add_render_rule('code_inline', render_code_inline)
 MD.add_render_rule('image', render_image)
+MD.add_render_rule('link_open', render_link_open)
 
 MD.block.ruler.before('fence', 'table', table_block)
 MD.block.ruler.before('fence', 'info', template('info'))
@@ -290,7 +357,7 @@ def _code_terms(tokens):
 
 def outline(src):
     """Structured content for the search index: the doc title (h1), every
-    h2/h3 with the same slug the renderer assigns (so anchors line up), and
+    h2/h3/h4 with the same slug the renderer assigns (so anchors line up), and
     every distinct inline code term the doc contains."""
     title = ''
     headings = []
@@ -298,7 +365,7 @@ def outline(src):
     tokens = MD.parse(src)
     slugs = heading_slugs(tokens)
     # A uniform shift never changes a slug (see heading_shift's docstring),
-    # so this only affects which levels count as "h2/h3" below — the same
+    # so this only affects which levels count as indexable below — the same
     # promotion the renderer applies, kept in step so a heading that reads
     # as an h2 on the page is also indexed as one.
     shift = heading_shift(tokens)
@@ -312,7 +379,7 @@ def outline(src):
         level = raw_level if raw_level == 1 else raw_level - shift
         if level == 1:
             title = text
-        elif level in (2, 3):
+        elif level in (2, 3, 4):
             headings.append({
                 'text': text,
                 'slug': slugs[idx],
