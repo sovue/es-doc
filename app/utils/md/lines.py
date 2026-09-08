@@ -20,8 +20,6 @@ could not be reached by scrolling at all. Two columns, one of which scrolls,
 keeps the numbers permanently visible *and* the whole line readable.
 """
 
-import html
-
 
 def split_lines(code_html):
     """Highlighted (or plain-escaped) code as a list of rows.

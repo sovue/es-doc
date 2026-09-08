@@ -48,7 +48,7 @@ async def _ensure_composed(sprite):
                     await asyncio.to_thread(compose_sprite, sprite)
                 except Exception:
                     logger.exception(f'Composing sprite "{sprite}" failed.')
-                    raise HTTPException(500, f'Не удалось собрать спрайт "{sprite}".')
+                    raise HTTPException(500, f'Не удалось собрать спрайт "{sprite}".') from None
 
 @router.get('/sprite/{sprite}')
 async def sprite_page(sprite, request: Request):
@@ -84,7 +84,7 @@ async def _ensure_tinted(kind, name):
                     await asyncio.to_thread(compose_tint, kind, name, source, item['tint'])
                 except Exception:
                     logger.exception(f'Tinting "{kind} {name}" failed.')
-                    raise HTTPException(500, f'Не удалось применить тон к "{name}".')
+                    raise HTTPException(500, f'Не удалось применить тон к "{name}".') from None
 
 @router.get('/tinted/{kind}/{name}')
 async def tinted_page(kind, name, request: Request):
@@ -120,7 +120,7 @@ async def thumb_page(kind, name, request: Request):
                     await asyncio.to_thread(make_thumb, kind, name)
                 except Exception:
                     logger.exception(f'Thumbnailing "{kind} {name}" failed.')
-                    raise HTTPException(500, f'Не удалось создать превью "{name}".')
+                    raise HTTPException(500, f'Не удалось создать превью "{name}".') from None
 
     return FileResponse(str(thumb_file(kind, name)), media_type='image/webp', headers=CACHE_HEADERS)
 
@@ -135,10 +135,10 @@ async def hero_page(name, request: Request):
                 try:
                     await asyncio.to_thread(make_hero, name)
                 except FileNotFoundError:
-                    raise HTTPException(404, f'Фон "{name}" не существует.')
+                    raise HTTPException(404, f'Фон "{name}" не существует.') from None
                 except Exception:
                     logger.exception(f'Hero-scaling bg "{name}" failed.')
-                    raise HTTPException(500, f'Не удалось подготовить фон "{name}".')
+                    raise HTTPException(500, f'Не удалось подготовить фон "{name}".') from None
 
     return FileResponse(str(hero_file(name)), media_type='image/webp', headers=CACHE_HEADERS)
 
@@ -201,7 +201,7 @@ async def artist_image(kind, name, request: Request):
                     await fetch_artist_img(value)
                 except Exception:
                     logger.exception(f'Fetching artist image "{kind}" for "{name}" failed.')
-                    raise HTTPException(502, f'Не удалось загрузить изображение для «{name}».')
+                    raise HTTPException(502, f'Не удалось загрузить изображение для «{name}».') from None
 
     return FileResponse(str(artist_img_file(value)), media_type='image/webp', headers=CACHE_HEADERS)
 

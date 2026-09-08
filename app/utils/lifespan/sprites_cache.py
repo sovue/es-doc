@@ -1,5 +1,4 @@
 import os, re, time
-from pathlib import Path
 from PIL import Image
 
 from ..config import CONFIG

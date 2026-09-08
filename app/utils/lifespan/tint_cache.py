@@ -31,7 +31,10 @@ def compose_tint(kind, name, source, tint):
     channels = img.split()
     scaled = [
         channel.point(lambda x, factor=factor: min(255, round(x * factor)))
-        for channel, factor in zip(channels, (r, g, b, 1.0))
+        # strict: the convert('RGBA') above guarantees four channels, so a
+        # length mismatch here means that assumption broke — better to say so
+        # than to silently drop a channel and fail later inside Image.merge.
+        for channel, factor in zip(channels, (r, g, b, 1.0), strict=True)
     ]
     img = Image.merge('RGBA', scaled)
 

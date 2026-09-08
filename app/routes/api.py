@@ -7,8 +7,11 @@ import httpx
 
 from . import main_router
 from ..utils.docs import search
+from ..utils.logging import root_logger
 
 router = main_router
+
+logger = root_logger.getChild('api')
 
 
 @router.get('/api/search')
@@ -116,9 +119,17 @@ async def contributors():
         )
 
     users: list[list[dict]] = []
-    for repo, result in zip(_GH_REPOS, results):
+    # strict: gather returns exactly one result per repo, so a mismatch would
+    # mean the pairing below had silently gone out of step.
+    for repo, result in zip(_GH_REPOS, results, strict=True):
         if isinstance(result, BaseException):
-            print(f'[contributors] {repo}: {result}')
+            # A failed repo is expected traffic, not an incident: GitHub
+            # rate-limits unauthenticated callers at 60/hour and the widget
+            # falls back to a link. Logged at warning through the app's own
+            # logger — this was a bare print(), which on a served process goes
+            # to stdout unformatted, unlevelled and outside every log file the
+            # rest of the app writes to.
+            logger.warning(f'Contributors: fetching {repo} failed: {result}')
         else:
             users.append(result)
 

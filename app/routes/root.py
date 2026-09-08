@@ -1,5 +1,4 @@
 from fastapi import Request
-from fastapi.responses import HTMLResponse
 
 from . import main_router
 from ..utils.file import templates, read_text

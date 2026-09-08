@@ -1,7 +1,7 @@
 import logging, re
 from logging.handlers import RotatingFileHandler
 from .file import ROOT
-from colorama import Fore, Style
+from colorama import Fore
 from datetime import datetime
 
 LOG_DIR = ROOT / 'logs'
