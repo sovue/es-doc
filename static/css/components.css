@@ -48,12 +48,8 @@
     padding: 28px 48px 24px;
 }
 
-/* Shares --column with .page-main below rather than keeping a 640px of its
-   own: both are centred now, and two centred blocks of different widths
-   would put the hero's first letter 60px inside the paragraph beneath it. */
 .page-hero-inner {
-    max-width: var(--column);
-    margin-inline: auto;
+    max-width: 640px;
 }
 
 .page-eyebrow {
@@ -119,10 +115,7 @@
 
 .page-main {
     padding: 56px 48px;
-    max-width: var(--column);
-    margin-inline: auto;
-    width: 100%;
-    box-sizing: border-box;
+    max-width: 760px;
 }
 
 /* ── Site header / nav ───────────────────────────────────── */
@@ -160,14 +153,6 @@
     gap: 32px;
     padding: 0 48px;
     min-height: 52px;
-
-    /* Centred on the shell while .site-header keeps the border-bottom, so
-       the rule under the header still spans the whole window and only the
-       nav's contents follow the page. */
-    max-width: var(--shell);
-    margin-inline: auto;
-    width: 100%;
-    box-sizing: border-box;
 }
 
 .nav-logo {
@@ -516,9 +501,7 @@
 /* Wraps now that the row carries icons and the support button too; without
    it the line overflows below ~700px. row-gap only matters once it does. */
 .site-footer p {
-    margin-inline: auto;
-    margin-block: 0;
-    max-width: var(--shell);
+    margin: 0;
     display: flex;
     align-items: center;
     flex-wrap: wrap;

@@ -139,15 +139,8 @@ img {
 /* min-height now lives on the parent .page (components.css), which uses
    flex: 1 to stretch .layout to absorb available space — so the footer
    below it can floor to the viewport bottom on short doc pages. */
-/* Sidebar and article travel together: centring the pair on the shell keeps
-   the contents column attached to the text it belongs to, where centring the
-   text alone would have left the sidebar pinned to the window edge with a gap
-   between them. */
 .layout {
     display: flex;
-    width: 100%;
-    max-width: var(--shell);
-    margin-inline: auto;
 }
 
 .sidebar {

@@ -102,15 +102,9 @@
 
 /* ── Contributors strip below page-main ──────────────────── */
 
-/* The credits close the same column the sections list runs in, so they take
-   --column and centre with it — the rule above them then reads as a divider
-   inside that column rather than a line trailing off the left of the screen. */
 .home-contributors {
     padding: 40px 48px 48px;
-    max-width: var(--column);
-    margin-inline: auto;
-    width: 100%;
-    box-sizing: border-box;
+    max-width: 760px;
     border-top: 1px solid var(--border);
 }
 
