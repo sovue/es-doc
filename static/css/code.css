@@ -207,13 +207,21 @@ pre code {
     position: relative;
 }
 
-/* Keep the first line clear of the button. The button is only rendered on
-   multi-line fences (md/__init__.py) and only revealed once docs.js confirms
-   a clipboard, so this reserves the gutter exactly when something is actually
-   parked there — a no-JS page keeps the full width. */
-.code-block:has(.code-copy:not([hidden])) pre {
-    padding-right: 52px;
-}
+/* The copy button used to reserve a 52px lane for itself here
+   (`padding-right` on the `pre`), so that the first line could never run
+   under it. That lane came out of *every* line, and the scrollport ended
+   53px short of the panel — which is what the right-hand dead strip was, and
+   why the overflow fade sat well inside the border instead of on it. On a
+   375px phone it cost 15% of the panel's width.
+
+   Measured against the corpus, the trade was backwards. 142 of the 151
+   multi-line blocks already scroll sideways at that width, so the lane never
+   saved a scroll; it only started one sooner. It protected the tail of one
+   line in 27% of blocks — and only on narrow screens, since a first line
+   long enough to reach the button in a 1050px panel is close to nonexistent.
+   The button is opaque, sits on the panel's own background with a border,
+   and anything under it comes out with one nudge of the scroll it was
+   already going to need. */
 
 .code-copy {
     /* The panel carries its own palette, so its focus ring follows the code

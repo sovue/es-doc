@@ -1058,7 +1058,17 @@ img {
         padding: 0;
     }
 
-    .sidebar nav {
+    /* ── This page's headings, as a strip ──
+       Scoped to `.sidebar-toc`, and that is the whole point of the class.
+       These five rules used to read `.sidebar nav` / `.sidebar ul` / `.sidebar
+       a`, which also caught the «Все статьи» tree below: the entire article
+       index — group headings and links alike — was flattened into one nowrap
+       row 554px wide inside a 343px sidebar, and `.sidebar ul ul` then hid
+       every article nested under a group. Opening the disclosure on a phone
+       showed four items out of twenty, jammed together mid-word, with the
+       real contents invisible. A strip is right for a dozen headings on the
+       page you are already reading; it is wrong for a tree. */
+    .sidebar-toc {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
 
@@ -1073,24 +1083,24 @@ img {
     }
 
     @media (prefers-contrast: more) {
-        .sidebar nav {
+        .sidebar-toc {
             background: none;
         }
     }
 
-    .sidebar ul {
+    .sidebar-toc ul {
         display: flex;
         flex-wrap: nowrap;
         gap: 0;
         padding-bottom: 4px;
     }
 
-    .sidebar li {
+    .sidebar-toc li {
         margin: 0;
         flex-shrink: 0;
     }
 
-    .sidebar ul ul {
+    .sidebar-toc ul ul {
         display: none;
     }
 
@@ -1098,12 +1108,35 @@ img {
        — it's the primary mobile navigation on doc pages, deserves comfortable taps.
        Right-only horizontal padding keeps items visually flush-left while still
        giving each link a comfortable separator before the next. */
-    .sidebar a {
+    .sidebar-toc a {
         display: inline-flex;
         align-items: center;
         min-height: 44px;
         padding: 0 16px 0 0;
         white-space: nowrap;
+    }
+
+    /* ── «Все статьи» and «Исходник страницы», as lists ──
+       They keep the desktop shape — one row per article, groups intact — and
+       only gain what a finger needs. The tree's own 38vh scroll box already
+       stops twenty articles from burying the page.
+
+       `overflow-wrap` rather than the strip's `white-space: nowrap`: a title
+       like «Спецификация API внутриигрового компаньона RKK Project 410» is
+       wider than a phone, and here there is nowhere sideways to put it. */
+    .sidebar-all-link,
+    .sidebar-source-links a {
+        display: flex;
+        align-items: center;
+        min-height: 44px;
+        overflow-wrap: break-word;
+    }
+
+    .sidebar-all-tree {
+        /* Taller than the desktop 38vh: the sidebar is not a sticky column
+           here, so the tree is not competing with the rest of it for one
+           viewport — it is just a block the page scrolls past. */
+        max-height: 60vh;
     }
 
     .content {

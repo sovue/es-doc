@@ -1254,15 +1254,26 @@ a.section-row:focus-visible .section-arrow {
     }
 }
 
-@media (max-width: 400px) {
+/* ── The header's compact form ──
+   Measured, not guessed. Between 401px and 640px the search is already an
+   icon, so the row carries the logo lockup (81px), that icon (44px), the two
+   links (218px) and the theme toggle (44px) — 387px of items, plus three
+   12px gaps and 40px of padding: 463px before it stops fitting.
+
+   These rules used to start at 400px, which left the whole 401–462px band
+   broken: the toggle wrapped to a second row and the header stood 100px tall
+   with one button stranded under it. That band is not an edge case — it is
+   where the iPhone 14/15 Plus and Pro Max (428/430px) and most large Android
+   phones (412/414px) live. The threshold below is the measured need rounded
+   up to a round number, not a device width. */
+@media (max-width: 480px) {
     .site-nav {
         gap: 4px;
         padding: 0 16px;
     }
 
-    /* The bar is already full at 375px (logo + search toggle + two links +
-       theme toggle). The mark alone is ~28px narrower than the full lockup,
-       so dropping the wordmark here buys width back instead of spending it.
+    /* The mark alone is ~57px narrower than the full lockup — more than the
+       gap and padding trims put together, and the star still names the site.
        Hidden the sr-only way, not display: none, so the link keeps its
        accessible name — the mark's alt is empty by design. */
     .nav-logo-text {
@@ -1280,18 +1291,17 @@ a.section-row:focus-visible .section-arrow {
         gap: 0;
     }
 
-    /* Four items share the bar since «Ресурсы» joined; the theme toggle
-       joins them too, so tighten padding to 6px and trim the toggle's box
-       to keep everything on one line at 375px (tap height stays 52px). */
+    /* Four items share the bar since «Ресурсы» joined it. With the wordmark
+       gone the row measures 350px at 375px, so the padding trim is the last
+       thing it needs — the theme toggle no longer has to give up its 44px
+       square to fit (WCAG 2.5.5), which it did while the wordmark was still
+       here at this width. */
     .nav-links a {
         padding-inline: 6px;
     }
+}
 
-    .theme-toggle {
-        width: 34px;
-        height: 34px;
-    }
-
+@media (max-width: 400px) {
     /* Used to be display: none at this width — 8 bare category names with
        zero explanation is exactly the "confusing home page" a first-time
        visitor on a phone (the likeliest way to arrive at all: a link from
@@ -1328,6 +1338,27 @@ a.section-row:focus-visible .section-arrow {
         height: 48px;
     }
 }
+
+/* Below 341px the four items stop fitting even stripped: 24px mark + 44px
+   search + 185px of link text + 44px toggle, and the text is not negotiable —
+   the type scale is a firmer commitment than a gap. So the last 21px come out
+   of space instead: 10px gutters, 2px gaps, 4px link padding, which brings the
+   row to 315px and holds a 320px screen. Narrower than that (a folded Galaxy,
+   say) the row wraps, which is what `flex-wrap` is there for and what WCAG
+   1.4.10 asks for — but the sticky header doubles to 92px when it happens, so
+   it is worth pushing the wrap point past every phone that is actually in
+   use. */
+@media (max-width: 340px) {
+    .site-nav {
+        gap: 2px;
+        padding: 0 10px;
+    }
+
+    .nav-links a {
+        padding-inline: 4px;
+    }
+}
+
 
 /* ── Reduced motion ──────────────────────────────────────── */
 
