@@ -116,6 +116,19 @@
     row-gap: 2px;
 }
 
+/* Both of these are grid or flex items with `min-width: auto`, so their
+   floor is min-content — and a native `<input type=range>` reports about
+   129px of intrinsic width however small the box around it gets. Add the two
+   26px clocks and the gaps and the seek row refused to go under ~200px, so
+   below roughly a 430px screen the bar stopped shrinking with its content
+   and the slider and the duration simply painted outside the rounded box.
+   `min-width: 0` is what lets the shrink reach the input, which already has
+   `flex: 1` and a zero floor of its own. */
+.res-seek,
+.res-nowplaying .res-volume {
+    min-width: 0;
+}
+
 .res-nowplaying-name {
     min-width: 0;
     font-family: var(--font-mono);
@@ -159,6 +172,28 @@
 }
 
 /* ── Responsive ──────────────────────────────────────────── */
+
+/* On a phone the seek row gets the whole width instead of the ~80px left over
+   beside two 44px buttons — a three-minute track on an 80px slider is two and
+   a half seconds per pixel. `display: contents` dissolves the name/seek pair
+   into the bar's own flex row, so the name keeps its place next to the
+   buttons and the slider wraps underneath, the way the volume already does.
+   Nothing is repositioned by hand and the markup does not change. */
+@media (max-width: 480px) {
+    .res-nowplaying-main {
+        display: contents;
+    }
+
+    .res-nowplaying-name {
+        flex: 1 1 auto;
+        min-width: 0;
+        align-self: center;
+    }
+
+    .res-seek {
+        flex: 1 1 100%;
+    }
+}
 
 @media (max-width: 640px) {
     /* The bar is the only transport on a phone and it floats in the thumb

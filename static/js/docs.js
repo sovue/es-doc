@@ -30,6 +30,33 @@ document.querySelectorAll("span.cs").forEach(el => {
     });
 })();
 
+/* ── Which end of the heading strip has more ──
+   Mobile only in effect: the strip is a single row there and runs several
+   times its own width. The fade is drawn by CSS (doc.css); this only tells
+   it which edges are still hiding something, so a strip scrolled to its end
+   stops claiming there is more. Sized in pixels rather than toggled with a
+   class so the two edges stay independent. */
+(function () {
+    const toc = document.querySelector('.sidebar-toc');
+    if (!toc) return;
+
+    const FADE = 32;
+
+    function update() {
+        const room = toc.scrollWidth - toc.clientWidth;
+        // A strip that fits has no edges to mark; `room <= 1` covers both
+        // that and the sub-pixel rounding a zoomed page produces.
+        const left = room > 1 && toc.scrollLeft > 1 ? FADE : 0;
+        const right = room > 1 && toc.scrollLeft < room - 1 ? FADE : 0;
+        toc.style.setProperty('--fade-start', left + 'px');
+        toc.style.setProperty('--fade-end', right + 'px');
+    }
+
+    toc.addEventListener('scroll', update, { passive: true });
+    addEventListener('resize', update);
+    update();
+})();
+
 /* ── Scroll-spy: highlight the TOC entry for the heading you're reading ── */
 (function () {
     const links = {};

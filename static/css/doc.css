@@ -1072,19 +1072,38 @@ img {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
 
-        /* Same edge cue as a code panel's overflow (code.css): a long
-           article's heading strip measured 2.6x its own width with nothing
-           to say so — the last visible link just looked like the last one.
-           The gutter's own gap gives this one a natural home for the fade;
-           a code panel has no gap so it borrows the padding box instead. */
-        background:
-            linear-gradient(to left, transparent, var(--bg-sidebar) 24px) 100% 0 / 24px 100% no-repeat local,
-            linear-gradient(to left, var(--fade-shadow), transparent 24px) 100% 0 / 24px 100% no-repeat scroll;
+        /* The strip runs four times its own width on a long article, so it
+           has to say that it continues. It used to say it with a shadow: a
+           24px wash of `--fade-shadow` behind the text at the right edge.
+           Behind, not over — so the shadow darkened the sidebar *and* the
+           half-cut word on top of it, and on the night theme (35% black over
+           an already dark panel) it read as a hard black slab rather than a
+           hint. The one thing that actually says "there is more here" — a
+           heading trailing off — was the thing it obscured.
+
+           A mask instead. The heading itself dissolves into the panel, which
+           is the same cue a printed page gives, and because a mask only acts
+           on pixels that exist, a strip with nothing under its edge fades
+           nothing. docs.js drops the end fade to 0 when the strip is scrolled
+           all the way and raises the start fade once it has left the
+           beginning, so each edge only speaks while it has something to say;
+           with no script the right edge stays faded, which is the state that
+           matters on arrival. */
+        --fade-start: 0px;
+        --fade-end: 32px;
+
+        mask-image: linear-gradient(to right,
+            transparent 0, #000 var(--fade-start),
+            #000 calc(100% - var(--fade-end)), transparent 100%);
+        -webkit-mask-image: linear-gradient(to right,
+            transparent 0, #000 var(--fade-start),
+            #000 calc(100% - var(--fade-end)), transparent 100%);
     }
 
     @media (prefers-contrast: more) {
         .sidebar-toc {
-            background: none;
+            --fade-start: 0px;
+            --fade-end: 0px;
         }
     }
 
