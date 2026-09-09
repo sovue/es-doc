@@ -240,6 +240,65 @@ img {
     font-weight: 600;
 }
 
+/* ── Contents (the page's own headings) ───────────────────
+   A <details> so that a phone can close it; a plain block on a desktop,
+   where the summary is hidden and the list is simply always there. The
+   sidebar title right above already names the article, so a second label
+   under it would say nothing a wide screen does not already show. */
+
+.sidebar-contents-summary {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    /* Same chevron label as «Все статьи» and «Исходник страницы» — three
+       sections of the sidebar, one control. */
+    .sidebar-contents-summary {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        cursor: pointer;
+        list-style: none;
+
+        font-family: var(--font-mono);
+        font-size: var(--fs-label);
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-soft);
+
+        transition: color 0.15s var(--ease-out);
+    }
+
+    .sidebar-contents-summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .sidebar-contents-summary::before {
+        content: '';
+        flex-shrink: 0;
+
+        width: 0.4em;
+        height: 0.4em;
+
+        border-right: 2px solid currentColor;
+        border-bottom: 2px solid currentColor;
+        transform: rotate(-45deg);
+
+        transition: transform 0.15s var(--ease-out);
+    }
+
+    .sidebar-contents[open] > .sidebar-contents-summary::before {
+        transform: rotate(45deg);
+    }
+
+    .sidebar-contents-summary:hover,
+    .sidebar-contents-summary:focus-visible {
+        color: var(--accent);
+    }
+}
+
 /* ── All articles (collapsed) ─────────────────────────────
    The whole docs tree, tucked under the page's own contents. Closed by
    default so the table of contents stays the first thing in the sidebar,
@@ -1128,87 +1187,35 @@ img {
         padding: 0;
     }
 
-    /* ── This page's headings, as a strip ──
-       Scoped to `.sidebar-toc`, and that is the whole point of the class.
-       These five rules used to read `.sidebar nav` / `.sidebar ul` / `.sidebar
-       a`, which also caught the «Все статьи» tree below: the entire article
-       index — group headings and links alike — was flattened into one nowrap
-       row 554px wide inside a 343px sidebar, and `.sidebar ul ul` then hid
-       every article nested under a group. Opening the disclosure on a phone
-       showed four items out of twenty, jammed together mid-word, with the
-       real contents invisible. A strip is right for a dozen headings on the
-       page you are already reading; it is wrong for a tree. */
-    .sidebar-toc {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    /* ── This page's headings, as a list ──
+       They used to be a horizontal strip. On a long article that strip ran
+       1435px inside a 362px sidebar — four times the width of the screen —
+       with no scrollbar and no affordance beyond a heading trailing off at
+       the edge, so four fifths of the contents could not be found at all,
+       and nesting could not be shown either. A phone has vertical room and
+       no horizontal room; the list goes the way the room goes.
 
-        /* The strip runs four times its own width on a long article, so it
-           has to say that it continues. It used to say it with a shadow: a
-           24px wash of `--fade-shadow` behind the text at the right edge.
-           Behind, not over — so the shadow darkened the sidebar *and* the
-           half-cut word on top of it, and on the night theme (35% black over
-           an already dark panel) it read as a hard black slab rather than a
-           hint. The one thing that actually says "there is more here" — a
-           heading trailing off — was the thing it obscured.
-
-           A mask instead. The heading itself dissolves into the panel, which
-           is the same cue a printed page gives, and because a mask only acts
-           on pixels that exist, a strip with nothing under its edge fades
-           nothing. docs.js drops the end fade to 0 when the strip is scrolled
-           all the way and raises the start fade once it has left the
-           beginning, so each edge only speaks while it has something to say;
-           with no script the right edge stays faded, which is the state that
-           matters on arrival. */
-        --fade-start: 0px;
-        --fade-end: 32px;
-
-        mask-image: linear-gradient(to right,
-            transparent 0, #000 var(--fade-start),
-            #000 calc(100% - var(--fade-end)), transparent 100%);
-        -webkit-mask-image: linear-gradient(to right,
-            transparent 0, #000 var(--fade-start),
-            #000 calc(100% - var(--fade-end)), transparent 100%);
+       Nothing here draws the list — the desktop rules already do, indent
+       steps and all. This only undoes the strip's own doing (the flex row
+       and the hidden sub-lists), gives each row a finger, and caps the whole
+       thing so a forty-heading article does not bury the text it belongs to. */
+    .sidebar-contents[open] > .sidebar-toc {
+        max-height: 50vh;
+        overflow-y: auto;
+        margin-top: 10px;
     }
 
-    @media (prefers-contrast: more) {
-        .sidebar-toc {
-            --fade-start: 0px;
-            --fade-end: 0px;
-        }
-    }
-
-    .sidebar-toc ul {
-        display: flex;
-        flex-wrap: nowrap;
-        gap: 0;
-        padding-bottom: 4px;
-    }
-
-    .sidebar-toc li {
-        margin: 0;
-        flex-shrink: 0;
-    }
-
-    .sidebar-toc ul ul {
-        display: none;
-    }
-
-    /* WCAG 2.5.5 (AAA) + Apple HIG 44pt comfort for the mobile horizontal nav strip
-       — it's the primary mobile navigation on doc pages, deserves comfortable taps.
-       Right-only horizontal padding keeps items visually flush-left while still
-       giving each link a comfortable separator before the next. */
     .sidebar-toc a {
-        display: inline-flex;
+        display: flex;
         align-items: center;
         min-height: 44px;
-        padding: 0 16px 0 0;
-        white-space: nowrap;
     }
 
     /* The two disclosure controls in the sidebar measured 20px tall — the
        label's own line and nothing else — while everything they reveal is a
        44px row. They open the two navigation blocks on the page, so they get
        the same. */
+    .sidebar-contents-summary,
     .sidebar-all-summary,
     .sidebar-source-label {
         min-height: 44px;
@@ -1279,7 +1286,9 @@ img {
     .details-summary,
     .details-summary::before,
     .sidebar-all-summary,
-    .sidebar-all-summary::before {
+    .sidebar-all-summary::before,
+    .sidebar-contents-summary,
+    .sidebar-contents-summary::before {
         transition: none;
     }
 

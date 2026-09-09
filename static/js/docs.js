@@ -30,31 +30,36 @@ document.querySelectorAll("span.cs").forEach(el => {
     });
 })();
 
-/* ── Which end of the heading strip has more ──
-   Mobile only in effect: the strip is a single row there and runs several
-   times its own width. The fade is drawn by CSS (doc.css); this only tells
-   it which edges are still hiding something, so a strip scrolled to its end
-   stops claiming there is more. Sized in pixels rather than toggled with a
-   class so the two edges stay independent. */
+/* ── Contents: open on a wide screen, the reader's choice on a narrow one ──
+   The inline script in doc.html sets the state before the first paint; this
+   half records what the reader does with it and re-applies the rule when the
+   viewport crosses the breakpoint. Without that last part a phone-sized
+   window that grows wide would keep a <details> shut whose summary is hidden
+   at that width — contents with no way to open them. */
 (function () {
-    const toc = document.querySelector('.sidebar-toc');
-    if (!toc) return;
+    const box = document.getElementById('sidebar-contents');
+    if (!box) return;
 
-    const FADE = 32;
+    const KEY = 'es-doc-contents';
+    const wide = matchMedia('(min-width: 769px)');
 
-    function update() {
-        const room = toc.scrollWidth - toc.clientWidth;
-        // A strip that fits has no edges to mark; `room <= 1` covers both
-        // that and the sub-pixel rounding a zoomed page produces.
-        const left = room > 1 && toc.scrollLeft > 1 ? FADE : 0;
-        const right = room > 1 && toc.scrollLeft < room - 1 ? FADE : 0;
-        toc.style.setProperty('--fade-start', left + 'px');
-        toc.style.setProperty('--fade-end', right + 'px');
-    }
+    box.addEventListener('toggle', function () {
+        // Only a deliberate choice on a phone is worth remembering: on a wide
+        // screen the state is forced, so storing it would record a decision
+        // the reader never made.
+        if (wide.matches) return;
+        try { localStorage.setItem(KEY, box.open ? '1' : '0'); } catch (e) {}
+    });
 
-    toc.addEventListener('scroll', update, { passive: true });
-    addEventListener('resize', update);
-    update();
+    wide.addEventListener('change', function () {
+        if (wide.matches) {
+            box.open = true;
+            return;
+        }
+        let saved = '0';
+        try { saved = localStorage.getItem(KEY) || '0'; } catch (e) {}
+        box.open = saved === '1';
+    });
 })();
 
 /* ── Scroll-spy: highlight the TOC entry for the heading you're reading ── */
