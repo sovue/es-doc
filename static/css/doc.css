@@ -1046,6 +1046,36 @@ img {
     text-decoration: underline;
 }
 
+/* One source cited several times: the number stops being a link and a letter
+   per mention takes its place (see refs.py for why this follows Wikipedia
+   rather than Word). Same mono voice as the number it follows, one step
+   quieter, so the row still reads «2^ а б» as one label. */
+.ref-back--plain {
+    color: var(--text-soft);
+    cursor: default;
+}
+
+.ref-backs {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.5em;
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+}
+
+.ref-backs a {
+    /* 24px of target for one letter, without moving the row (WCAG 2.5.8). */
+    display: inline-block;
+    min-width: 24px;
+    text-align: center;
+    text-decoration: none;
+}
+
+.ref-backs a:hover,
+.ref-backs a:focus-visible {
+    text-decoration: underline;
+}
+
 /* ── Disambiguation hatnote ───────────────────────────────
    One italic line above the article, in the same PT Serif voice blockquotes
    use, boxed in a plain --border frame so it reads as its own aside rather

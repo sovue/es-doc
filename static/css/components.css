@@ -1360,6 +1360,17 @@ a.section-row:focus-visible .section-arrow {
     .section-row {
         flex-wrap: wrap;
         row-gap: 2px;
+        /* The 20px that separated name from description on one line is too
+           much between a word and its own counter. */
+        column-gap: 10px;
+    }
+
+    /* The name reserved a 160px column so that descriptions lined up down the
+       page. With the description on its own line there is nothing left to
+       align, and the reservation only pushed «146» 115px away from «Фоны».
+       The count reads as part of the name now, which is what it is. */
+    .section-name {
+        min-width: 0;
     }
 
     .section-arrow {

@@ -166,25 +166,67 @@ def ref_list(state: StateBlock, startLine: int, endLine: int, silent: bool):
     return True
 
 
+# One source, cited more than once. Two conventions were on the table:
+#
+#   Word inserts the footnote once and every later mention is a *cross
+#   reference* — the same number, no second footnote, and no way back from the
+#   note to any particular mention. Print has no back-links to lose, so that
+#   costs Word nothing.
+#
+#   Wikipedia keeps one entry and gives it one back-link per mention, labelled
+#   а, б, в. Each letter returns to its own mention.
+#
+# The web has back-links, so Wikipedia's is the one that loses nothing — and
+# it is the convention this audience already reads. What it needs is that
+# every mention be individually addressable, which is what the numbered ids
+# below are for: `ref-back-2-1`, `ref-back-2-2`. Before this, a repeated
+# number put the id on the first mention only and the entry's single `2^`
+# always returned there, so a reader who followed the *second* mention down to
+# the note was sent back to a paragraph they had never been in.
+_LETTERS = 'абвгдежзиклмнопрстуфхцчшщэюя'
+
+
+def _back_label(k):
+    """`а`, `б`, … and plain numbers past the alphabet — the label only has to
+    be short and ordered, and no page is going to cite one source 28 times."""
+    return _LETTERS[k - 1] if k <= len(_LETTERS) else str(k)
+
+
 def render_ref_mark(self, tokens, idx, options, env):
     num = tokens[idx].meta['num']
 
-    # Only the first marker for a given number carries the id the list entry
-    # links back to — the same source cited twice would otherwise put the same
-    # id on the page twice, and the back-link would land on whichever the
-    # browser picked. Later markers still link forward to the entry.
-    seen = env.setdefault('ref_marks', set())
-    anchor = '' if num in seen else f' id="ref-back-{num}"'
-    seen.add(num)
+    # Markers render in document order, so counting them as they go gives each
+    # one a stable index — and the list's letters can point at those ids
+    # without either side having to agree on anything but the order.
+    counts = env.setdefault('ref_seen', {})
+    counts[num] = counts.get(num, 0) + 1
 
     return (
-        f'<sup class="ref"{anchor}>'
+        f'<sup class="ref" id="ref-back-{num}-{counts[num]}">'
         f'<a href="#ref-{num}" aria-label="Источник {num}">{num}</a>'
         f'</sup>'
     )
 
 
+def _count_marks(tokens, totals):
+    """How many times each source is cited, over the whole document.
+
+    Counted from the token stream rather than as the markers render, because
+    a list is not obliged to come after the prose that cites it — an article
+    could open with its sources. Markers live inside `inline` tokens, so the
+    walk has to descend one level."""
+    for token in tokens:
+        if token.type == 'ref_mark':
+            totals[token.meta['num']] = totals.get(token.meta['num'], 0) + 1
+        elif token.children:
+            _count_marks(token.children, totals)
+
+
 def render_refs_open(self, tokens, idx, options, env):
+    if 'ref_totals' not in env:
+        env['ref_totals'] = {}
+        _count_marks(tokens, env['ref_totals'])
+
     return '<div class="refs">'
 
 
@@ -194,14 +236,31 @@ def render_refs_close(self, tokens, idx, options, env):
 
 def render_ref_item_open(self, tokens, idx, options, env):
     num = tokens[idx].meta['num']
+    total = env.get('ref_totals', {}).get(num, 0)
+
+    # Cited once (or not at all — an entry nothing points to is still worth
+    # rendering): the number itself is the way back, as it always was.
+    if total < 2:
+        back = (
+            f'<a class="ref-back" href="#ref-back-{num}-1" '
+            f'aria-label="Вернуться к упоминанию источника {num}">{num}^</a>'
+        )
+    else:
+        # Cited several times: the number stops being a link — there is no
+        # single place for it to go — and one letter per mention takes over.
+        letters = ' '.join(
+            f'<a href="#ref-back-{num}-{k}" '
+            f'aria-label="Вернуться к упоминанию {k} источника {num}">{_back_label(k)}</a>'
+            for k in range(1, total + 1)
+        )
+        back = (
+            f'<span class="ref-back ref-back--plain">{num}^</span>'
+            f'<span class="ref-backs">{letters}</span>'
+        )
+
     # A div, not a p: an entry can hold several paragraphs now, and a <p>
     # cannot contain them.
-    return (
-        f'<div class="ref-item" id="ref-{num}">'
-        f'<a class="ref-back" href="#ref-back-{num}" '
-        f'aria-label="Вернуться к упоминанию источника {num}">{num}^</a>'
-        f'<div class="ref-text">'
-    )
+    return f'<div class="ref-item" id="ref-{num}">{back}<div class="ref-text">'
 
 
 def render_ref_item_close(self, tokens, idx, options, env):

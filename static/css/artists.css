@@ -332,10 +332,26 @@
     border-radius: var(--radius-block);
 }
 
+/* `width: 100%` inside a scrolling wrapper is a contradiction: the table can
+   never be wider than the box, so the box never scrolls and the columns get
+   crushed instead. On a 402px screen that squeezed the name column to 25px
+   and broke «artsam» into three stacked fragments — art / sa / m. The minimum
+   is where the rows stop fighting: measured across all 22 artists, 700px
+   leaves five rows taller than one line (the ones with four or more links)
+   against ten at 480px, and a worst case of 116px against 358px. Wider buys
+   nothing — 760px gives the same five. Below it the wrapper does what it was
+   always meant to do and scrolls sideways. */
 .artists-table {
     width: 100%;
+    min-width: 700px;
     border-collapse: collapse;
     font-size: var(--fs-ui);
+}
+
+/* A nickname is one token — it may wrap between words, never inside one. */
+.artists-table .artist-name {
+    overflow-wrap: normal;
+    word-break: normal;
 }
 
 .artists-table th {
