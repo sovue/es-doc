@@ -155,7 +155,9 @@ img {
     position: sticky;
     top: 52px;
 
+    /* dvh with a vh fallback — see .page in components.css for why. */
     height: calc(100vh - 52px);
+    height: calc(100dvh - 52px);
     overflow-y: auto;
 }
 
@@ -174,6 +176,9 @@ img {
     color: var(--text);
     font-family: var(--font-serif);
     font-size: var(--fs-lead);
+    /* Safari still wants the prefix, and Safari is the whole point here: this
+       is a Russian title in a 196px column on a phone. */
+    -webkit-hyphens: auto;
     hyphens: auto;
     overflow-wrap: break-word;
     font-weight: 700;
@@ -482,6 +487,7 @@ img {
 .content > ol,
 .content > dl,
 .content > blockquote {
+    -webkit-hyphens: auto;
     hyphens: auto;
     text-wrap: pretty;
 }
@@ -689,6 +695,35 @@ img {
 .heading:hover .anchor,
 .anchor:focus-visible {
     opacity: 1;
+}
+
+/* A screen with no pointer never fires the hover that reveals these, so on a
+   phone every heading carried a 13px-wide link at 30% opacity: invisible,
+   and still a tap target sitting right where a thumb scrolls. Half-visible
+   and wide enough to mean it, or not there at all — this takes the first,
+   since a link to a heading is worth having on the device most likely to be
+   sharing one. */
+/* A link that is the whole of its paragraph or list item is a destination,
+   not a word in a sentence — WCAG 2.5.8's exception for links inside a block
+   of text does not cover it, and at the body size it stands 20px tall. The
+   padding stays on an inline box: it grows the hit area without touching the
+   line box, and unlike `inline-block` it still lets a long title wrap. Only
+   these, never every link — overlapping targets on adjacent lines of a dense
+   paragraph would make the wrong one win. */
+@media (hover: none) {
+    .content p > a:only-child,
+    .content p > strong > a:only-child,
+    .content li > a:only-child {
+        padding-block: 3px;
+    }
+}
+
+@media (hover: none) {
+    .anchor {
+        display: inline-block;
+        min-width: 24px;
+        opacity: 0.55;
+    }
 }
 
 /* ── Callouts (info · warning · danger · attention · tip) ──
@@ -994,8 +1029,13 @@ img {
     }
 }
 
+/* `1^` is two glyphs of mono, 13px wide, and it is the only way back from a
+   source to the sentence that cited it. `min-width` rather than padding so
+   the number stays flush with the entry it numbers. */
 .ref-back {
     flex-shrink: 0;
+    display: inline-block;
+    min-width: 24px;
     font-family: var(--font-mono);
     font-size: 0.85em;
     text-decoration: none;
@@ -1133,6 +1173,15 @@ img {
         min-height: 44px;
         padding: 0 16px 0 0;
         white-space: nowrap;
+    }
+
+    /* The two disclosure controls in the sidebar measured 20px tall — the
+       label's own line and nothing else — while everything they reveal is a
+       44px row. They open the two navigation blocks on the page, so they get
+       the same. */
+    .sidebar-all-summary,
+    .sidebar-source-label {
+        min-height: 44px;
     }
 
     /* ── «Все статьи» and «Исходник страницы», as lists ──

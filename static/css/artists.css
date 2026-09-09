@@ -228,6 +228,7 @@
     line-height: var(--lh-flat);
     color: color-mix(in srgb, var(--text-soft) 55%, transparent);
     user-select: none;
+    -webkit-user-select: none;
 }
 
 .artist-preview-img {

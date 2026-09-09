@@ -155,6 +155,7 @@
     color: var(--text-soft);
     cursor: pointer;
     user-select: none;
+    -webkit-user-select: none;
 }
 
 .res-toggle input {
@@ -383,6 +384,19 @@ a.res-file:focus-visible {
 }
 
 /* ── Row actions (copy / download / play) ────────────────── */
+
+/* Copy and download travel as a pair. They used to be two loose children of
+   the row, which was fine while the row never wrapped — and wrong the moment
+   it did on a phone, where the two would split across lines and the download
+   button ended up alone under the thumbnail. One wrapper, one wrap. The gap
+   matches the row's own so nothing moves on a desktop. */
+.res-actions {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
 
 .res-copy,
 .res-play,
@@ -628,6 +642,7 @@ a.res-file:focus-visible {
     box-shadow: var(--shadow-modal);
     max-width: min(92vw, 1200px);
     max-height: 92vh;
+    max-height: 92dvh;
 }
 
 .res-lightbox::backdrop {
@@ -638,6 +653,7 @@ a.res-file:focus-visible {
     display: block;
     max-width: 100%;
     max-height: calc(92vh - 58px);
+    max-height: calc(92dvh - 58px);
     width: auto;
     height: auto;
     margin: 0 auto;
@@ -708,6 +724,28 @@ a.res-file:focus-visible {
 .res-lightbox-close:hover {
     color: var(--accent);
     border-color: var(--accent);
+}
+
+/* On a phone the lightbox is the whole screen and this bar is all of its
+   controls — and they measured 21px tall («Открыть оригинал», «Скачать») and
+   28px square (close), under the 24px floor and far under a thumb. The links
+   take their height from padding so the bar keeps its own proportions. */
+@media (max-width: 640px) {
+    .res-lightbox-bar {
+        gap: 12px;
+        padding: 4px 12px;
+    }
+
+    .res-lightbox-raw {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+    }
+
+    .res-lightbox-close {
+        width: 44px;
+        height: 44px;
+    }
 }
 
 /* The smooth zoom: scale + fade in on open (ease-out-quint). */
@@ -885,6 +923,16 @@ a.res-file:focus-visible {
     outline: var(--focus-ring);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
+}
+
+/* «Открыть файл» and «Скачать» are the two things this page exists to offer,
+   and at 24px they were the smallest targets on it. */
+@media (max-width: 768px) {
+    .fb-action {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+    }
 }
 
 /* Read-only code view on the film-dark panel, same palette the docs'
@@ -1123,7 +1171,30 @@ video.fb-media {
         padding: 0 20px;
     }
 
+    /* At 402px the row dealt itself out as thumbnail 144 + text 94 + two
+       44px buttons: a quarter of the width for the name, the description and
+       the path, which then wrapped to four lines beside a picture. Letting
+       the row wrap gives the text a 55% floor — it now takes ~218px next to
+       the thumbnail — and the two actions drop to a line of their own,
+       right where a thumb reaches them. Markup order is untouched, so the
+       reading order is still name, description, copy, download. */
     .res-row {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    /* A floor, not a share: 180px is what the name, the description and the
+       path need to read as three lines rather than eight. With it, a row that
+       carries a thumbnail can no longer fit its two actions on the same line
+       and they wrap together underneath (144 + 12 + 180 leaves 26 of 362);
+       an audio row, which has a 44px play button instead of a 144px picture,
+       still fits everything on one line at 348. The wrap decides itself from
+       the numbers rather than from a selector guessing at the row's kind. */
+    .res-meta {
+        min-width: 180px;
+    }
+
+    .res-actions {
         gap: 12px;
     }
 

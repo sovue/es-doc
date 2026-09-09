@@ -10,7 +10,12 @@
    The page's <main> (or <div class="layout"> on doc pages) is the flexible
    child that absorbs the free space; the footer is the rigid child after it. */
 .page {
+    /* `dvh` with a `vh` fallback: on iOS Safari `100vh` is the *large*
+       viewport — the height the page has only once the toolbar has scrolled
+       away — so a short page on a phone reserved more than the screen and
+       always had a little scroll in it. */
     min-height: calc(100vh - 52px);
+    min-height: calc(100dvh - 52px);
     display: flex;
     flex-direction: column;
 }
@@ -1072,6 +1077,18 @@ a.section-row:focus-visible .section-arrow {
     border-radius: var(--radius-xs);
 }
 
+/* The row is 48px tall; the link inside it was 20 — one line of type in the
+   middle of it, with the rest inert. Same layout-neutral trick the page-back
+   link and the file-browser rows use: padding grows the hit box, the negative
+   margin keeps the line where it was. */
+@media (max-width: 768px) {
+    .lit-row a {
+        display: inline-block;
+        padding-block: 12px;
+        margin-block: -12px;
+    }
+}
+
 /* ── GitHub contributors gallery ─────────────────────────── */
 
 .gh-contributors-status {
@@ -1326,16 +1343,20 @@ a.section-row:focus-visible .section-arrow {
     }
 }
 
-@media (max-width: 400px) {
-    /* Used to be display: none at this width — 8 bare category names with
-       zero explanation is exactly the "confusing home page" a first-time
-       visitor on a phone (the likeliest way to arrive at all: a link from
-       Discord or VK, not a desktop bookmark) never gets past. The name and
-       arrow keep their row (order: 0 puts the arrow — last in the markup —
-       back next to the name instead of after where the description used to
-       sit); the description wraps onto its own full-width line below,
-       instead of being hidden or cut with an ellipsis that would have
-       eaten the actual explanation. */
+/* The section rows — the home page's own contents, and the same component on
+   /docs/, /news, /literature and /support — put the name, its description and
+   an arrow on one line, with the description clipped to whatever is left.
+   That fits a desktop and nothing else: at 402px (an iPhone 17) all eight
+   home-page rows were cut, the worst of them showing 87px of a 365px
+   sentence, and on /news one description had been squeezed to zero width.
+   A quarter of a sentence ending in an ellipsis is not a shorter
+   explanation, it is a broken one.
+
+   This used to start at 400px, which is below every phone in use. 640px is
+   where the longest description in the corpus (413px) stops fitting beside
+   the longest name, so that is where the row wraps and the description takes
+   a full line of its own. */
+@media (max-width: 640px) {
     .section-row {
         flex-wrap: wrap;
         row-gap: 2px;
@@ -1352,6 +1373,9 @@ a.section-row:focus-visible .section-arrow {
         overflow: visible;
         text-overflow: clip;
     }
+}
+
+@media (max-width: 400px) {
 
     .author-row {
         gap: 14px;

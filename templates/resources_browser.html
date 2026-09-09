@@ -128,8 +128,10 @@
                         <span class="res-file">{{ f.sub }}</span>
                     </div>
                     {% if f.kind == 'audio' %}{{ res.play_button(f.raw, f.name) }}{% endif %}
-                    {{ res.copy_button(f.code) }}
-                    {{ res.dl_button(f.raw, f.name) }}
+                    <div class="res-actions">
+                        {{ res.copy_button(f.code) }}
+                        {{ res.dl_button(f.raw, f.name) }}
+                    </div>
                 </li>
                 {% endfor %}
             </ul>

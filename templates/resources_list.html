@@ -33,8 +33,10 @@
         {% if item.source %}<span class="res-file">{{ item.source }}</span>
         {%- elif item.file %}<span class="res-file">{{ item.file }}</span>{% endif %}
     </div>
-    {{ res.copy_button(item.code) }}
-    {% if item.raw %}{{ res.dl_button(item.raw, filename) }}{% endif %}
+    <div class="res-actions">
+        {{ res.copy_button(item.code) }}
+        {% if item.raw %}{{ res.dl_button(item.raw, filename) }}{% endif %}
+    </div>
 </li>
 {% endmacro %}
 
@@ -50,8 +52,10 @@
         <span class="res-file">{{ item.file }}</span>
         {% endif %}
     </div>
-    {{ res.copy_button(item.code) }}
-    {% if item.raw %}{{ res.dl_button(item.raw, item.file.rsplit('/', 1)[-1]) }}{% endif %}
+    <div class="res-actions">
+        {{ res.copy_button(item.code) }}
+        {% if item.raw %}{{ res.dl_button(item.raw, item.file.rsplit('/', 1)[-1]) }}{% endif %}
+    </div>
 </li>
 {% endmacro %}
 
