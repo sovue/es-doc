@@ -5,6 +5,9 @@
 {% set body_class = 'bg-solid' %}
 {% set active = 'resources' %}
 {% set extra_css = ['/static/css/resources.css'] %}
+{# Any folder here may hold sound files, and which ones is only known row by
+   row — so the player ships with the page rather than being guessed at. #}
+{% set with_player = true %}
 
 {% macro icon(kind) %}
 <span class="fb-ico fb-ico--{{ kind }}" aria-hidden="true">

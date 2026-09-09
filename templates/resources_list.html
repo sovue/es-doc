@@ -5,6 +5,8 @@
 {% set body_class = 'bg-solid' %}
 {% set active = 'resources' %}
 {% set extra_css = ['/static/css/resources.css'] %}
+{# Only the sound categories have anything to play. #}
+{% set with_player = category_meta.media == 'audio' %}
 
 {% macro name_line(item) %}
         <span class="res-name-line"><code class="res-name">{{ item.code }}</code>

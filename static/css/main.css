@@ -10,6 +10,18 @@
     box-sizing: border-box;
 }
 
+/* `hidden` is how every control on this site says "not until JS reveals me":
+   the copy buttons, the download links, the play buttons, the artist filters.
+   The browser's own rule for it is `[hidden] { display: none }`, one attribute
+   selector — which loses to any `.thing { display: flex }` written afterwards,
+   so those controls were on screen and inert on a page with no JavaScript.
+   Stated once here, with the weight the attribute is supposed to carry.
+   (artists.css and resources.css each carry a local guard for the same
+   reason; they are redundant now, not wrong.) */
+[hidden] {
+    display: none !important;
+}
+
 @media (prefers-reduced-motion: no-preference) {
     html {
         scroll-behavior: smooth;

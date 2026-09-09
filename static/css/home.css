@@ -117,33 +117,43 @@
 }
 
 /* ── The theme track ──────────────────────────────────────────
-   Two quiet rows under the hero lead: the button, the credits and the volume
-   on top; the position and the clock underneath. Still no waveform and no
-   album art — a player, not a widget, so it never competes with the title
-   above it for the first screen.
+   One quiet row under the hero lead: a play button, the artist, the title.
+   Position and volume are not here — pressing play raises the site's shared
+   now-playing bar (player.css), the same one the resource listings use, and
+   it carries the seek bar, the clock and the volume for the whole site.
+   Duplicating any of that in the hero would mean two players disagreeing
+   about the same sound.
 
-   It used to carry a «ТЕМА САЙТА» label over it. The row already says what it
-   is — a play button next to an artist and a title — and the mono label was
-   the loudest thing in a block meant to be the quietest. The group keeps the
-   name on `aria-label` for anyone who cannot see that.
+   It used to carry a «ТЕМА САЙТА» label over it. The row already says what
+   it is — a play button next to an artist and a title — and the mono label
+   was the loudest thing in a block meant to be the quietest. The group keeps
+   the name on `aria-label` for anyone who cannot see that.
 
-   `.hero-track-audio` is visible until track.js confirms it can replace
-   the native controls (`.is-enhanced`), so a reader with no JS gets the
-   browser's player instead of a row that does nothing. */
+   `.hero-track-audio` is the no-JS fallback: a bare <audio controls> that
+   player.js removes once it has a real control to offer. It is only ever on
+   screen when this stylesheet has no script behind it. */
 .hero-track {
+    display: flex;
+    align-items: center;
+    /* Only the no-JS row ever needs the second line: a native <audio controls>
+       is a fixed ~300px widget, and on a phone it and the credits do not fit
+       side by side. With the script the row is a 44px button and two words. */
+    flex-wrap: wrap;
+    gap: 12px;
+
     margin: 28px 0 0;
 }
 
-.hero-track-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+/* The no-JS fallback, and only until player.js removes it. Native players
+   refuse to shrink below their intrinsic width unless told to. */
+.hero-track-audio {
+    min-width: 0;
+    max-width: 100%;
 }
 
-.hero-track.is-enhanced .hero-track-audio {
-    display: none;
-}
-
+/* The button is the page's own, not the row-action square the resource lists
+   use: the player keys off `data-play-src`, so the two can look nothing alike
+   and still be the same control. */
 .hero-track-play {
     display: inline-flex;
     align-items: center;
@@ -176,22 +186,24 @@
     outline-offset: 3px;
 }
 
-/* One button, two glyphs: whichever the press will *do* next. */
+/* One button, two glyphs, swapped on the state the player writes —
+   `aria-pressed`, the same attribute the resource rows switch on. */
 .hero-track-icon-pause,
-.hero-track.is-playing .hero-track-icon-play {
+.hero-track-play[aria-pressed="true"] .hero-track-icon-play {
     display: none;
 }
 
-.hero-track.is-playing .hero-track-icon-pause {
+.hero-track-play[aria-pressed="true"] .hero-track-icon-pause {
     display: block;
 }
 
-/* Takes the slack in the row, so the volume control parks against the right
-   edge instead of trailing the title by a fixed gap. */
+.hero-track-play[aria-pressed="true"] {
+    border-color: var(--accent);
+}
+
 .hero-track-name {
     margin: 0;
     min-width: 0;
-    flex: 1;
     line-height: var(--lh-ui);
 }
 
@@ -210,205 +222,8 @@
     color: var(--text);
 }
 
-/* Empty until the reader presses play: with `preload="none"` the duration is
-   genuinely unknown before then, and a placeholder 0:00 would be a guess.
-   `tabular-nums` keeps the row from twitching as the seconds tick over, and
-   the fixed width keeps it still when the clock crosses 9:59 too. */
-.hero-track-time {
-    flex: none;
-    min-width: 9ch;
-    text-align: right;
-
-    font-family: var(--font-mono);
-    font-size: var(--fs-label);
-    font-variant-numeric: tabular-nums;
-    color: var(--text-soft);
-}
-
-/* ── Position and volume ──────────────────────────────────────
-   Two range inputs sharing one look. `appearance: none` is what makes that
-   possible at all — a native range is drawn by the platform and takes almost
-   no CSS — so everything below draws the control from scratch: a 4px groove,
-   a filled part up to the current value, and a thumb the size of a target.
-
-   The fill is a hard-stop gradient at `--fill`, which track.js writes as a
-   percentage on every update. A gradient rather than a second element because
-   an <input> cannot have children, and rather than a WebKit-only
-   `::-webkit-slider-runnable-track` trick because Firefox has to draw the
-   same thing. */
-
-.hero-track-scrub {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    margin-top: 10px;
-}
-
-.hero-track-slider {
-    appearance: none;
-    -webkit-appearance: none;
-
-    height: 20px;
-    margin: 0;
-    padding: 0;
-
-    background: linear-gradient(to right,
-        var(--accent) 0 var(--fill, 0%),
-        var(--border) var(--fill, 0%) 100%) center / 100% 4px no-repeat;
-    border: none;
-    border-radius: var(--radius-full);
-
-    cursor: pointer;
-}
-
-.hero-track-seek {
-    flex: 1;
-    min-width: 0;
-}
-
-/* Wide enough to set a level with, narrow enough that it stays a detail next
-   to the credits it sits beside. */
-.hero-track-vol {
-    flex: none;
-    width: 84px;
-}
-
-/* Both vendor thumbs, written twice because a browser drops the whole rule
-   when it meets a selector it does not know — they cannot be one list. */
-.hero-track-slider::-webkit-slider-thumb {
-    appearance: none;
-    -webkit-appearance: none;
-
-    width: 12px;
-    height: 12px;
-
-    background: var(--accent);
-    border: none;
-    border-radius: var(--radius-full);
-
-    transition: transform 0.15s var(--ease-out);
-}
-
-.hero-track-slider::-moz-range-thumb {
-    width: 12px;
-    height: 12px;
-
-    background: var(--accent);
-    border: none;
-    border-radius: var(--radius-full);
-
-    transition: transform 0.15s var(--ease-out);
-}
-
-.hero-track-slider:hover::-webkit-slider-thumb,
-.hero-track-slider:focus-visible::-webkit-slider-thumb {
-    transform: scale(1.25);
-}
-
-.hero-track-slider:hover::-moz-range-thumb,
-.hero-track-slider:focus-visible::-moz-range-thumb {
-    transform: scale(1.25);
-}
-
-.hero-track-slider:focus-visible {
-    outline: var(--focus-ring);
-    outline-offset: 4px;
-}
-
-/* Before the first play the duration is unknown, so the bar says so: no thumb
-   to grab and a groove with nothing filled. */
-.hero-track-slider:disabled {
-    cursor: default;
-    opacity: 0.5;
-}
-
-.hero-track-slider:disabled::-webkit-slider-thumb {
-    visibility: hidden;
-}
-
-.hero-track-slider:disabled::-moz-range-thumb {
-    visibility: hidden;
-}
-
-.hero-track-volume {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex: none;
-}
-
-/* A quieter control than play: no ring, no fill, just the glyph — it is the
-   secondary action in a block that already has a primary one. */
-.hero-track-mute {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: none;
-
-    width: 32px;
-    height: 32px;
-    padding: 0;
-
-    background: none;
-    border: none;
-    color: var(--text-soft);
-    cursor: pointer;
-
-    transition: color 0.15s var(--ease-out);
-}
-
-.hero-track-mute:hover {
-    color: var(--accent);
-}
-
-.hero-track-mute:focus-visible {
-    outline: var(--focus-ring);
-    outline-offset: 2px;
-    border-radius: var(--radius-xs);
-}
-
-/* One button, two glyphs — the same pattern as play/pause, except this one
-   shows the current state rather than the next action: a speaker with a cross
-   through it is what "you have muted this" looks like everywhere. */
-.hero-track-icon-muted,
-.hero-track.is-muted .hero-track-icon-loud {
-    display: none;
-}
-
-.hero-track.is-muted .hero-track-icon-muted {
-    display: block;
-}
-
-.hero-track.is-muted .hero-track-vol {
-    /* The level is still set, it is just not being applied — grey the fill
-       rather than zeroing it, so unmuting visibly returns to where it was. */
-    filter: grayscale(1);
-    opacity: 0.6;
-}
-
-/* On a phone the credits and the volume stop fitting on one line, so the row
-   wraps and the volume drops to its own. `flex-wrap` and not `order`: the
-   volume is already last in the markup, so wrapping alone puts it where it
-   belongs and the reading order stays the tab order. */
-@media (max-width: 480px) {
-    .hero-track-row {
-        flex-wrap: wrap;
-    }
-
-    .hero-track-volume {
-        margin-left: auto;
-    }
-
-    .hero-track-vol {
-        width: 72px;
-    }
-}
-
 @media (prefers-reduced-motion: reduce) {
-    .hero-track-slider::-webkit-slider-thumb,
-    .hero-track-slider::-moz-range-thumb,
-    .hero-track-mute {
+    .hero-track-play {
         transition: none;
     }
 }

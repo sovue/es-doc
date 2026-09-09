@@ -169,147 +169,12 @@
     outline-offset: 2px;
 }
 
-/* ── Global volume (shared audio player) ─────────────────── */
-
-.res-volume {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-soft);
-}
-
-.res-volume input {
-    width: 110px;
-    accent-color: var(--accent);
-}
-
-.res-volume input:focus-visible {
-    outline: var(--focus-ring);
-    outline-offset: 3px;
-    border-radius: var(--radius-xs);
-}
-
-/* ── Floating now-playing bar ────────────────────────────── */
-
-/* Follows the listener down the page, so the single volume control is at
-   hand exactly while something plays. Floats above the page plane, hence
-   the soft shadow. */
-.res-nowplaying {
-    position: fixed;
-    left: 24px;
-    bottom: 24px;
-    z-index: 9;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: min(480px, calc(100vw - 120px));
-    padding: 8px 14px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-soft);
-    opacity: 0;
-    transform: translateY(8px);
-    pointer-events: none;
-    transition: opacity 0.2s var(--ease-out), transform 0.2s var(--ease-out);
-}
-
-.res-nowplaying--visible {
-    opacity: 1;
-    transform: none;
-    pointer-events: auto;
-}
-
-.res-nowplaying-stop,
-.res-nowplaying-pause {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 30px;
-    height: 30px;
-    flex-shrink: 0;
-    padding: 0;
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-full);
-    color: var(--text-soft);
-    cursor: pointer;
-    transition: color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
-}
-
-.res-nowplaying-stop:hover,
-.res-nowplaying-pause:hover {
-    color: var(--accent);
-    border-color: var(--accent);
-}
-
-.res-nowplaying-stop:focus-visible,
-.res-nowplaying-pause:focus-visible {
-    outline: var(--focus-ring);
-    outline-offset: 2px;
-}
-
-/* The pause button flips to a play glyph while the track is paused. */
-.res-nowplaying-pause svg + svg {
-    display: none;
-}
-
-.res-nowplaying--paused .res-nowplaying-pause svg:first-child {
-    display: none;
-}
-
-.res-nowplaying--paused .res-nowplaying-pause svg + svg {
-    display: block;
-}
-
-.res-nowplaying-main {
-    flex: 1;
-    min-width: 0;
-    display: grid;
-    row-gap: 2px;
-}
-
-.res-nowplaying-name {
-    min-width: 0;
-    font-family: var(--font-mono);
-    font-size: var(--fs-label);
-    font-weight: 600;
-    color: var(--text);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* The seek row: click or drag the track to jump within the playing sound. */
-.res-seek {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.res-seek input {
-    flex: 1;
-    min-width: 0;
-    margin: 0;
-    accent-color: var(--accent);
-}
-
-.res-seek input:focus-visible {
-    outline: var(--focus-ring);
-    outline-offset: 3px;
-    border-radius: var(--radius-xs);
-}
-
-.res-time {
-    font-family: var(--font-mono);
-    font-size: var(--fs-label);
-    color: var(--text-soft);
-    font-variant-numeric: tabular-nums;
-}
-
-.res-nowplaying .res-volume input {
-    width: 72px;
-}
+/* The volume slider in the toolbar above an audio listing, the floating
+   now-playing bar and the seek row inside it all live in player.css now —
+   the home page's theme track uses the same player, and none of it was ever
+   about resource listings. `.res-play` below stays here: the player keys off
+   `data-play-src`, so the button's looks belong to the page that shows it,
+   and here it is one of the row actions. */
 
 .res-filter-count {
     margin-top: 6px;
@@ -1271,30 +1136,7 @@ video.fb-media {
 
 /* ── Reduced motion ──────────────────────────────────────── */
 
-@media (max-width: 640px) {
-    /* Volume drops to its own full-width row instead of squeezing beside the
-       seek bar (there isn't horizontal room for both on a phone) — it stays
-       reachable rather than being cut, the only volume control available
-       once the device's own hardware buttons are out of easy reach. */
-    .res-nowplaying {
-        left: 16px;
-        bottom: 16px;
-        width: calc(100vw - 90px);
-        padding: 6px 12px;
-        flex-wrap: wrap;
-        row-gap: 4px;
-    }
-
-    .res-nowplaying .res-volume {
-        flex: 1 1 100%;
-    }
-
-    .res-nowplaying .res-volume input {
-        flex: 1;
-        width: auto;
-    }
-}
-
+/* The now-playing bar's own transitions are switched off in player.css. */
 @media (prefers-reduced-motion: reduce) {
     .res-tab,
     .res-cats a,
@@ -1305,10 +1147,7 @@ video.fb-media {
     .res-dl,
     .res-jump a,
     .fb-crumbs a,
-    .fb-link,
-    .res-nowplaying,
-    .res-nowplaying-stop,
-    .res-nowplaying-pause {
+    .fb-link {
         transition: none;
     }
 }

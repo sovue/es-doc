@@ -28,8 +28,11 @@
 </a>
 {% endmacro %}
 
+{# `data-play-src` is the shared player's hook (static/js/player.js); the
+   class is only how this particular button looks. Named apart from the row's
+   own `data-name` so the two never read as the same field. #}
 {% macro play_button(src, name) %}
-<button type="button" class="res-play" data-src="{{ src }}" data-name="{{ name }}"
+<button type="button" class="res-play" data-play-src="{{ src }}" data-play-name="{{ name }}"
         aria-label="Прослушать {{ name }}" aria-pressed="false" hidden>
     <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
         <path d="M3.5 2.2a.6.6 0 0 1 .9-.52l7.2 4.3a.6.6 0 0 1 0 1.04l-7.2 4.3a.6.6 0 0 1-.9-.52z"/>
