@@ -212,7 +212,7 @@ was true (0.9rem, 0.925rem and 0.95rem all did the same job, 0.8px apart).
 | `--fs-title` | `1.8rem` | PT Serif 700 | Article H2, with a 1px bottom border |
 | `--fs-subtitle` | `1.4rem` | PT Serif 700 | Article H3, and H2 once the viewport is narrow |
 | `--fs-lead` | `1.25rem` | PT Serif 700 / Inter 600 | Article H4; group and card titles: resource groups, the next-article card, warper families; the sidebar document title, which is wayfinding rather than a headline |
-| `--fs-body` | `1rem` | Inter 400/600 | Prose, section names (600), everything read at length. Capped at 72ch on article pages. **The reading floor — nothing prose-shaped goes below it.** |
+| `--fs-body` | `1rem` | Inter 400/600 | Prose, section names (600), everything read at length. Runs the full width of the article column, like the code panels and tables beside it. **The reading floor — nothing prose-shaped goes below it.** |
 | `--fs-ui` | `0.875rem` | Inter 400/600 | Dense chrome, table bodies, and secondary prose that is genuinely secondary: hatnotes, footnote lists, banner bodies |
 | `--fs-label` | `0.75rem` | Consolas 600, tracking 0.1em, UPPERCASE | Section-directory headings, badges, social links, the raw-source link, keyboard hints, flags. Signals meta and structure, never content. |
 

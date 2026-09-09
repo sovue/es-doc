@@ -457,51 +457,18 @@ img {
     overflow-wrap: break-word;
 }
 
-/* ── The reading column ───────────────────────────────────────
-   `.content` takes whatever width the layout gives it, and the things a
-   reader looks at — code panels, tables, screenshots — want all of it. Prose
-   does not. At 1440px the paragraphs here were running 106 characters a line;
-   past roughly 75 the eye stops finding the start of the next line reliably
-   and starts re-reading the one it just left. DESIGN.md has claimed a 72ch
-   cap since the first draft — this is the rule that finally applies it.
+/* ── Prose width ──────────────────────────────────────────────
+   Prose takes the full width of `.content`, exactly like the code panels,
+   tables and screenshots it sits between: one edge down the whole page
+   instead of a narrow text column with everything technical hanging past it.
 
-   Named element by element rather than capping `.content` itself, so the
-   default for anything new is still full width: a block has to be prose to
-   be narrowed, not the other way round. The headings come along so their
-   border rules end where the text ends; a 1069px rule over a 726px column
-   reads as text failing to fill its space. */
-/* 42rem is 72 characters of Russian at the body size. Inter’s `0` measures
-   10.09px at 16px, but Cyrillic lowercase averages 9.61px, so deriving the
-   cap from the digit put real Russian lines at a median of 73 characters and
-   a tail out to 84. rem rather than ch because `ch` resolves against each
-   element’s own font, so a 72ch heading is half again wider than a 72ch
-   paragraph and the column stops being a column. One rem value holds every
-   block to the same edge and still follows the reader’s root size. */
-:root { --measure: 42rem; }
-
-.content > h1,
-.content > h2,
-.content > h3,
-.content > h4,
-.content > h5,
-.content > h6,
-.content > p,
-.content > ul,
-.content > ol,
-.content > dl,
-.content > hr,
-.content > blockquote,
-.content > .info,
-.content > .warning,
-.content > .danger,
-.content > .attention,
-.content > .tip,
-.content > .banner,
-.content > .hatnote,
-.content > .refs,
-.content > .doc-pager {
-    max-width: var(--measure);
-}
+   It was held to a 42rem measure for a while — past roughly 75 characters a
+   line the eye stops finding the start of the next one reliably, and at
+   1920px a paragraph here now runs about 118. Matching the neighbouring
+   blocks was chosen over matching that rule. `.content` still stops at
+   1200px, so the line does not keep growing with the monitor beyond it; the
+   lever if this ever needs walking back is a max-width on the prose
+   selectors below, not on `.content`, which the code blocks want whole. */
 
 /* A 375px screen puts a Russian paragraph at a median of 30 characters a
    line, well under the 45 the eye wants, and the body size cannot come down
