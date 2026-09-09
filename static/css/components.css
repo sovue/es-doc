@@ -80,6 +80,18 @@
     transition: color 0.15s var(--ease-out);
 }
 
+/* 20px of type, 44px of target. `padding-block` plus a matching negative
+   top margin grows the hit box without moving anything on the page: the
+   link sits exactly where it did, and a finger no longer has to land on a
+   single line of 12px mono. This is the one standalone control above the
+   title on most pages, so it is worth the trick (WCAG 2.5.8 asks 24; the
+   thumb wants 44). */
+.page-back {
+    padding-block: 12px;
+    margin-top: -12px;
+    margin-bottom: 2px;
+}
+
 .page-back:hover {
     color: var(--accent);
 }
@@ -321,7 +333,14 @@
     z-index: 20;
 }
 
+/* 40px was the height a two-line result came out at; a one-line result sat
+   under it. On a phone this list is the primary way into the site, so every
+   row is a full 44pt target whatever it holds. */
 .nav-search-option {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 44px;
     padding: 8px 10px;
     border-radius: var(--radius-sm);
     font-size: var(--fs-ui);
@@ -921,11 +940,17 @@ a.section-row:focus-visible .section-arrow {
     color: var(--border);
 }
 
+/* «VK» is two uppercase glyphs of 12px mono — 15px wide, and the 44px this
+   already reserved vertically bought nothing while the target stayed
+   narrower than WCAG 2.5.8's 24px floor. Centred rather than padded so the
+   `/` separators between items keep their spacing. */
 .author-socials a {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     padding-block: 12px;
     min-height: 44px;
+    min-width: 24px;
     color: var(--text-soft);
     text-decoration: none;
     transition: color 0.15s var(--ease-out);

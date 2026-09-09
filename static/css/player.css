@@ -161,6 +161,22 @@
 /* ── Responsive ──────────────────────────────────────────── */
 
 @media (max-width: 640px) {
+    /* The bar is the only transport on a phone and it floats in the thumb
+       zone, so its controls take the full 44px there rather than the 30px
+       that reads fine under a cursor. The sliders get a 24px box for the
+       same reason — the native track is 16px, which is under WCAG 2.5.8's
+       floor for something you are meant to drag. */
+    .res-nowplaying-stop,
+    .res-nowplaying-pause {
+        width: 44px;
+        height: 44px;
+    }
+
+    .res-seek input,
+    .res-volume input {
+        height: 24px;
+    }
+
     /* Volume drops to its own full-width row instead of squeezing beside the
        seek bar (there isn't horizontal room for both on a phone) — it stays
        reachable rather than being cut, the only volume control available

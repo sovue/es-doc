@@ -80,7 +80,7 @@
                         <span class="wp-lab-label">Фон</span>
                         <select class="filter-select" id="wp-lab-bg">
                             {% for bg in backgrounds %}
-                            <option value="{{ bg.raw }}" data-name="{{ bg.name }}">{{ bg.name }}</option>
+                            <option value="{{ bg.preview }}" data-name="{{ bg.name }}">{{ bg.name }}</option>
                             {%- endfor %}
                         </select>
                     </label>

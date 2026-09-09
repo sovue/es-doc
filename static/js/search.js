@@ -145,7 +145,7 @@
             // else: let the form submit to its fallback action
         } else if (e.key === 'Escape') {
             if (!list.hidden) { e.preventDefault(); close(); }
-            else { input.value = ''; announce(''); closeSheet(); }
+            else { input.value = ''; announce(''); closeSheet(true); }
         }
     });
 
@@ -170,9 +170,16 @@
         if (toggle) toggle.setAttribute('aria-expanded', 'true');
         input.focus();
     }
-    function closeSheet() {
+    function closeSheet(returnFocus) {
+        var wasOpen = document.body.classList.contains('search-open');
         document.body.classList.remove('search-open');
         if (toggle) toggle.setAttribute('aria-expanded', 'false');
+        // Escape used to drop the sheet and leave focus on the field it had
+        // just hidden, which the browser then resets to <body> — a keyboard
+        // reader ended up at the top of the document and had to tab back in
+        // through the whole header. Hand focus back to the control that
+        // opened the sheet, the way a dialog returns it to its trigger.
+        if (returnFocus && wasOpen && toggle) toggle.focus();
     }
     if (toggle) {
         toggle.addEventListener('click', function () {

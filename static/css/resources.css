@@ -169,6 +169,20 @@
     outline-offset: 2px;
 }
 
+/* The label is the target (it wraps the box and the words), and at 24px it
+   only just clears WCAG 2.5.8. On a phone this is a filter sitting among
+   inputs that are all 44px, so it matches them. */
+@media (max-width: 768px) {
+    .res-toggle {
+        min-height: 44px;
+    }
+
+    .res-toggle input {
+        width: 20px;
+        height: 20px;
+    }
+}
+
 /* The volume slider in the toolbar above an audio listing, the floating
    now-playing bar and the seek row inside it all live in player.css now —
    the home page's theme track uses the same player, and none of it was ever
@@ -804,9 +818,15 @@ a.res-file:focus-visible {
     color: color-mix(in oklab, var(--sunset) 55%, var(--text));
 }
 
+/* The rows in the file browser are 57px tall and the link inside them was
+   17: one line of type in the middle of a comfortable row, with the other
+   40px inert. `padding-block` on an inline element grows the hit box
+   without touching the line box, so the row looks identical and the whole
+   height of it now answers a tap (WCAG 2.5.8). */
 .fb-link {
     color: var(--text);
     text-decoration: none;
+    padding-block: 14px;
     transition: color 0.15s var(--ease-out);
 }
 

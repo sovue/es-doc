@@ -308,8 +308,14 @@ async def listing(collection, category, request: Request):
         # The sandbox at the top of the page animates a real background, so it
         # borrows the original collection's bg list — declared, non-NSFW and
         # actually present on disk. Both collections' warpers get to drive it.
+        # `preview` is what the sandbox actually loads: the hero downscale
+        # (1600px WebP, built for the home slideshow) rather than the raw game
+        # JPG, which runs 700 KB for a frame shown at a third of that. Tinted
+        # backgrounds have no hero — /resource/hero only downscales plain
+        # declared files — so those keep the raw path.
         backgrounds = [
-            {'name': i['name'], 'code': i['code'], 'raw': i['raw']}
+            {'name': i['name'], 'code': i['code'], 'raw': i['raw'],
+             'preview': i['raw'] if i.get('tint') else f"/resource/hero/{quote(i['name'])}"}
             for i in CONFIG.resources.get('original', {}).get('bg', [])
             if i['declared'] and i['raw'] and not i['nsfw']
         ]
