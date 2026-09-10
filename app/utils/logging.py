@@ -1,11 +1,13 @@
 import logging, re
 from logging.handlers import RotatingFileHandler
 from .file import ROOT
-from colorama import Fore
+from colorama import Fore, just_fix_windows_console
 from datetime import datetime
 
 LOG_DIR = ROOT / 'logs'
 LOG_DIR.mkdir(exist_ok=True)
+
+just_fix_windows_console()
 
 class Formatter(logging.Formatter):
     COLORS = {
@@ -55,7 +57,7 @@ class Formatter(logging.Formatter):
         message = self.colorize(record.getMessage())
         if record.exc_info:
             message += "\n" + self.formatException(record.exc_info)
-        return f'{timestamp} - [{record.name}] - [{color}{record.levelname}{"\033[0m" if self.colored else ""}]:\t{message}'
+        return f'{timestamp} - [{color}{record.levelname}{"\033[0m" if self.colored else ""}] - [{record.name}]:\t{message}'
 
 root_logger = logging.getLogger('app')
 root_logger.setLevel(logging.INFO)
