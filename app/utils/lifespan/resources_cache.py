@@ -224,16 +224,13 @@ EXTRA_RPY = ('scenario/zhenya.rpy',)
 PLACEHOLDER_DESC = 'Описание уточняется.'
 UNDECLARED_DESC = 'Не объявлен в игре — используется по пути к файлу.'
 
-# The base game's adult CGs, by declared-name prefix. Their files were cut
-# from the game (only the declarations remain in its code), so these items
-# live in the community collection — where the files can reappear — behind
-# the NSFW switch on the Арты page.
+# The base game's adult CGs (marked up in nsfw.yaml, see _load_nsfw). The
+# game itself ships only the declarations, not the files — they're cut
+# unless a separate NSFW mod is installed — so these items live in the
+# community collection (their files sit in community/images/cg, the
+# community drop-in folder) rather than the original one, and render
+# permanently blurred there.
 NSFW_DESC = 'Вырезан из файлов игры — объявление в коде осталось.'
-NSFW_CG_PREFIXES = (
-    'd2_mt_undressed', 'd3_sl_bathhouse', 'd5_dv_us_wash', 'd6_dv_hentai',
-    'd2_sl_swim', 'd6_sl_swim', 'd6_sl_hentai', 'd7_sl_morning',
-    'd7_un_hentai', 'miku_h', 'uvao_h',
-)
 
 # Where each file-backed category's assets live, for the undeclared-file
 # scan. The Женя scenario keeps its files in zhenya/: its leftover overlays
@@ -284,7 +281,25 @@ def _load_descriptions():
         return {}
 
 
-def _parse_rpy(root, raw_base, described):
+def _load_nsfw():
+    """nsfw.yaml in the assets root (next to descriptions.yaml):
+    {category: [name, ...]}. The hand-edited list of resources to flag as
+    NSFW — blurred in their listing, and (for cg today, see parse_resources)
+    moved into the community collection until a file for them shows up
+    there. Not restricted to any one category, so a future entry can mark up
+    any kind of resource the same way."""
+    path = CONFIG.res_path.parent / 'nsfw.yaml'
+    if not path.exists():
+        return {}
+    try:
+        data = yaml.safe_load(path.read_text('utf-8')) or {}
+        return {k: {str(n) for n in v} for k, v in data.items() if isinstance(v, list)}
+    except Exception:
+        logger.exception('nsfw.yaml is not valid YAML; ignoring it.')
+        return {}
+
+
+def _parse_rpy(root, raw_base, described, nsfw_marks):
     """Parse one collection root (a folder holding resources.rpy) into
     {category: items}. `raw_base` is the URL prefix of the route that serves
     this root's files (None → files are not served: no raw/thumb links)."""
@@ -345,7 +360,7 @@ def _parse_rpy(root, raw_base, described):
             thumb=f'/resource/thumb/{kind}/{quote(name)}' if exists else None,
             desc=desc_for(kind, name, auto_desc),
             loc=loc, time=time,
-            nsfw=kind == 'cg' and name.startswith(NSFW_CG_PREFIXES),
+            nsfw=name in nsfw_marks.get(kind, ()),
             tint=tint if exists else None,
             source=source,
         ))
@@ -573,8 +588,9 @@ def _build_search_items(collection):
 
 def parse_resources():
     described = _load_descriptions()
+    nsfw_marks = _load_nsfw()
 
-    original = _parse_rpy(CONFIG.res_path, '/resource/raw', described)
+    original = _parse_rpy(CONFIG.res_path, '/resource/raw', described, nsfw_marks)
     # sprites.rpy was already parsed by parse_sprites(); these names are
     # composable on demand via /resource/sprite/.
     original['sprites'] = _group_sprites(CONFIG.sprite_layers, composable=True)
@@ -587,7 +603,7 @@ def parse_resources():
     # in the assets root, holding resources.rpy / sprites.rpy in the same
     # format. Absent today — every category then renders its empty state.
     community_root = CONFIG.res_path.parent / 'community'
-    community = _parse_rpy(community_root, '/resource/community', described)
+    community = _parse_rpy(community_root, '/resource/community', described, nsfw_marks)
     community.pop('anim')  # the community set has no effects/animations
     sprites_rpy = community_root / 'sprites.rpy'
     community_sprite_names = RE_SPRITE.findall(sprites_rpy.read_text('utf-8')) if sprites_rpy.exists() else []

@@ -89,6 +89,7 @@ def _watchers():
             res / 'resources.rpy',
             res / 'media.rpy',
             assets / 'descriptions.yaml',
+            assets / 'nsfw.yaml',
             assets / 'community' / 'resources.rpy',
             assets / 'community' / 'sprites.rpy',
         ), _refresh_resources),

@@ -145,7 +145,7 @@
     max-width: 360px;
 }
 
-/* ── Toggles (undeclared files, NSFW) ────────────────────── */
+/* ── Toggles (undeclared files) ──────────────────────────── */
 
 .res-toggle {
     display: inline-flex;
@@ -331,14 +331,14 @@ a.res-thumb:focus-visible {
 
 /* ── NSFW previews (Арты) ────────────────────────────────── */
 
-/* Blurred until the page switch or a per-row click reveals them. scale
-   hides the sharp edge the blur would leave at the crop border. */
-body:not(.nsfw-ok) .res-row[data-nsfw]:not(.res-revealed) .res-thumb img {
+/* Always blurred in the listing; the lightbox opens the sharp original.
+   scale hides the sharp edge the blur would leave at the crop border. */
+.res-row[data-nsfw] .res-thumb img {
     filter: blur(18px);
     transform: scale(1.15);
 }
 
-body:not(.nsfw-ok) .res-row[data-nsfw]:not(.res-revealed) a.res-thumb::after {
+.res-row[data-nsfw] a.res-thumb::after {
     content: '18+';
     position: absolute;
     inset: 0;

@@ -364,8 +364,6 @@ async def listing(collection, category, request: Request):
                       else sum(len(g['sprites']) for g in items)),
         'has_undeclared': (category != 'sprites'
                            and any(not i['declared'] for i in items)),
-        'has_nsfw': (category != 'sprites'
-                     and any(i['nsfw'] for i in items)),
         'other_href': other_href,
         'bg_locations': bg_locations,
         'bg_times': bg_times,

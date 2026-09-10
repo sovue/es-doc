@@ -1,6 +1,6 @@
 /* Progressive enhancement for /resources/ listings: name/location/time
-   filters, sorting, undeclared-file and NSFW toggles, one-click copy and an
-   image lightbox. Playback is player.js, loaded alongside this file.
+   filters, sorting, the undeclared-file toggle, one-click copy and an image
+   lightbox. Playback is player.js, loaded alongside this file.
    Controls ship with [hidden] in the markup and are revealed here, so a
    no-JS page stays a clean reference list. */
 
@@ -111,28 +111,6 @@
    (#res-volume-input) is still declared here in the markup — the player
    picks it up if it is on the page. */
 
-/* ── NSFW switch (Арты): blurred previews until revealed ── */
-(function () {
-    const toggle = document.getElementById('res-nsfw-toggle');
-    if (!toggle) return;
-
-    const apply = on => {
-        document.body.classList.toggle('nsfw-ok', on);
-        if (!on) {
-            document.querySelectorAll('.res-row.res-revealed')
-                .forEach(row => row.classList.remove('res-revealed'));
-        }
-    };
-
-    toggle.checked = localStorage.getItem('es-doc-nsfw') === '1';
-    apply(toggle.checked);
-
-    toggle.addEventListener('change', () => {
-        localStorage.setItem('es-doc-nsfw', toggle.checked ? '1' : '0');
-        apply(toggle.checked);
-    });
-})();
-
 /* ── Filters and sorting ── */
 (function () {
     const box = document.querySelector('.res-filter');
@@ -160,9 +138,9 @@
 
     /* ── URL state: text/location/time/sort round-trip through the query
        string, so a filtered view ("night backgrounds") is bookmarkable and
-       survives a reload. The undeclared/NSFW toggles stay in localStorage
-       instead (below and in the NSFW block above): they're a standing
-       viewing preference, not something tied to this particular page. ── */
+       survives a reload. The undeclared-files toggle stays in localStorage
+       instead (below): it's a standing viewing preference, not something
+       tied to this particular page. ── */
     const urlParams = new URLSearchParams(location.search);
     if (urlParams.has('q')) input.value = urlParams.get('q');
     if (locSelect && [...locSelect.options].some(o => o.value === urlParams.get('loc'))) {
@@ -305,16 +283,6 @@
     document.querySelectorAll('a[data-zoom]').forEach(link => {
         link.addEventListener('click', e => {
             e.preventDefault();
-
-            // A blurred NSFW preview reveals on the first click; the zoom
-            // comes on the second.
-            const row = link.closest('.res-row');
-            if (row?.hasAttribute('data-nsfw')
-                && !document.body.classList.contains('nsfw-ok')
-                && !row.classList.contains('res-revealed')) {
-                row.classList.add('res-revealed');
-                return;
-            }
 
             img.src = link.href;
             img.alt = link.dataset.zoom || '';
