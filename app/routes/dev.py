@@ -15,9 +15,10 @@ if CONFIG.debug:
     async def livereload(request: Request):
         async def events():
             while not await request.is_disconnected():
-                # A periodic ping keeps the connection (and any intermediary
-                # proxy timeout) alive between real changes.
-                if await wait_for_change(timeout=15):
+                result = await wait_for_change(timeout=15)
+                if result is None:
+                    return
+                if result:
                     yield 'data: reload\n\n'
                 else:
                     yield ': ping\n\n'

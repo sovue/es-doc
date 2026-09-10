@@ -9,17 +9,31 @@ reloads the page on it. Nothing here runs unless CONFIG.debug is set.
 import asyncio
 
 _event = asyncio.Event()
+_shutdown = asyncio.Event()
 
 
 def bump():
     _event.set()
 
 
-async def wait_for_change(timeout: float) -> bool:
-    """Block until bump() fires or `timeout` seconds pass; True means it fired."""
+def shutdown():
+    """Break every SSE loop so the server can exit."""
+    _shutdown.set()
+    _event.set()
+
+
+async def wait_for_change(timeout: float) -> bool | None:
+    """Block until bump() fires, shutdown is requested, or `timeout` passes.
+
+    Returns True on change, False on timeout, None on shutdown.
+    """
+    if _shutdown.is_set():
+        return None
     try:
         await asyncio.wait_for(_event.wait(), timeout)
     except asyncio.TimeoutError:
         return False
+    if _shutdown.is_set():
+        return None
     _event.clear()
     return True

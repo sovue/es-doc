@@ -2,6 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
+from ..livereload import shutdown as shutdown_livereload
 from ..logging import root_logger
 
 from .artists_cache import parse_artists
@@ -81,4 +82,5 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    shutdown_livereload()
     worker.cancel()
