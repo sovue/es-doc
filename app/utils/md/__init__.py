@@ -3,6 +3,7 @@ from markdown_it.common.utils import escapeHtml, unescapeAll
 from pygments import highlight
 from pygments.filter import Filter
 from pygments.lexers import get_lexer_by_name
+from pygments.lexers.special import TextLexer
 from pygments.formatters import HtmlFormatter
 from pygments.token import Comment, Whitespace
 import re
@@ -166,12 +167,25 @@ class TagPlaceholders(Filter):
 
 
 def highlight_code(code, lang, attrs):
-    try:
-        lexer = RenPyLexer() if lang == 'renpy' else get_lexer_by_name(lang)
-    except Exception:
-        return ''
+    if lang == 'renpy':
+        lexer = RenPyLexer()
+    else:
+        try:
+            lexer = get_lexer_by_name(lang)
+        except Exception:
+            # No language on the fence, or one Pygments has never heard of.
+            # A lexer that tags nothing, rather than no lexer at all: the two
+            # treatments below aren't syntax highlighting and don't care what
+            # language this is — a placeholder is a docs convention and a space
+            # is a space. Bailing out here instead returned '' and sent the
+            # block down render_fence's escapeHtml fallback, where `<<Ваше
+            # значение>>` stayed doubled on the page, unmarked and uncopyable
+            # as anything else, and the indentation lost its dots. An
+            # unlabelled fence is the most common kind there is, so this was
+            # the path most placeholders actually took.
+            lexer = TextLexer()
 
-    # A fresh lexer per call (both branches construct one), so the filters are
+    # A fresh lexer per call (every branch constructs one), so the filters are
     # never added twice to the same instance. Placeholders first: TagWhitespace
     # passes `Comment.Special` through whole, so a marker tagged here keeps its
     # spaces instead of being split around them.
