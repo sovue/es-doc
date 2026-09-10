@@ -10,6 +10,7 @@ from .utils.logging import root_logger
 from .utils.lifespan import lifespan
 
 CONFIG.setup('config.yaml')
+templates.env.globals['DEBUG'] = CONFIG.debug
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
 # Compress text responses (HTML/CSS/JS). Skips already-compressed woff2 and
@@ -27,22 +28,42 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         'description': description
     }, status_code=exc.status_code)
 
-@app.middleware("http")
-async def log_requests(request, call_next):
-    start = time.perf_counter()
+class LogRequests:
+    """Pure ASGI middleware, not `@app.middleware("http")` (BaseHTTPMiddleware):
+    that wrapper buffers the whole response through a second task and breaks
+    on a client disconnecting mid-stream — which /dev/livereload's SSE
+    connection does on every reconnect, throwing 'RuntimeError: No response
+    returned' instead of the request it was in the middle of."""
 
-    response = await call_next(request)
+    def __init__(self, app):
+        self.app = app
 
-    duration = time.perf_counter() - start
+    async def __call__(self, scope, receive, send):
+        if scope['type'] != 'http':
+            await self.app(scope, receive, send)
+            return
 
-    root_logger.getChild('request').info(
-        '%s from %s:%s, #A"%s"#, #Ccode %s# in %.4fs',
-        request.method,
-        request.client.host,
-        request.client.port,
-        request.url.path,
-        response.status_code,
-        duration,
-    )
+        request = Request(scope, receive=receive)
+        start = time.perf_counter()
+        status = {}
 
-    return response
+        async def send_wrapper(message):
+            if message['type'] == 'http.response.start':
+                status['code'] = message['status']
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
+        duration = time.perf_counter() - start
+
+        root_logger.getChild('request').info(
+            '%s from %s:%s, #A"%s"#, #Ccode %s# in %.4fs',
+            request.method,
+            request.client.host,
+            request.client.port,
+            request.url.path,
+            status.get('code', 0),
+            duration,
+        )
+
+app.add_middleware(LogRequests)

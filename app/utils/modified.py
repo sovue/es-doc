@@ -30,15 +30,9 @@ logger = root_logger.getChild('modified')
 # that a hung git never holds a cache refresh open. The refresh runs in a
 # worker thread, so this blocks that thread and not the event loop.
 
-MONTHS_RU = (
-    'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-    'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря',
-)
-
-
 def format_ru(moment: datetime) -> str:
-    """`9 сентября 2026` — the form a Russian reader expects in prose."""
-    return f'{moment.day} {MONTHS_RU[moment.month - 1]} {moment.year}'
+    """`09.09.2026 14:30` — numeric date plus time to the minute, no seconds."""
+    return moment.strftime('%d.%m.%Y %H:%M')
 
 
 def _git_dates(directory: Path) -> dict[str, datetime]:

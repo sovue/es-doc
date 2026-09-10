@@ -87,10 +87,9 @@ async def page(doc, request: Request):
         'title': title or doc, 'body': body, 'nav': nav, 'doc': doc,
         'prev_doc': prev_doc, 'next_doc': next_doc,
         # Both forms: one for the reader, one for <time datetime> so a machine
-        # reading the page gets an unambiguous date rather than a Russian
-        # month name it would have to parse.
+        # reading the page gets an unambiguous, machine-parseable timestamp.
         'modified': format_ru(modified) if modified else None,
-        'modified_iso': modified.date().isoformat() if modified else None,
+        'modified_iso': modified.isoformat(timespec='minutes') if modified else None,
         # The whole docs tree, for the collapsed all-articles nav under the
         # page's own table of contents.
         'tree': CONFIG.docs_tree,

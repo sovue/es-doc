@@ -4,6 +4,8 @@ from pathlib import Path
 from watchfiles import awatch
 
 from ..config import CONFIG
+from ..file import ROOT
+from ..livereload import bump
 from ..logging import root_logger
 
 from .artists_cache import parse_artists
@@ -123,15 +125,25 @@ async def worker_refresh_caches():
     articles arrives as one batch, not forty refreshes. Anything that raises is
     logged and dropped, keeping the previous cache and the watch alive — a
     malformed YAML saved mid-edit must not take the watcher down with it.
+
+    In debug mode this also watches templates/ and static/, and notifies the
+    dev-server browser reload (utils/livereload.py) of every batch — those two
+    directories need no cache refresh of their own (Jinja reloads templates
+    per-request, and static/css/js are read fresh per-request too), only the
+    reload signal.
     """
     assets = _assets_root()
     watchers = _watchers()
+    extra_paths = [ROOT / 'templates', ROOT / 'static'] if CONFIG.debug else []
 
     logger.info(f'Cache refresh worker started; watching {assets}')
 
     try:
-        async for batch in awatch(assets, recursive=True):
+        async for batch in awatch(assets, *extra_paths, recursive=True):
             changed = {Path(path).resolve() for _change, path in batch}
+
+            if CONFIG.debug:
+                bump()
 
             # In declaration order, which puts docs last: a resources re-parse
             # in this same batch marks the search corpus stale (_resync_search),

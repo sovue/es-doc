@@ -1,3 +1,4 @@
+import os
 import yaml
 from pathlib import Path
 
@@ -117,6 +118,12 @@ class _ConfigContainer():
     def __init__(self):
         self.config: dict = {}
         self.logger = root_logger.getChild('config')
+
+        # Set by main.py before the --reload subprocess re-imports the app,
+        # since that subprocess doesn't inherit sys.argv's --debug flag.
+        # Gates the dev-only live-reload watcher and route (see
+        # utils/lifespan/refresh.py, utils/livereload.py, routes/dev.py).
+        self.debug = os.environ.get('ES_DOC_DEBUG') == '1'
 
         self.page_last_edited = 0
         # Derived caches refreshed alongside page_cache (see utils/lifespan.py):
