@@ -22,9 +22,35 @@ from .refs import (
     render_ref_mark, render_refs_close, render_refs_open,
 )
 from ..svg import SVG
-from ..renpy_lexer import PLACEHOLDER_RE, RenPyLexer
+from ..renpy_lexer import RenPyLexer
 
 dummy_rule = lambda s: lambda self, tokens, idx, options, env: s
+
+# Docs convention: `<<Название лейбла>>` marks a value the reader must supply
+# themselves — a channel name, a label, a file path. Not syntax in any language
+# the corpus shows, which is why it lives here, in the layer that renders all
+# of them, rather than in the Ren'Py lexer that used to own it.
+#
+# Only the inner pair survives into the page: the reader sees `<Название
+# лейбла>`, the angle brackets the convention is written with. Doubling them in
+# the source is what makes the marker unambiguous — a lone `<…>` is far too
+# common in real code to claim, while `<<` and `>>` together only otherwise
+# appear as shift operators, and those are ruled out below.
+#
+# Both inner edges must be non-space, which is what separates the marker from
+# a genuine `a << b >> c`: a shift always has whitespace around its operands,
+# this convention never does. Neither edge may be `>` either, and not only for
+# symmetry — the docs wrap these in Ren'Py's own angle-bracket audio syntax
+# (`"<from <<Начало>> to <<Конец>>>"`), where the marker's closing `>>` is
+# followed immediately by the one that ends the `<from …>`. A trailing `\S`
+# happily eats that third bracket, since `>` is not whitespace, and the label
+# came out as `<Конец>>` with Ren'Py's own syntax swallowed into it.
+PLACEHOLDER_RE = re.compile(r'<<([^\s>](?:[^>\n]*[^\s>])?)>>')
+
+
+def _placeholder_text(match):
+    """What the page shows for a marker: the label in single angle brackets."""
+    return f'<{match.group(1)}>'
 
 # Every space inside a code panel shows as a dot, the way Ren'Py's own script
 # linter draws them: in a language where indentation *is* syntax, three spaces
@@ -56,12 +82,12 @@ class TagWhitespace(Filter):
 
     def filter(self, lexer, stream):
         for ttype, value in stream:
-            # `|Имя персонажа|` is one token the page treats as one thing:
-            # docs.js strips its pipes and hangs "replace this" on what's left,
-            # and it can only recognise it while the whole marker is a single
-            # span. Splitting it around its space left two half-markers with
-            # their pipes showing. The label is prose to overwrite anyway —
-            # nobody counts its spaces — so it keeps them.
+            # `<Имя персонажа>` is one token the page treats as one thing:
+            # code.js hangs "replace this" on it, and can only recognise it
+            # while the whole marker is a single span. Splitting it around its
+            # space left two half-markers with their brackets showing. The
+            # label is prose to overwrite anyway — nobody counts its spaces —
+            # so it keeps them.
             if ttype in Comment.Special or ' ' not in value:
                 yield ttype, value
                 continue
@@ -77,48 +103,43 @@ class TagWhitespace(Filter):
                     yield ttype, part
 
 class TagPlaceholders(Filter):
-    """Re-tag `|подставь сюда|` as `Comment.Special` in whatever language.
+    """Re-tag every `<<подставь сюда>>` as `Comment.Special`, in any language.
 
-    The Ren'Py lexer has marked these since it was written (renpy_lexer.py,
-    `_PLACEHOLDER`): a value the reader is meant to replace with their own,
-    drawn with a dotted underline and a tooltip saying so (code.js). Every
-    other language in the corpus — the Python blocks, the shell one-liners,
-    the JSON — had the same need and no marker, so a placeholder there was
-    just italic-less text the reader could copy by mistake.
+    A value the reader is meant to replace with their own, drawn with a dotted
+    underline and a tooltip saying so (code.js). This is the only place that
+    knows the convention, so a Python block, a shell one-liner and a Ren'Py
+    script all get the same marker on the same terms.
 
     Matched against the block's whole text rather than token by token, which
-    is the only way it works outside a string literal. A lexer that doesn't
-    know the convention tokenises `notify(|Ваше значение|)` as bitwise-or,
-    name, name, bitwise-or — four tokens, none of which contains the marker,
-    so a per-token scan found nothing and only the placeholders that happened
-    to sit inside one string token were ever tagged. Joining first means the
-    tokeniser's opinion of those pipes stops mattering.
+    is the only way it works outside a string literal: a lexer that doesn't
+    know the convention tokenises `notify(<<Ваше значение>>)` as shift, name,
+    name, shift — several tokens, none of which holds the whole marker — so a
+    per-token scan found only the ones that happened to sit inside a single
+    string token. Joining first means the tokeniser's opinion stops mattering.
 
     A marker is emitted as one token even when the lexer split it across
     several, and the fragments it displaces are dropped: the page treats a
-    placeholder as a single thing — code.js strips its pipes and hangs
-    "replace this" on what's left — and can only recognise it while the whole
-    marker is one span.
-
-    Runs off the same regex as the lexer, not a second one, so the two can
-    never drift into disagreeing about what a placeholder looks like.
+    placeholder as one thing and can only recognise it while it is one span.
+    The text emitted is the reader-facing form, not the source form — see
+    PLACEHOLDER_RE — so the doubled brackets never reach the page.
     """
 
     def filter(self, lexer, stream):
         tokens = list(stream)
         text = ''.join(value for _, value in tokens)
 
-        if '|' not in text:
+        if '<<' not in text:
             yield from tokens
             return
 
-        spans = [match.span() for match in PLACEHOLDER_RE.finditer(text)]
-        if not spans:
+        marks = [(m.start(), m.end(), _placeholder_text(m))
+                 for m in PLACEHOLDER_RE.finditer(text)]
+        if not marks:
             yield from tokens
             return
 
-        pending = iter(spans)
-        span = next(pending, None)
+        pending = iter(marks)
+        mark = next(pending, None)
         pos = 0
         # Everything before this offset has already been emitted — how a marker
         # that swallowed several tokens keeps the rest of them from repeating it.
@@ -129,15 +150,15 @@ class TagPlaceholders(Filter):
             pos = end
             cursor = max(start, done)
 
-            while span is not None and span[0] < end:
-                if span[0] > cursor:
-                    yield ttype, text[cursor:span[0]]
-                    cursor = span[0]
-                if cursor <= span[0]:
-                    yield Comment.Special, text[span[0]:span[1]]
-                    done = span[1]
+            while mark is not None and mark[0] < end:
+                if mark[0] > cursor:
+                    yield ttype, text[cursor:mark[0]]
+                    cursor = mark[0]
+                if cursor <= mark[0]:
+                    yield Comment.Special, mark[2]
+                    done = mark[1]
                     cursor = max(cursor, done)
-                span = next(pending, None)
+                mark = next(pending, None)
 
             if cursor < end:
                 yield ttype, text[cursor:end]
@@ -217,11 +238,11 @@ COLOR_RE = re.compile(r'^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$')
 
 
 def _mark_placeholders(text):
-    """Escape `text`, wrapping every `|подставь сюда|` in the `span.cs` a code
+    """Escape `text`, wrapping every `<<подставь сюда>>` in the `span.cs` a code
     panel gives the same marker.
 
     An inline span never reaches Pygments — it has no language to lex — so the
-    filter above can't reach it, and `` `|Ваше значение|` `` in running prose
+    filter above can't reach it, and `` `<<Ваше значение>>` `` in running prose
     read as ordinary code however carefully the fenced blocks around it were
     marked. The convention is about what the reader must replace, not about
     where it happens to be written, so the two now agree.
@@ -231,7 +252,7 @@ def _mark_placeholders(text):
 
     for match in PLACEHOLDER_RE.finditer(text):
         out.append(escapeHtml(text[last:match.start()]))
-        out.append(f'<span class="cs">{escapeHtml(match.group(0))}</span>')
+        out.append(f'<span class="cs">{escapeHtml(_placeholder_text(match))}</span>')
         last = match.end()
 
     out.append(escapeHtml(text[last:]))

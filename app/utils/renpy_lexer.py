@@ -15,8 +15,6 @@ Keyword and property lists are lifted from the vscode-language-renpy grammar
 renpy.atl.
 """
 
-import re
-
 from pygments.lexer import RegexLexer, words, include, bygroups, using
 from pygments.lexers.python import PythonLexer
 from pygments.token import (
@@ -144,22 +142,13 @@ _SAY_GUARD = "|".join(
     + ("True", "False", "None")
 )
 
-# Docs convention: `|Название лейбла|` marks a value the reader must supply
-# themselves (channel names, label names, file paths, …) — not real Ren'Py
-# syntax. A previous version matched any `\|...\|` pair unconditionally, which
-# also fired on genuine Python bitwise-or (`flags | A | B`), since two real
-# `|` operators on one line look identical to a pair of delimiters. The fix:
-# require both inner edges to be non-space. A real `|` operator always has
-# whitespace on both sides (`flags | A`), while this placeholder convention
-# never does (`|Название|`), so the two can't be confused position-by-position
-# even when Python delegation doesn't already shield the line.
-_PLACEHOLDER = r"\|\S(?:[^|\n]*\S)?\|"
-
-# The same pattern, compiled, for the filter that gives every *other* lexer
-# this marker too (md/__init__.py, TagPlaceholders). Exported from here rather
-# than restated there, so the convention keeps exactly one definition and the
-# reasoning above governs Python and shell blocks as much as Ren'Py ones.
-PLACEHOLDER_RE = re.compile(_PLACEHOLDER)
+# `<<Название лейбла>>`, the docs' marker for a value the reader must supply,
+# is deliberately absent from this file. It is not Ren'Py syntax, and it turns
+# up in Python and shell blocks just as often, so it belongs to the markdown
+# layer that renders all of them (md/__init__.py, TagPlaceholders) — which tags
+# it across the whole block text and therefore needs no help from any lexer.
+# This one used to carry its own copy of the rule, plus a hand-rolled state to
+# keep the delegated Python lexer from swallowing it; both are gone.
 
 
 def _string_state(quote, tok):
@@ -186,12 +175,10 @@ def _string_state(quote, tok):
         # interpolation closed on this line -> parse; lone `[` -> unbalanced
         (r"(?=\[[^\]\n]*\])\[", String.Interpol, "interp"),
         (r"\[", Error),
-        # `|placeholder|` reads the same inside a string as outside it.
-        (_PLACEHOLDER, Comment.Special),
         (quote, tok, "#pop"),
         # end of line before the closing quote -> unterminated string
         (r"$", Error, "#pop"),
-        (r"[^" + quote + r"\\{\[%|\n]+", tok),
+        (r"[^" + quote + r"\\{\[%\n]+", tok),
         (r".", tok),
     ]
 
@@ -231,23 +218,6 @@ class RenPyLexer(RegexLexer):
         "double_string": _string_state('"', String.Double),
         "single_string": _string_state("'", String.Single),
 
-        # Entered right after `$ ` (see the inline-Python rule below). Splits
-        # the rest of the line around `|placeholder|` first and hands only the
-        # pieces in between to Python's lexer, so the placeholder still reads
-        # as Comment.Special even when it sits inside a Python string literal
-        # (`renpy.notify("|Текст|")`) that Python's own lexer would otherwise
-        # swallow whole. A run with no pipes still goes through Python a chunk
-        # at a time; that only ever fragments a single operator that happens to
-        # contain `|` (`|=`) into two Operator tokens, which is invisible since
-        # both map to the same CSS class. No explicit end-of-line rule is
-        # needed — Pygments' own fallback resets to "root" on an unmatched
-        # `\n` (see RegexLexer.get_tokens_unprocessed).
-        "inline_python": [
-            (_PLACEHOLDER, Comment.Special),
-            (r"[^|\n]+", using(PythonLexer)),
-            (r"\|", Operator),
-        ],
-
         "root": [
             # ── Line-anchored rules first ──────────────────────────────────
             # These carry their own `^[ \t]*` indent capture, so they must be
@@ -264,14 +234,10 @@ class RenPyLexer(RegexLexer):
              bygroups(Whitespace, Keyword, Keyword, Keyword, Whitespace,
                       Punctuation, using(PythonLexer), using(PythonLexer))),
 
-            # Inline Python: `$ expr` — hand the expression to the Python lexer,
-            # via the "inline_python" state below rather than delegating the
-            # whole rest of the line in one `using()` call, so a `|placeholder|`
-            # inside it doesn't disappear into Python's own tokenizer (which
-            # has no idea about this doc-only convention and reads a bare `|`
-            # as bitwise-or).
-            (r"^([ \t]*)(\$)([ \t]*)",
-             bygroups(Whitespace, Keyword, Whitespace), "inline_python"),
+            # Inline Python: `$ expr` — hand the rest of the line to the Python
+            # lexer whole.
+            (r"^([ \t]*)(\$)([ \t]*)([^\n]*)$",
+             bygroups(Whitespace, Keyword, Whitespace, using(PythonLexer))),
 
             # `define`/`default x = <python>` — keyword, then Python for the RHS.
             (r"^([ \t]*)(define|default)\b(.*)$",
@@ -310,11 +276,6 @@ class RenPyLexer(RegexLexer):
             (r"\b[0-9]+[eE][+\-]?[0-9]+\b", Number.Float),
             (r"\b0[xX][0-9a-fA-F]+\b", Number.Hex),
             (r"\b[0-9]+\b", Number.Integer),
-
-            # `|placeholder|` — see _PLACEHOLDER above. Must come before the
-            # operator rule below, which would otherwise claim a bare `|` as
-            # bitwise-or first.
-            (_PLACEHOLDER, Comment.Special),
 
             (r"\b(and|or|not|in|is)\b", Operator.Word),
             (r"(\*\*|//|<<|>>|[-+*/%&|^~<>=!]=?|~)", Operator),

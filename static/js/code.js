@@ -38,28 +38,27 @@ window.copyControl = (element, getValue, { message, status, reset = 1600 } = {})
     }).catch(() => {});
 };
 
-/* ── Placeholder values (`|Название лейбла|`) ──
-   A value the reader has to swap for their own. The pipes are how the marker
-   is written in the source and how every lexer recognises it (renpy_lexer.py,
-   `PLACEHOLDER_RE`), but they are punctuation for the parser, not for the
-   reader — so the page shows the label alone and says what to do with it in a
-   tooltip, leaving the dotted underline (syntax.css) as the standing hint.
+/* ── Placeholder values (`<Название лейбла>`) ──
+   A value the reader has to swap for their own. Written `<<so>>` in the source
+   and unwrapped to a single pair on the way out (md/__init__.py), so what
+   arrives here is already what the page should show — this only adds the
+   sentence saying what to do with it, on top of the dotted underline
+   (syntax.css) that marks it at rest.
 
-   This lived in docs.js, which runs after this file and only on doc pages.
-   Both hurt once inline spans started carrying the marker too: the chip loop
-   below reads `textContent` to know what to copy, so it captured the pipes a
-   moment before docs.js removed them and pasted a marker the page no longer
-   showed — and on any page docs.js skipped, the pipes simply stayed. Running
-   it here, ahead of that loop, settles the text before anything reads it.
+   Nothing is rewritten. An earlier marker was delimited by pipes that had to
+   be stripped in the browser, which put this in a race with the chip loop
+   below: that loop reads `textContent` to know what to copy, so whichever ran
+   first decided whether the clipboard got the delimiters. Unwrapping on the
+   server removed the race rather than ordering it — and a page with no JS at
+   all now shows the right text too.
 
    Codetags (TODO/FIXME) share the token and its underline, so the shape is
    checked rather than the class: a stray TODO must not be labelled
    "replace this value". */
 document.querySelectorAll('span.cs').forEach(el => {
     const text = el.textContent;
-    if (text.length < 2 || text[0] !== '|' || text[text.length - 1] !== '|') return;
+    if (text.length < 3 || text[0] !== '<' || text[text.length - 1] !== '>') return;
 
-    el.textContent = text.slice(1, -1);
     el.title = 'Это значение необходимо заменить на своё!';
 });
 
