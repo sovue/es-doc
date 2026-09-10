@@ -81,32 +81,67 @@ class TagPlaceholders(Filter):
 
     The Ren'Py lexer has marked these since it was written (renpy_lexer.py,
     `_PLACEHOLDER`): a value the reader is meant to replace with their own,
-    drawn with a dotted underline and a tooltip saying so (docs.js). Every
+    drawn with a dotted underline and a tooltip saying so (code.js). Every
     other language in the corpus — the Python blocks, the shell one-liners,
     the JSON — had the same need and no marker, so a placeholder there was
     just italic-less text the reader could copy by mistake.
 
+    Matched against the block's whole text rather than token by token, which
+    is the only way it works outside a string literal. A lexer that doesn't
+    know the convention tokenises `notify(|Ваше значение|)` as bitwise-or,
+    name, name, bitwise-or — four tokens, none of which contains the marker,
+    so a per-token scan found nothing and only the placeholders that happened
+    to sit inside one string token were ever tagged. Joining first means the
+    tokeniser's opinion of those pipes stops mattering.
+
+    A marker is emitted as one token even when the lexer split it across
+    several, and the fragments it displaces are dropped: the page treats a
+    placeholder as a single thing — code.js strips its pipes and hangs
+    "replace this" on what's left — and can only recognise it while the whole
+    marker is one span.
+
     Runs off the same regex as the lexer, not a second one, so the two can
-    never drift into disagreeing about what a placeholder looks like. Tokens
-    the lexer already tagged are passed through untouched: re-splitting them
-    would only fragment a span that is already correct.
+    never drift into disagreeing about what a placeholder looks like.
     """
 
     def filter(self, lexer, stream):
-        for ttype, value in stream:
-            if ttype in Comment.Special or '|' not in value:
-                yield ttype, value
-                continue
+        tokens = list(stream)
+        text = ''.join(value for _, value in tokens)
 
-            last = 0
-            for match in PLACEHOLDER_RE.finditer(value):
-                if match.start() > last:
-                    yield ttype, value[last:match.start()]
-                yield Comment.Special, match.group(0)
-                last = match.end()
+        if '|' not in text:
+            yield from tokens
+            return
 
-            if last < len(value):
-                yield ttype, value[last:]
+        spans = [match.span() for match in PLACEHOLDER_RE.finditer(text)]
+        if not spans:
+            yield from tokens
+            return
+
+        pending = iter(spans)
+        span = next(pending, None)
+        pos = 0
+        # Everything before this offset has already been emitted — how a marker
+        # that swallowed several tokens keeps the rest of them from repeating it.
+        done = 0
+
+        for ttype, value in tokens:
+            start, end = pos, pos + len(value)
+            pos = end
+            cursor = max(start, done)
+
+            while span is not None and span[0] < end:
+                if span[0] > cursor:
+                    yield ttype, text[cursor:span[0]]
+                    cursor = span[0]
+                if cursor <= span[0]:
+                    yield Comment.Special, text[span[0]:span[1]]
+                    done = span[1]
+                    cursor = max(cursor, done)
+                span = next(pending, None)
+
+            if cursor < end:
+                yield ttype, text[cursor:end]
+                done = end
 
 
 def highlight_code(code, lang, attrs):
@@ -180,9 +215,31 @@ def render_fence(self, tokens, idx, options, env):
 # then makes copyable, like any other inline chip.
 COLOR_RE = re.compile(r'^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$')
 
+
+def _mark_placeholders(text):
+    """Escape `text`, wrapping every `|подставь сюда|` in the `span.cs` a code
+    panel gives the same marker.
+
+    An inline span never reaches Pygments — it has no language to lex — so the
+    filter above can't reach it, and `` `|Ваше значение|` `` in running prose
+    read as ordinary code however carefully the fenced blocks around it were
+    marked. The convention is about what the reader must replace, not about
+    where it happens to be written, so the two now agree.
+    """
+    out = []
+    last = 0
+
+    for match in PLACEHOLDER_RE.finditer(text):
+        out.append(escapeHtml(text[last:match.start()]))
+        out.append(f'<span class="cs">{escapeHtml(match.group(0))}</span>')
+        last = match.end()
+
+    out.append(escapeHtml(text[last:]))
+    return ''.join(out)
+
+
 def render_code_inline(self, tokens, idx, options, env):
     content = tokens[idx].content
-    code = escapeHtml(content)
 
     # The regex above is the whole sanitiser: only `#` and hex digits ever
     # reach the style attribute.
@@ -190,10 +247,10 @@ def render_code_inline(self, tokens, idx, options, env):
         return (
             f'<code class="code-color">'
             f'<span class="code-swatch" style="background: {content}" aria-hidden="true"></span>'
-            f'{code}</code>'
+            f'{escapeHtml(content)}</code>'
         )
 
-    return f'<code>{code}</code>'
+    return f'<code>{_mark_placeholders(content)}</code>'
 
 # Article illustrations are screenshots of the game, several to a page and all
 # of them below the fold — an article that opens with an image is rare enough

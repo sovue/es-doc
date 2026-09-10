@@ -38,6 +38,31 @@ window.copyControl = (element, getValue, { message, status, reset = 1600 } = {})
     }).catch(() => {});
 };
 
+/* ── Placeholder values (`|Название лейбла|`) ──
+   A value the reader has to swap for their own. The pipes are how the marker
+   is written in the source and how every lexer recognises it (renpy_lexer.py,
+   `PLACEHOLDER_RE`), but they are punctuation for the parser, not for the
+   reader — so the page shows the label alone and says what to do with it in a
+   tooltip, leaving the dotted underline (syntax.css) as the standing hint.
+
+   This lived in docs.js, which runs after this file and only on doc pages.
+   Both hurt once inline spans started carrying the marker too: the chip loop
+   below reads `textContent` to know what to copy, so it captured the pipes a
+   moment before docs.js removed them and pasted a marker the page no longer
+   showed — and on any page docs.js skipped, the pipes simply stayed. Running
+   it here, ahead of that loop, settles the text before anything reads it.
+
+   Codetags (TODO/FIXME) share the token and its underline, so the shape is
+   checked rather than the class: a stray TODO must not be labelled
+   "replace this value". */
+document.querySelectorAll('span.cs').forEach(el => {
+    const text = el.textContent;
+    if (text.length < 2 || text[0] !== '|' || text[text.length - 1] !== '|') return;
+
+    el.textContent = text.slice(1, -1);
+    el.title = 'Это значение необходимо заменить на своё!';
+});
+
 (function () {
     if (!navigator.clipboard) return;
 

@@ -2,18 +2,6 @@
    clipboard — are code.js's job now, since they turn up on pages that never
    load this file. What stays here is what only a doc page has. */
 
-/* ── Adding tooltips for placeholder values in code (`|Название лейбла|`) ──
-   The lexer also tags TODO/FIXME-style codetags as the same Comment.Special
-   token (span.cs), for its own dotted-underline treatment — filter to spans
-   that actually look like a |placeholder| so a stray TODO comment doesn't
-   get mislabeled as "replace this value". */
-document.querySelectorAll("span.cs").forEach(el => {
-    const text = el.textContent;
-    if (text.length < 2 || text[0] !== '|' || text[text.length - 1] !== '|') return;
-    el.textContent = text.slice(1, -1);
-    el.title = "Это значение необходимо заменить на своё!";
-});
-
 /* ── Remember whether the all-articles tree is open ──
    Restoring it is the inline script's job (doc.html, right after the element,
    so an open tree never flashes shut); this half only records the choice. A

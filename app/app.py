@@ -38,12 +38,35 @@ class LogRequests:
     def __init__(self, app):
         self.app = app
 
+    # The dev-server reload stream stays open for as long as the tab is, so the
+    # line below — written when the response *ends*, and timing it — described
+    # it as a request that took eleven minutes and only said so once the
+    # browser had already gone. Every restart reconnects every open tab, so
+    # what the log actually showed was a pile of multi-minute 200s arriving in
+    # a burst, timestamped nowhere near the thing that caused them. It's
+    # announced on arrival instead, where the duration would have meant
+    # nothing and the fact of connecting means everything.
+    #
+    # Gated on debug as well as on the path, because outside it nothing serves
+    # this route (routes/dev.py) — matching on the path alone would let anyone
+    # probing that URL in production log an opened stream that never existed,
+    # and swallow the 404 that actually happened.
+    STREAM_PATH = '/dev/livereload' if CONFIG.debug else None
+
     async def __call__(self, scope, receive, send):
         if scope['type'] != 'http':
             await self.app(scope, receive, send)
             return
 
         request = Request(scope, receive=receive)
+        log = root_logger.getChild('request')
+        client = request.client
+
+        if request.url.path == self.STREAM_PATH:
+            log.info('Live-reload stream opened by %s:%s', client.host, client.port)
+            await self.app(scope, receive, send)
+            return
+
         start = time.perf_counter()
         status = {}
 
@@ -56,11 +79,11 @@ class LogRequests:
 
         duration = time.perf_counter() - start
 
-        root_logger.getChild('request').info(
+        log.info(
             '%s from %s:%s, #A"%s"#, #Ccode %s# in %.4fs',
             request.method,
-            request.client.host,
-            request.client.port,
+            client.host,
+            client.port,
             request.url.path,
             status.get('code', 0),
             duration,

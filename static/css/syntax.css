@@ -65,10 +65,20 @@ pre .cm,
 pre .cp { color: var(--code-comment); }
 
 /* Codetags and `|placeholders|` — the one token that carries an affordance
-   rather than just a colour: docs.js hangs "replace this value" on it. */
-pre .cs {
+   rather than just a colour: code.js hangs "replace this value" on it.
+   The only rule in this file that reaches outside a `<pre>`: a placeholder is
+   also the one marker an inline span can carry (md/__init__.py), and the two
+   have to read identically — a value you must replace looks the same whether
+   the sentence names it or a fenced block shows it in place. */
+pre .cs,
+code .cs {
     color: var(--code-operator);
     text-decoration: underline dotted;
+}
+
+/* Only in a panel, where the marker is purely a hint. An inline chip is itself
+   a copy control (code.js), so the pointer it already shows must survive. */
+pre .cs {
     cursor: help;
 }
 
