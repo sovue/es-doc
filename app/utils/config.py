@@ -69,12 +69,18 @@ class _ConfigContainer():
 
             # Every derived image the site produces. Quality is WebP's 0–100.
             'images': {
-                'hero': {'width': 1600, 'quality': 75},
+                'hero': {'width': 1600, 'quality': 75, 'narrow-aspect': 0.95},
                 'thumb': {'box': 320, 'quality': 80},
                 'sprite-quality': 90,
                 'tint-quality': 90,
                 'artist': {
-                    'max-side': 1200,
+                    # The box each kind is shown in, doubled for high-DPI
+                    # screens: a preview fills a card of ~300×200, a logo a
+                    # 30px circle. An image is scaled down to *cover* its box
+                    # — the smallest size that still fills it on both axes —
+                    # and never up.
+                    'preview-box': [600, 400],
+                    'logo-box': [96, 96],
                     'quality': 85,
                     'timeout': 10.0,
                     # Some hosts (VK's userapi CDN) refuse hotlinks or serve

@@ -76,6 +76,20 @@ a:hover {
     text-decoration: underline;
 }
 
+/* Links inside running text carry the faint underline at rest (vars.css,
+   --link-underline); without it a link mid-sentence read as a red word.
+   Footnote markers keep none — a superscript numeral is its own cue, and a
+   line would crowd a 0.75em glyph — and so does a link whose whole label is
+   inline code, which already draws its own (code.css). */
+.content :is(p, li, td, dd, figcaption, blockquote) a:not(.ref a, :has(> code:only-child)) {
+    text-decoration: underline 1px var(--link-underline);
+    text-underline-offset: 0.2em;
+}
+
+.content :is(p, li, td, dd, figcaption, blockquote) a:not(.ref a, :has(> code:only-child)):is(:hover, :focus-visible) {
+    text-decoration-color: currentColor;
+}
+
 ul, ol {
     padding-left: 1.5rem;
 }
@@ -153,11 +167,14 @@ img {
     border-right: 1px solid var(--border);
 
     position: sticky;
-    top: 52px;
+    /* The header's real height (vars.css), not a copy of its 52px: with a
+       larger default text size the header grows, and a hard-coded top slid
+       the first 100px of the sidebar under it. */
+    top: var(--header-h);
 
     /* dvh with a vh fallback — see .page in components.css for why. */
-    height: calc(100vh - 52px);
-    height: calc(100dvh - 52px);
+    height: calc(100vh - var(--header-h));
+    height: calc(100dvh - var(--header-h));
     overflow-y: auto;
 }
 
@@ -250,7 +267,7 @@ img {
     display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 48em) {
     /* Same chevron label as «Все статьи» and «Исходник страницы» — three
        sections of the sidebar, one control. */
     .sidebar-contents-summary {
@@ -508,6 +525,31 @@ img {
     color: var(--accent);
 }
 
+/* The two disclosure labels and the two source links are one line of 12px
+   mono: 20px tall, under the 24px WCAG 2.5.8 asks of a target. Padding grows
+   the hit box and the matching negative margin keeps every line exactly where
+   it was — the same trick .page-back uses. Scoped to the desktop sidebar: the
+   ≤768px block below gives them a full 44px row instead, and so does a touch
+   screen that is wide enough to keep this layout. */
+@media (min-width: 48.0625em) {
+    .sidebar-all-summary,
+    .sidebar-source-label,
+    .sidebar-source-links a {
+        padding-block: 6px;
+        margin-block: -6px;
+    }
+}
+
+@media (min-width: 48.0625em) and (pointer: coarse) {
+    .sidebar-all-summary,
+    .sidebar-source-label,
+    .sidebar-source-links a {
+        min-height: 44px;
+        padding-block: 0;
+        margin-block: 0;
+    }
+}
+
 .content {
     flex: 1;
 
@@ -718,9 +760,10 @@ img {
 
 .heading {
     position: relative;
-    /* A heading is read with the line under it, so it clears the header
-       by a little more than a row does. */
-    scroll-margin-top: calc(var(--scroll-offset) + 12px);
+    /* A heading is read with the line under it, so it clears the header by
+       12px more than a row does — on top of the page's scroll-padding
+       (main.css), which already clears the header itself. */
+    scroll-margin-top: 12px;
 }
 
 .heading:target {
@@ -756,12 +799,6 @@ img {
     opacity: 1;
 }
 
-/* A screen with no pointer never fires the hover that reveals these, so on a
-   phone every heading carried a 13px-wide link at 30% opacity: invisible,
-   and still a tap target sitting right where a thumb scrolls. Half-visible
-   and wide enough to mean it, or not there at all — this takes the first,
-   since a link to a heading is worth having on the device most likely to be
-   sharing one. */
 /* A link that is the whole of its paragraph or list item is a destination,
    not a word in a sentence — WCAG 2.5.8's exception for links inside a block
    of text does not cover it, and at the body size it stands 20px tall. The
@@ -777,6 +814,12 @@ img {
     }
 }
 
+/* A screen with no pointer never fires the hover that reveals these, so on a
+   phone every heading carried a 13px-wide link at 30% opacity: invisible,
+   and still a tap target sitting right where a thumb scrolls. Half-visible
+   and wide enough to mean it, or not there at all — this takes the first,
+   since a link to a heading is worth having on the device most likely to be
+   sharing one. */
 @media (hover: none) {
     .anchor {
         display: inline-block;
@@ -1032,10 +1075,10 @@ img {
    marker small and skippable, and the list findable once you land on it. */
 
 .ref {
-    /* No left margin and no padding on the link: the marker sits flush
-       against the word it cites, the way a printed footnote does. */
+    /* No left margin, and on a mouse no padding on the link either: the
+       marker sits flush against the word it cites, the way a printed
+       footnote does. */
     font-size: 0.75em;
-    scroll-margin-top: var(--scroll-offset);
 }
 
 .ref a {
@@ -1045,6 +1088,19 @@ img {
 .ref a:hover,
 .ref a:focus-visible {
     text-decoration: underline;
+}
+
+/* Under a finger the marker is a 5–8px target. The padding widens what a tap
+   can land on to about 24px and the equal negative margin hands the width
+   back, so the marker stays flush and no line reflows; vertical padding on an
+   inline box never moves a line anyway. A mouse keeps the glyph: it is
+   precise enough, and a wider target would take the last letter of the word
+   before it. */
+@media (pointer: coarse) {
+    .ref a {
+        padding: 6px 8px;
+        margin: 0 -8px;
+    }
 }
 
 .refs {
@@ -1157,7 +1213,7 @@ img {
 
 /* ── Responsive ──────────────────────────────────────────── */
 
-@media (max-width: 768px) {
+@media (max-width: 48em) {
     .layout {
         flex-direction: column;
     }
@@ -1264,7 +1320,7 @@ img {
     }
 }
 
-@media (max-width: 400px) {
+@media (max-width: 25em) {
     .sidebar {
         padding: 12px 16px;
     }

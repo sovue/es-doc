@@ -1,27 +1,31 @@
-import hashlib
-
-from fastapi import Request
+from fastapi import HTTPException, Request
 from fastapi.responses import FileResponse, Response
 
 from . import main_router
-from ..utils.file import ROOT, read_text
+from ..utils.assets import load as load_asset
+from ..utils.file import ROOT
 
 router = main_router
 
-# CSS/JS aren't content-hashed in their URLs, so they can't be cached
-# "immutable" like the fonts. A short max-age lets a returning visitor reuse
-# them within a session; the content ETag turns the post-expiry recheck (and
-# any cross-session hit) into a 304 with no re-download, so a deploy still
-# goes live within the window. Previously these were served with no caching
-# headers at all — a full re-download of every stylesheet and script on every
-# navigation.
+# Pages link CSS/JS through `asset()` (utils/assets.py), which stamps each URL
+# with a digest of the bytes served. A URL carrying the current digest can
+# never mean anything else, so it is cached for a year like the fonts; a
+# deploy changes the digest and with it the URL, so nothing waits out a
+# max-age to go live. A bare or stale URL (a page left open across a deploy,
+# a link from outside) keeps the short max-age, and the ETag turns its recheck
+# into a 304 with no re-download.
 _TEXT_CACHE = 'public, max-age=300'
+_VERSIONED_CACHE = 'public, max-age=31536000, immutable'
 
 
 def _text_asset(request: Request, rel: str, media_type: str) -> Response:
-    body = read_text(rel)
-    etag = '"' + hashlib.md5(body.encode('utf-8')).hexdigest() + '"'
-    headers = {'ETag': etag, 'Cache-Control': _TEXT_CACHE}
+    try:
+        body, digest = load_asset(rel)
+    except FileNotFoundError:
+        raise HTTPException(404, f'Файл "{rel}" не существует.') from None
+    etag = f'"{digest}"'
+    versioned = request.query_params.get('v') == digest
+    headers = {'ETag': etag, 'Cache-Control': _VERSIONED_CACHE if versioned else _TEXT_CACHE}
     if request.headers.get('if-none-match') == etag:
         return Response(status_code=304, headers=headers)
     return Response(body, media_type=media_type, headers=headers)

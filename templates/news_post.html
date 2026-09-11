@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% set page_title = title ~ ' — ES Doc' %}
+{% set active = 'news' %}
 {#- The article stylesheets: a post is written in the same markdown as a doc
     and gets the same prose, code panels and callouts. -#}
 {% set extra_css = ['/static/css/syntax.css', '/static/css/code.css', '/static/css/doc.css', '/static/css/news.css'] %}

@@ -120,7 +120,13 @@
         var el = opts[active];
         el.setAttribute('aria-selected', 'true');
         input.setAttribute('aria-activedescendant', el.id);
-        el.scrollIntoView({ block: 'nearest' });
+        // Scroll the listbox only. scrollIntoView would also move the page,
+        // whose scroll-padding (main.css) counts the top rows of a listbox
+        // hanging from the sticky header as out of view, and nudged it on
+        // every arrow key.
+        var top = el.offsetTop, bottom = top + el.offsetHeight;
+        if (top < list.scrollTop) list.scrollTop = top;
+        else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight;
     }
 
     function go(m) {

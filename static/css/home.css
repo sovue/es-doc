@@ -48,19 +48,69 @@
     --hero-4: url('/resource/hero/ext_island_night');
 }
 
+/* Phones get the same photos center-cropped to 0.95:1 (855×900, about half
+   the bytes; hero_cache.py). Up to 480px the hero box is never wider than
+   0.93:1 — 0.41 at 320px — so `cover` only ever showed the middle 370–840px
+   of the 1600: the crop keeps every pixel that was on screen. At 640px the box
+   is 1.39:1 and shows 1255px of the frame, so wider screens keep all of it. */
+@media (max-width: 30em) {
+    .hero-bg {
+        --hero-1: url('/resource/hero/ext_beach_day?crop=narrow');
+        --hero-2: url('/resource/hero/ext_square_day?crop=narrow');
+        --hero-3: url('/resource/hero/ext_road_day?crop=narrow');
+        --hero-4: url('/resource/hero/ext_island_day?crop=narrow');
+    }
+}
+
+@media (max-width: 30em) and (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .hero-bg {
+        --hero-1: url('/resource/hero/ext_beach_night?crop=narrow');
+        --hero-2: url('/resource/hero/ext_square_night?crop=narrow');
+        --hero-3: url('/resource/hero/ext_road_night2?crop=narrow');
+        --hero-4: url('/resource/hero/ext_island_night?crop=narrow');
+    }
+}
+
+@media (max-width: 30em) {
+    :root[data-theme="dark"] .hero-bg {
+        --hero-1: url('/resource/hero/ext_beach_night?crop=narrow');
+        --hero-2: url('/resource/hero/ext_square_night?crop=narrow');
+        --hero-3: url('/resource/hero/ext_road_night2?crop=narrow');
+        --hero-4: url('/resource/hero/ext_island_night?crop=narrow');
+    }
+}
+
 .hero-bg-slide {
     position: absolute;
     inset: 0;
     background-size: cover;
     background-position: center;
     opacity: 0;
+}
+
+/* At rest the hero is one still: the first slide, and the only photo fetched.
+   That is what a page without JS shows, what reduced motion shows, and what
+   every page shows until it has loaded. Slides 2–4 are three more photos (up
+   to 500 kB by day) nobody sees for the first eight seconds, and they used to
+   download alongside the one that is the page's largest paint. */
+.hero-bg-slide:first-child {
+    background-image: var(--hero-1);
+    opacity: 1;
+}
+
+/* home.html adds .is-live once the page has loaded and slides 2–4 have
+   downloaded, and never under reduced motion. The cycle starts 2.56s in, at
+   the 8% where a slide is fully faded in, so the first slide is already
+   showing when the animation takes it over instead of blinking out to fade
+   back up; the others shift by the same 2.56s and keep their 8s spacing. */
+.hero-bg.is-live .hero-bg-slide {
     animation: hero-fade 32s linear infinite;
 }
 
-.hero-bg-slide:nth-child(1) { background-image: var(--hero-1); }
-.hero-bg-slide:nth-child(2) { background-image: var(--hero-2); animation-delay: 8s; }
-.hero-bg-slide:nth-child(3) { background-image: var(--hero-3); animation-delay: 16s; }
-.hero-bg-slide:nth-child(4) { background-image: var(--hero-4); animation-delay: 24s; }
+.hero-bg.is-live .hero-bg-slide:nth-child(1) { animation-delay: -2.56s; }
+.hero-bg.is-live .hero-bg-slide:nth-child(2) { background-image: var(--hero-2); animation-delay: 5.44s; }
+.hero-bg.is-live .hero-bg-slide:nth-child(3) { background-image: var(--hero-3); animation-delay: 13.44s; }
+.hero-bg.is-live .hero-bg-slide:nth-child(4) { background-image: var(--hero-4); animation-delay: 21.44s; }
 
 /* Each slide owns a quarter of the 32s cycle, with ~2.5s crossfades into
    its neighbours (8% of the cycle in, 25%→33% out). */
@@ -89,17 +139,6 @@
             var(--bg) 100%);
 }
 
-/* Reduced motion: one quiet still instead of a slideshow. */
-@media (prefers-reduced-motion: reduce) {
-    .hero-bg-slide {
-        animation: none;
-    }
-
-    .hero-bg-slide:first-child {
-        opacity: 1;
-    }
-}
-
 /* ── Contributors strip below page-main ──────────────────── */
 
 .home-contributors {
@@ -110,7 +149,7 @@
 
 /* ── Responsive ──────────────────────────────────────────── */
 
-@media (max-width: 640px) {
+@media (max-width: 40em) {
     .home-contributors {
         padding: 32px 20px 40px;
     }
@@ -222,7 +261,15 @@
     color: var(--text);
 }
 
+/* ── Reduced motion ──────────────────────────────────────── */
+
 @media (prefers-reduced-motion: reduce) {
+    /* One quiet still instead of a slideshow — even if the setting changes
+       after the slideshow has started (home.html checks it only once). */
+    .hero-bg.is-live .hero-bg-slide {
+        animation: none;
+    }
+
     .hero-track-play {
         transition: none;
     }

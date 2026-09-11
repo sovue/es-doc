@@ -9,12 +9,17 @@ logger = root_logger.getChild('lifespan').getChild('hero-cache')
 # `images.hero.width` is wide enough for a full-bleed hero on a desktop screen
 # while landing around a tenth of the original JPG's weight; the readability
 # overlay on top hides any resampling softness anyway.
+#
+# `images.hero.narrow-aspect` is the phone variant (`?crop=narrow`, home.css):
+# the same downscale, center-cropped to that width:height. Up to 480px the hero
+# box is never wider than 0.93:1, so `cover` only ever showed the middle of the
+# frame; the crop keeps all of that at about half the bytes.
 
 def hero_path():
     return CONFIG.cache_path / 'hero'
 
-def hero_file(name):
-    return hero_path() / f'{name}.webp'
+def hero_file(name, variant=None):
+    return hero_path() / (f'{name}.{variant}.webp' if variant else f'{name}.webp')
 
 def _source_file(name):
     # Only plain declared-or-undeclared bg files qualify — a hero image is a
@@ -26,13 +31,13 @@ def _source_file(name):
     path = CONFIG.res_path / item['file']
     return path if path.is_file() else None
 
-def is_heroed(name):
-    path = hero_file(name)
+def is_heroed(name, variant=None):
+    path = hero_file(name, variant)
     source = _source_file(name)
     return (path.is_file() and source is not None
             and path.stat().st_mtime >= source.stat().st_mtime)
 
-def make_hero(name):
+def make_hero(name, variant=None):
 
     source = _source_file(name)
     if source is None:
@@ -48,8 +53,14 @@ def make_hero(name):
         if img.width > width:
             img = img.resize((width, round(img.height * width / img.width)), Image.LANCZOS)
 
+        if variant == 'narrow':
+            crop = round(img.height * CONFIG.setting('images.hero.narrow-aspect'))
+            if crop < img.width:
+                left = (img.width - crop) // 2
+                img = img.crop((left, 0, left + crop, img.height))
+
         # Same swap-in trick as sprites/thumbs: never expose a half-written file.
-        path = hero_file(name)
+        path = hero_file(name, variant)
         tmp = path.with_suffix('.webp.tmp')
         img.save(tmp, 'WEBP', quality=CONFIG.setting('images.hero.quality'))
         os.replace(tmp, path)

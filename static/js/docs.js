@@ -29,7 +29,7 @@
     if (!box) return;
 
     const KEY = 'es-doc-contents';
-    const wide = matchMedia('(min-width: 769px)');
+    const wide = matchMedia('(min-width: 48.0625em)');
 
     box.addEventListener('toggle', function () {
         // Only a deliberate choice on a phone is worth remembering: on a wide

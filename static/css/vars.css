@@ -90,7 +90,6 @@
     --radius-xs: 2px;      /* focus rings, badges, skip-link corner */
     --radius-sm: 4px;      /* compact controls (search box) */
     --radius-md: 8px;      /* elevated popover (search results) */
-    --radius-lg: 16px;
     --radius-full: 999px;
     --radius-code: 6px;    /* inline code, tightened pre on narrow screens */
     --radius-block: 12px;  /* code blocks and images */
@@ -161,10 +160,25 @@
        distance — and a panel with its own palette can retint it (code.css). */
     --focus-ring: 2px solid var(--accent);
 
-    /* Anchored scroll targets clear the 52px sticky header with room to spare:
-       headings take a wider berth than rows because a heading is read with the
-       line under it. */
-    --scroll-offset: 64px;
+    /* The underline a link inside running text wears at rest: half its own
+       colour, enough to mark it without shouting, and full on hover and
+       focus. Colour alone can't mark these links: accent on ink is 2.83:1 by
+       day and 2.44:1 at night, under the 3:1 WCAG 1.4.1 asks for. It resolves
+       `currentColor` on the link itself, so the one token serves the red
+       article links and the ink ones in the thanks lists. */
+    --link-underline: color-mix(in srgb, currentColor 50%, transparent);
+
+    /* The sticky header's height: one 52px row at every width at the default
+       text size. header.html keeps it equal to the real header, so when a
+       larger default text size does give the header a second row, the sticky
+       sidebar and every scroll offset still clear it. Without JS it stays 52. */
+    --header-h: 52px;
+
+    /* How far a scrolled-to target clears the header. It is the page's
+       `scroll-padding-top` (main.css), so anchor jumps and keyboard focus both
+       honour it; headings add 12px of scroll-margin of their own, because a
+       heading is read with the line under it. */
+    --scroll-offset: calc(var(--header-h) + 12px);
 
     /* Ease-out-quart — interactive transitions leave fast, settle soft. */
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);

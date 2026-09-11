@@ -11,32 +11,35 @@
    loads on every page. Preloaded too, or it is discovered late. #}
 <link rel="preload" href="/static/fonts/inter-variable-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/static/fonts/ptserif-700-normal-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="/static/css/fonts.css">
-<link rel="stylesheet" href="/static/css/vars.css">
-<link rel="stylesheet" href="/static/css/main.css">
-<link rel="stylesheet" href="/static/css/components.css">
+{# asset() stamps every stylesheet and script with a digest of what it serves
+   (utils/assets.py), so browsers keep them for a year and still pick up the
+   next deploy the moment it lands. #}
+<link rel="stylesheet" href="{{ asset('/static/css/fonts.css') }}">
+<link rel="stylesheet" href="{{ asset('/static/css/vars.css') }}">
+<link rel="stylesheet" href="{{ asset('/static/css/main.css') }}">
+<link rel="stylesheet" href="{{ asset('/static/css/components.css') }}">
 {# Before extra_css, so a page's own sheet can still adjust the bar. #}
-{% if with_player %}<link rel="stylesheet" href="/static/css/player.css">
-{% endif %}{% for href in (extra_css or []) %}<link rel="stylesheet" href="{{ href }}">
+{% if with_player %}<link rel="stylesheet" href="{{ asset('/static/css/player.css') }}">
+{% endif %}{% for href in (extra_css or []) %}<link rel="stylesheet" href="{{ asset(href) }}">
 {% endfor %}<link rel="icon" href="/favicon.webp">
-<script src="/static/js/search.js" defer></script>
-<script src="/static/js/totop.js" defer></script>
-<script src="/static/js/theme.js" defer></script>
+<script src="{{ asset('/static/js/search.js') }}" defer></script>
+<script src="{{ asset('/static/js/totop.js') }}" defer></script>
+<script src="{{ asset('/static/js/theme.js') }}" defer></script>
 {#- Site-wide, like the three above: code panels turn up on docs pages, in the
     resource browser's viewer and on the warper page, several of them out of
     markdown no template inspects, and code.js is what reveals their copy
     button and makes inline chips copyable. Inert on a page with no code. -#}
-<script src="/static/js/code.js" defer></script>
-{% if with_contributors_js %}<script src="/static/js/contributors.js" defer></script>
+<script src="{{ asset('/static/js/code.js') }}" defer></script>
+{% if with_contributors_js %}<script src="{{ asset('/static/js/contributors.js') }}" defer></script>
 {% endif %}{# The shared audio player: the resource listings' play buttons and the
     home page's theme track are the same control and the same floating bar. #}
-{% if with_player %}<script src="/static/js/player.js" defer></script>
+{% if with_player %}<script src="{{ asset('/static/js/player.js') }}" defer></script>
 {% endif %}
-{% if active == "docs" or with_docs_js %}<script src="/static/js/docs.js" defer></script>
-{% endif %}{% if with_warpers_js %}<script src="/static/js/warpers.js" defer></script>
+{% if active == "docs" or with_docs_js %}<script src="{{ asset('/static/js/docs.js') }}" defer></script>
+{% endif %}{% if with_warpers_js %}<script src="{{ asset('/static/js/warpers.js') }}" defer></script>
 {% endif %}
-{% if active == "resources" %}<script src="/static/js/resources.js" defer></script>
-{% endif %}{% if active == "artists" %}<script src="/static/js/artists.js" defer></script>
+{% if active == "resources" %}<script src="{{ asset('/static/js/resources.js') }}" defer></script>
+{% endif %}{% if active == "artists" %}<script src="{{ asset('/static/js/artists.js') }}" defer></script>
 {% endif %}
-{% if DEBUG %}<script src="/static/js/livereload.js"></script>
+{% if DEBUG %}<script src="{{ asset('/static/js/livereload.js') }}"></script>
 {% endif %}
