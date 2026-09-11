@@ -28,8 +28,20 @@
     }
 }
 
+/* Scrolled-to targets — anchor jumps and keyboard focus alike — clear the
+   sticky header (vars.css, --scroll-offset). Without it, a link reached with
+   Shift+Tab from further down a page stopped at the very top edge of the
+   viewport, under the header (WCAG 2.4.11), and every anchor target had to
+   carry its own scroll-margin to avoid the same fate. */
+html {
+    scroll-padding-top: var(--scroll-offset);
+}
+
 body {
     margin: 0;
+    /* Room for the fixed header (components.css): its real height, kept in
+       --header-h by header.html, plus its 1px bottom border. */
+    padding-top: calc(var(--header-h) + 1px);
 
     background: linear-gradient(to right, var(--bg), var(--bg-light));
     color: var(--text);

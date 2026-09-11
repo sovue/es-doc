@@ -173,7 +173,7 @@
 /* The label is the target (it wraps the box and the words), and at 24px it
    only just clears WCAG 2.5.8. On a phone this is a filter sitting among
    inputs that are all 44px, so it matches them. */
-@media (max-width: 768px) {
+@media (max-width: 48em) {
     .res-toggle {
         min-height: 44px;
     }
@@ -215,8 +215,6 @@
     gap: 18px;
     padding: 10px 0;
     border-bottom: 1px solid var(--border);
-    /* Search-result anchors (#r-…) land below the sticky header. */
-    scroll-margin-top: var(--scroll-offset);
 }
 
 /* `content-visibility: auto` was tried here and taken back out: on the 1 164-row
@@ -431,7 +429,8 @@ a.res-file:focus-visible {
     outline-offset: 2px;
 }
 
-/* Each button holds two icons; the second (check / pause) shows on state. */
+/* A button that still carries two inline SVGs — anything not built by
+   res_macros.html — shows the second (check / pause) on state. */
 .res-copy svg + svg,
 .res-play svg + svg {
     display: none;
@@ -460,6 +459,30 @@ a.res-file:focus-visible {
     color: var(--accent);
     border-color: var(--accent);
 }
+
+/* The icons are CSS, not inline SVG: a mask cut from a data-URI SVG and
+   filled with the button's own colour, so hover, copied and playing recolour
+   it exactly as they recoloured the SVG's currentColor. Three inline SVGs a
+   row were 1.09 MB of the 1 162-row sprite listing's 2.3 MB of HTML and
+   8 of its DOM nodes per row, and every theme switch restyled all ~9 300.
+   `forced-color-adjust` keeps the fill on the button's colour in Windows'
+   high-contrast mode, which would otherwise repaint it as the background. */
+.res-icon::before {
+    content: '';
+    flex: none;
+    width: 14px;
+    height: 14px;
+    background-color: currentColor;
+    -webkit-mask: var(--res-icon) center / contain no-repeat;
+    mask: var(--res-icon) center / contain no-repeat;
+    forced-color-adjust: none;
+}
+
+.res-copy.res-icon { --res-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' fill='none' stroke='%23000' stroke-width='1.3'%3E%3Crect x='4.5' y='4.5' width='8' height='8' rx='1.5'/%3E%3Cpath d='M9.5 3V2.5A1.5 1.5 0 0 0 8 1H2.5A1.5 1.5 0 0 0 1 2.5V8a1.5 1.5 0 0 0 1.5 1.5H3'/%3E%3C/svg%3E"); }
+.res-copy.res-icon.copied { --res-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 7.5L5.5 11L12 3.5'/%3E%3C/svg%3E"); }
+.res-dl.res-icon { --res-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' fill='none' stroke='%23000' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 1.5v6.8M4.2 5.6 7 8.4l2.8-2.8'/%3E%3Cpath d='M1.8 10.2v.8a1.5 1.5 0 0 0 1.5 1.5h7.4a1.5 1.5 0 0 0 1.5-1.5v-.8'/%3E%3C/svg%3E"); }
+.res-play.res-icon { --res-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3.5 2.2a.6.6 0 0 1 .9-.52l7.2 4.3a.6.6 0 0 1 0 1.04l-7.2 4.3a.6.6 0 0 1-.9-.52z'/%3E%3C/svg%3E"); }
+.res-play.res-icon[aria-pressed="true"] { --res-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Crect x='2.8' y='2' width='3.2' height='10' rx='0.8'/%3E%3Crect x='8' y='2' width='3.2' height='10' rx='0.8'/%3E%3C/svg%3E"); }
 
 /* ── Characters (speaking cast) ──────────────────────────── */
 
@@ -559,26 +582,31 @@ a.res-file:focus-visible {
 
 /* Idle state carries the character's in-game name color. The raw game values
    are tuned for the dark dialogue box, so mix them toward ink for AA on paper;
-   at night they can run closer to full strength. */
+   at night they can run closer to full strength. 35% is the most colour that
+   keeps all thirteen at 4.5:1 or better across the whole paper gradient, sand
+   and cream alike: Электроник's pure yellow sets the limit, at 4.95:1 here and
+   2.72:1 at the 55% this used to be. */
 .res-jump a[style],
 .res-group-code[style] {
-    color: color-mix(in oklab, var(--char) 55%, var(--text));
+    color: color-mix(in oklab, var(--char) 35%, var(--text));
 }
 
-/* Dark lifts the character colours closer to full strength. Served two ways
+/* Dark lifts the character colours closer to full strength: 70%, where
+   Пионер's red (#E60101) still makes 4.97:1 on the lighter end of the night
+   gradient; 80% left it at 4.31. Served two ways
    so the theme toggle overrides the OS, mirroring vars.css: the media query
    (guarded so a toggle-forced light OS opts out) and the explicit night
    attribute. Keep the two blocks in sync. */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) .res-jump a[style],
     :root:not([data-theme="light"]) .res-group-code[style] {
-        color: color-mix(in oklab, var(--char) 80%, var(--text));
+        color: color-mix(in oklab, var(--char) 70%, var(--text));
     }
 }
 
 :root[data-theme="dark"] .res-jump a[style],
 :root[data-theme="dark"] .res-group-code[style] {
-    color: color-mix(in oklab, var(--char) 80%, var(--text));
+    color: color-mix(in oklab, var(--char) 70%, var(--text));
 }
 
 .res-jump a:hover {
@@ -594,12 +622,6 @@ a.res-file:focus-visible {
 .res-jump code {
     font-family: var(--font-mono);
     font-size: var(--fs-label);
-}
-
-/* Jump-nav anchors land on the h2 (it carries the id) — keep it clear of
-   the sticky header. */
-.res-group-title {
-    scroll-margin-top: var(--scroll-offset);
 }
 
 .res-group[hidden] {
@@ -730,7 +752,7 @@ a.res-file:focus-visible {
    controls — and they measured 21px tall («Открыть оригинал», «Скачать») and
    28px square (close), under the 24px floor and far under a thumb. The links
    take their height from padding so the bar keeps its own proportions. */
-@media (max-width: 640px) {
+@media (max-width: 40em) {
     .res-lightbox-bar {
         gap: 12px;
         padding: 4px 12px;
@@ -927,7 +949,7 @@ a.res-file:focus-visible {
 
 /* «Открыть файл» and «Скачать» are the two things this page exists to offer,
    and at 24px they were the smallest targets on it. */
-@media (max-width: 768px) {
+@media (max-width: 48em) {
     .fb-action {
         display: inline-flex;
         align-items: center;
@@ -1016,13 +1038,6 @@ a.res-file:focus-visible {
    them lives outside the span, so `code.textContent` keeps its line breaks
    for the copy button), which means the band covers the line's text rather
    than the full panel width. */
-/* `#L42` scrolls the page, so the addressed line has to clear the 53px sticky
-   header — the same 64px the search-result rows and jump-nav headings on these
-   pages already use. */
-.fb-line {
-    scroll-margin-top: var(--scroll-offset);
-}
-
 .fb-line:target {
     background: var(--target-bg);
     box-shadow: 0 0 0 2px var(--target-bg);
@@ -1081,37 +1096,10 @@ video.fb-media {
     font-size: 1.7rem;
 }
 
-/* ── Empty state ─────────────────────────────────────────── */
-
-.res-empty {
-    max-width: 55ch;
-    color: var(--text-soft);
-}
-
-.res-empty-title {
-    margin: 0 0 8px;
-    font-weight: 600;
-    color: var(--text);
-}
-
-.res-empty p {
-    margin: 0;
-    line-height: var(--lh-prose);
-}
-
-.res-empty a {
-    color: var(--accent);
-    text-decoration: none;
-}
-
-.res-empty a:hover {
-    text-decoration: underline;
-}
-
 /* ── Прочие ссылки (community hub) ───────────────────────
    What the community shares that this site can't scan into a listing: an
    archive, a tool, a pack hosted somewhere else. Same bordered `.sections-list`
-   rows as the categories above it and as /news — an outbound link is a row
+   rows as the categories above it and as /news/sources — an outbound link is a row
    like any other here — so the only thing this block adds is a title that
    marks where the site's own listings end and the rest of the internet
    begins. Serif title in the same voice as a resource group's, with the lead
@@ -1158,7 +1146,7 @@ video.fb-media {
 
 /* ── Responsive ──────────────────────────────────────────── */
 
-@media (max-width: 640px) {
+@media (max-width: 40em) {
     .res-tabs {
         padding: 0 20px;
     }
@@ -1240,5 +1228,17 @@ video.fb-media {
     .fb-crumbs a,
     .fb-link {
         transition: none;
+    }
+}
+
+/* ── Windows high-contrast mode ──────────────────────────── */
+
+@media (forced-colors: active) {
+    /* The current tab and category are marked by an inset box-shadow, which
+       forced colours drop along with every author colour. */
+    .res-tab[aria-current="page"],
+    .res-cats a[aria-current="page"] {
+        text-decoration: underline 2px;
+        text-underline-offset: 0.35em;
     }
 }

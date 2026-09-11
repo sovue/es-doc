@@ -69,12 +69,18 @@ class _ConfigContainer():
 
             # Every derived image the site produces. Quality is WebP's 0–100.
             'images': {
-                'hero': {'width': 1600, 'quality': 75},
+                'hero': {'width': 1600, 'quality': 75, 'narrow-aspect': 0.95},
                 'thumb': {'box': 320, 'quality': 80},
                 'sprite-quality': 90,
                 'tint-quality': 90,
                 'artist': {
-                    'max-side': 1200,
+                    # The box each kind is shown in, doubled for high-DPI
+                    # screens: a preview fills a card of ~300×200, a logo a
+                    # 30px circle. An image is scaled down to *cover* its box
+                    # — the smallest size that still fills it on both axes —
+                    # and never up.
+                    'preview-box': [600, 400],
+                    'logo-box': [96, 96],
                     'quality': 85,
                     'timeout': 10.0,
                     # Some hosts (VK's userapi CDN) refuse hotlinks or serve
@@ -150,14 +156,19 @@ class _ConfigContainer():
         # {name, status, preview, logo, links}.
         self.artists = []
 
-        # News/content channels, parsed from news.yaml at startup (see
-        # utils/lifespan/news_cache.py). List of dicts: {name, url, note}.
+        # The project's own news posts, indexed from <assets>/news/*.md at
+        # startup (see utils/lifespan/news_cache.py), newest first. List of
+        # dicts: {slug, title, lead, date, date_iso, date_label}.
         self.news = []
+
+        # Community news/content channels for /news/sources, parsed from
+        # news.yaml (same module). List of dicts: {name, url, note}.
+        self.news_sources = []
 
         # Everything on «Ресурсы сообщества» that isn't a scanned resource:
         # archives, tool sites, packs hosted elsewhere. Parsed from links.yaml
         # at startup (see utils/lifespan/links_cache.py). Same row shape as
-        # news: {name, url, note}.
+        # news_sources: {name, url, note}.
         self.links = []
 
         # Curated short links: {key: target url}, parsed from redirects.yaml

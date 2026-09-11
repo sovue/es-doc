@@ -1,3 +1,25 @@
+{#- The site's main sections, in one place. Rendered twice below — inline in
+    the header row on a wide screen, and as the section bar under the header
+    on a narrow one (components.css, «Section bar») — and only one of the two
+    is ever displayed, so a screen reader meets the list once. Авторы and
+    «Поддержать» stay in the footer: they're about the project, not sections
+    of the documentation. -#}
+{% set sections = [
+    ('/docs/', 'docs', 'Документация'),
+    ('/resources/', 'resources', 'Ресурсы'),
+    ('/news', 'news', 'Новости'),
+    ('/literature', 'literature', 'Литература'),
+    ('/artists', 'artists', 'Художники'),
+] %}
+
+{% macro section_links(sections, active) %}
+<ul class="nav-links">
+    {%- for href, key, label in sections %}
+    <li><a href="{{ href }}"{% if active == key %} aria-current="page"{% endif %}>{{ label }}</a></li>
+    {%- endfor %}
+</ul>
+{%- endmacro %}
+
 <header class="site-header">
     <nav class="site-nav" aria-label="Основная навигация">
         {# The favicon doubles as the header mark: one file, one already-cached
@@ -46,10 +68,7 @@
             <p class="nav-search-status sr-only" role="status" aria-live="polite"></p>
         </form>
 
-        <ul class="nav-links">
-            <li><a href="/docs/"{% if active == 'docs' %} aria-current="page"{% endif %}>Документация</a></li>
-            <li><a href="/resources/"{% if active == 'resources' %} aria-current="page"{% endif %}>Ресурсы</a></li>
-        </ul>
+        {{ section_links(sections, active) }}
 
         <!-- Ships [hidden]; theme.js reveals it. Without JS the site still
              follows the OS light/dark preference, so no broken control. -->
@@ -66,3 +85,23 @@
         </button>
     </nav>
 </header>
+
+{#- Keeps --header-h (vars.css) equal to the header's real height: 52px until a
+    larger default text size gives it a second row. The body's padding under
+    the fixed header, the sticky docs sidebar and every scroll offset hang off
+    that number. -#}
+<script>(function(){var h=document.querySelector('.site-header'),s=document.documentElement.style;function u(){s.setProperty('--header-h',h.clientHeight+'px');}u();if(window.ResizeObserver)new ResizeObserver(u).observe(h);})();</script>
+
+{#- Outside the sticky header on purpose: it scrolls away with the page, so the
+    header stays 52px at every width (see «Section bar» in components.css). -#}
+<nav class="section-bar" aria-label="Разделы сайта">
+    {{ section_links(sections, active) }}
+</nav>
+{#- On a phone the bar scrolls sideways; bring the current section into view
+    before first paint, the way doc.html restores its disclosures, and again
+    whenever a width change (a rotated phone, a resized window) leaves it out
+    of sight. A section already in view is left alone, so this never fights a
+    reader who scrolled the bar themselves. The 32px is the fade at the bar's
+    right edge (components.css), which doesn't count as in view. Inert where
+    the bar is hidden: there is no width to measure. -#}
+<script>(function(){var a=document.querySelector('.section-bar [aria-current="page"]');if(!a)return;var l=a.closest('ul'),f;function c(){var b=l.getBoundingClientRect(),r=a.getBoundingClientRect();if(!b.width||(r.left>=b.left&&r.right<=b.right-32))return;l.scrollLeft+=r.left-b.left-(b.width-r.width)/2;}c();addEventListener('resize',function(){cancelAnimationFrame(f);f=requestAnimationFrame(c);});})();</script>

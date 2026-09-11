@@ -64,7 +64,7 @@
                 in one state and flips to the other. Wide screens always open;
                 narrow ones start closed and then follow whatever the reader
                 last chose. -#}
-            <script>(function(){var d=document.getElementById('sidebar-contents');if(!d)return;if(window.matchMedia('(min-width: 769px)').matches)return;var v='0';try{v=localStorage.getItem('es-doc-contents')||'0';}catch(e){}d.open=v==='1';})();</script>
+            <script>(function(){var d=document.getElementById('sidebar-contents');if(!d)return;if(window.matchMedia('(min-width: 48.0625em)').matches)return;var v='0';try{v=localStorage.getItem('es-doc-contents')||'0';}catch(e){}d.open=v==='1';})();</script>
             {% endif %}
 
             {% if tree %}

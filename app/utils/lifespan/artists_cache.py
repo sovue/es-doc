@@ -2,6 +2,7 @@ import yaml
 
 from ..config import CONFIG
 from ..logging import root_logger
+from ..translit import unique_slugs
 
 logger = root_logger.getChild('lifespan').getChild('artists')
 
@@ -59,6 +60,14 @@ def parse_artists():
 
     # Alphabetical by default; the page's sort control reorders client-side.
     artists.sort(key=lambda a: a['name'].casefold())
+
+    # What the image routes are addressed by (/resource/artist/<kind>/<slug>),
+    # never the name itself: a name is free text, and one carrying `/` or
+    # `..` can't be routed as one path segment however it's quoted (see
+    # translit.py). Assigned after the sort, so a clash between two names is
+    # settled in the same alphabetical order every time.
+    for artist, slug in zip(artists, unique_slugs((a['name'] for a in artists), fallback='artist')):
+        artist['slug'] = slug
 
     CONFIG.artists = artists
     logger.info(f'Parsed {len(artists)} artist(s) from artists.yaml.')

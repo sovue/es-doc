@@ -5,7 +5,10 @@ from fastapi.responses import FileResponse
 from . import main_router
 from ..utils.config import CONFIG
 from ..utils.http import cache_headers
-from ..utils.lifespan.artist_img_cache import cache_file as artist_img_file, fetch_and_cache as fetch_artist_img, is_cached as artist_img_cached
+from ..utils.lifespan.artist_img_cache import (
+    cache_file as artist_img_file, cache_local as cache_artist_local, fetch_and_cache as fetch_artist_img,
+    is_cached as artist_img_cached, local_cache_file as artist_local_file,
+)
 from ..utils.lifespan.hero_cache import hero_file, is_heroed, make_hero
 from ..utils.lifespan.sprites_cache import compose_sprite, is_composed, sprite_file
 from ..utils.lifespan.thumbs_cache import is_thumbed, make_thumb, thumb_file
@@ -21,14 +24,15 @@ logger = root_logger.getChild('routes').getChild('resource')
 compose_lock = asyncio.Lock()
 
 # Artist images are fetched over the network, so unlike sprite composing they
-# shouldn't all serialise behind one lock. Key a lock per source URL: same
-# image fetches once, different images still fetch in parallel.
-_artist_img_locks: dict[str, asyncio.Lock] = {}
+# shouldn't all serialise behind one lock. Key a lock per source URL and kind
+# (each kind is cut to its own size): the same file fetches once, different
+# ones still fetch in parallel.
+_artist_img_locks: dict[tuple[str, str], asyncio.Lock] = {}
 
-def _artist_img_lock(url):
-    lock = _artist_img_locks.get(url)
+def _artist_img_lock(url, kind):
+    lock = _artist_img_locks.get((url, kind))
     if lock is None:
-        lock = _artist_img_locks[url] = asyncio.Lock()
+        lock = _artist_img_locks[(url, kind)] = asyncio.Lock()
     return lock
 
 async def _ensure_composed(sprite):
@@ -122,22 +126,26 @@ async def thumb_page(kind, name, request: Request):
     return FileResponse(str(thumb_file(kind, name)), media_type='image/webp', headers=cache_headers())
 
 @router.get('/hero/{name}')
-async def hero_page(name, request: Request):
+async def hero_page(name, request: Request, crop: str | None = None):
     """Hero-sized bg downscales for the homepage slideshow — same lazy
-    compose-once-then-serve pipeline as thumbs, only wider."""
+    compose-once-then-serve pipeline as thumbs, only wider. `?crop=narrow` is
+    the phone variant (hero_cache.py)."""
 
-    if not is_heroed(name):
+    if crop not in (None, 'narrow'):
+        raise HTTPException(404, f'Вариант "{crop}" не существует.')
+
+    if not is_heroed(name, crop):
         async with compose_lock:
-            if not is_heroed(name):
+            if not is_heroed(name, crop):
                 try:
-                    await asyncio.to_thread(make_hero, name)
+                    await asyncio.to_thread(make_hero, name, crop)
                 except FileNotFoundError:
                     raise HTTPException(404, f'Фон "{name}" не существует.') from None
                 except Exception:
                     logger.exception(f'Hero-scaling bg "{name}" failed.')
                     raise HTTPException(500, f'Не удалось подготовить фон "{name}".') from None
 
-    return FileResponse(str(hero_file(name)), media_type='image/webp', headers=cache_headers())
+    return FileResponse(str(hero_file(name, crop)), media_type='image/webp', headers=cache_headers())
 
 
 def _confined_file(base, resource):
@@ -161,12 +169,14 @@ async def community_page(resource, request: Request):
     # The community drop-in folder sits next to `game` in the assets root.
     return FileResponse(str(_confined_file(CONFIG.res_path.parent / 'community', resource)), headers=cache_headers())
 
-def _artist_img_value(kind, name):
+def _artist_img_value(kind, slug):
     # Fetch by reference, not by arbitrary URL/path: only values already
     # present in artists.yaml are reachable, so this is not an open proxy.
+    # Addressed by the artist's slug (artists_cache.py), not the raw name,
+    # which is free text and may not survive the trip through a URL.
     if kind not in ('logo', 'preview'):
         return None
-    item = next((a for a in CONFIG.artists if a['name'] == name), None)
+    item = next((a for a in CONFIG.artists if a['slug'] == slug), None)
     return item.get(kind) if item else None
 
 def _is_remote(value):
@@ -177,29 +187,44 @@ def _artists_local_dir():
     # from elsewhere) live here, next to `game` and `community`.
     return CONFIG.res_path.parent / 'artists'
 
-@router.get('/artist/{kind}/{name}')
-async def artist_image(kind, name, request: Request):
+@router.get('/artist/{kind}/{slug}')
+async def artist_image(kind, slug, request: Request):
 
-    value = _artist_img_value(kind, name)
+    value = _artist_img_value(kind, slug)
     if not value:
-        raise HTTPException(404, f'Изображение "{kind}" для «{name}» не существует.')
+        raise HTTPException(404, f'Изображение "{kind}" для «{slug}» не существует.')
 
-    # A local file (relative path under assets/artists/) is already trusted
-    # content — serve it as-is, confined against path traversal like /raw
-    # and /community. A remote URL is fetched, re-encoded to WebP and cached,
-    # which normalises the format and sidesteps the browser's ORB block.
+    # A local file (relative path under assets/artists/) is confined against
+    # path traversal like /raw and /community, then cut to its box and cached
+    # like a fetched one: dropped in by hand, it can be any size at all. A
+    # remote URL is fetched, re-encoded to WebP and cached, which also
+    # normalises the format and sidesteps the browser's ORB block.
     if not _is_remote(value):
-        return FileResponse(str(_confined_file(_artists_local_dir(), value)), headers=cache_headers())
+        path = _confined_file(_artists_local_dir(), value)
+        target = artist_local_file(path, kind)
 
-    if not artist_img_cached(value):
-        async with _artist_img_lock(value):
-            if not artist_img_cached(value):
+        if not target.is_file():
+            async with _artist_img_lock(str(path), kind):
+                if not target.is_file():
+                    try:
+                        await cache_artist_local(path, kind)
+                    except Exception:
+                        # Still the author's own image: serve it as it is
+                        # rather than lose it over a format Pillow can't read.
+                        logger.exception(f'Resizing local artist image "{kind}" for "{slug}" failed.')
+                        return FileResponse(str(path), headers=cache_headers())
+
+        return FileResponse(str(target), media_type='image/webp', headers=cache_headers())
+
+    if not artist_img_cached(value, kind):
+        async with _artist_img_lock(value, kind):
+            if not artist_img_cached(value, kind):
                 try:
-                    await fetch_artist_img(value)
+                    await fetch_artist_img(value, kind)
                 except Exception:
-                    logger.exception(f'Fetching artist image "{kind}" for "{name}" failed.')
-                    raise HTTPException(502, f'Не удалось загрузить изображение для «{name}».') from None
+                    logger.exception(f'Fetching artist image "{kind}" for "{slug}" failed.')
+                    raise HTTPException(502, f'Не удалось загрузить изображение для «{slug}».') from None
 
-    return FileResponse(str(artist_img_file(value)), media_type='image/webp', headers=cache_headers())
+    return FileResponse(str(artist_img_file(value, kind)), media_type='image/webp', headers=cache_headers())
 
 main_router.include_router(router)

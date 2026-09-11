@@ -35,6 +35,21 @@ def format_ru(moment: datetime) -> str:
     return moment.strftime('%d.%m.%Y %H:%M')
 
 
+# Genitive, the case a date takes in Russian: «11 сентября», not «11 сентябрь».
+# Spelled out rather than read from the locale, which on a server is whatever
+# the box was installed with.
+_MONTHS_GENITIVE = (
+    'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+    'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря',
+)
+
+
+def format_ru_date(day) -> str:
+    """`11 сентября 2026` — for a date read as a date (a news post's), where
+    format_ru's timestamp would be precision nobody asked for."""
+    return f'{day.day} {_MONTHS_GENITIVE[day.month - 1]} {day.year}'
+
+
 def _git_dates(directory: Path) -> dict[str, datetime]:
     """Last commit date per file under `directory`, keyed by file name.
 

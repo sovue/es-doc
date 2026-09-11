@@ -4,6 +4,7 @@ from starlette.middleware.gzip import GZipMiddleware
 import time
 
 from .routes import main_router
+from .utils.assets import asset_url
 from .utils.config import CONFIG
 from .utils.file import templates
 from .utils.logging import root_logger
@@ -11,6 +12,7 @@ from .utils.lifespan import lifespan
 
 CONFIG.setup('config.yaml')
 templates.env.globals['DEBUG'] = CONFIG.debug
+templates.env.globals['asset'] = asset_url
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
 # Compress text responses (HTML/CSS/JS). Skips already-compressed woff2 and

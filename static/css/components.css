@@ -14,8 +14,8 @@
        viewport — the height the page has only once the toolbar has scrolled
        away — so a short page on a phone reserved more than the screen and
        always had a little scroll in it. */
-    min-height: calc(100vh - 52px);
-    min-height: calc(100dvh - 52px);
+    min-height: calc(100vh - var(--header-h));
+    min-height: calc(100dvh - var(--header-h));
     display: flex;
     flex-direction: column;
 }
@@ -137,9 +137,17 @@
 
 /* ── Site header / nav ───────────────────────────────────── */
 
+/* Fixed, over a body padding of the same height (main.css), rather than
+   sticky — the two look identical, since the header is the first thing on the
+   page. The difference is what the browser does with focus: with the page's
+   scroll-padding-top, Chrome counted anything focused inside a sticky header
+   as out of view and scrolled the page to "reveal" it, 465px for the logo and
+   930px for the search field. A fixed box is never scrolled to. */
 .site-header {
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
     z-index: 10;
@@ -253,9 +261,14 @@
 
 /* ── Header search (combobox + listbox) ──────────────────── */
 
+/* Basis 240px, not `auto`: with the row wrapping, a flex line is broken on
+   each item's *base* size before anything shrinks, so an auto basis (the
+   full 360px) sent the theme toggle to a second row while the search still
+   had 120px it could have given up. It grows back to 360px where there is
+   room. */
 .nav-search {
     position: relative;
-    flex: 1 1 auto;
+    flex: 1 1 240px;
     max-width: 360px;
     display: flex;
     align-items: center;
@@ -271,11 +284,19 @@
     background: var(--input-bg);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    transition: border-color 0.15s var(--ease-out);
+    transition: border-color 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
 }
 
+/* The same 2px ring the filter fields draw: border plus a 1px shadow ring,
+   a focus state rather than a lift. Recolouring the 1px hairline alone made
+   the site's most-used field its faintest focus state. */
 .nav-search-box:focus-within {
     border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+    /* Invisible here. Windows' high-contrast mode drops the shadow and
+       repaints the border in its own colour, so this is the ring there. */
+    outline: 2px solid transparent;
+    outline-offset: 1px;
 }
 
 .nav-search-icon {
@@ -286,6 +307,9 @@
 .nav-search-input {
     flex: 1;
     min-width: 0;
+    /* The full height of the 34px box rather than the 19px line of text, so a
+       click just above or below the placeholder still lands in the field. */
+    align-self: stretch;
     border: 0;
     background: transparent;
     color: var(--text);
@@ -379,10 +403,17 @@
     font-weight: 700;
 }
 
+/* The empty and error rows carry their own --bg-surface, per the
+   Elevated-Surface Rule: the listbox around them is --bg-elevated, where the
+   «Открыть все разделы» link came out at 4.12:1 at night, under AA. On the
+   surface it is 4.87:1, and the row reads as a note set into the list rather
+   than as one more result. */
 .nav-search-empty {
     padding: 10px;
     font-size: var(--fs-ui);
     color: var(--text-soft);
+    background: var(--bg-surface);
+    border-radius: var(--radius-sm);
 }
 
 /* Divider between doc results and resource results in the dropdown. */
@@ -504,13 +535,6 @@
     transition: background-color 0.32s var(--ease-out),
                 color 0.32s var(--ease-out),
                 border-color 0.32s var(--ease-out) !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    :root.theme-animating,
-    :root.theme-animating * {
-        transition: none !important;
-    }
 }
 
 /* ── Site footer ─────────────────────────────────────────── */
@@ -689,6 +713,10 @@ a.section-row:focus-visible {
     color: var(--text);
     min-width: 160px;
     flex-shrink: 0;
+    /* Never wider than its row. `flex-shrink: 0` alone held a long name at its
+       full length, so the ellipsis below could never fire and the name ran out
+       of the row instead. */
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -807,8 +835,8 @@ a.section-row:focus-visible {
    so a row without a description still parks the arrow at the edge instead of
    tucking it against the name. Rows that do have one are unaffected — the desc
    has already eaten the free space, leaving the auto margin nothing to take.
-   This also fixes ≤400px, where .section-desc is display: none site-wide and
-   every arrow was sliding in next to its label. */
+   Below 640px, where the description wraps onto a line of its own, the same
+   margin is what keeps the arrow at the end of the name's line. */
 .section-arrow {
     font-size: var(--fs-ui);
     color: var(--accent);
@@ -1002,7 +1030,11 @@ a.section-row:focus-visible .section-arrow {
 
 .filter-input:focus-visible,
 .filter-select:focus-visible {
-    outline: none;
+    /* Transparent, not none: high-contrast mode paints it in the system
+       colour after dropping the shadow ring, and a select has no caret to
+       fall back on. */
+    outline: 2px solid transparent;
+    outline-offset: 1px;
     border-color: var(--accent);
     box-shadow: 0 0 0 1px var(--accent);
 }
@@ -1022,17 +1054,10 @@ a.section-row:focus-visible .section-arrow {
     color: var(--text-soft);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 40em) {
     .filter-input,
     .filter-select {
         height: 44px;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .filter-input,
-    .filter-select {
-        transition: none;
     }
 }
 
@@ -1057,18 +1082,19 @@ a.section-row:focus-visible .section-arrow {
     line-height: var(--lh-ui);
 }
 
-/* Linked entries follow the body-link convention (accent red, underline
-   on hover) so they read as clickable next to the plain-text rows, which
-   stay ink. Ink-at-rest here made links indistinguishable from text. */
+/* Linked entries follow the body-link convention (accent red, a faint
+   underline at rest, full on hover) so they read as clickable next to the
+   plain-text rows, which stay ink — red alone is under 3:1 against them. Ink-at-rest here made links indistinguishable from text. */
 .lit-row a {
     color: var(--accent);
-    text-decoration: none;
+    text-decoration: underline 1px var(--link-underline);
+    text-underline-offset: 0.2em;
     transition: color 0.15s var(--ease-out);
 }
 
 .lit-row a:hover {
     color: var(--accent-hover);
-    text-decoration: underline;
+    text-decoration-color: currentColor;
 }
 
 .lit-row a:focus-visible {
@@ -1081,12 +1107,47 @@ a.section-row:focus-visible .section-arrow {
    middle of it, with the rest inert. Same layout-neutral trick the page-back
    link and the file-browser rows use: padding grows the hit box, the negative
    margin keeps the line where it was. */
-@media (max-width: 768px) {
+@media (max-width: 48em) {
     .lit-row a {
         display: inline-block;
         padding-block: 12px;
         margin-block: -12px;
     }
+}
+
+/* ── Empty state ─────────────────────────────────────────────
+   Lived in resources.css, where it started, while /news, /news/sources,
+   /literature and /artists used it too without loading that sheet — so
+   everywhere but the resource pages it rendered as bare text with a
+   browser-blue link. Site-wide now, like the section rows. */
+
+.res-empty {
+    max-width: 55ch;
+    color: var(--text-soft);
+}
+
+.res-empty-title {
+    margin: 0 0 8px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.res-empty p {
+    margin: 0;
+    line-height: var(--lh-prose);
+}
+
+/* A link inside the empty-state sentence: red on ink-soft is 1.2:1, so
+   without the underline it was indistinguishable from the words around it. */
+.res-empty a {
+    color: var(--accent);
+    text-decoration: underline 1px var(--link-underline);
+    text-underline-offset: 0.2em;
+}
+
+.res-empty a:hover,
+.res-empty a:focus-visible {
+    text-decoration-color: currentColor;
 }
 
 /* ── GitHub contributors gallery ─────────────────────────── */
@@ -1168,14 +1229,18 @@ a.section-row:focus-visible .section-arrow {
     line-height: var(--lh-prose);
 }
 
+/* Each name opens a sentence of ink-soft text, and ink on ink-soft is 2.4:1
+   by day and 1.8:1 at night — a brightness step, not a link. */
 .thanks-list a {
     color: var(--text);
-    text-decoration: none;
+    text-decoration: underline 1px var(--link-underline);
+    text-underline-offset: 0.2em;
     transition: color 0.15s var(--ease-out);
 }
 
 .thanks-list a:hover {
     color: var(--accent);
+    text-decoration-color: currentColor;
 }
 
 .thanks-list a:focus-visible {
@@ -1209,7 +1274,7 @@ a.section-row:focus-visible .section-arrow {
    pair leaves too little room for it to shrink before the row overflows.
    Dropping the "/" focus hint early reclaims a little more of that room;
    it's a nice-to-have affordance, not essential at this width. */
-@media (max-width: 800px) {
+@media (max-width: 50em) {
     .site-nav {
         gap: 12px;
         padding: 0 32px;
@@ -1220,14 +1285,10 @@ a.section-row:focus-visible .section-arrow {
     }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 40em) {
     .site-nav {
         gap: 12px;
         padding: 0 20px;
-    }
-
-    .nav-links a {
-        padding-inline: 12px;
     }
 
     /* Search collapses to an icon that drops a full-width sheet under the bar,
@@ -1296,59 +1357,116 @@ a.section-row:focus-visible .section-arrow {
     }
 }
 
-/* ── The header's compact form ──
-   Measured, not guessed. Between 401px and 640px the search is already an
-   icon, so the row carries the logo lockup (81px), that icon (44px), the two
-   links (218px) and the theme toggle (44px) — 387px of items, plus three
-   12px gaps and 40px of padding: 463px before it stops fitting.
+/* ── Section bar ──
+   The five sections — Документация, Ресурсы, Новости, Литература, Художники —
+   come to ~530px of links at the header's 16px padding. On one 52px row with
+   the logo, the search field at its 240px basis (see .nav-search) and the
+   theme toggle they measure ~1094px, so the row holds from 1140px — the
+   need plus some slack for font metrics that aren't Inter's yet on a slow
+   load — and below that the links leave the row for a bar of their own
+   under the header. Two things about it are deliberate.
 
-   These rules used to start at 400px, which left the whole 401–462px band
-   broken: the toggle wrapped to a second row and the header stood 100px tall
-   with one button stranded under it. That band is not an edge case — it is
-   where the iPhone 14/15 Plus and Pro Max (428/430px) and most large Android
-   phones (412/414px) live. The threshold below is the measured need rounded
-   up to a round number, not a device width. */
-@media (max-width: 480px) {
-    .site-nav {
-        gap: 4px;
-        padding: 0 16px;
+   It sits *outside* the sticky <header> (header.html), so it scrolls away
+   with the page. The header stays 52px at every width, which is what
+   --scroll-offset, the docs sidebar's sticky top and every anchored heading
+   are measured against; a two-row sticky header would also have kept ~96px
+   of a phone screen for itself for good.
+
+   On a phone even the bar is too narrow (~490px of links on a 375px screen),
+   and it scrolls sideways rather than wrapping or folding into a menu: a flat
+   row of words is the nav modders already know, and a hamburger hides every
+   section behind a tap. The fade at the right edge says there is more, and
+   the current section is scrolled into view on load. The same `.nav-links`
+   list and link styles serve both places, so the active underline and hover
+   read identically in the row and in the bar. */
+
+.section-bar {
+    display: none;
+}
+
+/* 71.1875em is 1139px at the default 16px. Every breakpoint on the site is
+   written in em, which media queries resolve against the browser's default
+   text size: a reader who raises it reaches this compact header early,
+   instead of a header that wraps to three rows at 1280px. */
+@media (max-width: 71.1875em) {
+    .site-nav .nav-links {
+        display: none;
     }
 
-    /* The mark alone is ~57px narrower than the full lockup — more than the
-       gap and padding trims put together, and the star still names the site.
-       Hidden the sr-only way, not display: none, so the link keeps its
-       accessible name — the mark's alt is empty by design. */
-    .nav-logo-text {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
+    /* The row is logo, search and toggle now: the toggle takes the far edge
+       instead of hugging the search field. */
+    .theme-toggle {
+        margin-left: auto;
     }
 
-    .nav-logo {
-        gap: 0;
+    .section-bar {
+        display: block;
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
     }
 
-    /* Four items share the bar since «Ресурсы» joined it. With the wordmark
-       gone the row measures 350px at 375px, so the padding trim is the last
-       thing it needs — the theme toggle no longer has to give up its 44px
-       square to fit (WCAG 2.5.5), which it did while the wordmark was still
-       here at this width. */
-    .nav-links a {
-        padding-inline: 6px;
+    .section-bar .nav-links {
+        /* The nav's 48px gutter minus a link's own 16px padding, so the first
+           word lines up under the logo. */
+        padding-inline: 32px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        /* offsetParent for header.html's scroll-into-view. */
+        position: relative;
+    }
+
+    .section-bar .nav-links::-webkit-scrollbar {
+        display: none;
+    }
+
+    .section-bar .nav-links a {
+        min-height: 44px;
+    }
+
+    /* The bar's 45px comes out of the space a short page floors to, or every
+       short page would scroll by exactly that much. */
+    .page {
+        min-height: calc(100vh - var(--header-h) - 45px);
+        min-height: calc(100dvh - var(--header-h) - 45px);
+    }
+}
+
+@media (max-width: 50em) {
+    .section-bar .nav-links {
+        padding-inline: 16px;
+    }
+}
+
+@media (max-width: 40em) {
+    /* Search is an icon here, and the two icons share the far edge. */
+    .nav-search-toggle {
+        margin-left: auto;
+    }
+
+    .theme-toggle {
+        margin-left: 0;
+    }
+
+    /* The generous end padding is what the fade lands on once the row is
+       scrolled all the way, so the last link ends fully opaque. */
+    .section-bar .nav-links {
+        padding-inline: 8px 32px;
+        -webkit-mask-image: linear-gradient(to right, black calc(100% - 32px), transparent);
+        mask-image: linear-gradient(to right, black calc(100% - 32px), transparent);
+    }
+
+    .section-bar .nav-links a {
+        padding-inline: 12px;
     }
 }
 
 /* The section rows — the home page's own contents, and the same component on
-   /docs/, /news, /literature and /support — put the name, its description and
-   an arrow on one line, with the description clipped to whatever is left.
-   That fits a desktop and nothing else: at 402px (an iPhone 17) all eight
-   home-page rows were cut, the worst of them showing 87px of a 365px
-   sentence, and on /news one description had been squeezed to zero width.
+   /docs/, /news/sources, /literature and /support — put the name, its
+   description and an arrow on one line, with the description clipped to
+   whatever is left. That fits a desktop and nothing else: at 402px (an
+   iPhone 17) all eight home-page rows were cut, the worst of them showing
+   87px of a 365px sentence, and on the news-sources list one description
+   had been squeezed to zero width.
    A quarter of a sentence ending in an ellipsis is not a shorter
    explanation, it is a broken one.
 
@@ -1356,7 +1474,7 @@ a.section-row:focus-visible .section-arrow {
    where the longest description in the corpus (413px) stops fitting beside
    the longest name, so that is where the row wraps and the description takes
    a full line of its own. */
-@media (max-width: 640px) {
+@media (max-width: 40em) {
     .section-row {
         flex-wrap: wrap;
         row-gap: 2px;
@@ -1368,9 +1486,17 @@ a.section-row:focus-visible .section-arrow {
     /* The name reserved a 160px column so that descriptions lined up down the
        page. With the description on its own line there is nothing left to
        align, and the reservation only pushed «146» 115px away from «Фоны».
-       The count reads as part of the name now, which is what it is. */
+       The count reads as part of the name now, which is what it is.
+       It wraps as well, like the description below it: «ПАЗ-410 :: CHANNEL
+       410hz :: Бесконечное лето» on /news/sources is 379px of unbroken line,
+       and pushed a 375px page 39px sideways (94px at 320). An ellipsis would
+       have eaten the part that says which channel it is. */
     .section-name {
         min-width: 0;
+        flex-shrink: 1;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
     }
 
     .section-arrow {
@@ -1386,7 +1512,7 @@ a.section-row:focus-visible .section-arrow {
     }
 }
 
-@media (max-width: 400px) {
+@media (max-width: 25em) {
 
     .author-row {
         gap: 14px;
@@ -1399,50 +1525,69 @@ a.section-row:focus-visible .section-arrow {
     }
 }
 
-/* Below 341px the four items stop fitting even stripped: 24px mark + 44px
-   search + 185px of link text + 44px toggle, and the text is not negotiable —
-   the type scale is a firmer commitment than a gap. So the last 21px come out
-   of space instead: 10px gutters, 2px gaps, 4px link padding, which brings the
-   row to 315px and holds a 320px screen. Narrower than that (a folded Galaxy,
-   say) the row wraps, which is what `flex-wrap` is there for and what WCAG
-   1.4.10 asks for — but the sticky header doubles to 92px when it happens, so
-   it is worth pushing the wrap point past every phone that is actually in
-   use. */
-@media (max-width: 340px) {
-    .site-nav {
-        gap: 2px;
-        padding: 0 10px;
-    }
-
-    .nav-links a {
-        padding-inline: 4px;
-    }
-}
-
 
 /* ── Reduced motion ──────────────────────────────────────── */
 
+/* The one block for this file: anything above that gains a transition gets
+   its selector here, at the specificity it was declared with — the support
+   link's own rule outranks `.site-footer a`, so it is listed by name. */
 @media (prefers-reduced-motion: reduce) {
     .nav-logo,
     .nav-links a,
+    .nav-search-box,
+    .nav-search-toggle,
+    .theme-toggle,
     .site-footer a,
+    .site-footer .footer-support,
     .thanks-list a,
     .author-socials a,
     .gh-contributor,
     .gh-contributors-status a,
     .section-name,
     .section-arrow,
+    .filter-input,
+    .filter-select,
     .lit-row a,
     .page-back,
-    .theme-toggle,
     .to-top {
         transition: none;
     }
+
+    /* The theme cross-fade (theme.js) is declared !important, so it has to
+       be cancelled the same way. */
+    :root.theme-animating,
+    :root.theme-animating * {
+        transition: none !important;
+    }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 40em) {
     .to-top {
         right: 16px;
         bottom: 16px;
+    }
+}
+
+/* ── Windows high-contrast mode ──────────────────────────── */
+
+@media (forced-colors: active) {
+    /* The current section's underline is an inset box-shadow, and forced
+       colours drop shadows along with every author colour: nothing would be
+       left to say which link is this page. */
+    .nav-links a[aria-current="page"] {
+        text-decoration: underline 2px;
+        text-underline-offset: 0.35em;
+    }
+
+    /* The active option's tint is a background, which this mode repaints as
+       the page. The system highlight is what the mode itself uses. */
+    .nav-search-option[aria-selected="true"] {
+        forced-color-adjust: none;
+        background: Highlight;
+        color: HighlightText;
+    }
+
+    .nav-search-option[aria-selected="true"] * {
+        color: inherit;
     }
 }

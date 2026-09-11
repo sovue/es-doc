@@ -469,7 +469,7 @@
 /* Below the full matrix width the label column would squeeze the plots, so
    the family label becomes a heading over its own row of three. The prefix
    headings go with it — the legend above already carries what they mean. */
-@media (max-width: 1000px) {
+@media (max-width: 62.5em) {
     .wp-matrix {
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 20px 24px;
@@ -486,14 +486,14 @@
     }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 43.75em) {
     .wp-matrix,
     .wp-specials {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 40em) {
     .wp-main {
         padding: 24px 20px 40px;
     }
@@ -510,7 +510,7 @@
     }
 }
 
-@media (max-width: 460px) {
+@media (max-width: 28.75em) {
     .wp-matrix,
     .wp-specials {
         grid-template-columns: minmax(0, 1fr);

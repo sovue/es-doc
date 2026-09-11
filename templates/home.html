@@ -79,6 +79,15 @@
                 {% endif %}
 
             </div>
+
+            {#- Slides 2–4 are fetched only once the page has loaded, and the
+                crossfade starts only once they have arrived (home.css,
+                .is-live), so the first photo — the page's largest paint —
+                never shares the line with three it won't show for 8s. Skipped
+                under reduced motion, where the hero is one still for good.
+                There is deliberately no pause control here: see the hero in
+                DESIGN.md before adding one. -#}
+            <script>(function(){var b=document.querySelector('.hero-bg');if(!b||matchMedia('(prefers-reduced-motion: reduce)').matches)return;function go(){var s=getComputedStyle(b);Promise.all([2,3,4].map(function(n){var m=/url\(\s*['"]?([^'")]+)/.exec(s.getPropertyValue('--hero-'+n));if(!m)return;var i=new Image();i.src=m[1];return i.decode().catch(function(){});})).then(function(){b.classList.add('is-live');});}if(document.readyState==='complete')go();else addEventListener('load',go);})();</script>
         </section>
 
         <div class="page-main">
@@ -122,6 +131,14 @@
 
                     <li>
                         <a href="/news" class="section-row">
+                            <span class="section-name">Новости проекта</span>
+                            <span class="section-desc">Новые статьи, разделы и изменения на сайте</span>
+                            <span class="section-arrow" aria-hidden="true">→</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="/news/sources" class="section-row">
                             <span class="section-name">Новостные ресурсы</span>
                             <span class="section-desc">Каналы и сообщества с новостями о «Бесконечном Лете»</span>
                             <span class="section-arrow" aria-hidden="true">→</span>

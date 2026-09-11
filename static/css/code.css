@@ -280,7 +280,7 @@ pre code {
 
 /* ── Responsive ──────────────────────────────────────────── */
 
-@media (max-width: 400px) {
+@media (max-width: 25em) {
     pre {
         border-radius: var(--radius-code);
     }
