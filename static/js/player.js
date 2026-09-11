@@ -90,6 +90,11 @@
     const timeAll = bar.querySelector('[data-duration]');
 
     const fmt = s => {
+        // Firefox can report an Ogg stream's duration as Infinity until
+        // something reads its last page (see loadedmetadata below); NaN
+        // shows up in the instant before any metadata has loaded at all.
+        // Neither is a number to print.
+        if (!isFinite(s)) return '--:--';
         s = Math.round(s) || 0;
         return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
     };
@@ -105,11 +110,38 @@
         input.style.setProperty('--range-pct', pct + '%');
     };
 
-    audio.addEventListener('loadedmetadata', () => {
+    // A range `max` attribute has to parse as a real number — "Infinity"
+    // doesn't, so an unknown duration must not reach `seek.max` at all
+    // (an unparsed max silently reverts to the element's default of 100,
+    // which is what actually broke the seek bar's position, not just its
+    // label).
+    const applyDuration = () => {
+        if (!isFinite(audio.duration)) return;
         seek.max = audio.duration;
         timeAll.textContent = fmt(audio.duration);
         setFill(seek);
+    };
+
+    audio.addEventListener('loadedmetadata', () => {
+        applyDuration();
+
+        if (!isFinite(audio.duration)) {
+            // Chrome reads an Ogg/Vorbis file's last page for the real
+            // duration as part of loading metadata; Firefox defers that read
+            // until something actually seeks there, and otherwise leaves
+            // duration at Infinity for the whole file — this is that seek.
+            // 'durationchange' (below) picks up the corrected value once it
+            // lands, and this resumes exactly where playback already was.
+            const resume = audio.currentTime;
+            audio.currentTime = 1e101;
+            audio.addEventListener('seeked', function restoreAfterProbe() {
+                audio.removeEventListener('seeked', restoreAfterProbe);
+                audio.currentTime = resume;
+            }, { once: true });
+        }
     });
+
+    audio.addEventListener('durationchange', applyDuration);
 
     audio.addEventListener('timeupdate', () => {
         // Don't fight the hand that's dragging the thumb.
