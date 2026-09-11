@@ -25,12 +25,56 @@
     color: var(--text-soft);
 }
 
-/* A 24px box around the native 16px track, for both sliders: WCAG 2.5.8's
-   floor for something you drag holds under a cursor as much as a finger. */
+/* A 24px hit area around a 4px track, for both sliders: WCAG 2.5.8's floor
+   for something you drag holds under a cursor as much as a finger.
+
+   `accent-color` alone put that hit area at the engines' mercy: Chrome and
+   Safari draw a thin native groove no matter what height the `<input>` is
+   given, but Firefox stretches its groove to fill it — so the same control
+   read as a hairline in one and a 24px band in the other. Pinning just the
+   track pseudo-elements' own height was worse: both engines drive their
+   accent-colour fill through those same pseudo-elements while the control is
+   still in its native `appearance: auto` skin, and touching either one at
+   all made Chrome paint the whole groove one flat colour and made Firefox
+   drop its fill entirely, back to a blank UA-themed bar. `appearance: none`
+   hands the whole control to this file — the track lives on the `<input>`
+   itself as a gradient, split at `--range-pct` (player.js), and the thumb is
+   redrawn per engine below — so there's nothing left for either engine to
+   improvise. */
+.res-volume input,
+.res-seek input {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 24px;
+    background: linear-gradient(to right,
+        var(--accent) 0 var(--range-pct, 0%),
+        var(--border) var(--range-pct, 0%) 100%) center / 100% 4px no-repeat;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+}
+
 .res-volume input {
     width: 110px;
-    height: 24px;
-    accent-color: var(--accent);
+}
+
+.res-volume input::-webkit-slider-thumb,
+.res-seek input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: var(--radius-full);
+    background: var(--accent);
+    cursor: pointer;
+}
+
+.res-volume input::-moz-range-thumb,
+.res-seek input::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border: none;
+    border-radius: var(--radius-full);
+    background: var(--accent);
+    cursor: pointer;
 }
 
 .res-volume input:focus-visible {
@@ -162,9 +206,7 @@
 .res-seek input {
     flex: 1;
     min-width: 0;
-    height: 24px;
     margin: 0;
-    accent-color: var(--accent);
 }
 
 .res-seek input:focus-visible {

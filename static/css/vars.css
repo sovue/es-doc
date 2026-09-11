@@ -10,8 +10,8 @@
    reads as white until it meets the page beside it. Red is the ladybug on
    the leaf: the pioneer star in the logo and the warning/danger rungs, and
    nothing else. Dark is the night scene by the lake, served via
-   prefers-color-scheme; it keeps its night-blue ground and takes the same
-   leaf as its accent, lifted for the dark.
+   prefers-color-scheme; it keeps its night-blue ground and turns its own
+   accent to a lake-blue, rather than carrying the day's leaf over.
 
    It used to be sand and cream paper under a golden-hour sun with pioneer
    red as the accent. The relief colours (--sunset, --sky) survive from
@@ -303,13 +303,16 @@
         --bg-page-end: light-dark(#FFFFFF, #1F2532);
         --text: light-dark(#17261A, #ECE2C9); /* warm cream, not white */
         --text-soft: light-dark(#596859, #B5A88E);
-        /* The leaf, lifted for night: 6.77:1 even on --bg-elevated, where the
-           pioneer red it replaced managed 4.12 and had whole rules written
-           around keeping it off that surface. */
-        --accent: light-dark(#2F7524, #8DCB78);
-        --accent-hover: light-dark(#206220, #B0E299);
-        --accent-muted: light-dark(#D4EFBF, #273F28);
-        --target-bg: light-dark(#6DBE4538, #8DCB782E);
+        /* Night trades the leaf for a night-sky blue: same lightness and
+           chroma as the day leaf's lift, hue turned from 138° (leaf) to 250°
+           (lake) — a cool, slightly indigo blue distinct from --info's teal
+           and --code-type's cyan, so all three still read apart on one
+           screen. 6.55:1 on --bg-elevated, where the leaf it replaced held
+           6.77 and the pioneer red before that managed 4.12. */
+        --accent: light-dark(#2F7524, #7CBDFF);
+        --accent-hover: light-dark(#206220, #AED5FF);
+        --accent-muted: light-dark(#D4EFBF, #233A51);
+        --target-bg: light-dark(#6DBE4538, #7CBDFF2E);
         --sunset: light-dark(#E89460, #F5A878);
         --sky: light-dark(#8FB2C8, #6F8EA3);
         --pine: light-dark(#206220, #8FB07A); /* lifted for night — clears AA on its own 14% tint (open-status pill) */
@@ -321,7 +324,7 @@
         --code-bg-inline: light-dark(#EAEFE4, var(--code-bg));
         --input-bg: light-dark(#FFFFFF, #1F2532);
         --code-inline: light-dark(#8F4A1B, var(--sunset));
-        --code-link: light-dark(#206220, #8DCB78);
+        --code-link: light-dark(#206220, #7CBDFF);
         --code-keyword: light-dark(#9C4A06, #FF9933);
         --code-type: light-dark(#0B5A73, #66CCFF);
         --code-string: light-dark(#6B3FA0, #D8A0FF);

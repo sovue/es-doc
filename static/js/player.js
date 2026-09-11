@@ -94,27 +94,44 @@
         return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
     };
 
+    // The sliders are unstyled (`appearance: none` in player.css) precisely so
+    // this is the only thing drawing the played/set portion — no native fill
+    // left in either engine to fight or fall back to. Every place that moves
+    // a slider's value calls this right after.
+    const setFill = input => {
+        const min = parseFloat(input.min) || 0;
+        const max = parseFloat(input.max) || 0;
+        const pct = max > min ? ((parseFloat(input.value) - min) / (max - min)) * 100 : 0;
+        input.style.setProperty('--range-pct', pct + '%');
+    };
+
     audio.addEventListener('loadedmetadata', () => {
         seek.max = audio.duration;
         timeAll.textContent = fmt(audio.duration);
+        setFill(seek);
     });
 
     audio.addEventListener('timeupdate', () => {
         // Don't fight the hand that's dragging the thumb.
-        if (!seek.matches(':active')) seek.value = audio.currentTime;
+        if (!seek.matches(':active')) {
+            seek.value = audio.currentTime;
+            setFill(seek);
+        }
         timeNow.textContent = fmt(audio.currentTime);
     });
 
     seek.addEventListener('input', () => {
         audio.currentTime = +seek.value;
         timeNow.textContent = fmt(+seek.value);
+        setFill(seek);
     });
 
     const setVolume = v => {
         audio.volume = v;
         localStorage.setItem('es-doc-volume', String(v));
-        if (topVolume) topVolume.value = v;
+        if (topVolume) { topVolume.value = v; setFill(topVolume); }
         barVolume.value = v;
+        setFill(barVolume);
     };
     setVolume(audio.volume);
 
@@ -178,6 +195,7 @@
             barName.textContent = btn.dataset.playName || '';
             seek.value = 0;
             seek.max = 0;
+            setFill(seek);
             timeNow.textContent = timeAll.textContent = '0:00';
             bar.classList.add('res-nowplaying--visible');
             audio.src = btn.dataset.playSrc;
