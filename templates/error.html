@@ -9,10 +9,12 @@
     <main id="main-content">
 
         <section class="page-hero page-hero--lg">
+            {#- No eyebrow label over the title: the heading says what happened,
+                and the status code — for the reader who reports it — closes the
+                lead. The tab title carries it too («Ошибка 404 — ES Doc»). -#}
             <div class="page-hero-inner">
-                <p class="page-eyebrow">Ошибка {{ errno }}</p>
                 <h1 class="page-title page-title--lg">{{ detail }}</h1>
-                <p class="page-lead">{{ description }}</p>
+                <p class="page-lead">{{ description }} Код&nbsp;ошибки:&nbsp;{{ errno }}.</p>
             </div>
         </section>
 

@@ -4,24 +4,30 @@
   "title": "Design System: ES Doc",
   "extensions": {
     "colorMeta": {
-      "pioneer-red": {
+      "leaf": {
         "role": "primary",
-        "displayName": "Pioneer Red — the Galstuk",
-        "canonical": "#C8202E",
-        "dark": "#F2606C",
-        "tonalRamp": ["#3A0A0E", "#5C1016", "#7E161F", "#A81824", "#C8202E", "#D8515C", "#E8B5BA", "#F7E0E2"]
+        "displayName": "Leaf",
+        "canonical": "#2F7524",
+        "dark": "#8DCB78",
+        "tonalRamp": ["#011000", "#082D01", "#134D01", "#296F16", "#4B913B", "#6CB35D", "#95DE85", "#CDFFC2"]
       },
-      "pioneer-red-deep": {
+      "leaf-deep": {
         "role": "primary",
-        "displayName": "Pioneer Red Deep",
-        "canonical": "#A81824",
-        "dark": "#FF7A85"
+        "displayName": "Leaf Deep (hover · pine · tip)",
+        "canonical": "#206220",
+        "dark": "#B0E299 (hover) / #8FB07A (pine, tip, success)"
       },
-      "pioneer-red-muted": {
+      "leaf-muted": {
         "role": "primary",
-        "displayName": "Pioneer Red Muted",
-        "canonical": "#E8B5BA",
-        "dark": "#5A3338"
+        "displayName": "Leaf Muted",
+        "canonical": "#D4EFBF",
+        "dark": "#273F28"
+      },
+      "logo-leaf": {
+        "role": "primary",
+        "displayName": "Logo Leaf",
+        "canonical": "#6DBE45",
+        "tonalRamp": ["#030F00", "#0F2C00", "#1E4C00", "#306F03", "#459315", "#67B641", "#90E06D", "#CFFFBC"]
       },
       "sunset": {
         "role": "secondary",
@@ -30,12 +36,12 @@
         "dark": "#F5A878",
         "tonalRamp": ["#3D2413", "#5E381E", "#82502C", "#A6683B", "#CB8150", "#E89460", "#F3BE9C", "#FBE4D6"]
       },
-      "pine": {
-        "role": "tertiary",
-        "displayName": "Pine",
-        "canonical": "#4F6B3E",
-        "dark": "#8FB07A",
-        "tonalRamp": ["#161F10", "#26341C", "#374B29", "#495F37", "#5C7546", "#6E8B5C", "#9CB388", "#CFDCC2"]
+      "bark": {
+        "role": "secondary",
+        "displayName": "Bark (inline code, day)",
+        "canonical": "#8F4A1B",
+        "dark": "#F5A878",
+        "tonalRamp": ["#170600", "#3C1901", "#652E01", "#894B21", "#AC6B42", "#D08C63", "#FCB58B", "#FFEADE"]
       },
       "sky": {
         "role": "tertiary",
@@ -44,54 +50,54 @@
         "dark": "#6F8EA3",
         "tonalRamp": ["#16242D", "#243B49", "#345566", "#467184", "#5C8FA5", "#8FB2C8", "#B7CFDD", "#E0EBF1"]
       },
-      "sand-path": {
+      "shirt-white": {
         "role": "neutral",
-        "displayName": "Sand Path",
-        "canonical": "#F4EAD6",
-        "dark": "#161B26",
-        "tonalRamp": ["#161B26", "#2B2519", "#4A4030", "#6B5D45", "#8C7C5F", "#B0A07C", "#D9C7A4", "#F4EAD6"]
+        "displayName": "Shirt White",
+        "canonical": "#FFFFFF",
+        "dark": "#161B26"
       },
-      "cream-paper": {
+      "leaf-shade": {
         "role": "neutral",
-        "displayName": "Cream Paper",
-        "canonical": "#FBF6E9",
+        "displayName": "Leaf Shade (chrome)",
+        "canonical": "#EEF8E7",
+        "dark": "#161B26 (header) / #1A2030 (sidebar)",
+        "tonalRamp": ["#060E05", "#1E271C", "#394337", "#566154", "#768173", "#97A294", "#BFCCBC", "#E6F3E3"]
+      },
+      "leaf-paper": {
+        "role": "neutral",
+        "displayName": "Leaf Paper",
+        "canonical": "#F4F9F1",
         "dark": "#1F2532"
-      },
-      "paper-raised": {
-        "role": "neutral",
-        "displayName": "Paper Raised",
-        "canonical": "#FFFCF5",
-        "dark": "#2A3142"
       },
       "ink": {
         "role": "neutral",
         "displayName": "Ink",
-        "canonical": "#2B1F16",
+        "canonical": "#17261A",
         "dark": "#ECE2C9",
-        "tonalRamp": ["#1A120B", "#2B1F16", "#42342A", "#6B5847", "#8C7A67", "#B0A08C", "#D9C7A4", "#F4EAD6"]
+        "tonalRamp": ["#060E05", "#1E271C", "#394337", "#566154", "#768173", "#97A294", "#BFCCBC", "#E6F3E3"]
       },
       "ink-soft": {
         "role": "neutral",
         "displayName": "Ink Soft",
-        "canonical": "#6B5847",
+        "canonical": "#596859",
         "dark": "#B5A88E"
       },
-      "border-tan": {
+      "hairline": {
         "role": "neutral",
-        "displayName": "Border Tan",
-        "canonical": "#D9C7A4",
+        "displayName": "Hairline",
+        "canonical": "#D1DDCD",
         "dark": "#3A4254"
       },
-      "code-panel": {
+      "table-head": {
         "role": "neutral",
-        "displayName": "Code Panel",
-        "canonical": "#FDF9EE",
-        "dark": "#12161E"
+        "displayName": "Table Head",
+        "canonical": "#E9F3E3",
+        "dark": "#222A3A"
       },
       "code-chip": {
         "role": "neutral",
         "displayName": "Code Chip",
-        "canonical": "#EFE3C8",
+        "canonical": "#EAEFE4",
         "dark": "#12161E"
       },
       "info": {
@@ -103,9 +109,10 @@
       },
       "warning": {
         "role": "semantic",
-        "displayName": "Warning Red",
+        "displayName": "Warning — the Ladybug",
         "canonical": "#A81824",
-        "dark": "#F46974"
+        "dark": "#F46974",
+        "tonalRamp": ["#1F0001", "#4B0106", "#7C000F", "#A5292B", "#CB4E4A", "#F2716A", "#FFB0A9", "#FEE9E6"]
       },
       "danger": {
         "role": "semantic",
@@ -119,25 +126,28 @@
         "canonical": "#805407",
         "dark": "#F0C05A"
       },
-      "tip": {
+      "tip-bg": {
         "role": "semantic",
-        "displayName": "Tip Pine",
-        "canonical": "#4F6B3E",
-        "dark": "#8FB07A"
+        "displayName": "Tip Band",
+        "canonical": "#DCF2D0",
+        "dark": "#8FB07A33"
       }
     },
     "typographyMeta": {
       "display": { "displayName": "Display", "purpose": "Home and error page titles only; PT Serif 700, fluid clamp, tracking -0.01em." },
+      "page-title": { "displayName": "Page Title", "purpose": "Section page titles (/resources, /authors, /news…); PT Serif 700, fluid clamp." },
       "headline": { "displayName": "Headline", "purpose": "Article H1 (docs and news posts), PT Serif 700 with a 2px bottom border." },
       "title": { "displayName": "Title", "purpose": "Article H2, PT Serif 700 with a 1px bottom border." },
+      "subtitle": { "displayName": "Subtitle", "purpose": "Article H3, and H2 once the viewport is narrow." },
+      "lead": { "displayName": "Lead", "purpose": "Article H4; group and card titles; the sidebar document title (wayfinding, not a headline)." },
       "body": { "displayName": "Body", "purpose": "Inter prose and section names; the reading floor, running the full width of the article column." },
       "caption": { "displayName": "Caption / UI", "purpose": "Inter dense chrome: nav links, table bodies, section-row descriptions, news leads." },
       "label": { "displayName": "Label", "purpose": "Mono 600 uppercase with 0.1em tracking: section labels, badges, dates, keyboard hints. Meta, never content." }
     },
     "shadows": [
-      { "name": "soft", "value": "0 2px 12px rgba(43,31,22,0.06)", "purpose": "Quiet warm-tinted lift for low popovers; near-black at night (rgba(0,0,0,0.35))." },
-      { "name": "modal", "value": "0 16px 48px rgba(43,31,22,0.14)", "purpose": "Deep lift under the search results listbox, the one surface that leaves the page plane. Night: rgba(0,0,0,0.5)." },
-      { "name": "fade", "value": "rgba(43,31,22,0.15)", "purpose": "Edge shadow on a horizontally scrollable panel with more content past it (a clipped code line, the mobile TOC strip). Night: rgba(0,0,0,0.35)." }
+      { "name": "soft", "value": "0 2px 12px rgba(23,38,26,0.06)", "purpose": "Quiet ink-tinted lift for small things fixed over the scrolling page: the back-to-top button and the floating now-playing bar. Near-black at night (rgba(0,0,0,0.35))." },
+      { "name": "modal", "value": "0 1px 3px rgba(23,38,26,0.12), 0 16px 48px rgba(23,38,26,0.14)", "purpose": "Lift under the search results listbox and the resource image lightbox, with no visible border beside it: the tight contact layer draws the edge a hairline used to (by day these are white surfaces over a white page), the deep layer lifts. Border kept as 1px transparent for high-contrast mode. Night: 0 1px 3px rgba(0,0,0,0.45), 0 16px 48px rgba(0,0,0,0.5)." },
+      { "name": "fade", "value": "rgba(23,38,26,0.15)", "purpose": "Edge shadow on a horizontally scrollable panel with more content past it (a clipped code line, the mobile TOC strip). Night: rgba(0,0,0,0.35)." }
     ],
     "motion": [
       { "name": "ease-out", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Ease-out-quart; interactive transitions leave fast, settle soft." },
@@ -157,33 +167,41 @@
       "name": "Search Combobox",
       "kind": "input",
       "refersTo": "search-box",
-      "description": "Header type-ahead: bordered input group that warms its border on focus and drops a lifted listbox.",
-      "html": "<div class=\"ds-search\"><svg class=\"ds-search-icon\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" aria-hidden=\"true\"><circle cx=\"6.5\" cy=\"6.5\" r=\"4.5\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M10.5 10.5L14 14\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg><input class=\"ds-search-input\" type=\"search\" placeholder=\"Найти термин или раздел…\" aria-label=\"Поиск по документации\"><kbd class=\"ds-search-kbd\">/</kbd></div>",
-      "css": ".ds-search { display: inline-flex; align-items: center; gap: 8px; width: 320px; height: 34px; padding: 0 10px; background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--radius-sm); transition: border-color 0.15s var(--ease-out); } .ds-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); } .ds-search-icon { flex-shrink: 0; color: var(--text-soft); } .ds-search-input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--text); font-family: inherit; font-size: var(--fs-ui); outline: none; } .ds-search-input::placeholder { color: var(--text-soft); opacity: 1; } .ds-search-kbd { font-family: var(--font-mono); font-size: var(--fs-label); line-height: 1; color: var(--text-soft); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 2px 5px; } .ds-search:focus-within .ds-search-kbd { display: none; }"
+      "description": "Header type-ahead: a white bordered field on the header's leaf shade that rings itself in the leaf on focus and drops a lifted listbox.",
+      "html": "<div class=\"ds-search-bar\"><div class=\"ds-search\"><svg class=\"ds-search-icon\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"none\" aria-hidden=\"true\"><circle cx=\"6.5\" cy=\"6.5\" r=\"4.5\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M10.5 10.5L14 14\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg><input class=\"ds-search-input\" type=\"search\" placeholder=\"Найти термин или раздел…\" aria-label=\"Поиск по документации\"><kbd class=\"ds-search-kbd\">/</kbd></div></div>",
+      "css": ".ds-search-bar { display: inline-flex; align-items: center; padding: 9px 16px; background: var(--bg-chrome); border-bottom: 1px solid var(--border); } .ds-search { display: inline-flex; align-items: center; gap: 8px; width: 320px; height: 34px; padding: 0 10px; background: var(--input-bg); border: 1px solid var(--border); border-radius: var(--radius-sm); transition: border-color 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out); } .ds-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); } .ds-search-icon { flex-shrink: 0; color: var(--text-soft); } .ds-search-input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--text); caret-color: var(--accent); font-family: inherit; font-size: var(--fs-ui); outline: none; } .ds-search-input::placeholder { color: var(--text-soft); opacity: 1; } .ds-search-kbd { font-family: var(--font-mono); font-size: var(--fs-label); line-height: 1; color: var(--text-soft); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 2px 5px; } .ds-search:focus-within .ds-search-kbd { display: none; }"
     },
     {
       "name": "Nav Link",
       "kind": "nav",
       "refersTo": "nav-link",
-      "description": "Full-height sticky-header link: ink-soft at rest, ink on hover, an inset pioneer-red underline when current.",
+      "description": "Full-height fixed-header link on the leaf shade: ink-soft at rest, ink on hover, an inset leaf-green underline when current.",
       "html": "<nav class=\"ds-nav\" aria-label=\"Основная навигация\"><a class=\"ds-nav-link\" href=\"#\">Документация</a><a class=\"ds-nav-link\" href=\"#\">Ресурсы</a><a class=\"ds-nav-link\" href=\"#\" aria-current=\"page\">Новости</a><a class=\"ds-nav-link\" href=\"#\">Литература</a><a class=\"ds-nav-link\" href=\"#\">Художники</a></nav>",
-      "css": ".ds-nav { display: inline-flex; align-items: stretch; min-height: 52px; border-bottom: 1px solid var(--border); } .ds-nav-link { display: flex; align-items: center; padding-inline: 16px; font-size: var(--fs-ui); color: var(--text-soft); text-decoration: none; white-space: nowrap; transition: color 0.15s var(--ease-out); } .ds-nav-link:hover { color: var(--text); } .ds-nav-link[aria-current=\"page\"] { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); } .ds-nav-link:focus-visible { color: var(--text); outline: var(--focus-ring); outline-offset: -3px; border-radius: var(--radius-xs); }"
+      "css": ".ds-nav { display: inline-flex; align-items: stretch; min-height: 52px; background: var(--bg-chrome); border-bottom: 1px solid var(--border); } .ds-nav-link { display: flex; align-items: center; padding-inline: 16px; font-size: var(--fs-ui); color: var(--text-soft); text-decoration: none; white-space: nowrap; transition: color 0.15s var(--ease-out); } .ds-nav-link:hover { color: var(--text); } .ds-nav-link[aria-current=\"page\"] { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); } .ds-nav-link:focus-visible { color: var(--text); outline: var(--focus-ring); outline-offset: -3px; border-radius: var(--radius-xs); }"
     },
     {
       "name": "Section Bar",
       "kind": "nav",
       "refersTo": "nav-link",
-      "description": "The same section links on narrow screens: a 44px bar under the sticky header that scrolls sideways under a right-edge fade instead of folding into a menu.",
+      "description": "The same section links on narrow screens: a 44px leaf-shade bar under the fixed header that scrolls sideways under a right-edge fade instead of folding into a menu.",
       "html": "<nav class=\"ds-bar\" aria-label=\"Разделы сайта\"><ul class=\"ds-bar-list\"><li><a href=\"#\">Документация</a></li><li><a href=\"#\">Ресурсы</a></li><li><a href=\"#\">Новости</a></li><li><a href=\"#\">Литература</a></li><li><a href=\"#\" aria-current=\"page\">Художники</a></li></ul></nav>",
-      "css": ".ds-bar { width: 340px; background: var(--bg); border-bottom: 1px solid var(--border); } .ds-bar-list { display: flex; list-style: none; margin: 0; padding: 0 32px 0 8px; overflow-x: auto; scrollbar-width: none; -webkit-mask-image: linear-gradient(to right, black calc(100% - 32px), transparent); mask-image: linear-gradient(to right, black calc(100% - 32px), transparent); } .ds-bar-list li { display: flex; } .ds-bar-list a { display: flex; align-items: center; min-height: 44px; padding-inline: 12px; font-size: var(--fs-ui); color: var(--text-soft); text-decoration: none; white-space: nowrap; transition: color 0.15s var(--ease-out); } .ds-bar-list a:hover { color: var(--text); } .ds-bar-list a[aria-current=\"page\"] { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); } .ds-bar-list a:focus-visible { color: var(--text); outline: var(--focus-ring); outline-offset: -3px; border-radius: var(--radius-xs); }"
+      "css": ".ds-bar { width: 340px; background: var(--bg-chrome); border-bottom: 1px solid var(--border); } .ds-bar-list { display: flex; list-style: none; margin: 0; padding: 0 32px 0 8px; overflow-x: auto; scrollbar-width: none; -webkit-mask-image: linear-gradient(to right, black calc(100% - 32px), transparent); mask-image: linear-gradient(to right, black calc(100% - 32px), transparent); } .ds-bar-list li { display: flex; } .ds-bar-list a { display: flex; align-items: center; min-height: 44px; padding-inline: 12px; font-size: var(--fs-ui); color: var(--text-soft); text-decoration: none; white-space: nowrap; transition: color 0.15s var(--ease-out); } .ds-bar-list a:hover { color: var(--text); } .ds-bar-list a[aria-current=\"page\"] { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); } .ds-bar-list a:focus-visible { color: var(--text); outline: var(--focus-ring); outline-offset: -3px; border-radius: var(--radius-xs); }"
     },
     {
       "name": "Section Row",
       "kind": "nav",
       "refersTo": "section-row",
-      "description": "The primary grouping affordance: a hairline-separated list row whose pioneer-red arrow fades in on hover or focus.",
+      "description": "The primary grouping affordance: a hairline-separated list row whose leaf-green arrow fades in on hover or focus.",
       "html": "<ul class=\"ds-rows\"><li><a class=\"ds-row\" href=\"#\"><span class=\"ds-row-name\">Новостные ресурсы</span><span class=\"ds-row-desc\">Каналы и сообщества с новостями о «Бесконечном Лете»</span><span class=\"ds-row-arrow\" aria-hidden=\"true\">→</span></a></li></ul>",
       "css": ".ds-rows { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border); } .ds-rows li { border-bottom: 1px solid var(--border); } .ds-row { display: flex; align-items: baseline; gap: 20px; padding: 16px 0; text-decoration: none; color: inherit; } .ds-row-name { min-width: 160px; font-size: var(--fs-body); font-weight: 600; color: var(--text); white-space: nowrap; transition: color 0.15s var(--ease-out); } .ds-row-desc { flex: 1; font-size: var(--fs-ui); color: var(--text-soft); } .ds-row-arrow { margin-left: auto; font-size: var(--fs-ui); color: var(--accent); opacity: 0; transition: opacity 0.15s var(--ease-out); } .ds-row:hover .ds-row-name, .ds-row:focus-visible .ds-row-name { color: var(--accent); } .ds-row:hover .ds-row-arrow, .ds-row:focus-visible .ds-row-arrow { opacity: 1; } .ds-row:focus-visible { outline: var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-xs); }"
+    },
+    {
+      "name": "Inline Link and Code Chip",
+      "kind": "custom",
+      "refersTo": "link-inline",
+      "description": "Running-text link in the leaf with a faint underline at rest, beside an inline code chip in bark on a greyer leaf — warm enough never to be mistaken for a link.",
+      "html": "<p class=\"ds-prose\">Сбросьте старые зоны через <code class=\"ds-code\">disable_all_zones()</code>, затем прочитайте <a class=\"ds-link\" href=\"#\">статью о карте лагеря</a>.</p>",
+      "css": ".ds-prose { max-width: 560px; margin: 0; font-size: var(--fs-body); line-height: var(--lh-prose); color: var(--text); } .ds-link { color: var(--accent); text-decoration: underline 1px color-mix(in srgb, currentColor 50%, transparent); text-underline-offset: 0.2em; transition: color 0.15s var(--ease-out); } .ds-link:hover, .ds-link:focus-visible { color: var(--accent-hover); text-decoration-color: currentColor; } .ds-link:focus-visible { outline: var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-xs); } .ds-code { padding: 0.15em 0.4em; border-radius: var(--radius-code); background: var(--code-bg-inline); color: var(--code-inline); font-family: var(--font-mono); font-size: 0.9em; }"
     },
     {
       "name": "News Item",
@@ -194,10 +212,18 @@
       "css": ".ds-news { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border); max-width: 560px; } .ds-news-item { padding: 22px 0; border-bottom: 1px solid var(--border); } .ds-news-date { display: block; margin: 0 0 6px; font-family: var(--font-mono); font-size: var(--fs-label); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-soft); } .ds-news-title { margin: 0; font-family: var(--font-serif); font-size: var(--fs-lead); font-weight: 700; line-height: var(--lh-heading); } .ds-news-title a { color: var(--text); text-decoration: none; transition: color 0.15s var(--ease-out); } .ds-news-title a:hover, .ds-news-title a:focus-visible { color: var(--accent); } .ds-news-title a:focus-visible { outline: var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-xs); } .ds-news-lead { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; margin: 8px 0 0; font-size: var(--fs-ui); line-height: var(--lh-ui); color: var(--text-soft); }"
     },
     {
+      "name": "Tip Callout",
+      "kind": "custom",
+      "refersTo": "callout-tip",
+      "description": "The leaf talking: leaf-deep hairlines, icon and <strong> over the palest leaf band; the body stays ink. No side-stripe.",
+      "html": "<div class=\"ds-tip\"><svg class=\"ds-tip-icon\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2a7 7 0 0 0-4 12.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26A7 7 0 0 0 12 2m-2 18h4v1a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1z\"/></svg><div class=\"ds-tip-body\"><strong>Совет.</strong> Держите каждый мод в своей папке внутри <code>game</code>.</div></div>",
+      "css": ".ds-tip { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; color: var(--tip); border-top: 1px solid var(--tip); border-bottom: 1px solid var(--tip); background: linear-gradient(0deg, var(--tip-bg) 5%, var(--tip-bg1) 25%, var(--tip-bg1) 75%, var(--tip-bg) 95%); } .ds-tip-icon { width: 24px; height: 24px; flex-shrink: 0; margin-top: 0.1rem; } .ds-tip-body { min-width: 0; color: var(--text); line-height: var(--lh-prose); } .ds-tip-body strong { color: var(--tip); } .ds-tip-body code { padding: 0.15em 0.4em; border-radius: var(--radius-code); background: var(--code-bg-inline); color: var(--code-inline); font-family: var(--font-mono); }"
+    },
+    {
       "name": "Info Callout",
       "kind": "custom",
       "refersTo": "callout-info",
-      "description": "Calm sky-blue note: paired hairlines over a faint gradient band, a 24px currentColor icon parked on the first line. Body stays ink; no side-stripe.",
+      "description": "Calm sky-blue note — the one cool note on a day page drawn in leaf: paired hairlines over a faint gradient band, a 24px currentColor icon parked on the first line. Body stays ink; no side-stripe.",
       "html": "<div class=\"ds-info\"><svg class=\"ds-info-icon\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20m0 4a1 1 0 1 1 0 2 1 1 0 0 1 0-2m1 12h-2v-6h2z\"/></svg><div class=\"ds-info-body\"><strong>Примечание.</strong> Это информационный блок.</div></div>",
       "css": ".ds-info { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; color: var(--info); border-top: 1px solid var(--info); border-bottom: 1px solid var(--info); background: linear-gradient(0deg, var(--info-bg) 5%, var(--info-bg1) 25%, var(--info-bg1) 75%, var(--info-bg) 95%); } .ds-info-icon { width: 24px; height: 24px; flex-shrink: 0; margin-top: 0.1rem; } .ds-info-body { min-width: 0; color: var(--text); line-height: var(--lh-prose); } .ds-info-body strong { color: var(--info); }"
     },
@@ -205,56 +231,62 @@
       "name": "Warning Callout",
       "kind": "custom",
       "refersTo": "callout-warning",
-      "description": "Deeper-red caution block, the same shape as info; its triangle is what tells it apart from danger's octagon.",
+      "description": "The ladybug: the one red on a day page outside the logo. Same shape as info; its triangle is what tells it apart from danger's octagon.",
       "html": "<div class=\"ds-warn\"><svg class=\"ds-warn-icon\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M12 3 2 21h20zm0 6 6 10H6zm-1 3v3h2v-3zm0 5v2h2v-2z\"/></svg><div class=\"ds-warn-body\"><strong>Внимание.</strong> Это предупреждение.</div></div>",
       "css": ".ds-warn { display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px; color: var(--warning); border-top: 1px solid var(--warning); border-bottom: 1px solid var(--warning); background: linear-gradient(0deg, var(--warning-bg) 5%, var(--warning-bg1) 25%, var(--warning-bg1) 75%, var(--warning-bg) 95%); } .ds-warn-icon { width: 24px; height: 24px; flex-shrink: 0; margin-top: 0.1rem; } .ds-warn-body { min-width: 0; color: var(--text); line-height: var(--lh-prose); } .ds-warn-body strong { color: var(--warning); }"
     }
   ],
   "narrative": {
-    "northStar": "The Endless Golden Hour",
-    "overview": "ES Doc is a field manual for Russian-speaking modders of the visual novel *Everlasting Summer* (Бесконечное Лето). The whole system lives inside the game's own light: warm afternoon sun on a sand path by day, and the deep blue of the lake at camp by night. It should feel like a senior modder left you good notes, warm enough to trust and precise enough to ship from. Content is the product; every color, border, and font exists to make text findable and readable, never to decorate.\n\nThe theme is genuinely bimodal, not a dark tool with a light afterthought. **Light is the default** (`prefers-color-scheme` chooses): cream paper under warm sun, ink-brown text, the pioneer-red galstuk (neckerchief) as the one spot of alarm-free warmth. **Dark is the night scene by the lake**: deep night-blue surfaces, warm-cream text, a lifted pioneer red that still passes AA as link color. Code panels follow the theme too: a sheet of print on the desk by day, film-dark by the lake at night — one syntax palette each, rather than one palette forced to serve both.\n\nThis system explicitly rejects the sterile autogenerated look of ReadTheDocs and Sphinx, the corporate gray of a Confluence wiki, and try-hard neon/cyberpunk gaming aesthetics. Familiarity is a feature here: modders know wikis, and nothing should surprise them except how warm it feels.",
+    "northStar": "Noon at Sovyonok",
+    "overview": "ES Doc is a field manual for Russian-speaking modders of the visual novel *Everlasting Summer* (Бесконечное Лето). The whole system lives inside the game's own camp, «Совёнок»: high summer noon by day — the white of a pioneer shirt and the green of the leaf the game's logo is drawn around — and the deep blue of the lake by night. It should feel like a senior modder left you good notes, clear enough to trust and precise enough to ship from. Content is the product; every colour, border and font exists to make text findable and readable, never to decorate.\n\nThe theme is genuinely bimodal, not a dark tool with a light afterthought. **Light is the default** (`prefers-color-scheme` chooses): the reading column is white, the chrome around it — header, section bar, docs sidebar — sits in the leaf's shade, and the leaf itself, deepened until it can carry a word, marks everything you can press. Red survives only as the ladybug on that leaf: the pioneer star in the logo, and the warning/danger rungs. **Dark is the night scene by the lake**: deep night-blue surfaces, warm-cream text, and the same leaf lifted for the dark as the accent, so the brand keeps its hue when the theme changes. Code panels follow the theme too: a leaf-paper sheet by day, film-dark by the lake at night — one syntax palette each, rather than one palette forced to serve both.\n\nUntil September 2026 the day was warm sand and cream paper with pioneer red as the accent («The Endless Golden Hour»). It was replaced wholesale to put the game's own two colours, white and green, on the page; the night kept its ground and took the leaf.\n\nThis system explicitly rejects the sterile autogenerated look of ReadTheDocs and Sphinx, the corporate gray of a Confluence wiki, and try-hard neon/cyberpunk gaming aesthetics. Familiarity is a feature here: modders know wikis, and nothing should surprise them except how much it feels like the game.",
     "keyCharacteristics": [
-      "Warm-tinted neutrals only; never pure `#000` or `#fff`.",
-      "Pioneer red is a once-per-screen spotlight, not a fill.",
+      "White is the page; the leaf's shade is the chrome; every other neutral leans toward the leaf by day and the lake by night. Never `#000`, never an untinted gray.",
+      "The leaf is a once-per-screen spotlight for what you can press, not a fill.",
+      "Red is the ladybug: the logo star and the warning ladder, never anything interactive.",
       "PT Serif carries the warmth in headings; Inter carries the body; Consolas signals meta and code.",
-      "Flat by default; the one shadow is the search popover lifting off the page.",
+      "Flat by default; a shadow only under what genuinely floats — the search popover, the image lightbox, the player bar, the back-to-top button.",
       "Light and dark are equal citizens, switched by ambient preference."
     ],
     "rules": [
-      { "name": "The Galstuk Rule", "body": "Pioneer red appears on ≤10% of any screen. Its rarity is the point; a whole sidebar or a full row of red breaks it. Emphasis inside a red-tinted surface leans on weight, not more red.", "section": "colors" },
-      { "name": "The Two-Palette Code Rule", "body": "Code panels follow the theme like every other surface. That means two syntax palettes, not one: the ink weights on `#FDF9EE` by day, the lifted film palette on `#12161E` at night, each verified ≥4.5:1 against *its own* panel. Adding a `--code-*` token to one theme without the other is the same bug as any other half-defined token.", "section": "colors" },
-      { "name": "The Tinted Paper Rule", "body": "On light, a semantic wash is mixed toward white *first* and then laid on nearly opaque (92%); it is never a saturated hue at 8–16%. The paper is not a neutral — `#F4EAD6` is a yellow at chroma 11 — so a thin film of anything lands wherever that yellow drags it. The callout washes learned this the hard way: sky-blue info composited to hue 130° (a grey-green), forest-green tip to 102° (a khaki two degrees off the page), and all five callouts ended up inside one warm 50–130° arc, telling themselves apart by lightness alone and reading like panels borrowed from the night theme. Pre-mixing puts the hue back where it belongs (info 233°, tip 126°, attention 90°, warning 37°, danger 29°) and lifts the strongest band from L* 82–88 to 87–92 — a tint *on* the paper instead of a wash *over* it. Night keeps the thin-film treatment: a dark page is cool and neutral enough that a translucent hue stays the hue it started as.", "section": "colors" },
-      { "name": "The Elevated-Surface Rule", "body": "Accent text never sits on `--bg-elevated` at night: `#F2606C` on `#2A3142` is 4.12:1, under AA, where the same text on `--bg-surface` is 4.87. The footer's support control was built around this (it deliberately leaves its background alone on hover); the image lightbox was not, and shipped its «Открыть файл» / «Скачать» links under the bar for months. A panel that needs accent links keeps `--bg-surface` under them, whatever the surface above them does.", "section": "colors" },
-      { "name": "The No Pure Neutral Rule", "body": "Never `#000` or `#fff`, and never an untinted gray. Every neutral is pulled toward sand/ink warmth (or, at night, toward lake-blue). Prefer the token (`var(--ink)`, `var(--border)`) over any literal hex that has one.", "section": "colors" },
+      { "name": "The One-Leaf Rule", "body": "The full-strength leaf appears on ≤10% of any screen: links, the current place, focus, one call to action. Its tints — shade, paper, muted — are free; the leaf itself is a spotlight. A whole sidebar of green links breaks it, and so does a green heading, which reads as one more link. Emphasis inside a leaf-tinted surface leans on weight, not more green.", "section": "colors" },
+      { "name": "The Ladybug Rule", "body": "Red is the ladybug on the leaf: the pioneer star in the logo, and the warning → danger ladder (with the «устарела» banner that borrows warning's colour). Nothing interactive is red, in either theme. A red link, button, focus ring or current-page mark is drift back to the old palette.", "section": "colors" },
+      { "name": "The Shade-Frames-The-Shirt Rule", "body": "By day the chrome (header, section bar, phone search sheet, docs sidebar) sits on Leaf Shade and the reading column on white, so the page is always the brightest thing on screen. Things *on* the page — cards, pills, inputs, popovers — are white too and separate by their hairline, not by a tint. A new bar that belongs to the site's frame takes `--bg-chrome`; anything the reader reads or operates sits on `--bg`. At night the chrome is simply the page, as it always was.", "section": "colors" },
+      { "name": "The Two-Palette Code Rule", "body": "Code panels follow the theme like every other surface. That means two syntax palettes, not one: the ink weights on `#F4F9F1` by day, the lifted film palette on `#12161E` at night, each verified ≥4.5:1 against *its own* panel (and, by day, ≥4.7 on a line lit by `--target-bg`). Adding a `--code-*` token to one theme without the other is the same bug as any other half-defined token.", "section": "colors" },
+      { "name": "The Opaque-Band Rule", "body": "By day a callout band is a plain opaque tint, each hue mixed toward white until its ink holds ≥5.3:1 on the strongest band and a body link holds AA through the middle one — never a saturated hue laid on at 8–16%. That was learned on the old sand page, where `#F4EAD6`, a yellow at chroma 11, dragged every thin film toward itself (sky-blue info composited to a grey-green at hue 130°) and the bands had to be pre-mixed and laid on at 92% to keep their hue. White drags nothing, so the recipe simplified with the sand gone; the rule against films did not. Night keeps the thin-film treatment: a dark page is cool and neutral enough that a translucent hue stays the hue it started as.", "section": "colors" },
+      { "name": "The One White Rule", "body": "White is the page and the things on it; it is the brand's own colour, not a missing tint. Every other neutral is pulled toward the leaf by day — ink, ink soft, hairline, shade, paper, chip and table head all sit between hue 127° and 150° — or toward lake-blue by night. Never `#000`, and never an untinted gray. Prefer the token (`var(--text)`, `var(--border)`) over any literal hex that has one.", "section": "colors" },
       { "name": "The Cyrillic-Leading Rule", "body": "Headings led at 1.2 until it was measured: PT Serif 700 at 38.4px has a 51px font box, and a 1.2 line box is 46px, so two-line headings overlapped their own em boxes. Russian exposes what Latin hides — Ё and Й carry marks above cap height while у, р, ц, щ and д descend, which left 2.5px between one line’s descenders and the next line’s diaereses. Leading on this site is budgeted for Cyrillic, not for a ratio borrowed from Latin setting.", "section": "typography" },
       { "name": "The Hyphenation Rule", "body": "Prose sets `hyphens: auto`, and `lang=\"ru\"` on the document is what makes it work. At 375px a Russian paragraph runs about 30 characters a line, far under the 45 the eye wants, and the body size cannot come down to meet it. Hyphenation is the only lever left.", "section": "typography" },
-      { "name": "The Serif-Carries-Warmth Rule", "body": "Headings are ink-colored, not accent-colored. PT Serif carries the warmth so pioneer red stays a spotlight (see the Galstuk Rule). A page full of red headings is drift.", "section": "typography" },
+      { "name": "The Serif-Carries-Warmth Rule", "body": "Headings are ink-colored, not accent-colored. PT Serif carries the warmth so the leaf stays a spotlight (see the One-Leaf Rule) — and on this site green means \"you can press this\", so a green heading reads as a link. A page full of green headings is drift.", "section": "typography" },
       { "name": "The Three-Weight Rule", "body": "Only 400, 600, and 700 exist. Weight 500 was removed from the scale; do not reintroduce it.", "section": "typography" },
       { "name": "The Measured-Breakpoint Rule", "body": "A breakpoint sits where something measured stops fitting, and the stylesheet says what was measured next to it. Never a device width picked for its name.", "section": "layout" },
       { "name": "The Fixed-Header Rule", "body": "The header, fixed to the top of the viewport, is one 52px row at every width at the default text size. Anything that would make it taller goes underneath it and scrolls. Nothing copies that 52px, though: the sticky sidebar and every scroll offset read `--header-h`, which follows the real header, so when a larger default text size does give it a second row, nothing slides underneath.", "section": "layout" },
-      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. A shadow appears only when an element genuinely leaves the page plane, today that is the search popover alone. Cards, rows, callouts, and panels use borders and tint, never a drop shadow.", "section": "elevation" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. A shadow appears only when an element genuinely leaves the page plane: the search popover and the image lightbox (Modal), the back-to-top button and the player bar (Soft). Cards, rows, callouts, and panels use borders and tint, never a drop shadow. Elevation is declared once: a surface wears a border or a shadow, not a hairline under a wide lift.", "section": "elevation" },
+      { "name": "The Hidden-Means-Hidden Rule", "body": "Something that floats in and out — the back-to-top button, the player bar — is hidden at rest with `visibility: hidden`, never with `opacity: 0` alone. Transparent controls stay in the tab order and the accessibility tree: both of these once put a focus ring around nothing on every page. The visibility flip is delayed by the fade's own duration on the way out and immediate on the way in, so the motion is unchanged; and a control that hides while it holds focus hands focus on first (Stop returns it to the play button, back-to-top to the skip link).", "section": "elevation" },
       { "name": "The Picture-Gets-The-Curve Rule", "body": "12px belongs to things that are pictures of something — code, screenshots, artwork. A frame around text stops at 6px, and a list gets no frame at all.", "section": "shapes" }
     ],
     "dos": [
       "**Do** reach for the token, `var(--ink)`, `var(--border)`, `var(--accent)`, `var(--info)`, never a literal hex that has a token.",
       "**Do** give every new color token both halves at once: a plain light value in `:root` and a `light-dark(day, night)` pair in the `@supports` block of `vars.css`. A token that exists in only one mode is a bug (this is exactly how the info callout was once broken).",
-      "**Do** keep pioneer red to a once-per-screen spotlight; use weight or size for emphasis inside warm surfaces.",
+      "**Do** keep the leaf to a once-per-screen spotlight; use weight or size for emphasis inside tinted surfaces.",
+      "**Do** put the site's frame on `--bg-chrome` (or `--bg-sidebar`) and everything the reader reads or operates on `--bg`: by day the page is the brightest plane on screen, and a new bar or panel has to say which of the two it is.",
+      "**Do** keep red for the ladybug — the logo star and the warning → danger ladder — in both themes.",
       "**Do** give code panels a palette per theme, and verify each one against its own panel.",
       "**Do** use PT Serif for headings/quotes, Inter for body/UI, Consolas for meta labels and code, at weights 400/600/700 only.",
       "**Do** pair every callout/icon with `class=\"icon\"` and `currentColor` so it inherits the semantic color and the shared 24px size.",
       "**Do** keep the site's own links in the **same tab** — the nav, section rows, footer icons, and outbound rows like `/news/sources` and «Прочие ссылки»: no `target=\"_blank\"`, so readers keep their back button and choose a new tab themselves (WCAG G200; NN/g; GOV.UK). The one exception is a link *inside an article's prose* that leaves the site: the markdown renderer opens it in a new tab with `rel=\"noopener noreferrer\"`, because articles are reference material read while doing something else, and following the Ren'Py manual mid-example shouldn't cost the reader their place in it. Authors write both kinds the same way; the renderer decides. The other exception is hand-written, at the owner's request: the resource lightbox's «Открыть файл» opens the original beside the list, so the lightbox and the reader's place in a long listing survive the look.",
       "**Do** use тире (`—`, U+2014) as the Russian title separator (`'Авторы — ES Doc'`) and nested-list marker. This deliberately overrides the English \"no em dashes\" default: the audience reads Russian, where тире is correct.",
       "**Do** respect `prefers-reduced-motion`: disable both transitions and keyframe animations, merged into one block per stylesheet.",
-      "**Do** underline links inside running text at rest — a faint `--link-underline` (half the link's own colour), full on hover and focus. Colour alone can't mark them: accent on ink is 2.83:1 by day and 2.44:1 at night, under WCAG 1.4.1's 3:1. Navigation, section rows and buttons read as links by place and shape and stay bare; footnote markers and code-labelled links carry their own cue.",
+      "**Do** underline links inside running text at rest — a faint `--link-underline` (half the link's own colour), full on hover and focus. Colour alone can't mark them: accent on ink is 2.78:1 by day and 1.49:1 at night, under WCAG 1.4.1's 3:1. Navigation, section rows and buttons read as links by place and shape and stay bare; footnote markers and code-labelled links carry their own cue.",
       "**Do** keep every state visible in Windows' high-contrast mode (`forced-colors: active`), which drops shadows and repaints backgrounds: focus goes through `outline` (a transparent one where the design draws its ring with a shadow), the current page gets a `text-decoration` underline, the active search option the system `Highlight`.",
       "**Do** draw icons that repeat down a long list with CSS (`.res-icon`: a data-URI mask filled with `currentColor`), not inline SVG — on the 1 162-row sprite listing, three SVGs a row were half the HTML and some 9 300 DOM nodes."
     ],
     "donts": [
       "**Don't** ship the sterile autogenerated **ReadTheDocs / Sphinx** look, the corporate gray of a **Confluence wiki**, or try-hard **neon/cyberpunk gaming** aesthetics (PRODUCT.md anti-references).",
-      "**Don't** use `#000`, `#fff`, or any untinted gray. Warm-tint every neutral.",
-      "**Don't** use `border-left`/`border-right` wider than 1px as a colored accent stripe on callouts, banners, rows, or blockquotes. Use a full border, a background tint, or nothing. (The sidebar's 1px `--border-tan` nested-nav indent is the only allowed structural exception.)",
-      "**Don't** add drop shadows to cards, rows, or callouts. The search popover is the only element that leaves the page plane.",
-      "**Don't** color headings with pioneer red; ink + PT Serif carries them.",
+      "**Don't** use `#000` or any untinted gray, and don't use white for anything but the page and the things that sit on it. Every other neutral leans toward the leaf by day and the lake by night.",
+      "**Don't** make anything interactive red — no red links, buttons, focus rings or current-page marks (the Ladybug Rule).",
+      "**Don't** use `border-left`/`border-right` wider than 1px as a colored accent stripe on callouts, banners, rows, or blockquotes. Use a full border, a background tint, or nothing. (The sidebar's 1px `--border` nested-nav indent is the only allowed structural exception.)",
+      "**Don't** add drop shadows to cards, rows, or callouts. Only the search popover, the image lightbox, the player bar and the back-to-top button leave the page plane.",
+      "**Don't** color headings green; ink + PT Serif carries them, and on this site a green heading reads as a link.",
       "**Don't** reintroduce font-weight 500, or a display font in UI labels/data.",
       "**Don't** replace тире (`—`) in Russian copy with a colon, pipe, or middle dot.",
       "**Don't** hand-write `target=\"_blank\"` anywhere else — the renderer owns the prose case, and the lightbox's «Открыть файл» is the one written by hand — and don't add external-link/new-tab icons (NN/g and GOV.UK found they aren't reliably understood; GOV.UK removed theirs).",

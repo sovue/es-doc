@@ -1,6 +1,6 @@
 /* /artists — the commission-artist directory. One dataset, three views
    (gallery, board, table) toggled by artists.js. Follows the ES Doc tokens:
-   warm surfaces, the 1px tan divider, pioneer red kept to focus/hover only. */
+   white surfaces, the 1px hairline, the leaf kept to focus/hover only. */
 
 .page-main--artists {
     max-width: 1120px;
@@ -161,7 +161,7 @@
    so it carries more weight than plain inline text: a bordered chip with
    full-ink color at rest, not a muted afterthought under the status pill.
    Shape and weight do the work, not color, so the accent stays a hover-only
-   spotlight (Galstuk Rule). */
+   spotlight (One-Leaf Rule). */
 .artist-links a {
     display: inline-flex;
     align-items: center;

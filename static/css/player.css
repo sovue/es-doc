@@ -61,13 +61,22 @@
     opacity: 0;
     transform: translateY(8px);
     pointer-events: none;
-    transition: opacity 0.2s var(--ease-out), transform 0.2s var(--ease-out);
+    /* Hidden, not just transparent: at opacity 0 alone its four controls —
+       pause, stop, seek, volume — sat in the tab order of every page that can
+       play something, focusable and invisible while nothing played. The
+       visibility flip waits out the fade on the way out and is immediate on
+       the way in. (Same fix as .to-top in components.css.) */
+    visibility: hidden;
+    transition: opacity 0.2s var(--ease-out), transform 0.2s var(--ease-out),
+                visibility 0s linear 0.2s;
 }
 
 .res-nowplaying--visible {
     opacity: 1;
     transform: none;
     pointer-events: auto;
+    visibility: visible;
+    transition-delay: 0s;
 }
 
 .res-nowplaying-stop,

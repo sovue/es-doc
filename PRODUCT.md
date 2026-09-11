@@ -6,7 +6,7 @@ product
 
 ## Users
 
-Russian-speaking modders of the visual novel "Everlasting Summer" (Бесконечное Лето). Typically arrive mid-project: looking up a specific term, grabbing a code snippet, or understanding how a game mechanic works before writing their mod. Not beginners to the internet, but not necessarily programmers.
+Russian-speaking modders of the visual novel "Everlasting Summer" (Бесконечное Лето). Typically used by new modders, to look up "How to" guides or modders that arrive mid-project: looking up a specific term, grabbing a code snippet, or understanding how a game mechanic works before writing their mod. Not beginners to the internet, but not necessarily programmers.
 
 ## Product Purpose
 

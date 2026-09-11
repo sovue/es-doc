@@ -57,19 +57,11 @@
     max-width: 640px;
 }
 
-.page-eyebrow {
-    margin: 0 0 14px;
-    font-family: var(--font-mono);
-    font-size: var(--fs-ui);
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--accent);
-}
-
-/* A quiet way back to the parent section. Muted at rest (unlike the
-   accent-colored eyebrow above) so it doesn't compete for the one-red-
-   spotlight the Galstuk Rule reserves for genuine emphasis. */
+/* A quiet way back to the parent section. Muted at rest so it doesn't
+   compete for the one spotlight the One-Leaf Rule reserves for genuine
+   emphasis. (There used to be an accent-coloured eyebrow label beside it,
+   used only by the error page; a label restating what the heading under it
+   says went with it.) */
 .page-back {
     display: inline-flex;
     align-items: center;
@@ -130,6 +122,30 @@
     max-width: 55ch;
 }
 
+/* A lead is running text, so a link in it follows the article convention
+   (doc.css): accent ink, the faint underline at rest, full on hover and
+   focus. doc.css isn't loaded on the section pages or the home page, and
+   the home lead's link to the first-steps guide fell through to the
+   browser's own blue — the one link on the page in neither theme's colours. */
+.page-lead a {
+    color: var(--accent);
+    text-decoration: underline 1px var(--link-underline);
+    text-underline-offset: 0.2em;
+    transition: color 0.15s var(--ease-out), text-decoration-color 0.15s var(--ease-out);
+}
+
+.page-lead a:hover,
+.page-lead a:focus-visible {
+    color: var(--accent-hover);
+    text-decoration-color: currentColor;
+}
+
+.page-lead a:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+}
+
 .page-main {
     padding: 56px 48px;
     max-width: 760px;
@@ -148,7 +164,10 @@
     top: 0;
     left: 0;
     right: 0;
-    background: var(--bg);
+    /* The chrome's ground, not the page's: by day the leaf's shade, so the
+       white reading column is the brightest thing under it; at night the
+       same night blue as the page (vars.css). */
+    background: var(--bg-chrome);
     border-bottom: 1px solid var(--border);
     z-index: 10;
 }
@@ -354,7 +373,12 @@
     padding: 6px;
     list-style: none;
     background: var(--bg-elevated);
-    border: 1px solid var(--border);
+    /* The Modal shadow is the whole elevation: its tight first layer draws
+       the edge a hairline used to, so the listbox no longer wears both a
+       border and a lift (a ghost card). The border stays, transparent: 1px of
+       the same box, and the edge Windows' high-contrast mode paints once it
+       has dropped every shadow. */
+    border: 1px solid transparent;
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-modal);
     max-height: 60vh;
@@ -362,15 +386,20 @@
     z-index: 20;
 }
 
-/* 40px was the height a two-line result came out at; a one-line result sat
-   under it. On a phone this list is the primary way into the site, so every
-   row is a full 44pt target whatever it holds. */
+/* On a phone this list is the primary way into the site, so every row is a
+   full 44pt target. One line, ellipsised: a row is a block, and the 44px comes
+   from padding around one --lh-ui line rather than from centring.
+
+   It was a flex column with `justify-content: center` for a while, to reach
+   44px. A flex container makes every run of text inside it its own item, and
+   a row is several runs — the context, the label before the match, the
+   <mark>ed match, the rest — so each landed on a line of its own: «Изображения ›
+   / Спрайт / ы». */
 .nav-search-option {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    display: block;
     min-height: 44px;
-    padding: 8px 10px;
+    padding: calc((44px - var(--fs-ui) * var(--lh-ui)) / 2) 10px;
+    line-height: var(--lh-ui);
     border-radius: var(--radius-sm);
     font-size: var(--fs-ui);
     color: var(--text);
@@ -390,24 +419,26 @@
     color: var(--text-soft);
 }
 
-/* On the highlighted row the muted-accent fill lightens the surface, so the
-   soft context text would fall to ~3.8:1 in light mode. Lift it to full ink
-   (a shade of the same warm family, not gray) to hold WCAG AA in both themes. */
+/* On the highlighted row the muted-accent fill tints the surface, so the soft
+   context text would fall to 4.76:1 by day — AA, but barely, on the one row
+   the eye is sent to. Lift it to full ink (the same family, not gray) so the
+   highlighted row reads clearest in both themes. */
 .nav-search-option[aria-selected="true"] .nav-search-ctx,
 .nav-search-option:hover .nav-search-ctx {
     color: var(--text);
 }
 
-/* Matched substring leans on weight, keeping pioneer red a once-per-screen spotlight. */
+/* Matched substring leans on weight, keeping the leaf a once-per-screen spotlight. */
 .nav-search-option .match {
     font-weight: 700;
 }
 
-/* The empty and error rows carry their own --bg-surface, per the
-   Elevated-Surface Rule: the listbox around them is --bg-elevated, where the
-   «Открыть все разделы» link came out at 4.12:1 at night, under AA. On the
-   surface it is 4.87:1, and the row reads as a note set into the list rather
-   than as one more result. */
+/* The empty and error rows carry their own --bg-surface, so at night they
+   read as a note set into the list rather than as one more result. It began
+   as a contrast fix — the «Открыть все разделы» link, in the old pioneer red,
+   came out at 4.12:1 on the listbox's --bg-elevated — and the leaf clears that
+   surface at 6.77, but the note-in-the-list reading is worth keeping. By day
+   both surfaces are white and the row is simply part of the list. */
 .nav-search-empty {
     padding: 10px;
     font-size: var(--fs-ui);
@@ -589,10 +620,10 @@
     line-height: 0;
 }
 
-/* A bordered control, not a red fill: the footer sits under every page,
-   and a pioneer-red button here would spend the Galstuk Rule's one
-   spotlight on all of them at once. Border + surface tint make it read as
-   a control; the accent arrives on hover, where it's earned. */
+/* A bordered control, not a green fill: the footer sits under every page,
+   and a leaf-green button here would spend the One-Leaf Rule's one
+   spotlight on all of them at once. Border + surface make it read as a
+   control; the accent arrives on hover, where it's earned. */
 /* Scoped through .site-footer so it outranks the `.site-footer a` soft-ink
    default above; a bare .footer-support loses to it on specificity. */
 .site-footer .footer-support {
@@ -609,11 +640,10 @@
                 border-color 0.15s var(--ease-out);
 }
 
-/* Text and border warm to accent; the surface stays put. Lifting it to
-   --bg-elevated on hover pushed the dark-mode pair (#F2606C on #2A3142)
-   down to 4.12:1 — under AA for 14px semibold. Held at --bg-surface it's
-   4.87 dark / 5.26 light, and it matches .to-top, which hovers the same
-   way. */
+/* Text and border warm to accent; the surface stays put, and it matches
+   .to-top, which hovers the same way. (Holding the surface started as an AA
+   fix: the old pioneer red fell to 4.12:1 on --bg-elevated at night. The leaf
+   holds 6.77 there; the rule stays for the consistency.) */
 .site-footer .footer-support:hover {
     color: var(--accent);
     border-color: var(--accent);
@@ -654,7 +684,15 @@
     opacity: 0;
     transform: translateY(8px);
     pointer-events: none;
+    /* Hidden, not just transparent. At opacity 0 alone the button stayed in
+       the tab order at the top of every page — the last stop before the end,
+       a focus ring drawn around nothing — and a screen reader still offered
+       «Наверх» on a page already at the top. `visibility` takes it out of
+       both; its transition waits for the fade to finish on the way out and
+       flips at once on the way in, so the motion is unchanged. */
+    visibility: hidden;
     transition: opacity 0.2s var(--ease-out), transform 0.2s var(--ease-out),
+                visibility 0s linear 0.2s,
                 color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
 }
 
@@ -662,6 +700,8 @@
     opacity: 1;
     transform: none;
     pointer-events: auto;
+    visibility: visible;
+    transition-delay: 0s;
 }
 
 .to-top:hover {
@@ -753,7 +793,7 @@ a.section-row:focus-visible {
    destination: the rule is a hairline between groups, the heading a quiet
    Consolas label above one. Both stay pointedly quieter than the article rows
    they organise — same reasoning as the sidebar's section labels, and the
-   Galstuk Rule keeps accent red for things you can actually click. */
+   One-Leaf Rule keeps the accent for things you can actually click. */
 
 .doc-tree-sep hr {
     border: none;
@@ -1082,9 +1122,10 @@ a.section-row:focus-visible .section-arrow {
     line-height: var(--lh-ui);
 }
 
-/* Linked entries follow the body-link convention (accent red, a faint
+/* Linked entries follow the body-link convention (the leaf, a faint
    underline at rest, full on hover) so they read as clickable next to the
-   plain-text rows, which stay ink — red alone is under 3:1 against them. Ink-at-rest here made links indistinguishable from text. */
+   plain-text rows, which stay ink — the green alone is under 3:1 against them
+   (2.78 by day, 1.49 at night). Ink-at-rest here made links indistinguishable from text. */
 .lit-row a {
     color: var(--accent);
     text-decoration: underline 1px var(--link-underline);
@@ -1137,8 +1178,9 @@ a.section-row:focus-visible .section-arrow {
     line-height: var(--lh-prose);
 }
 
-/* A link inside the empty-state sentence: red on ink-soft is 1.2:1, so
-   without the underline it was indistinguishable from the words around it. */
+/* A link inside the empty-state sentence: the leaf on ink-soft is 1.04:1 by
+   day and 1.22 at night, so without the underline it is indistinguishable
+   from the words around it. */
 .res-empty a {
     color: var(--accent);
     text-decoration: underline 1px var(--link-underline);
@@ -1306,7 +1348,7 @@ a.section-row:focus-visible .section-arrow {
         max-width: none;
         margin: 0;
         padding: 10px 20px;
-        background: var(--bg);
+        background: var(--bg-chrome);
         border-bottom: 1px solid var(--border);
     }
 
@@ -1401,7 +1443,7 @@ a.section-row:focus-visible .section-arrow {
 
     .section-bar {
         display: block;
-        background: var(--bg);
+        background: var(--bg-chrome);
         border-bottom: 1px solid var(--border);
     }
 

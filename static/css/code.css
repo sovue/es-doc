@@ -4,7 +4,7 @@
    rendering the same `.code-block` markup: one definition, two consumers,
    no drift between them.
 
-   The panel follows the theme (cream sheet by day, film-dark at night); both
+   The panel follows the theme (leaf-paper sheet by day, film-dark at night); both
    palettes live in vars.css, so nothing here branches on theme.
 
    Loaded via extra_css by every template that renders fenced code
@@ -17,10 +17,10 @@
    ===================================================================== */
 
 code {
-    /* Its own token, not --code-bg: by day the fenced panel is nearly the same
-       cream as the paper and leans on its border, which an inline chip has no
-       room for, so the chip takes a deeper tan instead. At night both resolve
-       to the film-dark panel. */
+    /* Its own token, not --code-bg: by day the fenced panel is only a breath
+       off the white page and leans on its border, which an inline chip has no
+       room for, so the chip takes a deeper, greyer leaf instead. At night both
+       resolve to the film-dark panel. */
     background: var(--code-bg-inline);
 
     padding: 0.15em 0.4em;
@@ -156,8 +156,17 @@ pre {
    already fits shows neither: the content-edge layer starts already at the
    visible edge, with no shadow behind it to uncover. */
 .code-scroll {
+    /* The cover is solid panel colour across the shadow's whole 24px and
+       only fades out beyond it, over 16px where there is no shadow left to
+       show; that soft leading edge is what slides in as a reader scrolls to
+       the end of a long line. It used to run the other way — `to left,
+       transparent → panel` — which left the cover *transparent* exactly where
+       the shadow is strongest, so every panel wore a grey strip down its
+       right edge whether or not anything was clipped. A cover that fades
+       *inside* the shadow's width is no fix either: the overlap still leaves
+       a band 1–2% darker, faint but plainly a line. */
     background:
-        linear-gradient(to left, transparent, var(--code-bg) 24px) 100% 0 / 24px 100% no-repeat local,
+        linear-gradient(to left, var(--code-bg) 24px, transparent) 100% 0 / 40px 100% no-repeat local,
         linear-gradient(to left, var(--fade-shadow), transparent 24px) 100% 0 / 24px 100% no-repeat scroll,
         var(--code-bg);
 }

@@ -4,7 +4,7 @@ from fastapi.responses import FileResponse
 
 from . import main_router
 from ..utils.config import CONFIG
-from ..utils.http import cache_headers
+from ..utils.http import cache_headers, is_precompressed
 from ..utils.lifespan.artist_img_cache import (
     cache_file as artist_img_file, cache_local as cache_artist_local, fetch_and_cache as fetch_artist_img,
     is_cached as artist_img_cached, local_cache_file as artist_local_file,
@@ -56,7 +56,7 @@ async def sprite_page(sprite, request: Request):
 
     await _ensure_composed(sprite)
 
-    return FileResponse(str(sprite_file(sprite)), media_type='image/webp', headers=cache_headers())
+    return FileResponse(str(sprite_file(sprite)), media_type='image/webp', headers=cache_headers(precompressed=True))
 
 def _find_tinted(kind, name):
     return next((i for collection in CONFIG.resources.values()
@@ -92,7 +92,7 @@ async def tinted_page(kind, name, request: Request):
 
     await _ensure_tinted(kind, name)
 
-    return FileResponse(str(tinted_file(kind, name)), media_type='image/webp', headers=cache_headers())
+    return FileResponse(str(tinted_file(kind, name)), media_type='image/webp', headers=cache_headers(precompressed=True))
 
 @router.get('/thumb/{kind}/{name}')
 async def thumb_page(kind, name, request: Request):
@@ -123,7 +123,7 @@ async def thumb_page(kind, name, request: Request):
                     logger.exception(f'Thumbnailing "{kind} {name}" failed.')
                     raise HTTPException(500, f'Не удалось создать превью "{name}".') from None
 
-    return FileResponse(str(thumb_file(kind, name)), media_type='image/webp', headers=cache_headers())
+    return FileResponse(str(thumb_file(kind, name)), media_type='image/webp', headers=cache_headers(precompressed=True))
 
 @router.get('/hero/{name}')
 async def hero_page(name, request: Request, crop: str | None = None):
@@ -145,7 +145,7 @@ async def hero_page(name, request: Request, crop: str | None = None):
                     logger.exception(f'Hero-scaling bg "{name}" failed.')
                     raise HTTPException(500, f'Не удалось подготовить фон "{name}".') from None
 
-    return FileResponse(str(hero_file(name, crop)), media_type='image/webp', headers=cache_headers())
+    return FileResponse(str(hero_file(name, crop)), media_type='image/webp', headers=cache_headers(precompressed=True))
 
 
 def _confined_file(base, resource):
@@ -161,13 +161,15 @@ def _confined_file(base, resource):
 @router.get('/raw/{resource:path}')
 async def raw_page(resource, request: Request):
 
-    return FileResponse(str(_confined_file(CONFIG.res_path, resource)), headers=cache_headers())
+    path = _confined_file(CONFIG.res_path, resource)
+    return FileResponse(str(path), headers=cache_headers(precompressed=is_precompressed(path)))
 
 @router.get('/community/{resource:path}')
 async def community_page(resource, request: Request):
 
     # The community drop-in folder sits next to `game` in the assets root.
-    return FileResponse(str(_confined_file(CONFIG.res_path.parent / 'community', resource)), headers=cache_headers())
+    path = _confined_file(CONFIG.res_path.parent / 'community', resource)
+    return FileResponse(str(path), headers=cache_headers(precompressed=is_precompressed(path)))
 
 def _artist_img_value(kind, slug):
     # Fetch by reference, not by arbitrary URL/path: only values already
@@ -212,9 +214,9 @@ async def artist_image(kind, slug, request: Request):
                         # Still the author's own image: serve it as it is
                         # rather than lose it over a format Pillow can't read.
                         logger.exception(f'Resizing local artist image "{kind}" for "{slug}" failed.')
-                        return FileResponse(str(path), headers=cache_headers())
+                        return FileResponse(str(path), headers=cache_headers(precompressed=is_precompressed(path)))
 
-        return FileResponse(str(target), media_type='image/webp', headers=cache_headers())
+        return FileResponse(str(target), media_type='image/webp', headers=cache_headers(precompressed=True))
 
     if not artist_img_cached(value, kind):
         async with _artist_img_lock(value, kind):
@@ -225,6 +227,6 @@ async def artist_image(kind, slug, request: Request):
                     logger.exception(f'Fetching artist image "{kind}" for "{slug}" failed.')
                     raise HTTPException(502, f'Не удалось загрузить изображение для «{slug}».') from None
 
-    return FileResponse(str(artist_img_file(value, kind)), media_type='image/webp', headers=cache_headers())
+    return FileResponse(str(artist_img_file(value, kind)), media_type='image/webp', headers=cache_headers(precompressed=True))
 
 main_router.include_router(router)

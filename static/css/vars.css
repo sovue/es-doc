@@ -1,105 +1,138 @@
 /* =====================================================================
-   Everlasting Summer — "The Endless Golden Hour" palette.
-   Mapped from DESIGN.md (brand book v1.0) onto this project's existing
-   token names, so component/page CSS picks up the new look unchanged.
+   Everlasting Summer — "Noon at Sovyonok" palette.
+   Mapped from DESIGN.md onto this project's existing token names, so
+   component/page CSS picks up the look unchanged.
 
-   Light is the default (Day at camp); dark is the night scene by the
-   lake, served via prefers-color-scheme. Brand relief colors (--sunset,
-   --sky, --pine) are exposed for future components.
+   Light is the default: noon at camp, in the two colours the game's own
+   logo is drawn in. The page is the white of a pioneer shirt; everything
+   you can press is the leaf; the chrome around the reading column (header,
+   section bar, docs sidebar) sits in that leaf's shade, a green so pale it
+   reads as white until it meets the page beside it. Red is the ladybug on
+   the leaf: the pioneer star in the logo and the warning/danger rungs, and
+   nothing else. Dark is the night scene by the lake, served via
+   prefers-color-scheme; it keeps its night-blue ground and takes the same
+   leaf as its accent, lifted for the dark.
 
-   Code panels used to stay warm-dark in BOTH modes, sharing one syntax
-   palette. They now follow the theme like every other surface: cream paper
-   with ink-dark tokens by day, film-dark with the original lifted tokens by
-   night. That means the --code-* family is a full light/dark pair like the
-   rest of this file — a token added to one side must be added to the other.
+   It used to be sand and cream paper under a golden-hour sun with pioneer
+   red as the accent. The relief colours (--sunset, --sky) survive from
+   that set because the night theme and the callouts still draw on them.
+
+   Code panels follow the theme like every other surface: a leaf-paper sheet
+   with ink-weight tokens by day, film-dark with the lifted tokens by night.
+   That means the --code-* family is a full light/dark pair like the rest of
+   this file — a token added to one side must be added to the other.
    ===================================================================== */
 :root {
     color-scheme: light dark;
 
-    /* ── Surfaces (Light · sand path → cream paper) ───────── */
-    --bg: #F4EAD6;          /* sand path — page background */
-    --bg-light: #FBF6E9;    /* cream paper — body gradient end, blockquotes */
-    --bg-surface: #FBF6E9;  /* cards, panels */
-    --bg-elevated: #FFFCF5; /* modals, popovers */
+    /* ── Surfaces (Light · a white shirt, the leaf's shade) ── */
+    /* White is the brand's own colour here, not a missing tint: the logo is
+       drawn on it. It is the page and the things that sit on the page —
+       cards, controls, popovers — and the only pure neutral in the file. */
+    --bg: #FFFFFF;          /* the shirt — page background */
+    --bg-light: #F4F9F1;    /* leaf paper — blockquotes, frames, previews */
+    --bg-surface: #FFFFFF;  /* cards, pills, controls */
+    --bg-elevated: #FFFFFF; /* modals, popovers (the shadow does the lifting) */
+    /* The chrome's own ground. Header, section bar and the phone search sheet
+       used to share --bg with the page; by day they step into the shade so
+       the reading column is the brightest thing on screen. */
+    --bg-chrome: #EEF8E7;
+    /* Where the body's horizontal gradient lands. Flat by day — a shirt has
+       no sunset across it — and at night the same faint lift toward
+       --bg-light the page has always had. */
+    --bg-page-end: #FFFFFF;
 
-    /* ── Ink (warm near-black, never pure) ────────────────── */
-    --text: #2B1F16;        /* primary text */
-    --text-soft: #6B5847;   /* secondary, captions */
+    /* ── Ink (the leaf's darkest vein, never pure black) ──── */
+    --text: #17261A;        /* primary text */
+    --text-soft: #596859;   /* secondary, captions */
 
-    /* ── Accent (pioneer red — the galstuk, used sparingly) ─ */
-    --accent: #C8202E;
-    --accent-hover: #A81824;
-    --accent-muted: #E8B5BA;
+    /* ── Accent (the leaf — everything you can press) ─────── */
+    /* The logo's leaf is a mid green (#6DBE45) at 2.3:1 on white, a colour
+       for fills, not for words. This is the same leaf taken down to where it
+       can carry a link: 5.69:1 on white, 4.98 on a table head, and ≥4.5 on the
+       middle band of every callout. */
+    --accent: #2F7524;
+    --accent-hover: #206220;
+    --accent-muted: #D4EFBF;
 
-    --target-bg: #C8202E22;
+    /* The anchor-target flash: the logo's own leaf at 22%. */
+    --target-bg: #6DBE4538;
 
-    /* ── Relief colors (use when red would be too loud) ───── */
-    --sunset: #E89460;      /* warm orange, secondary accent */
-    --sky: #8FB2C8;         /* faded daytime sky */
-    --pine: #4F6B3E;        /* forest green, success/nature */
+    /* ── Relief colors ────────────────────────────────────── */
+    --sunset: #E89460;      /* warm orange — inline code at night */
+    --sky: #8FB2C8;         /* faded daytime sky — the info family */
+    /* The leaf's shade side: hover, tip callouts, the "open" pill, every
+       success confirmation. One green below the accent, not a second hue. */
+    --pine: #206220;
 
     /* ── Lines ────────────────────────────────────────────── */
-    --border: #D9C7A4;
+    --border: #D1DDCD;
 
-    /* ── Code (Light · a sheet of print on the desk) ───────── */
-    /* The fenced panel is a shade brighter than the paper around it and leans
-       on its 1px border, the way blockquotes do; inline code needs to read as a
-       chip inside a line of prose, so it takes a deeper tan of its own. */
-    --code-bg: #FDF9EE;
-    --code-bg-inline: #EFE3C8;
-    --input-bg: #FBF6E9;
+    /* ── Code (Light · a leaf-paper sheet on a white desk) ─── */
+    /* The fenced panel takes the leaf paper and leans on its 1px border, the
+       way blockquotes do; inline code needs to read as a chip inside a line of
+       prose, so it takes a greyer, deeper chip of its own. */
+    --code-bg: #F4F9F1;
+    --code-bg-inline: #EAEFE4;
+    --input-bg: #FFFFFF;
+    /* Inline code keeps the orange family it has at night (--sunset there),
+       deepened to bark: 5.68:1 on the chip, and nowhere near the leaf, so a
+       chip never reads as a link. */
     --code-inline: #8F4A1B;
     /* A link whose whole label is `code` keeps the chip but takes link ink;
-       --accent lands at 4.45:1 on the chip, just shy of AA, so the deeper
-       hover red carries it instead. */
-    --code-link: #A81824;
+       --accent lands at 4.87:1 on the chip, the shade carries it at 6.35. */
+    --code-link: #206220;
 
     /* Syntax highlighting, day set — the night set's hues rotated to ink
-       weights. All verified ≥4.5:1 on the light panel (#FDF9EE). */
+       weights. All verified ≥4.5:1 on the light panel (#F4F9F1), and ≥4.7
+       on a line highlighted by --target-bg. */
     --code-keyword: #9C4A06;
     --code-type: #0B5A73;
     --code-string: #6B3FA0;
-    --code-comment: #6B5847;
-    --code-name: #2B1F16;
+    --code-comment: #596859;
+    --code-name: #17261A;
     --code-func: #4A5560;
     --code-class: #8A5A12;
     --code-number: #A81A5E;
     --code-operator: #A6432F;
-    --code-whitespace: #2B1F1626;
-    /* Success green for the "copied" state on the panel — --pine deepened one
-       step so it clears AA on the light panel (plain --pine sits at 4.1:1
-       there). Same hue as the paper copy-path check, so the two confirmations
-       still read as one green. */
-    --code-success: #3F6B2C;
+    --code-whitespace: #17261A26;
+    /* Success green for the "copied" state on the panel — the leaf's shade,
+       6.95:1 on the light panel. Same green as the paper copy-path check, so
+       the two confirmations still read as one. */
+    --code-success: #206220;
 
-    --bg-sidebar: #FBF6E9;
-    --bg-table-head: #F0E5CF;
+    --bg-sidebar: #EEF8E7;
+    --bg-table-head: #E9F3E3;
 
-    /* Warm brown wash for interactive surface hovers on light paper. */
-    --surface-hover: rgb(43 31 22 / 0.05);
+    /* Ink wash for interactive surface hovers on white. */
+    --surface-hover: rgb(23 38 26 / 0.05);
 
     /* The scrim behind a modal image. Ink by day rather than black: the same
-       warm near-black every other neutral is pulled toward. */
-    --scrim: rgb(43 31 22 / 0.55);
+       green near-black every other neutral is pulled toward. */
+    --scrim: rgb(23 38 26 / 0.55);
 
-    /* Tinted accent surface + ink text — gentler than full red. */
+    /* Pale leaf behind selected text, ink over it — 12.7:1. */
     --selection-bg: var(--accent-muted);
     --selection-text: var(--text);
 
-    /* ── Elevation (DESIGN.md §04) — flat by default, warm-tinted lift ── */
+    /* ── Elevation (DESIGN.md §04) — flat by default, ink-tinted lift ── */
     --radius-xs: 2px;      /* focus rings, badges, skip-link corner */
     --radius-sm: 4px;      /* compact controls (search box) */
     --radius-md: 8px;      /* elevated popover (search results) */
     --radius-full: 999px;
     --radius-code: 6px;    /* inline code, tightened pre on narrow screens */
     --radius-block: 12px;  /* code blocks and images */
-    --shadow-soft: 0 2px 12px rgba(43, 31, 22, 0.06);
-    --shadow-modal: 0 16px 48px rgba(43, 31, 22, 0.14);
+    --shadow-soft: 0 2px 12px rgba(23, 38, 26, 0.06);
+    /* Two layers, and no border beside them: a tight contact shadow that
+       draws the popover's edge — by day a white listbox over a white page has
+       nothing else to separate it — and the deep lift that puts it above the
+       page. */
+    --shadow-modal: 0 1px 3px rgba(23, 38, 26, 0.12), 0 16px 48px rgba(23, 38, 26, 0.14);
     /* The edge shadow on a horizontally-scrollable panel that still has more
        content past it — a code block's clipped line, the mobile TOC's
        overflowing strip. Same recipe as the two shadows above: ink at low
        alpha by day, plain black at night. */
-    --fade-shadow: rgba(43, 31, 22, 0.15);
+    --fade-shadow: rgba(23, 38, 26, 0.15);
 
     /* ── Type families (DESIGN.md §03) ────────────────────── */
     --font-serif: "PT Serif", Georgia, "Times New Roman", serif;
@@ -154,7 +187,7 @@
     --lh-ui: 1.5;       /* dense chrome, table cells, short descriptions */
     --lh-prose: 1.7;    /* anything read at length */
 
-    /* One focus ring for the site: 2px of pioneer red, the width and colour
+    /* One focus ring for the site: 2px of the leaf, the width and colour
        repeated at 37 call sites before it became a token. Offsets stay local —
        a chip, a row and a full-bleed tab each need the ring at a different
        distance — and a panel with its own palette can retint it (code.css). */
@@ -162,9 +195,9 @@
 
     /* The underline a link inside running text wears at rest: half its own
        colour, enough to mark it without shouting, and full on hover and
-       focus. Colour alone can't mark these links: accent on ink is 2.83:1 by
-       day and 2.44:1 at night, under the 3:1 WCAG 1.4.1 asks for. It resolves
-       `currentColor` on the link itself, so the one token serves the red
+       focus. Colour alone can't mark these links: accent on ink is 2.78:1 by
+       day and 1.49:1 at night, under the 3:1 WCAG 1.4.1 asks for. It resolves
+       `currentColor` on the link itself, so the one token serves the green
        article links and the ink ones in the thanks lists. */
     --link-underline: color-mix(in srgb, currentColor 50%, transparent);
 
@@ -188,65 +221,53 @@
        two gradient bands: `--x-bg` at the top and bottom edges, `--x-bg1`
        through the middle.
 
-       The bands are near-opaque pale tints here, not thin films of the ink
-       colour, and that is the whole trick of making them read in daylight.
-       The paper is not neutral — #F4EAD6 is a yellow at chroma 11 — so a
-       saturated hue laid on at 8-16% lands wherever the paper's yellow drags
-       it: the old sky-blue info wash composited to hue 130°, a grey-green,
-       and tip's forest green to 102°, a khaki barely off the page colour. Five
-       callouts all sat inside one warm 50-130° arc, telling themselves apart
-       by lightness alone, and every one of them read as a panel borrowed from
-       the night theme. Mixing each hue toward white *first* and then laying it
-       on at 92% puts the hue back where it belongs (info 233°, tip 126°,
-       attention 90°, warning 37°, danger 29°) and lifts the strongest band
-       from L* 82-88 to L* 87-92 — a tint on the paper rather than a wash over
-       it. The remaining 8% is what keeps the page's own warmth underneath.
+       On white the bands are plain opaque tints, each hue mixed toward white
+       until the ink holds ≥5.3:1 on the strongest band and a body link holds
+       AA through the middle one. That was not always this simple: on the old
+       sand page (#F4EAD6, a yellow at chroma 11) a thin film of any hue landed
+       wherever the paper dragged it, so the bands had to be pre-mixed and laid
+       on at 92%. White drags nothing, and the recipe went with the sand.
 
        Night keeps the thin-film treatment: a dark page is already cool and
        neutral enough that a translucent hue stays the hue it started as. */
 
-    /* Warning leans on a deeper red so it reads as caution, distinct
-       from the inline accent red of links and headings. */
+    /* Warning is the ladybug: a deep red, the one place outside the logo a
+       day page shows red at all, so it reads as caution without competing
+       with anything else on the page. */
     --warning: #A81824;
-    --warning-bg: #F8D8D2EB;
-    --warning-bg1: #FBEAE6EB;
+    --warning-bg: #FED9D5;
+    --warning-bg1: #FDE9E7;
 
     /* Danger is warning turned up: the rung for a hard constraint («ВАЖНО»)
        rather than a caution («ВНИМАНИЕ»). Its band is a half-step deeper and
-       redder than warning's (L* 87 at hue 29°, against 89 at 37°) — enough to
-       tell the two apart side by side, nowhere near enough to tell them apart
-       across a page, so the ink and the icon still carry the distinction: an
-       octagon where warning is a triangle. */
+       redder than warning's — enough to tell the two apart side by side,
+       nowhere near enough to tell them apart across a page, so the ink and
+       the icon still carry the distinction: an octagon where warning is a
+       triangle. */
     --danger: #7E1220;
-    --danger-bg: #F6CFCCEB;
-    --danger-bg1: #FBE3E1EB;
+    --danger-bg: #FFCFCD;
+    --danger-bg1: #FFE4E3;
 
     /* Info is the calm counterpart to warning: a deep sky-blue (sibling of the
-       --sky relief) so it reads as "note", never as alarm. --info carries the
-       text/border/icon; the bands are the one cool tint in the set, and the
-       only place on a light page where the paper's warmth is deliberately
-       overruled rather than tinted. */
+       --sky relief) so it reads as "note", never as alarm, and the one cool
+       note on a page otherwise drawn in leaf. */
     --info: #215D70;
-    --info-bg: #D6EAF4EB;
-    --info-bg1: #E7F2F8EB;
+    --info-bg: #D4EEFB;
+    --info-bg1: #E7F5FC;
 
     /* Attention is the step between tip and warning: an ochre-yellow that says
-       "read this before you continue" without the alarm of pioneer red. Yellow
-       cannot carry text on cream at full saturation, so --attention stays the
-       deepened ink; its bands are the one hue that shares the paper's own
-       (90°), so they lean on chroma — 23 against the paper's 11 — instead of
-       on hue to separate from it. */
+       "read this before you continue" without the alarm of the ladybug. Yellow
+       cannot carry text on white at full saturation, so --attention stays the
+       deepened ink and the sun lives in the bands. */
     --attention: #805407;
-    --attention-bg: #F7E4B8EB;
-    --attention-bg1: #FBEFD4EB;
+    --attention-bg: #FBE6B7;
+    --attention-bg1: #FCF0D3;
 
-    /* Tip reuses --pine, the reserved nature/success hue (DESIGN.md §Tertiary),
-       as ink. Its old wash was --pine itself at 16%, which landed at hue 102°,
-       four degrees off plain paper, and left the ink at 4.05:1 on its own band
-       — under AA. The pale green band fixes both: hue 126°, ink at 4.83:1. */
-    --tip: #4F6B3E;
-    --tip-bg: #DDEBCEEB;
-    --tip-bg1: #EAF3E1EB;
+    /* Tip is the leaf talking: --pine, the accent's shade side, as ink, over
+       the palest leaf in the set. A friendly aside in the brand's own voice. */
+    --tip: #206220;
+    --tip-bg: #DCF2D0;
+    --tip-bg1: #EAF7E3;
 }
 
 /* The toggle's choice also drives the UA's own surfaces — scrollbars, form
@@ -273,73 +294,80 @@
    Support: Chrome 123, Firefox 120, Safari 17.5 (spring 2024). */
 @supports (color: light-dark(#000, #fff)) {
     :root {
-        --bg: light-dark(#F4EAD6, #161B26); /* deep night blue, not black */
-        --bg-light: light-dark(#FBF6E9, #1F2532);
-        --bg-surface: light-dark(#FBF6E9, #1F2532);
-        --bg-elevated: light-dark(#FFFCF5, #2A3142);
-        --text: light-dark(#2B1F16, #ECE2C9); /* warm cream, not white */
-        --text-soft: light-dark(#6B5847, #B5A88E);
-        --accent: light-dark(#C8202E, #F2606C); /* pioneer red, lifted for night — passes AA as link text */
-        --accent-hover: light-dark(#A81824, #FF7A85);
-        --accent-muted: light-dark(#E8B5BA, #5A3338);
-        --target-bg: light-dark(#C8202E22, #F2606C2E);
+        --bg: light-dark(#FFFFFF, #161B26); /* deep night blue, not black */
+        --bg-light: light-dark(#F4F9F1, #1F2532);
+        --bg-surface: light-dark(#FFFFFF, #1F2532);
+        --bg-elevated: light-dark(#FFFFFF, #2A3142);
+        /* At night the chrome is the page, as it always was. */
+        --bg-chrome: light-dark(#EEF8E7, #161B26);
+        --bg-page-end: light-dark(#FFFFFF, #1F2532);
+        --text: light-dark(#17261A, #ECE2C9); /* warm cream, not white */
+        --text-soft: light-dark(#596859, #B5A88E);
+        /* The leaf, lifted for night: 6.77:1 even on --bg-elevated, where the
+           pioneer red it replaced managed 4.12 and had whole rules written
+           around keeping it off that surface. */
+        --accent: light-dark(#2F7524, #8DCB78);
+        --accent-hover: light-dark(#206220, #B0E299);
+        --accent-muted: light-dark(#D4EFBF, #273F28);
+        --target-bg: light-dark(#6DBE4538, #8DCB782E);
         --sunset: light-dark(#E89460, #F5A878);
         --sky: light-dark(#8FB2C8, #6F8EA3);
-        --pine: light-dark(#4F6B3E, #8FB07A); /* lifted for night — clears AA on its own 14% tint (open-status pill) */
-        --border: light-dark(#D9C7A4, #3A4254);
+        --pine: light-dark(#206220, #8FB07A); /* lifted for night — clears AA on its own 14% tint (open-status pill) */
+        --border: light-dark(#D1DDCD, #3A4254);
         /* Code, night set — the film-dark panel and the lifted syntax palette
         this project shipped with. Inline code shares the panel here: on a
-        night-blue page it already reads as a chip without its own tan. */
-        --code-bg: light-dark(#FDF9EE, #12161E);
-        --code-bg-inline: light-dark(#EFE3C8, var(--code-bg));
-        --input-bg: light-dark(#FBF6E9, #1F2532);
+        night-blue page it already reads as a chip without its own tint. */
+        --code-bg: light-dark(#F4F9F1, #12161E);
+        --code-bg-inline: light-dark(#EAEFE4, var(--code-bg));
+        --input-bg: light-dark(#FFFFFF, #1F2532);
         --code-inline: light-dark(#8F4A1B, var(--sunset));
-        --code-link: light-dark(#A81824, #F2606C);
+        --code-link: light-dark(#206220, #8DCB78);
         --code-keyword: light-dark(#9C4A06, #FF9933);
         --code-type: light-dark(#0B5A73, #66CCFF);
         --code-string: light-dark(#6B3FA0, #D8A0FF);
-        --code-comment: light-dark(#6B5847, #8B949E);
-        --code-name: light-dark(#2B1F16, #E6EDF3);
+        --code-comment: light-dark(#596859, #8B949E);
+        --code-name: light-dark(#17261A, #E6EDF3);
         --code-func: light-dark(#4A5560, #9AA0A8);
         --code-class: light-dark(#8A5A12, #FFB86C);
         --code-number: light-dark(#A81A5E, #FF6B9D);
         --code-operator: light-dark(#A6432F, #D7796B);
-        --code-whitespace: light-dark(#2B1F1626, #FFF2);
-        --code-success: light-dark(#3F6B2C, #8FB07A);
-        --bg-sidebar: light-dark(#FBF6E9, #1A2030);
-        --bg-table-head: light-dark(#F0E5CF, #222A3A);
-        --surface-hover: light-dark(rgb(43 31 22 / 0.05), rgb(236 226 201 / 0.05));
+        --code-whitespace: light-dark(#17261A26, #FFF2);
+        --code-success: light-dark(#206220, #8FB07A);
+        --bg-sidebar: light-dark(#EEF8E7, #1A2030);
+        --bg-table-head: light-dark(#E9F3E3, #222A3A);
+        --surface-hover: light-dark(rgb(23 38 26 / 0.05), rgb(236 226 201 / 0.05));
         /* Night scrim runs deeper: the page behind it is already dark, so a 55%
         ink wash would barely separate the dialog from it. */
-        --scrim: light-dark(rgb(43 31 22 / 0.55), rgb(8 10 14 / 0.72));
-        /* Warm-tint shadows collapse to near-black depth at night. */
-        --shadow-soft: 0 2px 12px light-dark(rgba(43, 31, 22, 0.06), rgba(0, 0, 0, 0.35));
-        --shadow-modal: 0 16px 48px light-dark(rgba(43, 31, 22, 0.14), rgba(0, 0, 0, 0.5));
-        --fade-shadow: light-dark(rgba(43, 31, 22, 0.15), rgba(0, 0, 0, 0.35));
+        --scrim: light-dark(rgb(23 38 26 / 0.55), rgb(8 10 14 / 0.72));
+        /* Ink-tinted shadows collapse to near-black depth at night. */
+        --shadow-soft: 0 2px 12px light-dark(rgba(23, 38, 26, 0.06), rgba(0, 0, 0, 0.35));
+        --shadow-modal: 0 1px 3px light-dark(rgba(23, 38, 26, 0.12), rgba(0, 0, 0, 0.45)),
+                        0 16px 48px light-dark(rgba(23, 38, 26, 0.14), rgba(0, 0, 0, 0.5));
+        --fade-shadow: light-dark(rgba(23, 38, 26, 0.15), rgba(0, 0, 0, 0.35));
         --selection-bg: light-dark(var(--accent-muted), var(--accent));
         --selection-text: light-dark(var(--text), var(--bg));
         --warning: light-dark(#A81824, #F46974); /* clears AA on the gradient's strongest band */
-        --warning-bg: light-dark(#F8D8D2EB, #E8404E33);
-        --warning-bg1: light-dark(#FBEAE6EB, #E8404E1A);
+        --warning-bg: light-dark(#FED9D5, #E8404E33);
+        --warning-bg1: light-dark(#FDE9E7, #E8404E1A);
         /* Danger lifted for night. Nothing can go *darker* than warning on a
         dark panel and stay legible, so severity reads as hotter and
         brighter instead — 5.55:1 on its own strongest band, where
         warning sits at 4.79:1. */
         --danger: light-dark(#7E1220, #FF8A93);
-        --danger-bg: light-dark(#F6CFCCEB, #FF3B4733);
-        --danger-bg1: light-dark(#FBE3E1EB, #FF3B471A);
+        --danger-bg: light-dark(#FFCFCD, #FF3B4733);
+        --danger-bg1: light-dark(#FFE4E3, #FF3B471A);
         /* Info lifted for night — light sky-blue clears AA on the dark panel. */
         --info: light-dark(#215D70, #86C0DA);
-        --info-bg: light-dark(#D6EAF4EB, #5FA6C833);
-        --info-bg1: light-dark(#E7F2F8EB, #5FA6C81A);
+        --info-bg: light-dark(#D4EEFB, #5FA6C833);
+        --info-bg1: light-dark(#E7F5FC, #5FA6C81A);
         /* Attention lifted for night — a warm amber that clears AA on its own
         strongest band (5.96:1) and stays clearly apart from --warning. */
         --attention: light-dark(#805407, #F0C05A);
-        --attention-bg: light-dark(#F7E4B8EB, #E8B34A33);
-        --attention-bg1: light-dark(#FBEFD4EB, #E8B34A1A);
+        --attention-bg: light-dark(#FBE6B7, #E8B34A33);
+        --attention-bg1: light-dark(#FCF0D3, #E8B34A1A);
         /* Tip lifted for night — same value --pine already uses at night. */
-        --tip: light-dark(#4F6B3E, #8FB07A);
-        --tip-bg: light-dark(#DDEBCEEB, #8FB07A33);
-        --tip-bg1: light-dark(#EAF3E1EB, #8FB07A1A);
+        --tip: light-dark(#206220, #8FB07A);
+        --tip-bg: light-dark(#DCF2D0, #8FB07A33);
+        --tip-bg1: light-dark(#EAF7E3, #8FB07A1A);
     }
 }

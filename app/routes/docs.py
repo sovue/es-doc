@@ -9,7 +9,7 @@ from ..utils.docs import flatten_tree
 from ..utils.modified import format_ru
 from ..utils.file import templates, read_text
 from ..utils.md import render
-from ..utils.http import cache_headers
+from ..utils.http import cache_headers, is_precompressed
 
 router = APIRouter(prefix='/docs')
 
@@ -43,8 +43,9 @@ async def image(file, request: Request):
         raise HTTPException(404, f'Изображения "{file}" не существует.')
 
     # Same day-long cache the game assets get (res.py) — one setting, one
-    # header builder, rather than the same literal written twice.
-    return FileResponse(str(path), headers=cache_headers())
+    # header builder, rather than the same literal written twice. Screenshots
+    # are PNG/WebP already, so they skip gzip too.
+    return FileResponse(str(path), headers=cache_headers(precompressed=is_precompressed(path)))
 
 
 @router.get('/{doc}')

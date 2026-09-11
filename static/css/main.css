@@ -43,7 +43,7 @@ body {
        --header-h by header.html, plus its 1px bottom border. */
     padding-top: calc(var(--header-h) + 1px);
 
-    background: linear-gradient(to right, var(--bg), var(--bg-light));
+    background: linear-gradient(to right, var(--bg), var(--bg-page-end));
     color: var(--text);
 
     font-family: var(--font-sans);
@@ -61,6 +61,17 @@ body.bg-solid {
 ::selection {
     background: var(--selection-bg);
     color: var(--selection-text);
+}
+
+/* The parts of the page the browser draws itself take the leaf too: native
+   checkboxes, radios and ranges everywhere, and the caret in every field. */
+:root {
+    accent-color: var(--accent);
+}
+
+input,
+textarea {
+    caret-color: var(--accent);
 }
 
 /* ── Screen-reader only ──────────────────────────────────── */

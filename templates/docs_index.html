@@ -11,7 +11,12 @@
     a separator between every group. -#}
 <li class="doc-tree-sep" role="presentation" aria-hidden="true"><hr></li>
 {%- elif node.kind == 'heading' %}
-<li class="doc-tree-group" role="presentation">
+{#- A group is a real item of the list it sits in, holding its label and its
+    own list. It used to be `role="presentation"`, which left the outer list
+    owning something that was not a listitem (axe: aria-required-children):
+    a screen reader's item count skipped every group, and the label was loose
+    text inside a list. -#}
+<li class="doc-tree-group">
     <span class="doc-tree-heading">{{ node.title }}</span>
     {%- if node.children %}
     {#- The label is decoration for sighted readers; the same words reach a

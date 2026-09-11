@@ -8,8 +8,8 @@ h1, h2, h3, h4, h5, h6 {
     margin-top: 2em;
     margin-bottom: 0.6em;
 
-    /* Ink, not accent: brand reserves pioneer red for spotlights, not every
-       heading. PT Serif carries the warmth (DESIGN.md §03). */
+    /* Ink, not accent: the leaf marks what you can press, and a green heading
+       would read as one more link. PT Serif carries the warmth (DESIGN.md §03). */
     color: var(--text);
     font-family: var(--font-serif);
 
@@ -77,7 +77,7 @@ a:hover {
 }
 
 /* Links inside running text carry the faint underline at rest (vars.css,
-   --link-underline); without it a link mid-sentence read as a red word.
+   --link-underline); without it a link mid-sentence reads as a coloured word.
    Footnote markers keep none — a superscript numeral is its own cue, and a
    line would crowd a 0.75em glyph — and so does a link whose whole label is
    inline code, which already draws its own (code.css). */
@@ -238,8 +238,8 @@ img {
 }
 
 /* TOC links read as quiet wayfinding (ink-soft), warming to accent on
-   interaction — a whole sidebar of red would break the "once per screen"
-   rule. Mirrors the top-nav link pattern. */
+   interaction — a whole sidebar of leaf green would break the "once per
+   screen" rule. Mirrors the top-nav link pattern. */
 .sidebar a {
     color: var(--text-soft);
     text-decoration: none;
