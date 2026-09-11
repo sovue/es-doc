@@ -1081,37 +1081,10 @@ video.fb-media {
     font-size: 1.7rem;
 }
 
-/* ── Empty state ─────────────────────────────────────────── */
-
-.res-empty {
-    max-width: 55ch;
-    color: var(--text-soft);
-}
-
-.res-empty-title {
-    margin: 0 0 8px;
-    font-weight: 600;
-    color: var(--text);
-}
-
-.res-empty p {
-    margin: 0;
-    line-height: var(--lh-prose);
-}
-
-.res-empty a {
-    color: var(--accent);
-    text-decoration: none;
-}
-
-.res-empty a:hover {
-    text-decoration: underline;
-}
-
 /* ── Прочие ссылки (community hub) ───────────────────────
    What the community shares that this site can't scan into a listing: an
    archive, a tool, a pack hosted somewhere else. Same bordered `.sections-list`
-   rows as the categories above it and as /news — an outbound link is a row
+   rows as the categories above it and as /news/sources — an outbound link is a row
    like any other here — so the only thing this block adds is a title that
    marks where the site's own listings end and the rest of the internet
    begins. Serif title in the same voice as a resource group's, with the lead

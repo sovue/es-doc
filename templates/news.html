@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 
-{% set page_title = 'Новостные ресурсы — ES Doc' %}
+{% set page_title = 'Новости — ES Doc' %}
 {% set body_class = 'bg-solid' %}
+{% set extra_css = ['/static/css/news.css'] %}
 
 {% block content %}
 <div class="page">
@@ -11,35 +12,56 @@
         <section class="page-hero">
             <div class="page-hero-inner">
                 <a href="/" class="page-back"><span aria-hidden="true">←</span> На главную</a>
-                <h1 class="page-title">Новостные ресурсы</h1>
+                <h1 class="page-title">Новости</h1>
                 <p class="page-lead">
-                    Каналы и сообщества, которые публикуют новости и контент, связанный
-                    с «Бесконечным Летом» и модами к нему.
+                    Что нового на ES Doc: свежие статьи, новые разделы и изменения на сайте.
                 </p>
             </div>
         </section>
 
         <div class="page-main">
 
-            {% if resources %}
-            <ul class="sections-list" role="list">
-                {% for r in resources %}
-                <li>
-                    <a href="{{ r.url }}" class="section-row">
-                        <span class="section-name">{{ r.name }}</span>
-                        {% if r.note %}<span class="section-desc">{{ r.note }}</span>{% endif %}
-                        <span class="section-arrow" aria-hidden="true">→</span>
-                    </a>
+            {% if posts %}
+            {#- Newest first, so an ordered list would count backwards; the
+                dates already carry the order. -#}
+            <ul class="news-list" role="list">
+                {% for p in posts %}
+                <li class="news-item">
+                    <article aria-labelledby="news-{{ loop.index }}">
+                        {% if p.date_label %}<time class="news-date" datetime="{{ p.date_iso }}">{{ p.date_label }}</time>{% endif %}
+                        <h2 class="news-title" id="news-{{ loop.index }}"><a href="/news/{{ p.slug|urlencode }}">{{ p.title }}</a></h2>
+                        {% if p.lead %}<p class="news-lead">{{ p.lead }}</p>{% endif %}
+                    </article>
                 </li>
                 {% endfor %}
             </ul>
             {% else %}
             <div class="res-empty">
-                <p class="res-empty-title">Список пока пуст.</p>
-                <p>Знаете канал или сообщество, которое стоит здесь указать —
-                   <a href="https://github.com/sovue/es-doc/issues">расскажите нам</a>.</p>
+                <p class="res-empty-title">Новостей пока нет.</p>
+                <p>Первые появятся здесь, а пока анонсы проекта выходят
+                   в <a href="https://t.me/sovue_esdoc">Telegram-канале</a>.</p>
             </div>
             {% endif %}
+
+            <section class="news-elsewhere" aria-labelledby="news-elsewhere-label">
+                <h2 class="authors-list-label" id="news-elsewhere-label">Где ещё следить</h2>
+                <ul class="sections-list" role="list">
+                    <li>
+                        <a href="https://t.me/sovue_esdoc" class="section-row">
+                            <span class="section-name">Канал ES Doc</span>
+                            <span class="section-desc">Анонсы проекта в Telegram</span>
+                            <span class="section-arrow" aria-hidden="true">→</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/news/sources" class="section-row">
+                            <span class="section-name">Новостные ресурсы</span>
+                            <span class="section-desc">Каналы и сообщества с новостями о «Бесконечном Лете»</span>
+                            <span class="section-arrow" aria-hidden="true">→</span>
+                        </a>
+                    </li>
+                </ul>
+            </section>
 
         </div>
 

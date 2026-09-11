@@ -1,0 +1,106 @@
+/* ── Project news (/news and /news/<post>) ───────────────────
+   A post is listed by its date, its title and its opening paragraph — enough
+   to decide whether to open it, and no more. Rows, not cards, like every
+   other list on the site (the Flat-By-Default Rule): a hairline between
+   posts, no shadow, no fill. The date is metadata, so it takes the mono
+   label voice; the title is the one thing to click, so it is the only part
+   that warms to accent. */
+
+.news-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+}
+
+.news-item {
+    padding: 22px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.news-date {
+    display: block;
+    margin: 0 0 6px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+}
+
+.news-title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: var(--fs-lead);
+    font-weight: 700;
+    line-height: var(--lh-heading);
+    text-wrap: balance;
+}
+
+.news-title a {
+    color: var(--text);
+    text-decoration: none;
+    transition: color 0.15s var(--ease-out);
+}
+
+.news-title a:hover,
+.news-title a:focus-visible {
+    color: var(--accent);
+}
+
+.news-title a:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+}
+
+/* Three lines at most: a lead is a preview, and a post that opens with a
+   long paragraph would otherwise push every other post down the page. */
+.news-lead {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+
+    margin: 8px 0 0;
+    font-size: var(--fs-ui);
+    line-height: var(--lh-ui);
+    color: var(--text-soft);
+    -webkit-hyphens: auto;
+    hyphens: auto;
+}
+
+/* «Где ещё следить» — the project channel and the community sources page,
+   after the posts rather than before them: the page is for the news. */
+.news-elsewhere {
+    margin-top: 56px;
+}
+
+/* ── A single post ───────────────────────────────────────────
+   Rendered by the same markdown pipeline and prose styles as an article
+   (doc.css), minus the sidebar: a post has no table of contents worth a
+   column, and no tree to sit in. Without the sidebar the column would run
+   to .content's 1200px, which is wide for something read top to bottom
+   once, so a post stops at a comfortable measure instead. */
+
+.content.news-post {
+    max-width: 860px;
+}
+
+.news-post-date {
+    margin: 0 0 4px;
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .news-title a {
+        transition: none;
+    }
+}

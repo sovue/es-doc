@@ -1089,6 +1089,37 @@ a.section-row:focus-visible .section-arrow {
     }
 }
 
+/* ── Empty state ─────────────────────────────────────────────
+   Lived in resources.css, where it started, while /news, /news/sources,
+   /literature and /artists used it too without loading that sheet — so
+   everywhere but the resource pages it rendered as bare text with a
+   browser-blue link. Site-wide now, like the section rows. */
+
+.res-empty {
+    max-width: 55ch;
+    color: var(--text-soft);
+}
+
+.res-empty-title {
+    margin: 0 0 8px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.res-empty p {
+    margin: 0;
+    line-height: var(--lh-prose);
+}
+
+.res-empty a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.res-empty a:hover {
+    text-decoration: underline;
+}
+
 /* ── GitHub contributors gallery ─────────────────────────── */
 
 .gh-contributors-status {
@@ -1344,11 +1375,12 @@ a.section-row:focus-visible .section-arrow {
 }
 
 /* The section rows — the home page's own contents, and the same component on
-   /docs/, /news, /literature and /support — put the name, its description and
-   an arrow on one line, with the description clipped to whatever is left.
-   That fits a desktop and nothing else: at 402px (an iPhone 17) all eight
-   home-page rows were cut, the worst of them showing 87px of a 365px
-   sentence, and on /news one description had been squeezed to zero width.
+   /docs/, /news/sources, /literature and /support — put the name, its
+   description and an arrow on one line, with the description clipped to
+   whatever is left. That fits a desktop and nothing else: at 402px (an
+   iPhone 17) all eight home-page rows were cut, the worst of them showing
+   87px of a 365px sentence, and on the news-sources list one description
+   had been squeezed to zero width.
    A quarter of a sentence ending in an ellipsis is not a shorter
    explanation, it is a broken one.
 

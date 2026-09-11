@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% set page_title = title ~ ' — ES Doc' %}
+{#- The article stylesheets: a post is written in the same markdown as a doc
+    and gets the same prose, code panels and callouts. -#}
+{% set extra_css = ['/static/css/syntax.css', '/static/css/code.css', '/static/css/doc.css', '/static/css/news.css'] %}
+
+{% block content %}
+<div class="page">
+
+    <div class="layout">
+
+        <main class="content news-post" id="main-content">
+            <a href="/news" class="page-back"><span aria-hidden="true">←</span> Новости</a>
+
+            {% if post.date_label %}
+            <p class="news-post-date"><time datetime="{{ post.date_iso }}">{{ post.date_label }}</time></p>
+            {% endif %}
+
+            {% if not has_h1 %}<h1>{{ title }}</h1>{% endif %}
+
+            {{ body|safe }}
+
+            {% if older or newer %}
+            {#- The article pager, pointed through time instead of the docs
+                tree: «next» is the newer post, so reading forward from an
+                old one follows the project as it happened. -#}
+            <nav class="doc-pager" aria-label="Соседние новости">
+                {% if older %}
+                <a href="/news/{{ older.slug|urlencode }}" class="doc-prev-link">
+                    <span class="doc-prev-arrow" aria-hidden="true">←</span>
+                    <span class="doc-prev-meta">
+                        <span class="doc-prev-label">Раньше</span>
+                        <span class="doc-prev-title">{{ older.title }}</span>
+                    </span>
+                </a>
+                {% endif %}
+
+                {% if newer %}
+                <a href="/news/{{ newer.slug|urlencode }}" class="doc-next-link">
+                    <span class="doc-next-meta">
+                        <span class="doc-next-label">Следующая новость</span>
+                        <span class="doc-next-title">{{ newer.title }}</span>
+                    </span>
+                    <span class="doc-next-arrow" aria-hidden="true">→</span>
+                </a>
+                {% endif %}
+            </nav>
+            {% endif %}
+        </main>
+
+    </div>
+
+    {% include "partials/footer.html" %}
+
+</div>
+
+<p class="sr-only" role="status" aria-live="polite" id="code-copy-status"></p>
+{% endblock %}
