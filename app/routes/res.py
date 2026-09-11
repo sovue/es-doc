@@ -161,12 +161,14 @@ async def community_page(resource, request: Request):
     # The community drop-in folder sits next to `game` in the assets root.
     return FileResponse(str(_confined_file(CONFIG.res_path.parent / 'community', resource)), headers=cache_headers())
 
-def _artist_img_value(kind, name):
+def _artist_img_value(kind, slug):
     # Fetch by reference, not by arbitrary URL/path: only values already
     # present in artists.yaml are reachable, so this is not an open proxy.
+    # Addressed by the artist's slug (artists_cache.py), not the raw name,
+    # which is free text and may not survive the trip through a URL.
     if kind not in ('logo', 'preview'):
         return None
-    item = next((a for a in CONFIG.artists if a['name'] == name), None)
+    item = next((a for a in CONFIG.artists if a['slug'] == slug), None)
     return item.get(kind) if item else None
 
 def _is_remote(value):
@@ -177,12 +179,12 @@ def _artists_local_dir():
     # from elsewhere) live here, next to `game` and `community`.
     return CONFIG.res_path.parent / 'artists'
 
-@router.get('/artist/{kind}/{name}')
-async def artist_image(kind, name, request: Request):
+@router.get('/artist/{kind}/{slug}')
+async def artist_image(kind, slug, request: Request):
 
-    value = _artist_img_value(kind, name)
+    value = _artist_img_value(kind, slug)
     if not value:
-        raise HTTPException(404, f'Изображение "{kind}" для «{name}» не существует.')
+        raise HTTPException(404, f'Изображение "{kind}" для «{slug}» не существует.')
 
     # A local file (relative path under assets/artists/) is already trusted
     # content — serve it as-is, confined against path traversal like /raw
@@ -197,8 +199,8 @@ async def artist_image(kind, name, request: Request):
                 try:
                     await fetch_artist_img(value)
                 except Exception:
-                    logger.exception(f'Fetching artist image "{kind}" for "{name}" failed.')
-                    raise HTTPException(502, f'Не удалось загрузить изображение для «{name}».') from None
+                    logger.exception(f'Fetching artist image "{kind}" for "{slug}" failed.')
+                    raise HTTPException(502, f'Не удалось загрузить изображение для «{slug}».') from None
 
     return FileResponse(str(artist_img_file(value)), media_type='image/webp', headers=cache_headers())
 
