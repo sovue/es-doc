@@ -108,7 +108,8 @@
     font-family: var(--font-mono);
     font-size: 0.85em;
     /* Inline chip, not a panel — same token prose's `code` uses, so it keeps
-       its own tan on the light theme instead of dissolving into the card. */
+       its own chip colour on the light theme instead of dissolving into the
+       card. */
     background: var(--code-bg-inline);
     color: var(--code-inline);
     padding: 2px 7px;
@@ -504,24 +505,21 @@ a.res-file:focus-visible {
     border-style: dashed;
 }
 
-/* Night swatches follow the same two-way theme plumbing as the sprite
-   group colors below — keep the two blocks in sync. */
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .res-swatch {
-        background: var(--char-night);
+/* The night value, as one `light-dark()` pair like every token in vars.css.
+   This used to be the same rule written twice — under the dark media query
+   and again under the toggle's `[data-theme="dark"]` — with a note to keep
+   the copies in sync. A browser without the function keeps the day value
+   above, which is the site's default anyway. The empty frame is restated
+   inside the block because this rule comes after it at the same
+   specificity and would otherwise paint it. */
+@supports (color: light-dark(#000, #fff)) {
+    .res-swatch {
+        background: light-dark(var(--char-day), var(--char-night));
     }
 
-    :root:not([data-theme="light"]) .res-swatch--none {
+    .res-swatch--none {
         background: none;
     }
-}
-
-:root[data-theme="dark"] .res-swatch {
-    background: var(--char-night);
-}
-
-:root[data-theme="dark"] .res-swatch--none {
-    background: none;
 }
 
 /* Small inline dots next to the day/night hex values in the "цвет имени"
@@ -581,11 +579,11 @@ a.res-file:focus-visible {
 }
 
 /* Idle state carries the character's in-game name color. The raw game values
-   are tuned for the dark dialogue box, so mix them toward ink for AA on paper;
-   at night they can run closer to full strength. 35% is the most colour that
-   keeps all thirteen at 4.5:1 or better across the whole paper gradient, sand
-   and cream alike: Электроник's pure yellow sets the limit, at 4.95:1 here and
-   2.72:1 at the 55% this used to be. */
+   are tuned for the dark dialogue box, so mix them toward ink for AA on the
+   white page; at night they can run closer to full strength. 35% was set as
+   the most colour that kept all thirteen at 4.5:1 on the old sand page, and on
+   white it holds with room to spare: Электроник's pure yellow still sets the
+   limit, at 5.86:1 (4.95 on sand, 2.72 at the 55% this used to be). */
 .res-jump a[style],
 .res-group-code[style] {
     color: color-mix(in oklab, var(--char) 35%, var(--text));
@@ -593,20 +591,15 @@ a.res-file:focus-visible {
 
 /* Dark lifts the character colours closer to full strength: 70%, where
    Пионер's red (#E60101) still makes 4.97:1 on the lighter end of the night
-   gradient; 80% left it at 4.31. Served two ways
-   so the theme toggle overrides the OS, mirroring vars.css: the media query
-   (guarded so a toggle-forced light OS opts out) and the explicit night
-   attribute. Keep the two blocks in sync. */
-@media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) .res-jump a[style],
-    :root:not([data-theme="light"]) .res-group-code[style] {
-        color: color-mix(in oklab, var(--char) 70%, var(--text));
+   gradient; 80% left it at 4.31. One `light-dark()` pair, like the swatch
+   above and every token in vars.css — it used to be two copies of the night
+   rule (media query and toggle attribute) kept in sync by hand. */
+@supports (color: light-dark(#000, #fff)) {
+    .res-jump a[style],
+    .res-group-code[style] {
+        color: light-dark(color-mix(in oklab, var(--char) 35%, var(--text)),
+                          color-mix(in oklab, var(--char) 70%, var(--text)));
     }
-}
-
-:root[data-theme="dark"] .res-jump a[style],
-:root[data-theme="dark"] .res-group-code[style] {
-    color: color-mix(in oklab, var(--char) 70%, var(--text));
 }
 
 .res-jump a:hover {
@@ -658,7 +651,11 @@ a.res-file:focus-visible {
 
 .res-lightbox {
     padding: 0;
-    border: 1px solid var(--border);
+    /* Elevation is the Modal shadow over the scrim; a hairline on top of it
+       was a second way of saying the same thing. Transparent rather than
+       gone, so high-contrast mode, which drops the shadow, still paints an
+       edge (same as the search listbox, components.css). */
+    border: 1px solid transparent;
     border-radius: var(--radius-md);
     background: var(--bg-elevated);
     box-shadow: var(--shadow-modal);
@@ -681,12 +678,11 @@ a.res-file:focus-visible {
     margin: 0 auto;
 }
 
-/* The bar keeps --bg-surface while the dialog around it stays elevated, for
-   the same reason the footer's support control does (DESIGN.md §Site Footer):
-   accent text on --bg-elevated is 4.12:1 at night, under AA, and on
-   --bg-surface it is 4.87 dark / 5.26 light. The half-step down from the
-   dialog's own surface also seats the bar under the image instead of floating
-   on the same plane. */
+/* The bar keeps --bg-surface while the dialog around it stays elevated: the
+   half-step down from the dialog's own surface seats the bar under the image
+   instead of floating on the same plane. It began as a contrast fix — the old
+   pioneer-red accent was 4.12:1 on --bg-elevated at night — and the leaf holds
+   6.77:1 there, so the step is now kept for the seating alone. */
 .res-lightbox-bar {
     display: flex;
     align-items: center;
@@ -870,8 +866,8 @@ a.res-file:focus-visible {
 }
 
 /* Folders read at a glance, like in every file manager — the warm relief
-   orange, not the red spotlight. Mixed toward ink so it clears the 3:1
-   non-text floor on sand paper (raw --sunset is only 1.99:1 there); at night
+   orange, not the leaf that marks links. Mixed toward ink so it clears the 3:1
+   non-text floor on white (raw --sunset is only 2.38:1 there); at night
    the mix lands lighter against the dark bg, staying well clear. Same
    toward-ink treatment the sprite character colours use. */
 .fb-ico--dir {

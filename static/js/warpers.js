@@ -10,7 +10,7 @@
 
    Each canvas draws its curve at rest and runs a marker along it (plus
    a travel track under the plot) while its cell is hovered or focused.
-   Colours are read from the stylesheet so previews follow the paper /
+   Colours are read from the stylesheet so previews follow the day /
    lake themes instead of pinning their own palette.
    ===================================================================== */
 
@@ -610,8 +610,8 @@ class WarperCanvas {
         ctx.fillText('1', right, axisY + TICK + 5);
 
         if (!this.active) {
-            // At rest the preview stays ink-quiet: pioneer red shows up only
-            // on the one curve you're pointing at (DESIGN.md, Galstuk Rule).
+            // At rest the preview stays ink-quiet: the leaf shows up only
+            // on the one curve you're pointing at (DESIGN.md, One-Leaf Rule).
             ctx.strokeStyle = palette.line;
 
             ctx.beginPath();

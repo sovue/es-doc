@@ -34,10 +34,11 @@ def _text_asset(request: Request, rel: str, media_type: str) -> Response:
 @router.get('/favicon.webp')
 async def favicon():
     # Fetched on nearly every page; a week of caching with FileResponse's
-    # built-in ETag/Last-Modified revalidation after that.
+    # built-in ETag/Last-Modified revalidation after that. WebP is already
+    # compressed, so it opts out of GZipMiddleware like the fonts below.
     return FileResponse(
         str(ROOT / 'static' / 'img' / 'favicon.webp'),
-        headers={'Cache-Control': 'public, max-age=604800'},
+        headers={'Cache-Control': 'public, max-age=604800', 'Content-Encoding': 'identity'},
     )
 
 @router.get('/static/css/{name}')

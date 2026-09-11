@@ -139,7 +139,7 @@
 }
 
 /* The page's one call to action, so it carries the accent at rest — the
-   previews only spend red under the cursor, leaving the spotlight free. */
+   previews only spend the leaf under the cursor, leaving the spotlight free. */
 .wp-lab-play {
     display: inline-flex;
     align-items: center;

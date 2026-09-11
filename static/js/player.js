@@ -50,6 +50,11 @@
     // while a track plays.
     const bar = document.createElement('div');
     bar.className = 'res-nowplaying';
+    // A landmark of its own: the bar is appended to <body>, outside the page's
+    // <main>, so without a region its controls were loose content that a
+    // screen reader's landmark list skipped straight past.
+    bar.setAttribute('role', 'region');
+    bar.setAttribute('aria-label', 'Сейчас играет');
     bar.innerHTML =
         '<button type="button" class="res-nowplaying-pause" aria-label="Пауза">' +
         '<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">' +
@@ -118,6 +123,11 @@
 
     const stop = () => {
         audio.pause();
+        // The bar is about to leave the tab order (player.css), so a Stop
+        // pressed from the keyboard — or a track ending while focus sat on the
+        // seek bar — would drop focus to <body>. Hand it back to the button
+        // that started the track.
+        if (current && bar.contains(document.activeElement)) current.focus();
         bar.classList.remove('res-nowplaying--visible');
         if (current) {
             current.setAttribute('aria-pressed', 'false');

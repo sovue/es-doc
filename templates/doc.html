@@ -10,7 +10,9 @@
     groups is for the eye, not for a screen reader to announce. -#}
 <li class="sidebar-all-sep" role="presentation" aria-hidden="true"><hr></li>
 {%- elif node.kind == 'heading' %}
-<li class="sidebar-all-group" role="presentation">
+{#- A real listitem holding its label and its own list, like its twin on
+    /docs/ (docs_index.html explains why it is not presentational). -#}
+<li class="sidebar-all-group">
     <span class="sidebar-all-heading">{{ node.title }}</span>
     {%- if node.children %}
     <ul role="list" aria-label="{{ node.title }}">
