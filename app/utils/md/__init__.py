@@ -1,29 +1,38 @@
+import re
+
 from markdown_it import MarkdownIt
 from markdown_it.common.utils import escapeHtml, unescapeAll
 from pygments import highlight
 from pygments.filter import Filter
+from pygments.formatters import HtmlFormatter
 from pygments.lexers import get_lexer_by_name
 from pygments.lexers.special import TextLexer
-from pygments.formatters import HtmlFormatter
 from pygments.token import Comment, Whitespace
-import re
 
+from ..renpy_lexer import RenPyLexer
+from ..svg import SVG
+from .banner import banner, render_banner_close, render_banner_open
+from .details import (
+    details,
+    render_details_close,
+    render_details_open,
+    render_details_summary_close,
+    render_details_summary_open,
+)
+from .hatnote import hatnote, render_hatnote_close, render_hatnote_open
+from .lines import gutter, scroll_box, split_lines
+from .refs import (
+    ref_list,
+    ref_mark,
+    render_ref_item_close,
+    render_ref_item_open,
+    render_ref_mark,
+    render_refs_close,
+    render_refs_open,
+)
 from .slugs import heading_shift, heading_slugs, render_heading_open
 from .table import table_block
 from .template import template
-from .banner import BANNERS, banner, render_banner_open, render_banner_close
-from .details import (
-    details, render_details_close, render_details_open,
-    render_details_summary_close, render_details_summary_open,
-)
-from .hatnote import hatnote, render_hatnote_open, render_hatnote_close
-from .lines import gutter, scroll_box, split_lines
-from .refs import (
-    ref_list, ref_mark, render_ref_item_close, render_ref_item_open,
-    render_ref_mark, render_refs_close, render_refs_open,
-)
-from ..svg import SVG
-from ..renpy_lexer import RenPyLexer
 
 dummy_rule = lambda s: lambda self, tokens, idx, options, env: s
 
@@ -342,16 +351,15 @@ MD.block.ruler.before('fence', 'tip', template('tip'))
 MD.block.ruler.before('fence', 'attention', template('attention'))
 MD.block.ruler.before('fence', 'danger', template('danger'))
 
-# Article-status banners (`:::stub` / `:::wip` / `:::outdated`, `:::`-fenced
-# like the callouts above) and the disambiguation hatnote (`::about …`, its
+# Article-status banners (`:::{name}`, `:::`-fenced like the callouts above)
+# are generated from config.yaml; the disambiguation hatnote (`::about …`, its
 # own single-line syntax — see hatnote.py). Registration order doesn't
 # matter: every opener names itself.
 MD.block.ruler.before('fence', 'hatnote', hatnote)
 MD.block.ruler.before('fence', 'details', details)
 MD.block.ruler.before('fence', 'refs', ref_list)
 
-for _banner in BANNERS:
-    MD.block.ruler.before('fence', _banner, banner(_banner))
+MD.block.ruler.before('fence', 'banner', banner())
 
 MD.add_render_rule('heading_open', render_heading_open)
 
@@ -373,11 +381,10 @@ MD.add_render_rule('attention_close', dummy_rule('</div></div>'))
 MD.add_render_rule('danger_open', dummy_rule(f'<div class="danger">{SVG["danger"]}<div class="danger-content">'))
 MD.add_render_rule('danger_close', dummy_rule('</div></div>'))
 
-# One renderer for all three banners — the box differs only by icon, heading
-# and tone, and banner.py reads each of those off the token.
-for _banner in BANNERS:
-    MD.add_render_rule(f'{_banner}_open', render_banner_open)
-    MD.add_render_rule(f'{_banner}_close', render_banner_close)
+# One renderer for every configured banner — the box differs only by icon,
+# heading and tone, and banner.py reads each of those off the token.
+MD.add_render_rule('banner_open', render_banner_open)
+MD.add_render_rule('banner_close', render_banner_close)
 
 MD.add_render_rule('hatnote_open', render_hatnote_open)
 MD.add_render_rule('hatnote_close', render_hatnote_close)

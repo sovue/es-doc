@@ -377,7 +377,7 @@ The opener's text is parsed as **inline markdown**, not escaped flat, because ti
 
 Each banner ships **its own wording**: a serif title in the status colour plus a sentence of ink-soft explanation. That is the point — every unfinished article says the same thing the same way, so readers learn to recognise the banner instead of parsing a slightly different apology on each page. Authors choose the state, not the words; a note written after the marker replaces the default sentence when a page needs to be specific ("the Export section isn't written yet").
 
-The site-wide wording and presentation are configured in `config.yaml` under `banners`: `title` is plain text, `text` is Markdown, `icon` selects a shared SVG, and `tone` selects one of the five semantic colour families for both themes. Each omitted field inherits its default from `app/utils/config.py`; an author's note still replaces only the configured explanation.
+The banner set itself is generated from `config.yaml`: every key under `banners` becomes a `:::name` Markdown block, so adding or removing a key adds or removes a status without changing Python. `title` is plain text, `text` is Markdown, `icon` selects a shared SVG, and `tone` selects one of the five semantic colour families for both themes. The built-in `stub`, `wip` and `outdated` entries inherit omitted fields from `app/utils/config.py`; a new entry declares all four fields. An author's note still replaces only the configured explanation.
 
 ### Article Source and Date
 

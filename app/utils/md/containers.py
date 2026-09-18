@@ -29,9 +29,8 @@ everything else.
 import re
 
 # Registered by the modules that own them, so the registry cannot drift out of
-# step with the parsers: a container that nobody parses would make `find_closer`
-# count a fence that never opens, and one that parses but never registers would
-# have its closer stolen by whatever encloses it.
+# step with the parsers. Configured banners are resolved lazily below because
+# their names do not exist until config.yaml has been loaded.
 _NAMES: set[str] = set()
 
 # `:::name`, with or without the space the corpus uses both ways, and with or
@@ -58,7 +57,20 @@ def opener_name(line: str) -> str | None:
     if not match:
         return None
     name = match.group(1)
-    return name if name in _NAMES else None
+    if name in _NAMES:
+        return name
+
+    # Banner names are loaded from config after this module is imported. Keep
+    # the registry lazy so a custom configured opener is still counted while
+    # an enclosing callout searches for its matching closer.
+    try:
+        from ..config import CONFIG
+        if name in CONFIG.banner_names():
+            return name
+    except (ImportError, AttributeError, TypeError):
+        pass
+
+    return None
 
 
 def find_closer(state, startLine: int, endLine: int) -> int | None:

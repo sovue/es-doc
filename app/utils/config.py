@@ -278,13 +278,24 @@ class _ConfigContainer():
         return self.config.get('support') or []
 
     def banner(self, name: str) -> dict:
-        """Read at render time: Markdown rules are registered before setup().
-
-        Merge fields so older configs and partial overrides retain defaults.
-        """
-        defaults = self._DEFAULT_CONFIG['banners'][name]
+        """Return one configured banner, including defaults for old configs."""
+        defaults = self._DEFAULT_CONFIG['banners'].get(name, {})
         overrides = (self.config.get('banners') or {}).get(name) or {}
+        if not defaults and not overrides:
+            raise KeyError(f'Unknown banner: {name}')
         return defaults | overrides
+
+    def banner_names(self) -> tuple[str, ...]:
+        """Names accepted by the Markdown banner syntax.
+
+        Once a config contains ``banners``, it is the source of truth: adding
+        a key creates a new ``:::name`` block and removing one disables it.
+        A config written before banners existed still receives the defaults.
+        """
+        configured = self.config.get('banners')
+        if configured is None:
+            configured = self._DEFAULT_CONFIG['banners']
+        return tuple(configured)
 
     def setup(self, path):
 

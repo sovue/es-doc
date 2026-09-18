@@ -5,7 +5,6 @@ from markdown_it.rules_block import StateBlock
 
 from ..config import CONFIG
 from ..svg import SVG
-from . import containers
 
 # Page-level status banners for articles that aren't finished. Unlike the
 # `:::info` / `:::warning` callouts (template.py), these carry their own
@@ -14,15 +13,8 @@ from . import containers
 # a slightly different sentence on each page. The author only decides *which*
 # state the article is in; the note underneath is optional and replaces the
 # default sentence when given.
-# Syntax stays fixed; presentation comes from config.yaml at render time.
-BANNERS = ('stub', 'wip', 'outdated')
+# Syntax and presentation both come from config.yaml at render time.
 BANNER_TONES = ('info', 'tip', 'attention', 'warning', 'danger')
-
-# Counted as containers by everything that encloses them, even though a
-# banner keeps its own bounded scan below: from the outside it opens and
-# closes with the same markers as a callout, so an enclosing block has to
-# know not to take a banner's closer for its own.
-containers.register(*BANNERS)
 
 
 def render_banner_open(self, tokens, idx, options, env):
@@ -43,13 +35,13 @@ def render_banner_open(self, tokens, idx, options, env):
 def render_banner_close(self, tokens, idx, options, env):
     return '</div></div></aside>'
 
-def banner(name: str):
+def banner():
     # `:::stub`, or `:::stub <короткая приписка>` on the same line. A multi-line
     # note may follow, closed by `:::` — but only while the lines run on without
     # a blank one between them. A banner note is a sentence or two by design, and
     # the bounded scan means a lone `:::stub` can never swallow the rest of the
     # page looking for a closer that was never written.
-    open_re = re.compile(rf'^:::\s*{re.escape(name)}(?:\s+(\S.*))?\s*$')
+    open_re = re.compile(r'^:::\s*([A-Za-z][\w-]*)(?:\s+(\S.*))?\s*$')
 
     def block(state: StateBlock, startLine: int, endLine: int, silent: bool):
         pos = state.bMarks[startLine] + state.tShift[startLine]
@@ -59,10 +51,14 @@ def banner(name: str):
         if not match:
             return False
 
+        name = match.group(1)
+        if name not in CONFIG.banner_names():
+            return False
+
         if silent:
             return True
 
-        lead = (match.group(1) or '').strip()
+        lead = (match.group(2) or '').strip()
 
         # Find the optional note body. bodyEnd stays at startLine + 1 for the
         # bare single-line form; nextLine is where parsing resumes afterwards.
@@ -87,7 +83,7 @@ def banner(name: str):
         else:
             bodyEnd = nextLine = startLine + 1
 
-        token = state.push(f'{name}_open', 'aside', 1)
+        token = state.push('banner_open', 'aside', 1)
         token.meta = {'kind': name}
         token.map = [startLine, nextLine]
 
@@ -118,7 +114,7 @@ def banner(name: str):
             inline.children = []
             state.push('paragraph_close', 'p', -1)
 
-        state.push(f'{name}_close', 'aside', -1)
+        state.push('banner_close', 'aside', -1)
 
         state.line = nextLine
         return True
