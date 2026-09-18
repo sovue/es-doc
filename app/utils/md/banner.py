@@ -1,7 +1,9 @@
 import re
 
+from markdown_it.common.utils import escapeHtml
 from markdown_it.rules_block import StateBlock
 
+from ..config import CONFIG
 from ..svg import SVG
 from . import containers
 
@@ -12,22 +14,9 @@ from . import containers
 # a slightly different sentence on each page. The author only decides *which*
 # state the article is in; the note underneath is optional and replaces the
 # default sentence when given.
-BANNERS = {
-    'stub': (
-        'Эта статья — заготовка.',
-        'Скоро здесь будет новая статья, мы уже работаем над этим.',
-    ),
-    'wip': (
-        'Эта статья сейчас переписывается',
-        'Над этой статьёй ведётся активная работа: '
-        'содержимое может измениться в любой момент, '
-        'поэтому не стоит опираться на него как на окончательное.',
-    ),
-    'outdated': (
-        'Эта статья устарела',
-        'Она не соответствует нашим стандартам качества и требует ревизии.',
-    ),
-}
+# Syntax stays fixed; presentation comes from config.yaml at render time.
+BANNERS = ('stub', 'wip', 'outdated')
+BANNER_TONES = ('info', 'tip', 'attention', 'warning', 'danger')
 
 # Counted as containers by everything that encloses them, even though a
 # banner keeps its own bounded scan below: from the outside it opens and
@@ -38,10 +27,14 @@ containers.register(*BANNERS)
 
 def render_banner_open(self, tokens, idx, options, env):
     kind = tokens[idx].meta['kind']
-    title = BANNERS[kind][0]
+    settings = CONFIG.banner(kind)
+    title = escapeHtml(settings['title'])
+    tone = settings['tone']
+    if tone not in BANNER_TONES:
+        raise ValueError(f'Unknown banner tone for {kind}: {tone}')
     return (
-        f'<aside class="banner banner-{kind}" role="note">'
-        f'{SVG[kind]}'
+        f'<aside class="banner banner-{kind} banner-tone-{tone}" role="note">'
+        f'{SVG[settings["icon"]]}'
         f'<div class="banner-content">'
         f'<p class="banner-title">{title}</p>'
         f'<div class="banner-note">'
@@ -121,7 +114,7 @@ def banner(name: str):
         if not lead and bodyEnd == startLine + 1:
             state.push('paragraph_open', 'p', 1)
             inline = state.push('inline', '', 0)
-            inline.content = BANNERS[name][1]
+            inline.content = CONFIG.banner(name)['text']
             inline.children = []
             state.push('paragraph_close', 'p', -1)
 

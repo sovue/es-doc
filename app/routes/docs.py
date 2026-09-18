@@ -91,7 +91,7 @@ async def page(doc, request: Request):
         # reading the page gets an unambiguous, machine-parseable timestamp.
         'modified': format_ru(modified) if modified else None,
         'modified_iso': modified.isoformat(timespec='minutes') if modified else None,
-        # The whole docs tree, for the collapsed all-articles nav under the
+        # The whole docs tree, for the collapsed all-articles nav above the
         # page's own table of contents.
         'tree': CONFIG.docs_tree,
     })

@@ -41,11 +41,27 @@
 
         <aside class="sidebar">
             <a href="/docs/" class="page-back"><span aria-hidden="true">←</span> Документация</a>
+            {% if tree %}
+            {#- Global navigation precedes the current article and its contents.
+                The tree expands in full; only the desktop sidebar scrolls.
+                On phones each new article starts with the tree closed. -#}
+            <details class="sidebar-all" id="sidebar-all">
+                <summary class="sidebar-all-summary">Все статьи</summary>
+                <nav aria-label="Все статьи">
+                    <ul class="sidebar-all-tree" role="list">
+                        {% for node in tree %}{{ tree_node(node) }}{% endfor %}
+                    </ul>
+                </nav>
+            </details>
+            {#- Restore the desktop preference before the first paint. -#}
+            <script>(function(){if(!window.matchMedia('(min-width: 48.0625em)').matches)return;try{if(localStorage.getItem('es-doc-all-articles')==='1')document.getElementById('sidebar-all').open=true;}catch(e){}})();</script>
+            {% endif %}
+
             <p class="sidebar-title">{{ title }}</p>
             {#- The page's own headings. On a desktop this is a plain list and
                 the <summary> above it is hidden — the sidebar title already
                 says which article's contents these are. On a phone it becomes
-                the third disclosure in a column of three, closed on arrival:
+                a disclosure closed on arrival:
                 the strip it replaced ran four times the width of the screen
                 with no sign that it did, so four fifths of the headings were
                 simply unreachable.
@@ -61,7 +77,7 @@
                     {{ nav|safe }}
                 </ul></nav>
             </details>
-            {#- Same reasoning as the «Все статьи» script further down: inline
+            {#- Same reasoning as the «Все статьи» script above: inline
                 and immediately after the element, so the sidebar never paints
                 in one state and flips to the other. Wide screens always open;
                 narrow ones start closed and then follow whatever the reader
@@ -69,37 +85,7 @@
             <script>(function(){var d=document.getElementById('sidebar-contents');if(!d)return;if(window.matchMedia('(min-width: 48.0625em)').matches)return;var v='0';try{v=localStorage.getItem('es-doc-contents')||'0';}catch(e){}d.open=v==='1';})();</script>
             {% endif %}
 
-            {% if tree %}
-            {#- All articles. Closed on a first visit, so the page's own
-                contents stay the first thing in the sidebar and the wider
-                tree is one click away without pushing them off-screen;
-                after that it reopens however the reader last left it. -#}
-            <details class="sidebar-all" id="sidebar-all">
-                <summary class="sidebar-all-summary">Все статьи</summary>
-                <nav aria-label="Все статьи">
-                    <ul class="sidebar-all-tree" role="list">
-                        {% for node in tree %}{{ tree_node(node) }}{% endfor %}
-                    </ul>
-                </nav>
-            </details>
-            {#- Reapply the saved state before the first paint. Inline and
-                immediately after the element, not in head.html, because the
-                <details> has to exist for this to reach it — the theme script
-                can live in the head only because it sets an attribute on
-                <html>. Deferring it to docs.js would open the tree after the
-                sidebar had already painted shut. -#}
-            <script>(function(){try{if(localStorage.getItem('es-doc-all-articles')==='1')document.getElementById('sidebar-all').open=true;}catch(e){}})();</script>
-            {% endif %}
-            {#- Collapsed by default, same as "Все статьи" above it: this was
-                an always-open block that, on a narrow screen, pushed the
-                article's own <h1> as far as 425px down the page — a
-                power-user affordance outranking the content it describes.
-                Closed everywhere (not just on mobile) for the same reason
-                "Все статьи" is: one consistent rule beats a breakpoint-only
-                exception, and the desktop sidebar loses nothing essential,
-                just one click to a feature most readers never touch. -#}
-            <details class="sidebar-source">
-                <summary class="sidebar-source-label">Исходник страницы</summary>
+            <div class="sidebar-source">
                 <div class="sidebar-source-links">
                     <a href="?md">
                         <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
@@ -114,22 +100,17 @@
                         </svg>
                         Скачать</a>
                 </div>
-            </details>
+                {% if modified %}
+                <p class="doc-modified">
+                    Последнее изменение:
+                    <time datetime="{{ modified_iso }}">{{ modified }}</time>
+                </p>
+                {% endif %}
+            </div>
         </aside>
 
         <main class="content" id="main-content">
             {{ body|safe }}
-
-            {#- Below the article, above the pager: a reader checks how current
-                a modding guide is *after* reading it, when the question is
-                "does this still apply", not before, when it would only be
-                noise between them and the first paragraph. -#}
-            {% if modified %}
-            <p class="doc-modified">
-                Последнее изменение:
-                <time datetime="{{ modified_iso }}">{{ modified }}</time>
-            </p>
-            {% endif %}
 
             {% if prev_doc or next_doc %}
             <nav class="doc-pager" aria-label="Соседние статьи">

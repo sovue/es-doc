@@ -4,16 +4,18 @@
 
 /* ── Remember whether the all-articles tree is open ──
    Restoring it is the inline script's job (doc.html, right after the element,
-   so an open tree never flashes shut); this half only records the choice. A
-   standing viewing preference, so localStorage rather than the URL — same
-   split the theme toggle uses. */
+   so an open tree never flashes shut); this half records the desktop choice.
+   Phones start each new article with the tree closed, so a full-height list
+   never pushes the article away just because the previous page had it open. */
 (function () {
     const all = document.getElementById('sidebar-all');
     if (!all) return;
 
     const KEY = 'es-doc-all-articles';
+    const wide = matchMedia('(min-width: 48.0625em)');
 
     all.addEventListener('toggle', function () {
+        if (!wide.matches) return;
         try { localStorage.setItem(KEY, all.open ? '1' : '0'); } catch (e) {}
     });
 })();

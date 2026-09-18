@@ -15,6 +15,31 @@ class _ConfigContainer():
         'assets-path': '',
         'support': [],
 
+        # Article status banners. Authors choose a status in Markdown; site
+        # configuration owns its wording, icon and semantic colour family.
+        'banners': {
+            'stub': {
+                'title': 'Эта статья — заготовка.',
+                'text': 'Скоро здесь будет новая статья, мы уже работаем над этим.',
+                'icon': 'attention',
+                'tone': 'attention',
+            },
+            'wip': {
+                'title': 'Эта статья сейчас переписывается',
+                'text': 'Над этой статьёй ведётся активная работа: '
+                        'содержимое может измениться в любой момент, '
+                        'поэтому не стоит опираться на него как на окончательное.',
+                'icon': 'wip',
+                'tone': 'info',
+            },
+            'outdated': {
+                'title': 'Эта статья устарела',
+                'text': 'Она не соответствует нашим стандартам качества и требует ревизии.',
+                'icon': 'outdated',
+                'tone': 'warning',
+            },
+        },
+
         # Where the derived-image caches live (composed sprites, thumbnails,
         # tints, hero downscales, fetched artist images). Relative paths anchor
         # to ROOT, like assets-path. `temp/` is what .gitignore excludes, so
@@ -251,6 +276,15 @@ class _ConfigContainer():
         the non-monetary ways to help instead of showing a dead link.
         """
         return self.config.get('support') or []
+
+    def banner(self, name: str) -> dict:
+        """Read at render time: Markdown rules are registered before setup().
+
+        Merge fields so older configs and partial overrides retain defaults.
+        """
+        defaults = self._DEFAULT_CONFIG['banners'][name]
+        overrides = (self.config.get('banners') or {}).get(name) or {}
+        return defaults | overrides
 
     def setup(self, path):
 

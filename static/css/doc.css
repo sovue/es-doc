@@ -268,8 +268,7 @@ img {
 }
 
 @media (max-width: 48em) {
-    /* Same chevron label as «Все статьи» and «Исходник страницы» — three
-       sections of the sidebar, one control. */
+    /* Same disclosure control as «Все статьи». */
     .sidebar-contents-summary {
         display: flex;
         align-items: center;
@@ -317,15 +316,13 @@ img {
 }
 
 /* ── All articles (collapsed) ─────────────────────────────
-   The whole docs tree, tucked under the page's own contents. Closed by
-   default so the table of contents stays the first thing in the sidebar,
-   and given its own scroll box so opening it on a long tree scrolls inside
-   the disclosure instead of pushing the source links out of reach. */
+   Global navigation above the current article. The expanded tree takes its
+   full height, sharing the desktop sidebar's single scroll container. */
 
 .sidebar-all {
-    margin-top: 20px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border);
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
 }
 
 .sidebar-all-summary {
@@ -375,12 +372,6 @@ img {
 }
 
 .sidebar-all-tree {
-    /* Its own window: the sidebar is already a sticky viewport-height column,
-       so an open tree of forty articles has to scroll here rather than make
-       the whole column longer. */
-    max-height: 38vh;
-    overflow-y: auto;
-
     margin: 10px 0 0;
     padding-left: 0;
 }
@@ -443,69 +434,17 @@ img {
     font-weight: 600;
 }
 
-/* Power-user affordance: the page-source block under the TOC — open the raw
-   Markdown in place, or save it as «<страница>.md». Closed by default, same
-   disclosure as .sidebar-all right above it — a mono chevron label rather
-   than always-visible links, so this doesn't outrank the article itself on
-   a narrow screen (it used to push a real <h1> as far as 425px down). */
+/* Source actions stay visible, with the modification date directly below. */
 .sidebar-source {
     margin-top: 24px;
     padding-top: 14px;
     border-top: 1px solid var(--border);
 }
 
-.sidebar-source-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    cursor: pointer;
-    list-style: none;
-
-    font-family: var(--font-mono);
-    font-size: var(--fs-label);
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-soft);
-
-    transition: color 0.15s var(--ease-out);
-}
-
-.sidebar-source-label::-webkit-details-marker {
-    display: none;
-}
-
-/* Same chevron as .sidebar-all-summary, at the same label scale — one
-   disclosure vocabulary for both collapsed sidebar sections. */
-.sidebar-source-label::before {
-    content: '';
-    flex-shrink: 0;
-
-    width: 0.4em;
-    height: 0.4em;
-
-    border-right: 2px solid currentColor;
-    border-bottom: 2px solid currentColor;
-    transform: rotate(-45deg);
-
-    transition: transform 0.15s var(--ease-out);
-}
-
-.sidebar-source[open] > .sidebar-source-label::before {
-    transform: rotate(45deg);
-}
-
-.sidebar-source-label:hover,
-.sidebar-source-label:focus-visible {
-    color: var(--accent);
-}
-
 .sidebar-source-links {
     display: flex;
     flex-wrap: wrap;
     gap: 4px 16px;
-    margin-top: 8px;
 }
 
 .sidebar-source-links a {
@@ -533,7 +472,6 @@ img {
    screen that is wide enough to keep this layout. */
 @media (min-width: 48.0625em) {
     .sidebar-all-summary,
-    .sidebar-source-label,
     .sidebar-source-links a {
         padding-block: 6px;
         margin-block: -6px;
@@ -542,7 +480,6 @@ img {
 
 @media (min-width: 48.0625em) and (pointer: coarse) {
     .sidebar-all-summary,
-    .sidebar-source-label,
     .sidebar-source-links a {
         min-height: 44px;
         padding-block: 0;
@@ -608,18 +545,20 @@ img {
    and the accent arrow, while "previous" is a small ink-soft backstop. They
    share a row; with only one of them present it takes its own side. */
 
-/* Metadata, not content: the Label role's mono and tracking say "this is the
-   page talking about itself", the same voice as «ИСХОДНИК СТРАНИЦЫ» in the
-   sidebar. Sits close under the last paragraph so it reads as belonging to
-   the article it dates, and the pager's own 56px rule separates it from what
-   comes next. */
+/* Metadata shares the source actions' quiet mono voice and stays close to
+   them. The timestamp wraps as a unit in the narrow desktop sidebar. */
 .doc-modified {
-    margin: 40px 0 0;
+    margin: 10px 0 0;
 
     font-family: var(--font-mono);
     font-size: var(--fs-label);
     letter-spacing: 0.04em;
     color: var(--text-soft);
+    line-height: var(--lh-ui);
+}
+
+.doc-modified time {
+    display: inline-block;
 }
 
 .doc-pager {
@@ -1014,9 +953,11 @@ img {
    from a callout is its content, not its box — a serif title plus a note,
    instead of one paragraph of prose. */
 
-.banner-stub     { --banner: var(--attention); --banner-bg: var(--attention-bg); --banner-bg1: var(--attention-bg1); }
-.banner-wip      { --banner: var(--info);      --banner-bg: var(--info-bg);      --banner-bg1: var(--info-bg1); }
-.banner-outdated { --banner: var(--warning);   --banner-bg: var(--warning-bg);   --banner-bg1: var(--warning-bg1); }
+.banner-tone-attention { --banner: var(--attention); --banner-bg: var(--attention-bg); --banner-bg1: var(--attention-bg1); }
+.banner-tone-info      { --banner: var(--info);      --banner-bg: var(--info-bg);      --banner-bg1: var(--info-bg1); }
+.banner-tone-warning   { --banner: var(--warning);   --banner-bg: var(--warning-bg);   --banner-bg1: var(--warning-bg1); }
+.banner-tone-tip       { --banner: var(--tip);       --banner-bg: var(--tip-bg);       --banner-bg1: var(--tip-bg1); }
+.banner-tone-danger    { --banner: var(--danger);    --banner-bg: var(--danger-bg);    --banner-bg1: var(--danger-bg1); }
 
 .banner {
     display: flex;
@@ -1272,15 +1213,14 @@ img {
        44px row. They open the two navigation blocks on the page, so they get
        the same. */
     .sidebar-contents-summary,
-    .sidebar-all-summary,
-    .sidebar-source-label {
+    .sidebar-all-summary {
         min-height: 44px;
     }
 
-    /* ── «Все статьи» and «Исходник страницы», as lists ──
+    /* ── Article links and source actions ──
        They keep the desktop shape — one row per article, groups intact — and
-       only gain what a finger needs. The tree's own 38vh scroll box already
-       stops twenty articles from burying the page.
+       only gain what a finger needs. The tree starts closed on each new
+       article, and expands in the page's normal flow when requested.
 
        `overflow-wrap` rather than the strip's `white-space: nowrap`: a title
        like «Спецификация API внутриигрового компаньона RKK Project 410» is
@@ -1291,13 +1231,6 @@ img {
         align-items: center;
         min-height: 44px;
         overflow-wrap: break-word;
-    }
-
-    .sidebar-all-tree {
-        /* Taller than the desktop 38vh: the sidebar is not a sticky column
-           here, so the tree is not competing with the rest of it for one
-           viewport — it is just a block the page scrolls past. */
-        max-height: 60vh;
     }
 
     .content {

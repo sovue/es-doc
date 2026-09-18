@@ -377,6 +377,14 @@ The opener's text is parsed as **inline markdown**, not escaped flat, because ti
 
 Each banner ships **its own wording**: a serif title in the status colour plus a sentence of ink-soft explanation. That is the point — every unfinished article says the same thing the same way, so readers learn to recognise the banner instead of parsing a slightly different apology on each page. Authors choose the state, not the words; a note written after the marker replaces the default sentence when a page needs to be specific ("the Export section isn't written yet").
 
+The site-wide wording and presentation are configured in `config.yaml` under `banners`: `title` is plain text, `text` is Markdown, `icon` selects a shared SVG, and `tone` selects one of the five semantic colour families for both themes. Each omitted field inherits its default from `app/utils/config.py`; an author's note still replaces only the configured explanation.
+
+### Article Source and Date
+
+The sidebar follows the scope of navigation: «Документация», the collapsible «Все статьи» tree, then the current article's title and contents. The expanded tree has no height cap or internal scrollbar: on desktop it shares the sticky sidebar's scroll container; on mobile it grows in the page flow. Desktop remembers the open state, while each new article starts with the tree closed on mobile so the reader reaches the text immediately.
+
+The sidebar exposes «Открыть .md» and «Скачать» directly, without a disclosure or an extra label. They remain quiet mono links below the navigation, separated from it by a hairline. «Последнее изменение» sits immediately below those links in the same metadata voice, with the timestamp kept together when it wraps. On narrow screens the links retain 44px tap targets; a missing date leaves only the two source actions.
+
 ### Disambiguation Hatnote
 `::about A | Б | ссылка` renders the one italic line above an article that says what this page covers and where the other meaning lives — «Эта статья о A; о Б см. …». PT Serif italic in ink-soft, boxed in a plain `--border` frame. Double colon, not triple: unlike every other `:::name` block on this page, a hatnote is one physical line with no body and no closer, and the shorter marker makes that visible on sight instead of inviting an author to hunt for a `:::` to close it. The frame is unpainted (no `--bg-light` fill), a step quieter than blockquote's painted card and well short of a banner's status-coloured one — it reads as its own aside, not as content in its own right. Exactly three `|`-separated fields, both subjects in the prepositional case so the sentence's single «о» serves both. Anything else fails the block and leaves the raw `::about` line visible on the page — a half-filled sentence is worse than an obvious mistake.
 
