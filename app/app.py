@@ -10,7 +10,7 @@ from .utils.file import templates
 from .utils.logging import root_logger
 from .utils.lifespan import lifespan
 
-CONFIG.setup('config.yaml')
+CONFIG.setup()
 templates.env.globals['DEBUG'] = CONFIG.debug
 templates.env.globals['asset'] = asset_url
 

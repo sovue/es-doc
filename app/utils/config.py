@@ -9,6 +9,33 @@ from .logging import root_logger
 # legitimate configured value rather than a synonym for "not set".
 _MISSING = object()
 
+
+def _load_dotenv(path: Path) -> None:
+    """Load simple local ``KEY=VALUE`` overrides without replacing env vars.
+
+    The app only needs a handful of deployment values here (paths and the
+    debug flag), so keeping the loader dependency-free avoids making the
+    content repository install a dotenv package just to start the server.
+    Existing process variables always win, matching python-dotenv's default.
+    """
+    if not path.is_file():
+        return
+
+    for raw_line in path.read_text('utf-8').splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith('#'):
+            continue
+        if line.startswith('export '):
+            line = line[7:].lstrip()
+        key, separator, value = line.partition('=')
+        if not separator or not key.strip():
+            continue
+        key = key.strip()
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+            value = value[1:-1]
+        os.environ.setdefault(key, value)
+
 class _ConfigContainer():
 
     _DEFAULT_CONFIG = {
@@ -147,6 +174,7 @@ class _ConfigContainer():
     }
 
     def __init__(self):
+        _load_dotenv(ROOT / '.env')
         self.config: dict = {}
         self.logger = root_logger.getChild('config')
 
@@ -270,10 +298,10 @@ class _ConfigContainer():
     def support(self) -> list:
         """Donation platforms for /support, straight from config.yaml.
 
-        Lives in the app config rather than the assets repo (like news or
-        literature) because it's the project's own identity, not curated
-        content. Absent or empty is a valid state — the page falls back to
-        the non-monetary ways to help instead of showing a dead link.
+        Lives in the server config in the assets repo because it's the site's
+        identity, not a path belonging to one local installation. Absent or
+        empty is a valid state — the page falls back to the non-monetary ways
+        to help instead of showing a dead link.
         """
         return self.config.get('support') or []
 
@@ -297,31 +325,46 @@ class _ConfigContainer():
             configured = self._DEFAULT_CONFIG['banners']
         return tuple(configured)
 
-    def setup(self, path):
+    def setup(self, path='config.yaml'):
+        """Load local deployment paths and server configuration separately.
 
-        path = ROOT / path
+        ``.env`` (or the legacy local YAML file) owns machine-specific paths.
+        The assets repository owns ``config.yaml`` and therefore the site's
+        banners, copy, error messages and other server-facing settings.
+        """
+        _load_dotenv(ROOT / '.env')
 
-        if path.exists():
+        legacy_path = ROOT / path
+        legacy = {}
+        if legacy_path.is_file():
+            legacy = yaml.load(legacy_path.read_text('utf-8'), yaml.SafeLoader) or {}
 
-            self.config = yaml.load(path.read_text('utf-8'), yaml.SafeLoader)
-            self.logger.info('Configuration file loaded.')
+        assets_value = os.environ.get('ES_DOC_ASSETS_PATH') or legacy.get('assets-path')
+        assets_path = resolve(assets_value or '')
 
+        if not assets_value or not assets_path.exists():
+            self.logger.error('Assets folder not found, terminating app! Did you forget to set ES_DOC_ASSETS_PATH in .env?')
+            raise FileNotFoundError('Assets folder not found in current configuration')
+
+        server_path = assets_path / 'config.yaml'
+        if server_path.is_file():
+            server = yaml.load(server_path.read_text('utf-8'), yaml.SafeLoader) or {}
+            self.logger.info('Server configuration loaded from %s.', server_path)
         else:
+            # A content checkout may be older than the app. Defaults keep it
+            # bootable until the server config is added to that checkout.
+            server = {}
+            self.logger.warning('Server configuration %s not found; using built-in defaults.', server_path)
 
-            self.logger.info('Configuration file doesn\'t exist! Creating...')
-            self.config = self.__class__._DEFAULT_CONFIG
-            path.write_text(yaml.dump(self.config, Dumper=yaml.SafeDumper, allow_unicode=True, width=float('inf'), indent=4, sort_keys=False), encoding='utf-8')
-            self.logger.info('Configuration file created.')
+        cache_value = os.environ.get('ES_DOC_CACHE_PATH') or legacy.get('cache-path')
+        self.config = self._DEFAULT_CONFIG | server | {
+            'assets-path': assets_value,
+            'cache-path': cache_value or self._DEFAULT_CONFIG['cache-path'],
+        }
 
         # Anchor relative paths to ROOT (not the CWD) so the existence check
         # and every later read resolve the same way regardless of where the
         # server was launched from.
-        assets_path = resolve(self.config.get('assets-path') or '')
-
-        if not self.config.get('assets-path') or not assets_path.exists():
-            self.logger.error('Assets folder not found, terminating app! Did you forget to change the assets-path in the config?')
-            raise FileNotFoundError('Assets folder not found in current configuration')
-
         self.docs_path = assets_path / 'docs'
         self.res_path = assets_path / 'game'
 
