@@ -36,6 +36,18 @@ def _load_dotenv(path: Path) -> None:
             value = value[1:-1]
         os.environ.setdefault(key, value)
 
+
+def _merge_config(base: dict, override: dict) -> dict:
+    """Merge server config recursively, letting the newer source win."""
+    merged = dict(base)
+    for key, value in override.items():
+        previous = merged.get(key)
+        if isinstance(previous, dict) and isinstance(value, dict):
+            merged[key] = _merge_config(previous, value)
+        else:
+            merged[key] = value
+    return merged
+
 class _ConfigContainer():
 
     _DEFAULT_CONFIG = {
@@ -339,6 +351,15 @@ class _ConfigContainer():
         if legacy_path.is_file():
             legacy = yaml.load(legacy_path.read_text('utf-8'), yaml.SafeLoader) or {}
 
+        # Keep pre-split installations working while their server values are
+        # moved into the assets checkout. The asset config wins whenever it
+        # declares the same key, so this cannot override the shared source of
+        # truth.
+        legacy_server = {
+            key: value for key, value in legacy.items()
+            if key not in {'assets-path', 'cache-path'}
+        }
+
         assets_value = os.environ.get('ES_DOC_ASSETS_PATH') or legacy.get('assets-path')
         assets_path = resolve(assets_value or '')
 
@@ -348,12 +369,15 @@ class _ConfigContainer():
 
         server_path = assets_path / 'config.yaml'
         if server_path.is_file():
-            server = yaml.load(server_path.read_text('utf-8'), yaml.SafeLoader) or {}
+            server = _merge_config(
+                legacy_server,
+                yaml.load(server_path.read_text('utf-8'), yaml.SafeLoader) or {},
+            )
             self.logger.info('Server configuration loaded from %s.', server_path)
         else:
             # A content checkout may be older than the app. Defaults keep it
             # bootable until the server config is added to that checkout.
-            server = {}
+            server = legacy_server
             self.logger.warning('Server configuration %s not found; using built-in defaults.', server_path)
 
         cache_value = os.environ.get('ES_DOC_CACHE_PATH') or legacy.get('cache-path')

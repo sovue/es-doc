@@ -56,6 +56,17 @@ def _refresh_docs():
     cache_docs()
 
 
+def _refresh_config():
+    """Reload shared server settings without restarting the app process.
+
+    The assets watcher already emits the browser reload signal in debug mode;
+    this handler updates the in-memory values before the next request sees the
+    refreshed page. Local paths stay restart-only because changing the assets
+    root would require rebuilding every watcher and cache dependency.
+    """
+    CONFIG.setup()
+
+
 def _under(directory: Path):
     """Match a path inside `directory`, at any depth."""
     directory = directory.resolve()
@@ -79,6 +90,8 @@ def _watchers():
     res = CONFIG.res_path
 
     return [
+        ('config.yaml', _one_of(assets / 'config.yaml'), _refresh_config),
+
         ('sprites.rpy', _one_of(
             res / 'sprites.rpy',
             # Declares sprites too (parsed by parse_sprites), so it lives in
