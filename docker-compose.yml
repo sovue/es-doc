@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: es-doc
+    ports:
+      - "443:443"
+    restart: unless-stopped
+    volumes:
+      - ./content:/app/content
+      - ./static:/app/static
+      - ./templates:/app/templates
+      - ./temp:/app/temp
+    environment:
+      - ES_DOC_ASSETS_PATH=/app/content
+      - ES_DOC_CACHE_PATH=/app/temp
