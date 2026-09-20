@@ -195,6 +195,9 @@ class _ConfigContainer():
         # Gates the dev-only live-reload watcher and route (see
         # utils/lifespan/refresh.py, utils/livereload.py, routes/dev.py).
         self.debug = os.environ.get('ES_DOC_DEBUG') == '1'
+        # The public origin used in robots.txt and sitemap.xml. Keep it
+        # independent of a request's Host header (and proxy configuration).
+        self.site_url = os.environ.get('ES_DOC_SITE_URL')
 
         self.page_last_edited = 0
         # Derived caches refreshed alongside page_cache (see utils/lifespan.py):
