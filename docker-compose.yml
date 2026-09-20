@@ -14,6 +14,7 @@ services:
     environment:
       - ES_DOC_ASSETS_PATH=/app/content
       - ES_DOC_CACHE_PATH=/app/temp
+      - ES_DOC_SITE_URL=https://es-doc.rfld.ru
     expose:
       - "8000"
 
