@@ -11,6 +11,35 @@ Copy-Item .env.example .env
 pdm run dev    # http://127.0.0.1:8000
 ```
 
+### Запуск с Docker
+
+```sh
+# Сборка и запуск контейнеров
+docker-compose up --build
+
+# Приложение будет доступно по адресу http://localhost:8005
+# TIP: не смотря на то что в main.py порт 8000, в контейнере есть еще nginx который проксирует запрос, а внешний порт у контейнера 8005
+```
+
+Docker Compose настраивает два контейнера:
+- **web**: Python-приложение на порту 8000 (внутренний)
+- **nginx**: Reverse proxy на порту 8005 (внешний)
+
+#### Ассеты
+
+Ассеты загружаются из репозитория [es-doc-assets](https://github.com/sovue/es-doc-assets) при сборке образа:
+- **Продакшн**: Ассеты встроены в образ при сборке (см docker-compose.yml \ Dockerfile)
+- **Разработка**: Можно монтировать локальную копию ассетов через volume (см docker-compose.yml \ Dockerfile)
+
+Для разработки с локальными ассетами:
+1. Клонируйте репозиторий ассетов: `git clone https://github.com/sovue/es-doc-assets.git`
+2. Раскомментируйте строку в `docker-compose.yml`:
+   ```yaml
+   volumes:
+     - ../es-doc-assets:/app/content
+   ```
+3. Перезапустите контейнеры: `docker-compose up --build`
+
 ## Конфигурация
 
 Локальный `.env` содержит только параметры этой установки: путь к репозиторию
