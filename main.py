@@ -27,4 +27,4 @@ if __name__ == "__main__":
         )
     else:
         from app.app import app
-        uvicorn.run(app, host="0.0.0.0", port=443, log_config=None)
+        uvicorn.run(app, host="0.0.0.0", port=8000, log_config=None)

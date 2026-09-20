@@ -3,15 +3,27 @@ version: '3.8'
 services:
   web:
     build: .
-    container_name: es-doc
-    ports:
-      - "443:443"
+    container_name: es-doc-web
     restart: unless-stopped
     volumes:
-      - ./content:/app/content
+      # Монтирование для разработки (раскомментируйте при наличии репы с ассетами(es-doc-assets) в директории с приложением или рядом с ним)
+      # - ../es-doc-assets:/app/content
       - ./static:/app/static
       - ./templates:/app/templates
       - ./temp:/app/temp
     environment:
       - ES_DOC_ASSETS_PATH=/app/content
       - ES_DOC_CACHE_PATH=/app/temp
+    expose:
+      - "8000"
+
+  nginx:
+    image: nginx:alpine
+    container_name: es-doc-nginx
+    ports:
+      - "8005:80"
+    restart: unless-stopped
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web
