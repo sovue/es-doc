@@ -1,4 +1,5 @@
 from fastapi import Request
+from fastapi.responses import PlainTextResponse
 
 from . import main_router
 from ..utils.config import CONFIG
@@ -6,6 +7,11 @@ from ..utils.file import templates, read_text
 from ..utils.md import render_thanks
 
 router = main_router
+
+
+@router.get('/healthz', include_in_schema=False)
+async def healthz():
+    return PlainTextResponse('ok')
 
 def _authors_core():
     return read_text('templates/partials/authors_core.html')
