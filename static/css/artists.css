@@ -120,9 +120,14 @@
 .artist-status {
     display: inline-block;
     flex: none;
-    padding: 3px 9px;
+    /* Status is metadata: let it scale with the available viewport instead
+       of taking a desktop-sized bite out of a two-column phone card. The
+       upper clamp keeps the established desktop rhythm; the lower bound
+       preserves a readable label without truncating its meaning. */
+    padding: clamp(2px, calc(1.5px + 0.1vw), 3px)
+             clamp(6px, calc(4px + 0.4vw), 9px);
     font-family: var(--font-mono);
-    font-size: var(--fs-label);
+    font-size: clamp(0.625rem, calc(0.55rem + 0.25vw), var(--fs-label));
     font-weight: 600;
     letter-spacing: 0.02em;
     white-space: nowrap;
