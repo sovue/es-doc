@@ -5,7 +5,7 @@ from urllib.parse import quote
 
 from . import main_router
 from ..utils.config import CONFIG
-from ..utils.docs import flatten_tree
+from ..utils.docs import flatten_tree, search
 from ..utils.modified import format_ru
 from ..utils.file import templates, read_text
 from ..utils.md import render
@@ -14,11 +14,16 @@ from ..utils.http import cache_headers, is_precompressed
 router = APIRouter(prefix='/docs')
 
 @router.get('/')
-async def index(request: Request):
+async def index(request: Request, q: str = ''):
     # The "Документация" nav destination: docs as a nested tree resolved from
     # tree.yaml. Only pages named in the tree are listed; the cache is kept warm
     # by the lifespan refresh (see utils/lifespan.py).
-    return templates.TemplateResponse(request, 'docs_index.html', {'tree': CONFIG.docs_tree})
+    query = q.strip()
+    return templates.TemplateResponse(request, 'docs_index.html', {
+        'tree': CONFIG.docs_tree,
+        'query': query,
+        'results': search(query, CONFIG.setting('search.max-limit')) if query else [],
+    })
 
 def _siblings(doc):
     # Reading order is the tree flattened pre-order (see flatten_tree): the

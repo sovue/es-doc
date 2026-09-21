@@ -205,4 +205,6 @@
         e.preventDefault();
         openSheet();   // no-op class on desktop; focuses input in both layouts
     });
+    document.body.classList.add('search-ready');
+    if (toggle) toggle.hidden = false;
 })();
