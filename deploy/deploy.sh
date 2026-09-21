@@ -58,8 +58,28 @@ fi
 echo "Validating Compose configuration for ${release_tag}..."
 compose "${release_tag}" config --quiet
 
+rollback() {
+    if [[ -z "${previous_tag}" ]]; then
+        echo "No previous successful release is recorded; manual recovery is required." >&2
+        return 1
+    fi
+
+    echo "Rolling back to ${previous_tag}..." >&2
+    if compose "${previous_tag}" pull && compose "${previous_tag}" up --wait --remove-orphans; then
+        echo "Rollback completed: ${previous_tag}" >&2
+        return 0
+    fi
+
+    echo "Rollback failed; inspect Docker Compose logs on the host." >&2
+    return 1
+}
+
 echo "Pulling ${release_tag}..."
-compose "${release_tag}" pull
+if ! compose "${release_tag}" pull; then
+    echo "Could not pull ${release_tag}." >&2
+    rollback || true
+    exit 1
+fi
 
 echo "Starting ${release_tag} and waiting for healthy services..."
 if compose "${release_tag}" up --wait --remove-orphans; then
@@ -72,16 +92,5 @@ if compose "${release_tag}" up --wait --remove-orphans; then
 fi
 
 echo "Deployment failed for ${release_tag}." >&2
-if [[ -z "${previous_tag}" ]]; then
-    echo "No previous successful release is recorded; manual recovery is required." >&2
-    exit 1
-fi
-
-echo "Rolling back to ${previous_tag}..." >&2
-compose "${previous_tag}" pull
-if compose "${previous_tag}" up --wait --remove-orphans; then
-    echo "Rollback completed: ${previous_tag}" >&2
-else
-    echo "Rollback failed; inspect Docker Compose logs on the host." >&2
-fi
+rollback || true
 exit 1
