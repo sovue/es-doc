@@ -40,6 +40,59 @@ Docker Compose настраивает два контейнера:
    ```
 3. Перезапустите контейнеры: `docker-compose up --build`
 
+### Полуавтоматический продакшен-деплой
+
+Продакшен собирается и публикуется через GitHub Actions, а запуск на сервере
+происходит после ручного одобрения защищённого окружения `production`. Образ
+получает неизменяемый тег `sha-<commit>`, поэтому повторный запуск не зависит
+от того, какой код сейчас находится в ветке `main`.
+
+#### Одноразовая настройка сервера
+
+На сервере нужны Docker Engine с Compose Plugin и каталог, например
+`/opt/es-doc`:
+
+```sh
+mkdir -p /opt/es-doc/deploy
+cp .env.production.example /opt/es-doc/.env.production
+chmod 600 /opt/es-doc/.env.production
+```
+
+Заполните `.env.production`: укажите адрес сайта, внешний порт и тот же
+`DEPLOY_PATH`, что будет задан в GitHub Secret. Файл остаётся на сервере и не
+перезаписывается workflow. `nginx.conf`, `compose.production.yaml` и
+`deploy/deploy.sh` workflow передаёт при каждом запуске.
+
+В GitHub создайте защищённое окружение `production`, добавьте required
+reviewer и следующие secrets:
+
+- `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_PATH`;
+- `DEPLOY_SSH_KEY` — приватный ключ отдельного пользователя деплоя;
+- `DEPLOY_KNOWN_HOSTS` — заранее проверенная запись `known_hosts` для сервера;
+- `GHCR_USERNAME` и `GHCR_TOKEN` с правом `read:packages`, если пакет GHCR
+  закрытый.
+
+#### Выпуск обновления
+
+Откройте **Actions → Deploy → Run workflow**, выберите `app_ref` и
+`assets_ref`, затем одобрите job в окружении `production`. Для полностью
+воспроизводимого контента указывайте в `assets_ref` полный commit SHA.
+Workflow строит образ, добавляет SBOM и provenance, публикует его в GHCR и
+по SSH запускает `deploy/deploy.sh` на сервере.
+
+Скрипт блокирует параллельные запуски, проверяет Compose-конфигурацию, ждёт
+здоровый `/healthz` перед переключением nginx и сохраняет последний успешный
+релиз. При неудаче запуска он автоматически возвращает предыдущий тег. Для
+ручного возврата к релизу, сохранённому перед последним успешным обновлением:
+
+```sh
+cd /opt/es-doc
+./deploy/deploy.sh "$(cat .previous-successful-release)"
+```
+
+Локальный `docker-compose.yml` остаётся workflow разработки; production
+использует отдельный `compose.production.yaml` без bind-mount исходников.
+
 ## Конфигурация
 
 Локальный `.env` содержит только параметры этой установки: путь к репозиторию
