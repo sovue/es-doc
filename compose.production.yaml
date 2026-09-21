@@ -1,0 +1,41 @@
+services:
+  web:
+    image: "${ES_DOC_IMAGE:?ES_DOC_IMAGE is required}:${ES_DOC_TAG:?ES_DOC_TAG is required}"
+    container_name: es-doc-web
+    restart: unless-stopped
+    init: true
+    environment:
+      ES_DOC_ASSETS_PATH: /app/content
+      ES_DOC_CACHE_PATH: /app/temp
+      ES_DOC_SITE_URL: "${ES_DOC_SITE_URL:?ES_DOC_SITE_URL is required}"
+    volumes:
+      - es_doc_cache:/app/temp
+    expose:
+      - "8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import urllib.request;
+          urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+  nginx:
+    image: nginx:1.29-alpine
+    container_name: es-doc-nginx
+    restart: unless-stopped
+    ports:
+      - "${ES_DOC_HTTP_PORT:-8005}:80"
+    volumes:
+      - "${DEPLOY_PATH:?DEPLOY_PATH is required}/nginx.conf:/etc/nginx/nginx.conf:ro"
+    depends_on:
+      web:
+        condition: service_healthy
+
+volumes:
+  es_doc_cache:

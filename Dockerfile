@@ -1,38 +1,49 @@
-FROM python:3.14-rc-slim
+FROM python:3.14-slim
+
+ARG ASSETS_REPO=https://github.com/sovue/es-doc-assets.git
+ARG ASSETS_REF=main
+ARG APP_REVISION=unknown
+ARG ASSETS_REVISION=unknown
+
+LABEL org.opencontainers.image.title="ES Doc" \
+      org.opencontainers.image.description="Everlasting Summer modding Wiki" \
+      org.opencontainers.image.revision="${APP_REVISION}" \
+      org.opencontainers.image.source="https://github.com/sovue/es-doc" \
+      org.opencontainers.image.vendor="Sovue" \
+      io.es-doc.assets-revision="${ASSETS_REVISION}"
 
 WORKDIR /app
 
-# Установка системных зависимостей
-RUN apt-get update && apt-get install -y \
-    gcc \
-    git \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git \
     && rm -rf /var/lib/apt/lists/*
 
-# Установка PDM
 RUN pip install --no-cache-dir pdm
 
-# Копирование файлов зависимостей
 COPY pyproject.toml pdm.lock ./
+RUN pdm install --prod --no-editable
 
-# Установка зависимостей
-RUN pdm install
+RUN addgroup --system app \
+    && adduser --system --ingroup app app
 
-# Активация виртуального окружения в PATH
+COPY --chown=app:app . .
+
+RUN mkdir -p /app/temp /app/content \
+    && chown -R app:app /app
+
+RUN git clone --filter=blob:none --no-checkout "${ASSETS_REPO}" /tmp/es-doc-assets \
+    && git -C /tmp/es-doc-assets fetch --depth=1 origin "${ASSETS_REF}" \
+    && git -C /tmp/es-doc-assets archive FETCH_HEAD | tar -x -C /app/content \
+    && rm -rf /tmp/es-doc-assets \
+    && chown -R app:app /app/content
+
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Копирование остального проекта
-COPY . .
+USER app
 
-# Создание директории для кэша и ассетов
-RUN mkdir -p /app/temp /app/content
-
-# Клонирование ассетов по умолчанию (если не переопределено через volume в docker-compose)
-RUN git clone --depth 1 https://github.com/sovue/es-doc-assets.git /app/content-default && \
-    cp -r /app/content-default/* /app/content/ && \
-    rm -rf /app/content-default
-
-# Открываем порт 8000
 EXPOSE 8000
 
-# Запуск приложения
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"
+
 CMD ["python", "main.py"]

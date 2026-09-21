@@ -25,3 +25,7 @@ temp/
 # Config file
 config.yaml
 .env
+.env.production
+.last-successful-release
+.previous-successful-release
+.deploy.lock
