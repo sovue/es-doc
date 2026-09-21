@@ -5,6 +5,7 @@
      flashes the wrong scene. No stored choice = fall through to the OS
      preference (prefers-color-scheme), leaving the attribute unset. -->
 <script>(function(){try{var t=localStorage.getItem('es-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+{% if active == 'docs' %}<script>try{if(localStorage.getItem('es-doc-width')==='wide')document.documentElement.dataset.docWidth='wide';}catch(e){}</script>{% endif %}
 <link rel="preload" href="/static/fonts/inter-variable-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
 {# The latin subset is not optional on a Russian site: it carries the digits,
    quotes and the Latin technical vocabulary these docs are built on, so it

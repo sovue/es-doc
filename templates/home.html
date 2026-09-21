@@ -90,10 +90,10 @@
             <script>(function(){var b=document.querySelector('.hero-bg');if(!b||matchMedia('(prefers-reduced-motion: reduce)').matches)return;function go(){var s=getComputedStyle(b);Promise.all([2,3,4].map(function(n){var m=/url\(\s*['"]?([^'")]+)/.exec(s.getPropertyValue('--hero-'+n));if(!m)return;var i=new Image();i.src=m[1];return i.decode().catch(function(){});})).then(function(){b.classList.add('is-live');});}if(document.readyState==='complete')go();else addEventListener('load',go);})();</script>
         </section>
 
-        <div class="page-main">
+        <div class="page-main home-directory">
 
             <section class="doc-sections" aria-labelledby="sections-heading">
-                <h2 id="sections-heading" class="authors-list-label">Важные ссылки</h2>
+                <h2 id="sections-heading" class="authors-list-label">Создание мода</h2>
 
                 <ul class="sections-list" role="list">
 
@@ -107,12 +107,17 @@
 
                     <li>
                         <a href="/docs/errors" class="section-row">
-                            <span class="section-name">ЧаВО</span>
-                            <span class="section-desc">Часто задаваемые вопросы и ответы на них</span>
+                            <span class="section-name">Ошибки и решения</span>
+                            <span class="section-desc">Распространённые ошибки и способы их исправить</span>
                             <span class="section-arrow" aria-hidden="true">→</span>
                         </a>
                     </li>
 
+                </ul>
+            </section>
+            <section class="doc-sections" aria-labelledby="community-heading">
+                <h2 id="community-heading" class="authors-list-label">Материалы и сообщество</h2>
+                <ul class="sections-list" role="list">
                     <li>
                         <a href="/resources/" class="section-row">
                             <span class="section-name">Ресурсы игры</span>

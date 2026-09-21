@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% set page_title = 'Документация — ES Doc' %}
+{% set page_title = ('Поиск — ' if query else 'Документация — ') ~ 'ES Doc' %}
 {% set body_class = 'bg-solid' %}
 {% set active = 'docs' %}
 
@@ -46,12 +46,14 @@
 
     <main id="main-content">
 
-        <section class="page-hero page-hero--lg">
+        <section class="page-hero">
             <div class="page-hero-inner">
                 <a href="/" class="page-back"><span aria-hidden="true">←</span> На главную</a>
-                <h1 class="page-title page-title--lg">Документация</h1>
+                <h1 class="page-title page-title--lg">{{ 'Результаты поиска' if query else 'Документация' }}</h1>
                 <p class="page-lead">
-                    {% if tree %}
+                    {% if query %}
+                    По запросу «{{ query }}»
+                    {% elif tree %}
                     Все материалы по созданию модов для «Бесконечного Лета».
                     Выберите раздел ниже или воспользуйтесь поиском.
                     {% else %}
@@ -63,9 +65,26 @@
 
         <div class="page-main">
 
-            {% if tree %}
+            {% if query %}
+            <section aria-label="Результаты поиска">
+                {% if results %}
+                <ul class="sections-list search-page-results" role="list">
+                    {% for result in results %}
+                    <li><a class="section-row" href="{{ result.url if result.url else '/docs/' ~ (result.doc|urlencode) ~ ('#' ~ (result.anchor|urlencode) if result.anchor else '') }}">
+                        <span class="section-name">{{ result.label }}</span>
+                        {% if result.context %}<span class="section-desc">{{ result.context }}</span>{% endif %}
+                        <span class="section-arrow" aria-hidden="true">→</span>
+                    </a></li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p>Ничего не найдено. Попробуйте другое название или более короткий запрос.</p>
+                {% endif %}
+                <p><a class="page-back" href="/docs/">Все статьи</a></p>
+            </section>
+            {% elif tree %}
             <nav aria-label="Дерево документации">
-                <ul class="doc-tree" role="list">
+                <ul class="doc-tree doc-tree--directory" role="list">
                     {% for node in tree %}{{ tree_node(node) }}{% endfor %}
                 </ul>
             </nav>

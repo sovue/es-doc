@@ -3,7 +3,7 @@
    white surfaces, the 1px hairline, the leaf kept to focus/hover only. */
 
 .page-main--artists {
-    max-width: 1120px;
+    max-width: var(--directory-max);
 }
 
 /* [hidden] must beat the flex/display rules below it: the controls ship

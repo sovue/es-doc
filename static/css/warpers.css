@@ -11,8 +11,10 @@
    Tighter on top for the same reason .page-main--res is — tabs and the
    category strip already sit above it. */
 .wp-main {
-    padding: 28px 48px 56px;
-    max-width: 1100px;
+    width: 100%;
+    margin-inline: auto;
+    padding: 28px var(--page-gutter) 48px;
+    max-width: var(--directory-max);
 }
 
 .wp-section + .wp-section {

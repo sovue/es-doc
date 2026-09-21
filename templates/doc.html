@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-
 {% set page_title = title ~ ' — ES Doc' %}
 {% set extra_css = ['/static/css/syntax.css', '/static/css/code.css', '/static/css/doc.css'] %}
 {% set active = 'docs' %}
+{% set body_class = 'docs-page' %}
 
 {% macro tree_node(node) %}
 {%- if node.kind == 'divider' %}
@@ -36,82 +36,50 @@
 
 {% block content %}
 <div class="page">
-
-    <div class="layout">
-
-        <aside class="sidebar">
-            <a href="/docs/" class="page-back"><span aria-hidden="true">←</span> Документация</a>
-            {% if tree %}
-            {#- Global navigation precedes the current article and its contents.
-                The tree expands in full; only the desktop sidebar scrolls.
-                On phones each new article starts with the tree closed. -#}
-            <details class="sidebar-all" id="sidebar-all">
+    <div class="layout layout--docs{{ ' layout--no-toc' if not nav else '' }}">
+        <aside class="sidebar" aria-label="Навигация по документации">
+            <details class="sidebar-all" id="sidebar-all" open>
                 <summary class="sidebar-all-summary">Все статьи</summary>
                 <nav aria-label="Все статьи">
+                    <a href="/docs/" class="sidebar-index-link">Обзор документации</a>
                     <ul class="sidebar-all-tree" role="list">
                         {% for node in tree %}{{ tree_node(node) }}{% endfor %}
                     </ul>
                 </nav>
             </details>
-            {#- Restore the desktop preference before the first paint. -#}
-            <script>(function(){if(!window.matchMedia('(min-width: 48.0625em)').matches)return;try{if(localStorage.getItem('es-doc-all-articles')==='1')document.getElementById('sidebar-all').open=true;}catch(e){}})();</script>
-            {% endif %}
-
-            <p class="sidebar-title">{{ title }}</p>
-            {#- The page's own headings. On a desktop this is a plain list and
-                the <summary> above it is hidden — the sidebar title already
-                says which article's contents these are. On a phone it becomes
-                a disclosure closed on arrival:
-                the strip it replaced ran four times the width of the screen
-                with no sign that it did, so four fifths of the headings were
-                simply unreachable.
-
-                Shipped open, and the script below closes it on a narrow
-                screen. That way a page with no JavaScript errs toward showing
-                the contents rather than hiding them behind a control that
-                cannot be operated. -#}
-            {% if nav %}
-            <details class="sidebar-contents" id="sidebar-contents" open>
-                <summary class="sidebar-contents-summary">Содержание</summary>
-                <nav class="sidebar-toc" aria-label="Содержание"><ul>
-                    {{ nav|safe }}
-                </ul></nav>
-            </details>
-            {#- Same reasoning as the «Все статьи» script above: inline
-                and immediately after the element, so the sidebar never paints
-                in one state and flips to the other. Wide screens always open;
-                narrow ones start closed and then follow whatever the reader
-                last chose. -#}
-            <script>(function(){var d=document.getElementById('sidebar-contents');if(!d)return;if(window.matchMedia('(min-width: 48.0625em)').matches)return;var v='0';try{v=localStorage.getItem('es-doc-contents')||'0';}catch(e){}d.open=v==='1';})();</script>
-            {% endif %}
-
-            <div class="sidebar-source">
-                <div class="sidebar-source-links">
-                    <a href="?md">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                            <path d="M3.8 3A1.3 1.3 0 0 1 5.1 1.7h3.1a.9.9 0 0 1 .64.26l1.9 1.9a.9.9 0 0 1 .26.64v5A1.3 1.3 0 0 1 9.7 10.8H5.1A1.3 1.3 0 0 1 3.8 9.5z" stroke="currentColor" stroke-width="1.1"/>
-                            <path d="M1 4.2v5.6a1.5 1.5 0 0 0 1.5 1.5h4.6" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
-                        </svg>
-                        Открыть .md</a>
-                    <a href="?md&amp;dl" download="{{ doc }}.md">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                            <path d="M6 1.2v6M3.6 4.8 6 7.2l2.4-2.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M1.5 8.8v.7A1.3 1.3 0 0 0 2.8 10.8h6.4a1.3 1.3 0 0 0 1.3-1.3v-.7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-                        </svg>
-                        Скачать</a>
-                </div>
-                {% if modified %}
-                <p class="doc-modified">
-                    Последнее изменение:
-                    <time datetime="{{ modified_iso }}">{{ modified }}</time>
-                </p>
-                {% endif %}
-            </div>
+            <script>if(!matchMedia('(min-width: 62em)').matches)document.getElementById('sidebar-all').open=false;</script>
         </aside>
 
-        <main class="content" id="main-content">
+        <div class="doc-toolbar">
+            <nav class="doc-breadcrumbs" aria-label="Хлебные крошки">
+                <a href="/docs/">Документация</a><span aria-hidden="true">/</span><span aria-current="page">{{ title }}</span>
+            </nav>
+            <button type="button" class="doc-width-toggle" aria-pressed="false" hidden>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 5 3 8l3 3M10 5l3 3-3 3M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>Шире</span>
+            </button>
+        </div>
+
+        {% if nav %}
+        <aside class="doc-toc" aria-label="Навигация по статье">
+            <details class="sidebar-contents" id="sidebar-contents" open>
+                <summary class="sidebar-contents-summary">На этой странице</summary>
+                <nav class="sidebar-toc" aria-label="На этой странице"><ul>{{ nav|safe }}</ul></nav>
+            </details>
+            <script>if(!matchMedia('(min-width: 80em)').matches)document.getElementById('sidebar-contents').open=false;</script>
+        </aside>
+        {% endif %}
+
+        <main class="content" id="main-content" tabindex="-1">
             {{ body|safe }}
 
+            <div class="doc-tools">
+                {% if modified %}<p class="doc-modified">Обновлено <time datetime="{{ modified_iso }}">{{ modified }}</time></p>{% endif %}
+                <div class="sidebar-source-links">
+                    <a href="?md">Исходник Markdown</a>
+                    <a href="?md&amp;dl" download="{{ doc }}.md">Скачать .md</a>
+                </div>
+            </div>
             {% if prev_doc or next_doc %}
             <nav class="doc-pager" aria-label="Соседние статьи">
                 {#- Previous is the quieter of the two: same row, but small
@@ -138,12 +106,8 @@
             </nav>
             {% endif %}
         </main>
-
     </div>
-
     {% include "partials/footer.html" %}
-
 </div>
-
 <p class="sr-only" role="status" aria-live="polite" id="code-copy-status"></p>
 {% endblock %}

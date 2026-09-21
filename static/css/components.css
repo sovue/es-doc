@@ -10,6 +10,9 @@
    The page's <main> (or <div class="layout"> on doc pages) is the flexible
    child that absorbs the free space; the footer is the rigid child after it. */
 .page {
+    width: 100%;
+    max-width: var(--site-max);
+    margin-inline: auto;
     /* `dvh` with a `vh` fallback: on iOS Safari `100vh` is the *large*
        viewport — the height the page has only once the toolbar has scrolled
        away — so a short page on a phone reserved more than the screen and
@@ -36,13 +39,13 @@
 /* ── Page hero / page header ─────────────────────────────── */
 
 .page-hero {
-    padding: 56px 48px 48px;
+    padding: 32px var(--page-gutter) 28px;
     border-bottom: 1px solid var(--border);
 }
 
 /* Larger variant for landing-style pages (home, error) */
 .page-hero--lg {
-    padding: 72px 48px 64px;
+    padding: 40px var(--page-gutter) 32px;
 }
 
 /* Tighter variant for nested browsing pages that stack more chrome below
@@ -50,11 +53,12 @@
    category/browser/viewer. The hero still carries the title, back-link and
    lead, just with less air around them. */
 .page-hero--tight {
-    padding: 28px 48px 24px;
+    padding: 24px var(--page-gutter);
 }
 
 .page-hero-inner {
-    max-width: 640px;
+    max-width: calc(var(--directory-max) - 2 * var(--page-gutter));
+    margin-inline: auto;
 }
 
 /* A quiet way back to the parent section. Muted at rest so it doesn't
@@ -147,8 +151,10 @@
 }
 
 .page-main {
-    padding: 56px 48px;
-    max-width: 760px;
+    width: 100%;
+    padding: 32px var(--page-gutter) 48px;
+    max-width: var(--directory-max);
+    margin-inline: auto;
 }
 
 /* ── Site header / nav ───────────────────────────────────── */
@@ -172,18 +178,11 @@
     z-index: 10;
 }
 
-/* align-items: stretch so child links fill the full 52px tap height.
-   A fixed gap, not justify-content: space-between — space-between
-   redistributes all leftover row width as inter-item gaps, so on wide
-   viewports the logo/search/links/toggle drift apart into disconnected
-   islands. A flat gap keeps every pair a consistent, deliberate distance;
-   .nav-search still grows to fill spare width (flex: 1 1 auto, capped at
-   max-width) same as before, and any width left over after that cap just
-   trails past the toggle instead of inflating the gaps between items. */
+/* A centered row; search grows to 480px and the theme control takes the end. */
 .site-nav {
     display: flex;
 
-    /* Fits on one row at any ordinary width, but a fixed 32px gap between
+    /* Fits on one row at any ordinary width, but a fixed gap between
        four items stops shrinking once the search box (the only item that
        shrinks at all — .nav-search below) hits zero, and enlarged text at
        ~150%+ needed 8px this row didn't have. Wrap is the WCAG 1.4.10
@@ -194,8 +193,11 @@
     flex-wrap: wrap;
 
     align-items: stretch;
-    gap: 32px;
-    padding: 0 48px;
+    gap: 24px;
+    width: 100%;
+    max-width: var(--site-max);
+    margin-inline: auto;
+    padding: 0 var(--page-gutter);
     min-height: 52px;
 }
 
@@ -288,7 +290,7 @@
 .nav-search {
     position: relative;
     flex: 1 1 240px;
-    max-width: 360px;
+    max-width: 480px;
     display: flex;
     align-items: center;
 }
@@ -571,7 +573,7 @@
 /* ── Site footer ─────────────────────────────────────────── */
 
 .site-footer {
-    padding: 20px 48px;
+    padding: 16px var(--page-gutter);
     border-top: 1px solid var(--border);
     font-size: var(--fs-ui);
     color: var(--text-soft);
@@ -580,7 +582,8 @@
 /* Wraps now that the row carries icons and the support button too; without
    it the line overflows below ~700px. row-gap only matters once it does. */
 .site-footer p {
-    margin: 0;
+    max-width: calc(var(--directory-max) - 2 * var(--page-gutter));
+    margin: 0 auto;
     display: flex;
     align-items: center;
     flex-wrap: wrap;
@@ -1375,19 +1378,19 @@ a.section-row:focus-visible .section-arrow {
     }
 
     .page-hero {
-        padding: 40px 20px 32px;
+        padding: 24px var(--page-gutter);
     }
 
     .page-hero--lg {
-        padding: 48px 20px 40px;
+        padding: 28px var(--page-gutter);
     }
 
     .page-hero--tight {
-        padding: 24px 20px 20px;
+        padding: 20px var(--page-gutter);
     }
 
     .page-main {
-        padding: 40px 20px;
+        padding: 24px var(--page-gutter) 32px;
     }
 
     .section-name {
@@ -1450,7 +1453,9 @@ a.section-row:focus-visible .section-arrow {
     .section-bar .nav-links {
         /* The nav's 48px gutter minus a link's own 16px padding, so the first
            word lines up under the logo. */
-        padding-inline: 32px;
+        padding-inline: calc(var(--page-gutter) - 16px);
+        max-width: var(--site-max);
+        margin-inline: auto;
         overflow-x: auto;
         scrollbar-width: none;
         /* offsetParent for header.html's scroll-into-view. */
@@ -1632,4 +1637,58 @@ a.section-row:focus-visible .section-arrow {
     .nav-search-option[aria-selected="true"] * {
         color: inherit;
     }
+}
+
+/* Layout roles: shared gutters, full names, and a browsable directory. */
+@media (max-width: 50em) {
+    :root { --page-gutter: 24px; --layout-gap: 24px; }
+}
+@media (max-width: 40em) {
+    :root { --page-gutter: 16px; --layout-gap: 20px; }
+}
+.site-nav { padding-inline: var(--page-gutter); }
+.site-nav > .theme-toggle { margin-left: auto; }
+@media (max-width: 40em) { .site-nav > .theme-toggle { margin-left: 0; } }
+.section-bar .nav-links { padding-inline: max(0px, calc(var(--page-gutter) - 16px)); }
+@media (max-width: 40em) { .section-bar .nav-links { padding-inline: 4px 32px; } }
+.section-name, .section-desc {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+}
+.section-name { flex-shrink: 1; }
+.doc-tree--directory {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 48px;
+    row-gap: 16px;
+    align-items: start;
+}
+.doc-tree--directory > .doc-tree-sep { display: none; }
+.doc-tree--directory > li:not(.doc-tree-group) { grid-column: 1 / -1; }
+.doc-tree--directory .doc-tree-heading {
+    padding: 12px 0;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-sans);
+    font-size: var(--fs-body);
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--text);
+}
+.doc-tree--directory .doc-tree-row { min-height: 44px; }
+@media (max-width: 48em) {
+    .doc-tree--directory { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+}
+/* The search form works without scripts. Only the initialized enhancement
+   may collapse it behind the mobile trigger. */
+@media (max-width: 40em) {
+    body:not(.search-ready) .nav-search {
+        display: flex;
+        position: static;
+        flex: 1 1 100%;
+        padding: 0 0 12px;
+        border: 0;
+    }
+    body:not(.search-ready) .site-nav { gap: 0 12px; }
 }

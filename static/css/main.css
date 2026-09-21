@@ -43,7 +43,7 @@ body {
        --header-h by header.html, plus its 1px bottom border. */
     padding-top: calc(var(--header-h) + 1px);
 
-    background: linear-gradient(to right, var(--bg), var(--bg-page-end));
+    background: var(--bg);
     color: var(--text);
 
     font-family: var(--font-sans);

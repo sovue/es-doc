@@ -1,84 +1,111 @@
-/* Code panels — the whitespace glyphs, the copy button, both routes to the
-   clipboard — are code.js's job now, since they turn up on pages that never
-   load this file. What stays here is what only a doc page has. */
-
-/* ── Remember whether the all-articles tree is open ──
-   Restoring it is the inline script's job (doc.html, right after the element,
-   so an open tree never flashes shut); this half records the desktop choice.
-   Phones start each new article with the tree closed, so a full-height list
-   never pushes the article away just because the previous page had it open. */
+/* Documentation navigation; native disclosures also work without scripts. */
 (function () {
-    const all = document.getElementById('sidebar-all');
-    if (!all) return;
+    const tree = document.getElementById('sidebar-all');
+    const contents = document.getElementById('sidebar-contents');
+    const desktopTree = matchMedia('(min-width: 62em)');
+    const desktopContents = matchMedia('(min-width: 80em)');
 
-    const KEY = 'es-doc-all-articles';
-    const wide = matchMedia('(min-width: 48.0625em)');
+    function adaptDisclosure(details, media) {
+        if (!details) return;
+        media.addEventListener('change', () => {
+            const hadFocus = details.contains(document.activeElement);
+            details.open = media.matches;
+            if (hadFocus && !details.open) details.querySelector('summary').focus({preventScroll: true});
+        });
+        details.addEventListener('keydown', event => {
+            if (event.key !== 'Escape' || !details.open) return;
+            details.open = false;
+            details.querySelector('summary').focus({preventScroll: true});
+        });
+    }
+    adaptDisclosure(tree, desktopTree);
+    adaptDisclosure(contents, desktopContents);
+    if (contents && window.ResizeObserver) {
+        const summary = contents.querySelector('summary');
+        new ResizeObserver(() => {
+            document.documentElement.style.setProperty('--doc-contents-h', summary.offsetHeight + 'px');
+        }).observe(summary);
+    }
 
-    all.addEventListener('toggle', function () {
-        if (!wide.matches) return;
-        try { localStorage.setItem(KEY, all.open ? '1' : '0'); } catch (e) {}
-    });
-})();
+    // Scroll only the independent rail; preserve the document's deep link.
+    const current = tree && tree.querySelector('[aria-current="page"]');
+    const rail = tree && tree.closest('.sidebar');
+    if (current && desktopTree.matches && rail) {
+        const linkBox = current.getBoundingClientRect();
+        const railBox = rail.getBoundingClientRect();
+        if (linkBox.bottom > railBox.bottom) rail.scrollTop += linkBox.bottom - railBox.bottom + 24;
+    }
 
-/* ── Contents: open on a wide screen, the reader's choice on a narrow one ──
-   The inline script in doc.html sets the state before the first paint; this
-   half records what the reader does with it and re-applies the rule when the
-   viewport crosses the breakpoint. Without that last part a phone-sized
-   window that grows wide would keep a <details> shut whose summary is hidden
-   at that width — contents with no way to open them. */
-(function () {
-    const box = document.getElementById('sidebar-contents');
-    if (!box) return;
-
-    const KEY = 'es-doc-contents';
-    const wide = matchMedia('(min-width: 48.0625em)');
-
-    box.addEventListener('toggle', function () {
-        // Only a deliberate choice on a phone is worth remembering: on a wide
-        // screen the state is forced, so storing it would record a decision
-        // the reader never made.
-        if (wide.matches) return;
-        try { localStorage.setItem(KEY, box.open ? '1' : '0'); } catch (e) {}
-    });
-
-    wide.addEventListener('change', function () {
-        if (wide.matches) {
-            box.open = true;
-            return;
+    const widthButton = document.querySelector('.doc-width-toggle');
+    if (widthButton) {
+        const root = document.documentElement;
+        function syncWidth() {
+            const wide = root.dataset.docWidth === 'wide';
+            widthButton.setAttribute('aria-pressed', String(wide));
+            widthButton.querySelector('span').textContent = wide ? 'Обычная ширина' : 'Шире';
+            widthButton.title = wide ? 'Вернуть обычную ширину статьи' : 'Использовать всю ширину окна';
         }
-        let saved = '0';
-        try { saved = localStorage.getItem(KEY) || '0'; } catch (e) {}
-        box.open = saved === '1';
-    });
-})();
+        syncWidth();
+        widthButton.hidden = false;
+        widthButton.addEventListener('click', () => {
+            const wide = root.dataset.docWidth !== 'wide';
+            root.dataset.docWidth = wide ? 'wide' : 'standard';
+            try { localStorage.setItem('es-doc-width', wide ? 'wide' : 'standard'); } catch (e) {}
+            syncWidth();
+        });
+    }
 
-/* ── Scroll-spy: highlight the TOC entry for the heading you're reading ── */
-(function () {
-    const links = {};
-    document.querySelectorAll('.sidebar nav a').forEach(a => {
-        let id = a.hash.slice(1);
+    const links = new Map();
+    document.querySelectorAll('.sidebar-toc a[href^="#"]').forEach(link => {
+        let id = link.hash.slice(1);
         try { id = decodeURIComponent(id); } catch (e) {}
-        if (id) links[id] = a;
+        if (id) links.set(id, link);
     });
+    const headings = [...document.querySelectorAll('.content .heading')].filter(heading => links.has(heading.id));
+    if (!headings.length) return;
+    let active = null;
+    let frame = 0;
+    function update() {
+        frame = 0;
+        const offset = (parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 64) + 24;
+        let heading = headings[0];
+        for (const candidate of headings) {
+            if (candidate.getBoundingClientRect().top > offset) break;
+            heading = candidate;
+        }
+        const next = links.get(heading.id);
+        if (next === active) return;
+        if (active) { active.classList.remove('active'); active.removeAttribute('aria-current'); }
+        active = next;
+        active.classList.add('active');
+        active.setAttribute('aria-current', 'location');
+    }
+    function scheduleUpdate() {
+        if (!frame) frame = requestAnimationFrame(update);
+    }
+    addEventListener('scroll', scheduleUpdate, {passive: true});
+    addEventListener('resize', scheduleUpdate);
+    addEventListener('hashchange', scheduleUpdate);
+    addEventListener('load', scheduleUpdate);
+    if (document.fonts) document.fonts.ready.then(scheduleUpdate);
+    update();
 
-    const headings = [...document.querySelectorAll('.content .heading')].filter(h => links[h.id]);
-    if (headings.length < 2) return;
-
-    let current = null;
-    const setActive = a => {
-        if (current === a) return;
-        if (current) { current.classList.remove('active'); current.removeAttribute('aria-current'); }
-        current = a;
-        if (a) { a.classList.add('active'); a.setAttribute('aria-current', 'location'); }
-    };
-
-    const visible = new Set();
-    const io = new IntersectionObserver(entries => {
-        entries.forEach(e => e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id));
-        // Topmost heading inside the active band wins; if none, keep the last one above.
-        const top = headings.find(h => visible.has(h.id));
-        if (top) setActive(links[top.id]);
-    }, { rootMargin: '-76px 0px -65% 0px' });
-
-    headings.forEach(h => io.observe(h));
+    // Collapse first, then navigate: otherwise an in-flow TOC moves the target.
+    if (contents) contents.addEventListener('click', event => {
+        const link = event.target.closest('.sidebar-toc a');
+        if (!link || desktopContents.matches || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        let id = link.hash.slice(1);
+        try { id = decodeURIComponent(id); } catch (e) {}
+        const target = document.getElementById(id);
+        if (!target) return;
+        event.preventDefault();
+        contents.open = false;
+        requestAnimationFrame(() => {
+            history.pushState(null, '', link.hash);
+            target.setAttribute('tabindex', '-1');
+            target.focus({preventScroll: true});
+            target.scrollIntoView({block: 'start', behavior: 'instant'});
+            scheduleUpdate();
+        });
+    });
 })();

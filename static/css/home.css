@@ -274,3 +274,12 @@
         transition: none;
     }
 }
+
+/* Browse the two distinct jobs side by side; keep each group's reading order. */
+.home-directory { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 48px; }
+.home-directory .section-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding-block: 16px; }
+.home-directory .section-desc { grid-column: 1; grid-row: 2; }
+.home-directory .section-arrow { grid-column: 2; grid-row: 1 / 3; align-self: center; opacity: 1; }
+.home-directory .section-name { min-width: 0; }
+.home-contributors { width: 100%; max-width: var(--directory-max); margin-inline: auto; padding: 32px var(--page-gutter); }
+@media (max-width: 48em) { .home-directory { grid-template-columns: minmax(0, 1fr); gap: 32px; } }

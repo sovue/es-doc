@@ -100,7 +100,7 @@
    already stacks tabs and a category strip above it, so the full 56px
    rhythm reads as an extra gap rather than breathing room. */
 .page-main--res {
-    max-width: 920px;
+    max-width: var(--directory-max);
     padding-top: 28px;
 }
 
@@ -1237,4 +1237,9 @@ video.fb-media {
         text-decoration: underline 2px;
         text-underline-offset: 0.35em;
     }
+}
+
+/* Collection and category controls share the directory's content edge. */
+.res-tabs, .res-cats ul {
+    padding-inline: max(var(--page-gutter), calc((100% - var(--directory-max)) / 2 + var(--page-gutter)));
 }

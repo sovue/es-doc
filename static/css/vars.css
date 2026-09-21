@@ -23,6 +23,12 @@
    this file — a token added to one side must be added to the other.
    ===================================================================== */
 :root {
+    /* Shared centered workspace; the reading rails stay close to the article. */
+    --site-max: 96rem;
+    --directory-max: 80rem;
+    --page-gutter: 32px;
+    --layout-gap: 32px;
+    --rail-width: 14rem;
     color-scheme: light dark;
 
     /* ── Surfaces (Light · a white shirt, the leaf's shade) ── */

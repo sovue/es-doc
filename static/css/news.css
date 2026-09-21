@@ -86,7 +86,9 @@
    once, so a post stops at a comfortable measure instead. */
 
 .content.news-post {
+    width: 100%;
     max-width: 860px;
+    margin-inline: auto;
 }
 
 .news-post-date {
