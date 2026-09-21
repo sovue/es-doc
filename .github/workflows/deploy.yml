@@ -22,6 +22,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: sovue/es-doc
   ASSETS_REPO: https://github.com/sovue/es-doc-assets.git
+  KEEP_RELEASES: 5
 
 jobs:
   build:
@@ -120,6 +121,7 @@ jobs:
     environment: production
     permissions:
       contents: read
+      packages: write
     steps:
       - name: Check out deployment files
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.0.1
@@ -129,6 +131,7 @@ jobs:
           sparse-checkout: |
             compose.production.yaml
             deploy/deploy.sh
+            deploy/prune-ghcr.sh
             nginx.conf
           sparse-checkout-cone-mode: false
 
@@ -180,3 +183,12 @@ jobs:
 
           ssh "${ssh_options[@]}" "${remote}" \
             "cd '${DEPLOY_PATH}' && ./deploy/deploy.sh '${RELEASE_TAG}'"
+
+      - name: Prune old GHCR images
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          PACKAGE_NAME: es-doc
+          RELEASE_TAG: ${{ needs.build.outputs.image_tag }}
+          KEEP_RELEASES: ${{ env.KEEP_RELEASES }}
+        run: ./deploy/prune-ghcr.sh
