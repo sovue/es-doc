@@ -88,7 +88,7 @@ components:
   docs-sidebar:
     backgroundColor: "{colors.leaf-shade}"
     textColor: "{colors.ink-soft}"
-    width: "260px"
+    width: "224px"
   link-inline:
     textColor: "{colors.leaf}"
   link-inline-hover:
@@ -195,7 +195,7 @@ A white-and-leaf palette at summer noon: white for the page, the leaf's shade fo
 ### How the tokens are declared
 Every value that changes with the theme is one `light-dark(day, night)` pair in `vars.css`, inside an `@supports (color: light-dark(#000, #fff))` block; the plain light values above it are what a browser without the function keeps. The night set used to be written twice — once under `prefers-color-scheme`, once under the toggle's `[data-theme="dark"]` — and those two copies had to be edited in lockstep, which this file's own header called out as a bug waiting to happen. There is now nowhere for them to disagree.
 
-Two tokens exist only because the day theme split what the night keeps together: `--bg-chrome` (the header, section bar and phone search sheet; Leaf Shade by day, the page's own night-blue at night) and `--bg-page-end` (where the body's horizontal gradient lands; white by day, so the page is flat, and `#1F2532` at night, the faint lift it always had).
+Two tokens exist only because the day theme split what the night keeps together: `--bg-chrome` (the header, section bar and phone search sheet; Leaf Shade by day, the page's own night-blue at night) and `--bg-page-end` (a retained compatibility token; the centered workspace now uses the solid `--bg` in both themes).
 
 The toggle also sets `color-scheme` on the root, which is both what `light-dark()` reads and what the browser paints its own surfaces from, so forcing a theme now takes the scrollbars, form controls and caret with it instead of leaving them on the OS preference. The root also sets `accent-color` to the leaf, and fields set `caret-color`, so the parts of the page the browser draws itself carry the palette too.
 
@@ -235,7 +235,7 @@ was true (0.9rem, 0.925rem and 0.95rem all did the same job, 0.8px apart).
 | `--fs-headline` | `2.4rem` | PT Serif 700 | Article H1, with a 2px bottom border |
 | `--fs-title` | `1.8rem` | PT Serif 700 | Article H2, with a 1px bottom border |
 | `--fs-subtitle` | `1.4rem` | PT Serif 700 | Article H3, and H2 once the viewport is narrow |
-| `--fs-lead` | `1.25rem` | PT Serif 700 / Inter 600 | Article H4; group and card titles: resource groups, the next-article card, warper families; the sidebar document title, which is wayfinding rather than a headline |
+| `--fs-lead` | `1.25rem` | PT Serif 700 / Inter 600 | Article H4; group and card titles: resource groups, the next-article card, warper families |
 | `--fs-body` | `1rem` | Inter 400/600 | Prose, section names (600), everything read at length. Runs the full width of the article column, like the code panels and tables beside it. **The reading floor — nothing prose-shaped goes below it.** |
 | `--fs-ui` | `0.875rem` | Inter 400/600 | Dense chrome, table bodies, and secondary prose that is genuinely secondary: hatnotes, footnote lists, banner bodies |
 | `--fs-label` | `0.75rem` | Consolas 600, tracking 0.1em, UPPERCASE | Section-directory headings, badges, social links, the raw-source link, keyboard hints, flags. Signals meta and structure, never content. |
@@ -278,19 +278,53 @@ come down to meet it. Hyphenation is the only lever left.
 
 ## Layout
 
-One column of content under one sticky bar; the docs sidebar is the only thing that ever sits beside it. The page is a flex column (`.page`) that floors to the viewport under the header, so the footer lands at the bottom of a short page instead of halfway up it.
+The site is a centered documentation workspace. Center the composition, keep text left-aligned, and use the available width for navigation and related material. The reading task leads: find an article, identify your place, jump to a section, use the example, continue to the next article.
 
-- **Header** (52px, fixed to the top, `z-index: 10`): logo lockup, search, the section links and the theme toggle on one row, separated by a flat 32px gap rather than `space-between`. The search grows from a 240px basis to 360px; width left over after that trails past the toggle instead of inflating the gaps. The docs sidebar's sticky top and `--scroll-offset` (the header plus 12px, and the page's `scroll-padding-top`) hang off `--header-h`: 52px at every width at the default text size, and kept equal to the real header by a `ResizeObserver` in `header.html` for a reader whose larger default text gives it a second row. It is `position: fixed` over a matching `padding-top` on the body rather than `position: sticky`, which looks the same: with the page's `scroll-padding-top`, Chrome counted anything focused inside a sticky header as out of view and scrolled the page 465–930px to reveal it, and a fixed box is never scrolled to.
-- **Section bar** (≤1139px): once the header row can't hold the five section links beside a usable search, they move to a 44px bar directly under it, *outside* the sticky header, so it scrolls away with the page and the 52px above never changes (see Navigation).
-- **Gutters**: 48px for the header, page hero and page body; the header tightens to 32px at ≤800px, and everything goes to 20px at ≤640px.
-- **Measures**: section pages hold their column to 760px (`.page-main`) and a lead paragraph to 55ch; an article runs to 1200px beside a 260px sidebar; a news post, with no sidebar to share the width, stops at 860px.
-- **Rhythm**: page hero 56px top / 48px bottom (72/64 on the landing variant, 28/24 on nested browsing pages that stack more chrome below it), page body 56px. List rows breathe between 10px (doc tree) and 22px (news items) each way, 16px for the standard section row.
+### Shared geometry
 
-Breakpoints are measured, not named after devices: **1139px** (section links leave the header row), **800px** (header gap and gutter tighten), **768px** (the docs sidebar stacks above the article), **640px** (search becomes an icon and a sheet, section-row descriptions wrap to their own line, 20px gutters), **400px** (last trims: author rows, article padding, code panels). A few pages keep local ones where their own content needs it (the warper sandbox at 1000/700/460px, the player bar at 480px). They are written in em — 71.1875em is 1139px at the default 16px — so a reader who raises the browser's default text size reaches the compact header and the single column early, instead of a header that wraps to three rows.
+| Role | Value | Use |
+|---|---|---|
+| `--site-max` | `96rem` (1536px at 16px) | Centered `.page` and header row |
+| `--directory-max` | `80rem` (1280px) | Page headers, directories, resource and artist lists, footer content |
+| `--rail-width` | `14rem` (224px) | Each article navigation rail |
+| `--page-gutter` | 32 / 24 / 16px | Shared outside padding, reduced at 800 / 640px |
+| `--layout-gap` | 32 / 24 / 20px | Column separation, reduced with the gutters |
 
-**The Measured-Breakpoint Rule.** A breakpoint sits where something measured stops fitting, and the stylesheet says what was measured next to it. Never a device width picked for its name.
+`.page` is a full-width flex column with `margin-inline: auto` and the site maximum. Its main region fills short pages so the footer stays at the bottom. Directories also use `width: 100%` and auto inline margins. Their headers, lists and secondary navigation share the same content edge. Never combine a narrow max-width with an uncentered container.
 
-**The Fixed-Header Rule.** The header, fixed to the top of the viewport, is one 52px row at every width at the default text size. Anything that would make it taller goes underneath it and scrolls. Nothing copies that 52px, though: the sticky sidebar and every scroll offset read `--header-h`, which follows the real header, so when a larger default text size does give it a second row, nothing slides underneath.
+The header is fixed, normally 52px high. Its row contains the logo, an expanding search field (up to 480px), section links, and theme control. Gaps are 24px, reducing to 12px on narrow screens. The real height is measured into `--header-h`; body padding and sticky offsets follow that measurement. Below 1140px the section links occupy a separate scrolling bar that moves away with the document.
+
+### Articles
+
+At 1280px and above, `.layout--docs` has three columns: **all articles / current article / on this page**. Equal 224px rails balance the central article. At the maximum shell width the article is 960px wide, including its code, tables and callouts. Both rails stick beneath the header and scroll independently; opening the article tree never pushes its table of contents away.
+
+The left rail opens by default and marks the current article with weight, accent and a pale tint. The right rail is labeled «На этой странице» and highlights the heading being read. Neither repeats the article's H1. Both controls are native `details`/`summary`: Enter, Space and pointer activation work without scripts, and Escape closes the enhanced panel.
+
+Breadcrumbs above the H1 establish the section and current page. «Шире» becomes available above 1536px, where extra width actually exists; it expands the shell to the window. «Обычная ширина» restores the centered measure. The choice persists under `es-doc-width`, applies before paint, and never makes a phone wider than its screen. Standard article width is a deliberate wiki compromise for prose, code and illustrations; long prose-only news posts keep an 860px centered container.
+
+Below 1280px, the table of contents becomes a collapsed sticky disclosure above the article. Below 992px, the left tree also becomes a collapsed disclosure. An expanded compact tree/TOC has bounded vertical scroll. Each new article starts with compact panels closed. Resizing opens desktop panels and collapses compact panels; focus moves to the summary if necessary. On compact layouts, following a heading link closes the contents before scrolling and focuses the destination. Anchor offsets include the measured sticky summary height.
+
+The DOM order is article navigation, breadcrumbs, local contents, article. There is one copy of each navigation. The skip link goes directly to the main article. The right contents is a spatial supplement on desktop and naturally precedes the article on compact layouts; CSS does not clone interactive elements.
+
+### Directories and homepage
+
+`/docs/` has a compact header and two side-by-side thematic groups from the existing tree. Ungrouped entries span the directory; nested pages remain with their parent. Below 768px the directory is a single sequential list. Group labels use readable sans text; long article titles wrap at every width.
+
+The homepage puts «Создание мода» and «Материалы и сообщество» alongside each other, with descriptions below link names. It keeps the existing camp imagery, introduction, track and contributor content. Links identify the actual destination: «Ошибки и решения» leads to the error guide. Resource and artist directories use the same 1280px content frame. Collection tabs and category links align with their lists.
+
+Standard header spacing is 32px above / 28px below, 40/32 for the homepage, and 24px for nested resource headers. The directory body starts 32px below its preceding region. Keep the existing 4px spacing scale; use smaller gaps within groups and larger gaps between tasks.
+
+### Responsive and accessibility contract
+
+- Breakpoints use em and reflect content fit: 1280px (TOC), 1140px (header links), 992px (article tree), 800px (gutters), 768px (directory groups), 640px (search sheet).
+- Grid content always has `min-width: 0`; long identifiers wrap, code and wide tables scroll within their own containers.
+- Navigation targets are at least 44px on compact layouts and coarse pointers. Disclosures remain operable at every width.
+- Preserve visible focus, skip navigation, `aria-current`, native link behavior, and reduced-motion preferences. Current navigation also uses weight, so color is not the only cue.
+- Verify 1920, 1440, 1024, 768, 390 and 320px, enlarged content, long titles, both themes, search, anchors and transitions across breakpoints.
+
+### Reference basis
+
+[Wikipedia's example article](https://en.wikipedia.org/wiki/Early_Netherlandish_painting) informed independent contents and width choice. [MediaWiki's layout rationale](https://www.mediawiki.org/wiki/Reading/Web/Desktop_Improvements/Features/Limiting_content_width) distinguishes reading width from the whole workspace. [The Last of Us Wiki](https://thelastofus.fandom.com/ru/wiki/The_Last_of_Us_Wiki) informed the common community/page container. These are structural references, not skins to copy. Context7 `/mdn/content` supplied CSS Grid and native disclosure guidance; [WAI Disclosure](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/) informed keyboard behavior.
 
 ## Elevation & Depth
 
@@ -340,15 +374,18 @@ One 20px row, deliberately: this is a docs site, and the footer is wayfinding, n
 ### Search (combobox + listbox)
 The header's centerpiece: a bordered input group that rings itself in accent on `:focus-within` (the border plus a 1px `box-shadow` ring, the same 2px the filter fields draw — a ring, not a lift), dropping a `--bg-elevated` listbox (white by day) with the Modal shadow. The field itself is white on the header's Leaf Shade — the one place in the chrome that is the page's own colour, because it is where you type. Matched substrings are marked with **weight 700, not color** (keeping the leaf rare). The highlighted/hovered option takes the pale Leaf Muted tint; its context prefix lifts to full ink so the row the eye is sent to reads clearest. Collapses to an icon-triggered full-width sheet at ≤640px. Fully keyboard-driven (WAI-ARIA combobox) and degrades to a navigable `<form>` without JS.
 
+
+The native form submits to `/docs/?q=…`, which renders results on the server with the same ranked corpus as autocomplete. It preserves the query, links to matching headings/resources, escapes all labels and offers «Все статьи» plus a useful empty-state message. On phones, only successfully initialized JavaScript collapses the search form behind its button; without it the form stays visible.
+
 ### Heading Anchors
 Every heading below h1 carries a hover-revealed `#` anchor and a slug built from the **path of headings containing it**: an h2 is `{h2}`, an h3 under it `{h2}/{h3}`, an h4 under that `{h2}/{h3}/{h4}`. Two sections called «Плюсы» under different parents are therefore two different anchors, with no disambiguation needed; genuine collisions under one parent get `-2`, `-3` in document order.
 
 This replaced a flat `{текст}-{номера строк}` scheme whose uniqueness came from the heading's line numbers, which meant every anchor on a page moved the moment anyone inserted a paragraph above it. A path survives edits elsewhere in the document, and reads as a location rather than an accident. Slashes are legal in both `id` attributes and URL fragments; the TOC scroll-spy matches ids as strings, never as CSS selectors, so nothing needs escaping.
 
 ### Section Row & Doc Tree
-The primary grouping affordance, a bordered list of rows, never a card grid. Baseline-aligned flex rows with a leaf-green arrow that fades in on hover/focus. The docs index nests these into a tree with a 1px `--border` left-indent guide (structural, not a decorative stripe). Names truncate with ellipsis on a wide screen, capped at their row's width so a long one can't run past it; the arrow stays pinned right, and it's pinned by its own `margin-left: auto`, not by `.section-desc`'s `flex: 1`. The description is optional — some rows carry none — so hanging the arrow's position on it left the arrow tucked against the name in exactly those cases. Below 640px nothing is clipped: the name wraps, and the description takes a full line of its own under it: a quarter of a sentence ending in an ellipsis is a broken explanation, not a shorter one.
+The primary grouping affordance is a flat list of links. Names and descriptions wrap instead of truncating the information needed to choose a page. The arrow remains secondary; the whole row is the target. On the homepage each description sits beneath its name; the two job groups share the directory width.
 
-**Grouping a long tree.** `tree.yaml` takes two nodes that aren't pages: `- ---` draws a `--border` hairline between groups, and `- heading: Текст` labels one, in the quiet uppercase Consolas the sidebar uses for every other section label. Both work at any depth and render in both docs navs — the `/docs/` index and the sidebar's «Все статьи» — from one resolved tree, so a group written once appears in both places at their own scales.
+`tree.yaml` supports dividers (`- ---`) and named groups (`- heading: Текст`) at any depth. Both navigation surfaces use the same resolved tree. The directory arranges top-level groups into columns and drops top-level divider rules where column grouping already separates them. Nested dividers and hierarchy remain intact. Group labels use the sans UI face.
 
 Neither is a link, and neither is furniture the reader has to step over: the rule is `role="presentation"` and `aria-hidden`, and a heading's items are named to a screen reader through the `aria-label` of the list it heads. The group itself is a real list item — its label plus its own list — not a presentational one: an outer `role="list"` that owns something other than list items has its count wrong in a screen reader (axe's `aria-required-children`), which is what the grouped tree shipped with until the September 2026 audit. A heading's children keep the indent of the rows around them rather than nesting — the indent guide means "these belong to the article above", and above a group there is no article. A rule with nothing left to separate (leading, trailing, or following another) is dropped rather than drawn, so a group whose articles are all missing or renamed doesn't leave a hairline hanging against the top of the list.
 
@@ -381,9 +418,7 @@ The banner set itself is generated from `es-doc-assets/config.yaml`: every key u
 
 ### Article Source and Date
 
-The sidebar follows the scope of navigation: «Документация», the collapsible «Все статьи» tree, then the current article's title and contents. The expanded tree has no height cap or internal scrollbar: on desktop it shares the sticky sidebar's scroll container; on mobile it grows in the page flow. Desktop remembers the open state, while each new article starts with the tree closed on mobile so the reader reaches the text immediately.
-
-The sidebar exposes «Открыть .md» and «Скачать» directly, without a disclosure or an extra label. They remain quiet mono links below the navigation, separated from it by a hairline. «Последнее изменение» sits immediately below those links in the same metadata voice, with the timestamp kept together when it wraps. On narrow screens the links retain 44px tap targets; a missing date leaves only the two source actions.
+«Обновлено», «Исходник Markdown» and «Скачать .md» appear after the article, before the previous/next navigation. They stay directly available without using the opening viewport on phones. A missing date leaves just the source actions. Sources remain ordinary links and the download link retains its `download` attribute.
 
 ### Disambiguation Hatnote
 `::about A | Б | ссылка` renders the one italic line above an article that says what this page covers and where the other meaning lives — «Эта статья о A; о Б см. …». PT Serif italic in ink-soft, boxed in a plain `--border` frame. Double colon, not triple: unlike every other `:::name` block on this page, a hatnote is one physical line with no body and no closer, and the shorter marker makes that visible on sight instead of inviting an author to hunt for a `:::` to close it. The frame is unpainted (no `--bg-light` fill), a step quieter than blockquote's painted card and well short of a banner's status-coloured one — it reads as its own aside, not as content in its own right. Exactly three `|`-separated fields, both subjects in the prepositional case so the sentence's single «о» serves both. Anything else fails the block and leaves the raw `::about` line visible on the page — a half-filled sentence is worse than an obvious mistake.
