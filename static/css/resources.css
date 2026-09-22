@@ -343,7 +343,7 @@ a.res-thumb:focus-visible {
     background: var(--bg-light);
 }
 
-.res-row--sprite:target .res-sprite-trigger {
+.res-row--sprite:target:not(.is-stale-target) .res-sprite-trigger {
     background: var(--target-bg);
 }
 
@@ -377,8 +377,16 @@ a.res-thumb:focus-visible {
     box-shadow: var(--shadow-soft);
 }
 
+.res-sprite-menu::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 0;
+    right: 0;
+    height: 6px;
+}
+
 .res-sprite-picker:hover .res-sprite-menu,
-.res-sprite-picker:focus-within .res-sprite-menu,
 .res-sprite-picker.is-open .res-sprite-menu {
     display: grid;
 }

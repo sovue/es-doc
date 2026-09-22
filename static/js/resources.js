@@ -186,9 +186,12 @@
                 if (!picker.contains(document.activeElement)) {
                     picker.classList.remove('is-search-locked');
                 }
-            } else if (!picker.classList.contains('is-open')) {
-                trigger.setAttribute('aria-expanded', 'false');
             }
+            close(picker);
+        });
+
+        picker.addEventListener('focusout', event => {
+            if (!picker.contains(event.relatedTarget)) close(picker);
         });
 
         trigger.addEventListener('keydown', event => {
@@ -237,6 +240,9 @@
     });
 
     const selectHashTarget = () => {
+        document.querySelectorAll('.res-row--sprite.is-stale-target').forEach(row => {
+            row.classList.remove('is-stale-target');
+        });
         const id = location.hash ? decodeURIComponent(location.hash.slice(1)) : '';
         const target = hashVariants.get(id);
         if (!target) return;
@@ -248,6 +254,14 @@
     };
     selectHashTarget();
     window.addEventListener('hashchange', selectHashTarget);
+
+    document.addEventListener('pointerover', event => {
+        const hoveredRow = event.target.closest?.('.res-row--sprite');
+        const targetRow = document.querySelector('.res-row--sprite:target');
+        if (hoveredRow && targetRow && hoveredRow !== targetRow) {
+            targetRow.classList.add('is-stale-target');
+        }
+    });
 
     document.addEventListener('click', event => {
         pickers.forEach(picker => {
