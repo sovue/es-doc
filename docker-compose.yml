@@ -10,11 +10,11 @@ services:
       # - ../es-doc-assets:/app/content
       - ./static:/app/static
       - ./templates:/app/templates
-      - ./temp:/app/temp
+      - temp_data:/app/temp
     environment:
       - ES_DOC_ASSETS_PATH=/app/content
       - ES_DOC_CACHE_PATH=/app/temp
-      - ES_DOC_SITE_URL=https://es-doc.rfld.ru
+      - ES_DOC_SITE_URL=https://es-doc.sovue.ru
     expose:
       - "8000"
 
@@ -28,3 +28,7 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - web
+
+volumes:
+  temp_data:
+  
