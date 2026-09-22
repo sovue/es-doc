@@ -2,10 +2,8 @@
    The shared audio player (static/js/player.js).
 
    Moved out of resources.css when the home page's theme track started using
-   the same bar. Loaded by head.html on any page that plays something, so
-   `.res-` here is history rather than scope: the floating bar is site-wide
-   and the class names stayed put so the resource listings did not have to
-   be rewritten around a rename.
+   the same bar. Loaded by head.html on every page so the track can hand off
+   across section navigations; `.res-` here is history rather than scope.
 
    The play button itself is deliberately *not* here. It is styled by the
    page that shows it — the square row action on the resource lists, the
@@ -124,7 +122,8 @@
 }
 
 .res-nowplaying-stop,
-.res-nowplaying-pause {
+.res-nowplaying-pause,
+.res-nowplaying-repeat {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -141,13 +140,16 @@
 }
 
 .res-nowplaying-stop:hover,
-.res-nowplaying-pause:hover {
+.res-nowplaying-pause:hover,
+.res-nowplaying-repeat:hover,
+.res-nowplaying-repeat[aria-pressed="true"] {
     color: var(--accent);
     border-color: var(--accent);
 }
 
 .res-nowplaying-stop:focus-visible,
-.res-nowplaying-pause:focus-visible {
+.res-nowplaying-pause:focus-visible,
+.res-nowplaying-repeat:focus-visible {
     outline: var(--focus-ring);
     outline-offset: 2px;
 }
@@ -170,6 +172,14 @@
     min-width: 0;
     display: grid;
     row-gap: 2px;
+}
+
+.res-nowplaying-repeat {
+    flex-shrink: 0;
+}
+
+.res-nowplaying--ended .res-nowplaying-repeat {
+    color: var(--accent);
 }
 
 /* Both of these are grid or flex items with `min-width: auto`, so their
@@ -255,7 +265,8 @@
        zone, so its buttons take the full 44px there rather than the 30px
        that reads fine under a cursor. */
     .res-nowplaying-stop,
-    .res-nowplaying-pause {
+    .res-nowplaying-pause,
+    .res-nowplaying-repeat {
         width: 44px;
         height: 44px;
     }

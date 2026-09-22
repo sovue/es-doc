@@ -106,10 +106,7 @@
 
 /* ── Shared audio player ──
    Moved to player.js: the home page's theme track wanted the same bar, and
-   nothing in it was ever about resource listings. head.html loads it
-   alongside this file. The volume slider in the toolbar above the list
-   (#res-volume-input) is still declared here in the markup — the player
-   picks it up if it is on the page. */
+   nothing in it was ever about resource listings. */
 
 /* ── Filters and sorting ── */
 (function () {
