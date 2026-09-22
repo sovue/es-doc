@@ -14,6 +14,27 @@
    lake themes instead of pinning their own palette.
    ===================================================================== */
 
+/* Page scripts are re-evaluated by navigation.js when the user returns to
+   this page without a full reload. Keep the implementation scoped so a
+   second visit cannot redeclare its lexical bindings in the document. */
+(function () {
+
+const previousCleanup = window.__esdocWarperCleanup;
+if (previousCleanup) previousCleanup();
+
+const cleanupTasks = [];
+const registerCleanup = task => cleanupTasks.push(task);
+window.__esdocWarperCleanup = () => {
+    while (cleanupTasks.length) {
+        try {
+            cleanupTasks.pop()();
+        } catch (error) {
+            // A detached preview must never prevent the next page from loading.
+            console.warn('Unable to clean up warper preview:', error);
+        }
+    }
+};
+
 const Warpers = {
 
     // Special warpers
@@ -702,13 +723,17 @@ const measureAll = () => {
     stale.forEach(preview => preview.render());
 };
 
+registerCleanup(() => previews.forEach(preview => preview.stop()));
+
 /* Draw straight away rather than waiting for the observer's first delivery.
    A tab that isn't compositing yet (opened in the background, restored
    session) skips the rendering steps entirely, and with them both the
    observer callback and any rAF — so `load` is the backstop that gets those
    previews their first real measurement. */
 measureAll();
-window.addEventListener('load', measureAll);
+const onLoad = () => measureAll();
+window.addEventListener('load', onLoad);
+registerCleanup(() => window.removeEventListener('load', onLoad));
 
 // measure() is a no-op while the box is unchanged, so the observer's own
 // first callback doesn't redraw what's already on screen.
@@ -725,7 +750,12 @@ const track = preview => {
 };
 
 if (sizeObserver) previews.forEach(preview => sizeObserver.observe(preview.canvas));
-else window.addEventListener('resize', () => previews.forEach(preview => preview.measure()));
+else {
+    const onResize = () => previews.forEach(preview => preview.measure());
+    window.addEventListener('resize', onResize);
+    registerCleanup(() => window.removeEventListener('resize', onResize));
+}
+if (sizeObserver) registerCleanup(() => sizeObserver.disconnect());
 
 /* Theme swap: the toggle rewrites data-theme, the OS flips the media query.
    Either way the cached palette is stale, so re-read it and repaint. */
@@ -734,12 +764,16 @@ const refresh = () => {
     previews.forEach(preview => preview.draw());
 };
 
-new MutationObserver(refresh).observe(document.documentElement, {
+const themeObserver = new MutationObserver(refresh);
+themeObserver.observe(document.documentElement, {
     attributes: true,
     attributeFilter: ['data-theme'],
 });
+registerCleanup(() => themeObserver.disconnect());
 
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', refresh);
+const colorScheme = window.matchMedia('(prefers-color-scheme: dark)');
+colorScheme.addEventListener('change', refresh);
+registerCleanup(() => colorScheme.removeEventListener('change', refresh));
 
 /* ── Copying: the name, the graph, the formula ────────────── */
 
@@ -869,7 +903,10 @@ if (navigator.clipboard && window.copyControl) {
         return /^[A-Za-z_][A-Za-z0-9_]*$/.test(value) ? value : 'my_warper';
     };
 
-    const duration = () => Math.min(Math.max(parseFloat(seconds.value) || 1.5, 0.2), 10);
+    const duration = () => {
+        const value = parseFloat(seconds.value);
+        return Number.isFinite(value) ? Math.max(value, 0.2) : 1.5;
+    };
 
     const apply = value => {
         if (property.value === 'alpha') {
@@ -888,6 +925,11 @@ if (navigator.clipboard && window.copyControl) {
     };
 
     let frame = null;
+
+    registerCleanup(() => {
+        cancelAnimationFrame(frame);
+        frame = null;
+    });
 
     const run = () => {
         cancelAnimationFrame(frame);
@@ -1066,4 +1108,6 @@ if (navigator.clipboard && window.copyControl) {
     curveCanvas.addEventListener('pointerenter', () => curve.play());
     curveCanvas.addEventListener('pointerleave', () => curve.stop());
     curveCanvas.addEventListener('click', () => curve.replay());
+})();
+
 })();

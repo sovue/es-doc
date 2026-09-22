@@ -107,6 +107,7 @@
         await updateStyles(nextDocument);
         if (id !== navigationId) return;
 
+        window.__esdocWarperCleanup?.();
         content.innerHTML = nextContent.innerHTML;
         document.title = nextDocument.title;
         document.body.className = nextDocument.body.className;
