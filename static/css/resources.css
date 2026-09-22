@@ -236,6 +236,12 @@
     background: var(--target-bg);
 }
 
+/* Search lands on the sprite family row. Highlight its code rather than
+   painting a full-width slab behind the thumbnail and action buttons. */
+.res-row--sprite:target {
+    background: transparent;
+}
+
 .res-thumb {
     display: flex;
     align-items: center;
@@ -304,6 +310,107 @@ a.res-thumb:focus-visible {
     font-weight: 600;
     color: var(--text);
     overflow-wrap: break-word;
+}
+
+/* Sprite names are families rather than one flat stream: the trigger keeps
+   the familiar code visible, while its small popover exposes the three game
+   distances without spending a full row on each one. */
+.res-sprite-picker {
+    position: relative;
+    display: inline-flex;
+}
+
+.res-sprite-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    margin: -3px -7px;
+    padding: 3px 7px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-xs);
+    background: none;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.res-sprite-trigger:hover,
+.res-sprite-trigger[aria-expanded="true"] {
+    border-color: var(--border);
+    color: var(--accent);
+    background: var(--bg-light);
+}
+
+.res-row--sprite:target .res-sprite-trigger {
+    background: var(--target-bg);
+}
+
+.res-sprite-trigger:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+}
+
+.res-sprite-distance {
+    flex-shrink: 0;
+    padding: 2px 5px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    color: var(--text-soft);
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 400;
+}
+
+.res-sprite-menu {
+    position: absolute;
+    z-index: 1;
+    top: calc(100% + 5px);
+    left: 0;
+    display: none;
+    min-width: 100%;
+    padding: 4px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow-soft);
+}
+
+.res-sprite-picker:hover .res-sprite-menu,
+.res-sprite-picker:focus-within .res-sprite-menu,
+.res-sprite-picker.is-open .res-sprite-menu {
+    display: grid;
+}
+
+/* Search changes the selected asset, not the user's picker. Keep the menu
+   hidden until the user explicitly opens it. */
+.res-sprite-picker.is-search-locked .res-sprite-menu {
+    display: none;
+}
+
+.res-sprite-option {
+    display: block;
+    width: 100%;
+    padding: 7px 9px;
+    border: 0;
+    border-radius: var(--radius-xs);
+    background: none;
+    color: var(--text-soft);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.res-sprite-option:hover,
+.res-sprite-option[aria-selected="true"] {
+    background: var(--bg-light);
+    color: var(--accent);
+}
+
+.res-sprite-option:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: -1px;
 }
 
 .res-desc {

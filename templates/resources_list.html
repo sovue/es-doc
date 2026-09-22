@@ -41,6 +41,52 @@
 </li>
 {% endmacro %}
 
+{% macro sprite_row(family) %}
+{% set primary = family.primary %}
+<li class="res-row res-row--sprite" id="{{ primary.rid }}"
+    data-name="{{ family.name }}" data-search="{{ family.search }}"
+    data-variant-count="{{ family.variants|length }}">
+    {% if primary.thumb %}
+    <a class="res-thumb res-thumb--sprite" href="{{ primary.raw }}"
+       data-media-surface data-zoom="{{ primary.code }}" data-file="{{ primary.name }}.webp"
+       aria-label="Открыть «{{ primary.code }}» в полном размере">
+        <img src="{{ primary.thumb }}" loading="lazy" decoding="async" alt="">
+    </a>
+    {% else %}
+    <span class="res-thumb res-thumb--sprite res-thumb--none">нет превью</span>
+    {% endif %}
+    <div class="res-meta">
+        <span class="res-name-line">
+            <span class="res-sprite-picker">
+                <button type="button" class="res-sprite-trigger" aria-haspopup="listbox"
+                        aria-expanded="false" aria-label="Выбрать дистанцию для {{ family.name }}">
+                    <code class="res-name">{{ primary.code }}</code>
+                    <span class="res-sprite-distance" data-sprite-distance>{{ primary.distance }}</span>
+                </button>
+                <span class="res-sprite-menu" role="listbox" aria-label="Дистанция спрайта">
+                    {% for variant in family.variants %}
+                    <button type="button" class="res-sprite-option" data-sprite-select
+                            {% if variant.rid != primary.rid %}id="{{ variant.rid }}"{% endif %}
+                            data-code="{{ variant.code }}" data-name="{{ variant.name }}"
+                            data-distance="{{ variant.distance }}"
+                            {% if variant.raw %}data-raw="{{ variant.raw }}"{% endif %}
+                            {% if variant.thumb %}data-thumb="{{ variant.thumb }}"{% endif %}
+                            data-file="{{ variant.name }}.webp"
+                            role="option" aria-selected="{{ 'true' if variant.rid == primary.rid else 'false' }}">
+                        <code>{{ variant.distance }}</code>
+                    </button>
+                    {% endfor %}
+                </span>
+            </span>
+        </span>
+    </div>
+    <div class="res-actions">
+        {{ res.copy_button(primary.code) }}
+        {% if primary.raw %}{{ res.dl_button(primary.raw, primary.name + '.webp') }}{% endif %}
+    </div>
+</li>
+{% endmacro %}
+
 {% macro audio_row(item) %}
 <li class="res-row" id="{{ item.rid }}" data-name="{{ item.name }}"{% if not item.declared %} data-undeclared hidden{% endif %}>
     {% if item.raw %}{{ res.play_button(item.raw, item.name) }}{% endif %}
@@ -150,7 +196,7 @@
                     <span class="res-count">{{ group.sprites|length }}</span>
                 </h2>
                 <ul class="res-list" role="list">
-                    {% for item in group.sprites %}{{ image_row(item, sprite=true) }}{% endfor %}
+                    {% for family in group.sprite_families %}{{ sprite_row(family) }}{% endfor %}
                 </ul>
             </section>
             {% endfor %}

@@ -131,6 +131,7 @@
 
     function go(m) {
         if (!m) return;
+        close();
         window.location.href = m.url ||
             '/docs/' + encodeURIComponent(m.doc) + (m.anchor ? '#' + m.anchor : '');
     }
