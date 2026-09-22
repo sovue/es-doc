@@ -21,6 +21,7 @@
     {%- if item.loc is not none or item.time is not none %} data-loc="{{ item.loc or '' }}" data-time="{{ item.time or '' }}"{% endif %}>
     {% if item.thumb %}
     <a class="res-thumb{% if sprite %} res-thumb--sprite{% endif %}" href="{{ item.raw }}"
+       data-media-surface
        data-zoom="{{ item.code }}" data-file="{{ filename }}" aria-label="Открыть «{{ item.code }}» в полном размере">
         <img src="{{ item.thumb }}" loading="lazy" decoding="async" alt="">
     </a>

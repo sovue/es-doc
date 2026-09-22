@@ -22,10 +22,12 @@
 {# Before extra_css, so a page's own sheet can still adjust the bar. #}
 {% if with_player %}<link rel="stylesheet" href="{{ asset('/static/css/player.css') }}">
 {% endif %}{% for href in (extra_css or []) %}<link rel="stylesheet" href="{{ asset(href) }}">
-{% endfor %}<link rel="icon" href="/favicon.webp">
+{% endfor %}<link rel="stylesheet" href="{{ asset('/static/css/media.css') }}">
+<link rel="icon" href="/favicon.webp">
 <script src="{{ asset('/static/js/search.js') }}" defer></script>
 <script src="{{ asset('/static/js/totop.js') }}" defer></script>
 <script src="{{ asset('/static/js/theme.js') }}" defer></script>
+<script src="{{ asset('/static/js/media.js') }}" defer></script>
 {#- Site-wide, like the three above: code panels turn up on docs pages, in the
     resource browser's viewer and on the warper page, several of them out of
     markdown no template inspects, and code.js is what reveals their copy

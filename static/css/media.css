@@ -1,0 +1,77 @@
+/* =====================================================================
+   Shared image loading states.
+
+   The skeleton belongs to the image surface, not to a second layer of
+   markup. That keeps the reserved shape identical to the finished media and
+   means a slow image never causes the page to jump when it arrives.
+   ===================================================================== */
+
+[data-media-surface].media-skeleton,
+img.media-skeleton {
+    background-color: var(--skeleton-bg);
+    background-image: linear-gradient(
+        110deg,
+        var(--skeleton-bg) 20%,
+        var(--skeleton-shine) 43%,
+        var(--skeleton-bg) 66%
+    );
+    background-size: 220% 100%;
+    animation: media-skeleton-shimmer 1.35s ease-in-out infinite;
+}
+
+[data-media-surface].media-skeleton > img {
+    opacity: 0;
+}
+
+.artist-preview.media-skeleton .artist-monogram {
+    opacity: 0;
+}
+
+/* Markdown images and the standalone file viewer have no wrapper or known
+   intrinsic box before the response arrives. Give those two cases a calm
+   reading-sized placeholder; fixed avatars keep their authored dimensions. */
+img.media-skeleton:not([width]):not([height]):not([data-media-surface-child]):not(.artist-avatar) {
+    display: block;
+    width: 100%;
+    min-height: 180px;
+    object-fit: contain;
+    color: transparent;
+}
+
+/* A lightbox image gets its dimensions from the file. Reserve a useful stage
+   only while it is waiting, then let the finished image size the dialog. */
+.res-lightbox-media {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.res-lightbox-media.media-skeleton {
+    width: min(72vw, 860px);
+    min-height: min(64vh, 560px);
+}
+
+.res-lightbox-media > img {
+    display: block;
+    max-width: 100%;
+    max-height: calc(92vh - 58px);
+    max-height: calc(92dvh - 58px);
+    width: auto;
+    height: auto;
+}
+
+@keyframes media-skeleton-shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -20% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-media-surface].media-skeleton,
+    img.media-skeleton {
+        animation: none;
+    }
+
+    .hero-bg.media-skeleton::before {
+        animation: none;
+    }
+}

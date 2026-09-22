@@ -24,7 +24,7 @@
    The status badge floats in the corner: secondary metadata, out of the way
    of the name and contact links that follow in the card body. #}
 {% macro preview(a) %}
-<span class="artist-preview{% if not a.preview %} artist-preview--none{% endif %}">
+<span class="artist-preview{% if not a.preview %} artist-preview--none{% endif %}" data-media-surface>
     <span class="artist-monogram" aria-hidden="true">{{ a.name[:1]|upper }}</span>
     {%- if a.preview %}
     <img class="artist-preview-img" src="/resource/artist/preview/{{ a.slug }}" alt="" loading="lazy" decoding="async">
