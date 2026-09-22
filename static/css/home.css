@@ -17,7 +17,7 @@
 
 .page-hero--home .page-hero-inner {
     position: relative;
-    z-index: 1;
+    z-index: 3;
 }
 
 /* The image set per theme: day shots under the sun, night shots by the
@@ -98,6 +98,25 @@
     opacity: 1;
 }
 
+/* The first slide is a CSS background rather than an <img>, so the shared
+   loader paints its temporary surface on the hero's own layer. The wash stays
+   underneath it; the title column remains readable above both. */
+.hero-bg.media-skeleton::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background-color: var(--skeleton-bg);
+    background-image: linear-gradient(
+        110deg,
+        var(--skeleton-bg) 20%,
+        var(--skeleton-shine) 43%,
+        var(--skeleton-bg) 66%
+    );
+    background-size: 220% 100%;
+    animation: media-skeleton-shimmer 1.35s ease-in-out infinite;
+}
+
 /* home.html adds .is-live once the page has loaded and slides 2–4 have
    downloaded, and never under reduced motion. The cycle starts 2.56s in, at
    the 8% where a slide is fully faded in, so the first slide is already
@@ -137,6 +156,7 @@
         linear-gradient(to bottom,
             color-mix(in srgb, var(--bg) 25%, transparent) 55%,
             var(--bg) 100%);
+    z-index: 1;
 }
 
 /* ── Contributors strip below page-main ──────────────────── */

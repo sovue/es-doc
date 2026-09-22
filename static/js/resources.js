@@ -106,10 +106,169 @@
 
 /* ── Shared audio player ──
    Moved to player.js: the home page's theme track wanted the same bar, and
-   nothing in it was ever about resource listings. head.html loads it
-   alongside this file. The volume slider in the toolbar above the list
-   (#res-volume-input) is still declared here in the markup — the player
-   picks it up if it is on the page. */
+   nothing in it was ever about resource listings. */
+
+/* ── Sprite distance picker ─────────────────────────────── */
+(function () {
+    const pickers = [...document.querySelectorAll('.res-sprite-picker')];
+    if (!pickers.length) return;
+    const hashVariants = new Map();
+
+    const close = picker => {
+        picker.classList.remove('is-open');
+        picker.querySelector('.res-sprite-trigger')?.setAttribute('aria-expanded', 'false');
+    };
+
+    pickers.forEach(picker => {
+        const row = picker.closest('.res-row');
+        const trigger = picker.querySelector('.res-sprite-trigger');
+        const name = trigger?.querySelector('.res-name');
+        const distance = trigger?.querySelector('[data-sprite-distance]');
+        const options = [...picker.querySelectorAll('[data-sprite-select]')];
+        const imageLink = row?.querySelector('a.res-thumb');
+        const image = imageLink?.querySelector('img');
+        const copy = row?.querySelector('.res-copy');
+        const download = row?.querySelector('.res-dl');
+
+        if (!row || !trigger || !name || !distance || !options.length) return;
+
+        const select = option => {
+            if (option.getAttribute('aria-selected') === 'true') return;
+
+            const code = option.dataset.code;
+            const raw = option.dataset.raw || '';
+            const thumb = option.dataset.thumb || '';
+            const file = option.dataset.file || '';
+
+            name.textContent = code;
+            distance.textContent = option.dataset.distance;
+            trigger.setAttribute('aria-label', `Выбрать дистанцию для ${code}`);
+
+            if (imageLink && image && raw && thumb) {
+                imageLink.href = raw;
+                imageLink.dataset.zoom = code;
+                imageLink.dataset.file = file;
+                imageLink.setAttribute('aria-label', `Открыть «${code}» в полном размере`);
+                image.src = thumb;
+                image.alt = '';
+            }
+
+            if (copy) {
+                copy.dataset.copy = code;
+                copy.setAttribute('aria-label', `Скопировать: ${code}`);
+            }
+
+            if (download && raw) {
+                download.href = raw;
+                download.download = file;
+                download.setAttribute('aria-label', `Скачать ${file}`);
+            }
+
+            options.forEach(item => item.setAttribute(
+                'aria-selected', item === option ? 'true' : 'false',
+            ));
+        };
+
+        trigger.addEventListener('click', () => {
+            picker.classList.remove('is-search-locked');
+            const open = picker.classList.toggle('is-open');
+            trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+
+        picker.addEventListener('pointerenter', () => {
+            if (!picker.classList.contains('is-search-locked')) {
+                trigger.setAttribute('aria-expanded', 'true');
+            }
+        });
+
+        picker.addEventListener('pointerleave', () => {
+            if (picker.classList.contains('is-search-locked')) {
+                if (!picker.contains(document.activeElement)) {
+                    picker.classList.remove('is-search-locked');
+                }
+            }
+            close(picker);
+        });
+
+        picker.addEventListener('focusout', event => {
+            if (!picker.contains(event.relatedTarget)) close(picker);
+        });
+
+        trigger.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                close(picker);
+                return;
+            }
+            if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+            event.preventDefault();
+            picker.classList.remove('is-search-locked');
+            picker.classList.add('is-open');
+            trigger.setAttribute('aria-expanded', 'true');
+            (event.key === 'ArrowDown' ? options[0] : options[options.length - 1]).focus();
+        });
+
+        options.forEach(option => {
+            if (option.id) hashVariants.set(option.id, { option, picker, row, select });
+            option.addEventListener('click', () => {
+                select(option);
+                // Keep the manual picker available for choosing another
+                // distance, matching its previous hover-driven behavior.
+                picker.classList.add('is-open');
+                trigger.setAttribute('aria-expanded', 'true');
+                trigger.focus();
+            });
+
+            option.addEventListener('keydown', event => {
+                if (event.key === 'Escape') {
+                    close(picker);
+                    trigger.focus();
+                }
+            });
+        });
+
+        row.addEventListener('res:sprite-filter', event => {
+            const query = event.detail.query;
+            const match = query
+                ? options.find(option => option.dataset.code.toLowerCase().includes(query))
+                : options[0];
+            if (match) {
+                select(match);
+                picker.classList.add('is-search-locked');
+                close(picker);
+            }
+        });
+    });
+
+    const selectHashTarget = () => {
+        document.querySelectorAll('.res-row--sprite.is-stale-target').forEach(row => {
+            row.classList.remove('is-stale-target');
+        });
+        const id = location.hash ? decodeURIComponent(location.hash.slice(1)) : '';
+        const target = hashVariants.get(id);
+        if (!target) return;
+        target.select(target.option);
+        target.picker.classList.add('is-search-locked');
+        close(target.picker);
+        if (target.picker.contains(document.activeElement)) document.activeElement.blur();
+        target.row.scrollIntoView({ block: 'start', behavior: 'instant' });
+    };
+    selectHashTarget();
+    window.addEventListener('hashchange', selectHashTarget);
+
+    document.addEventListener('pointerover', event => {
+        const hoveredRow = event.target.closest?.('.res-row--sprite');
+        const targetRow = document.querySelector('.res-row--sprite:target');
+        if (hoveredRow && targetRow && hoveredRow !== targetRow) {
+            targetRow.classList.add('is-stale-target');
+        }
+    });
+
+    document.addEventListener('click', event => {
+        pickers.forEach(picker => {
+            if (!picker.contains(event.target)) close(picker);
+        });
+    });
+})();
 
 /* ── Filters and sorting ── */
 (function () {
@@ -128,11 +287,13 @@
 
     const rows = [...document.querySelectorAll('.res-row')].map(el => ({
         el,
-        text: (el.querySelector('.res-name')?.textContent || '').toLowerCase(),
+        text: (el.dataset.search || el.querySelector('.res-name')?.textContent || '').toLowerCase(),
         desc: (el.querySelector('.res-desc')?.textContent || '').toLowerCase(),
     }));
     const groups = [...document.querySelectorAll('.res-group')];
     const jumps = [...document.querySelectorAll('.res-jump li')];
+    let previousQuery = input.value.trim().toLowerCase();
+    const hasDistanceQuery = query => /\b(?:close|far)\b/.test(query);
 
     box.hidden = false;
 
@@ -181,7 +342,16 @@
                 && (!loc || row.el.dataset.loc === loc)
                 && (!time || row.el.dataset.time === time);
             row.el.hidden = !hit;
-            if (hit) shown++;
+            const selected = row.el.querySelector('.res-sprite-option[aria-selected="true"]');
+            const needsDistanceReset = selected && selected.dataset.distance !== 'normal';
+            if (hit && (hasDistanceQuery(q) || (hasDistanceQuery(previousQuery) && needsDistanceReset))) {
+                row.el.dispatchEvent(new CustomEvent('res:sprite-filter', {
+                    detail: { query: q },
+                }));
+            }
+            if (hit) {
+                shown += +row.el.dataset.variantCount || 1;
+            }
         });
 
         // Sprite pages: collapse character groups (and their jump links)
@@ -196,6 +366,7 @@
         if (count) count.textContent = shown === base ? String(base) : `${shown} из ${base}`;
         if (empty) empty.hidden = shown > 0;
 
+        previousQuery = q;
         syncUrl();
     };
 

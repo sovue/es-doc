@@ -21,6 +21,7 @@
     {%- if item.loc is not none or item.time is not none %} data-loc="{{ item.loc or '' }}" data-time="{{ item.time or '' }}"{% endif %}>
     {% if item.thumb %}
     <a class="res-thumb{% if sprite %} res-thumb--sprite{% endif %}" href="{{ item.raw }}"
+       data-media-surface
        data-zoom="{{ item.code }}" data-file="{{ filename }}" aria-label="Открыть «{{ item.code }}» в полном размере">
         <img src="{{ item.thumb }}" loading="lazy" decoding="async" alt="">
     </a>
@@ -36,6 +37,52 @@
     <div class="res-actions">
         {{ res.copy_button(item.code) }}
         {% if item.raw %}{{ res.dl_button(item.raw, filename) }}{% endif %}
+    </div>
+</li>
+{% endmacro %}
+
+{% macro sprite_row(family) %}
+{% set primary = family.primary %}
+<li class="res-row res-row--sprite" id="{{ primary.rid }}"
+    data-name="{{ family.name }}" data-search="{{ family.search }}"
+    data-variant-count="{{ family.variants|length }}">
+    {% if primary.thumb %}
+    <a class="res-thumb res-thumb--sprite" href="{{ primary.raw }}"
+       data-media-surface data-zoom="{{ primary.code }}" data-file="{{ primary.name }}.webp"
+       aria-label="Открыть «{{ primary.code }}» в полном размере">
+        <img src="{{ primary.thumb }}" loading="lazy" decoding="async" alt="">
+    </a>
+    {% else %}
+    <span class="res-thumb res-thumb--sprite res-thumb--none">нет превью</span>
+    {% endif %}
+    <div class="res-meta">
+        <span class="res-name-line">
+            <span class="res-sprite-picker">
+                <button type="button" class="res-sprite-trigger" aria-haspopup="listbox"
+                        aria-expanded="false" aria-label="Выбрать дистанцию для {{ family.name }}">
+                    <code class="res-name">{{ primary.code }}</code>
+                    <span class="res-sprite-distance" data-sprite-distance>{{ primary.distance }}</span>
+                </button>
+                <span class="res-sprite-menu" role="listbox" aria-label="Дистанция спрайта">
+                    {% for variant in family.variants %}
+                    <button type="button" class="res-sprite-option" data-sprite-select
+                            {% if variant.rid != primary.rid %}id="{{ variant.rid }}"{% endif %}
+                            data-code="{{ variant.code }}" data-name="{{ variant.name }}"
+                            data-distance="{{ variant.distance }}"
+                            {% if variant.raw %}data-raw="{{ variant.raw }}"{% endif %}
+                            {% if variant.thumb %}data-thumb="{{ variant.thumb }}"{% endif %}
+                            data-file="{{ variant.name }}.webp"
+                            role="option" aria-selected="{{ 'true' if variant.rid == primary.rid else 'false' }}">
+                        <code>{{ variant.distance }}</code>
+                    </button>
+                    {% endfor %}
+                </span>
+            </span>
+        </span>
+    </div>
+    <div class="res-actions">
+        {{ res.copy_button(primary.code) }}
+        {% if primary.raw %}{{ res.dl_button(primary.raw, primary.name + '.webp') }}{% endif %}
     </div>
 </li>
 {% endmacro %}
@@ -127,17 +174,6 @@
                     </label>
                     {% endif %}
 
-                    {% if category_meta.media == 'audio' %}
-                    <label class="res-volume" for="res-volume-input">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                            <path d="M2.5 6v4h2.6L8.7 13V3L5.1 6z" fill="currentColor"/>
-                            <path d="M10.8 5.5a3.4 3.4 0 0 1 0 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-                            <path d="M12.6 3.7a6 6 0 0 1 0 8.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-                        </svg>
-                        <input type="range" id="res-volume-input" min="0" max="1" step="0.05" value="1"
-                               aria-label="Громкость прослушивания">
-                    </label>
-                    {% endif %}
                 </div>
                 <p class="res-filter-count filter-count" aria-live="polite" data-total="{{ count }}" data-all="{{ count_all }}"></p>
             </div>
@@ -160,7 +196,7 @@
                     <span class="res-count">{{ group.sprites|length }}</span>
                 </h2>
                 <ul class="res-list" role="list">
-                    {% for item in group.sprites %}{{ image_row(item, sprite=true) }}{% endfor %}
+                    {% for family in group.sprite_families %}{{ sprite_row(family) }}{% endfor %}
                 </ul>
             </section>
             {% endfor %}

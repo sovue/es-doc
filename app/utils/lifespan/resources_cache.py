@@ -46,6 +46,7 @@ SPRITE_CHARS = {
 # distance so each outfit reads as one coherent block ("body" goes last).
 SPRITE_OUTFITS = ['pioneer', 'pioneer2', 'sport', 'dress', 'swim', 'body']
 SPRITE_DISTANCES = {'': 0, 'close': 1, 'far': 2}
+SPRITE_DISTANCE_LABELS = {'': 'normal', 'close': 'close', 'far': 'far'}
 
 # ── BG name grammar: (ext|int)_<location>_<time>[_modifier…] ──────────
 
@@ -458,6 +459,49 @@ def _sprite_sort_key(name):
     return (outfit, ' '.join(core), distance)
 
 
+def _sprite_distance(name):
+    suffix = name.rsplit(' ', 1)[-1]
+    return suffix if suffix in ('close', 'far') else ''
+
+
+def _sprite_family_name(name):
+    distance = _sprite_distance(name)
+    return name.rsplit(' ', 1)[0] if distance else name
+
+
+def _sprite_families(items):
+    """Group one character's flat sprite list by pose and outfit.
+
+    The empty suffix is the game's normal distance. It stays the primary
+    preview, while close/far remain real items in the family so copy,
+    download and search can still address their exact names.
+    """
+    families = {}
+    for item in items:
+        distance = _sprite_distance(item['name'])
+        family_name = _sprite_family_name(item['name'])
+        item['distance'] = SPRITE_DISTANCE_LABELS[distance]
+        family = families.setdefault(family_name, {
+            'name': family_name,
+            'variants': [],
+        })
+        family['variants'].append(item)
+
+    order = {'normal': 0, 'close': 1, 'far': 2}
+    result = []
+    for family in families.values():
+        family['variants'].sort(key=lambda item: order[item['distance']])
+        family['primary'] = next(
+            (item for item in family['variants'] if item['distance'] == 'normal'),
+            family['variants'][0],
+        )
+        family['search'] = ' '.join(
+            f"{item['name']} {item['distance']}" for item in family['variants']
+        )
+        result.append(family)
+    return result
+
+
 def _group_sprites(names, composable):
     """Group sprite names by their character code, known cast first; within a
     group: outfit block → emotion → base/close/far."""
@@ -479,6 +523,7 @@ def _group_sprites(names, composable):
         'title': SPRITE_CHARS.get(code, {}).get('title', code),
         'color': SPRITE_CHARS.get(code, {}).get('color'),
         'sprites': groups[code],
+        'sprite_families': _sprite_families(groups[code]),
     } for code in ordered]
 
 
@@ -497,6 +542,8 @@ def _crosslist_character_images(collection):
         if group:
             group['sprites'].append(item)
             group['sprites'].sort(key=lambda i: _sprite_sort_key(i['name']))
+    for group in collection['sprites']:
+        group['sprite_families'] = _sprite_families(group['sprites'])
 
 
 # ── Characters (media.rpy): dialogue codes, display names, name colors ──
@@ -567,15 +614,27 @@ def _build_search_items(collection):
             continue
         if category == 'sprites':
             entries = [(g, i) for g in collection[category] for i in g['sprites']]
+            family_rows = {
+                item['name']: family['primary']['rid']
+                for group in collection[category]
+                for family in group['sprite_families']
+                for item in family['variants']
+            }
         else:
             entries = [(None, i) for i in collection[category]]
         for group, item in entries:
             if not item['declared']:
                 continue
+            url = f'/resources/original/{category}#{quote(item["rid"])}'
+            if category == 'sprites':
+                url = (
+                    f'/resources/original/sprites?q={quote(item["code"])}'
+                    f'#{quote(family_rows[item["name"]])}'
+                )
             row = {
                 'label': item['code'],
                 'context': CATEGORY_TITLES[category] if not group else f'{CATEGORY_TITLES[category]} / {group["title"]}',
-                'url': f'/resources/original/{category}#{quote(item["rid"])}',
+                'url': url,
                 'kind': 'res',
             }
             # Real descriptions (auto bg/music or hand-written) are searchable

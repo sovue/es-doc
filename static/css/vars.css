@@ -64,6 +64,11 @@
     /* The anchor-target flash: the logo's own leaf at 22%. */
     --target-bg: #6DBE4538;
 
+    /* Image loading surfaces: a quiet leaf-paper tint with enough separation
+       from both page themes to read as a deliberate temporary state. */
+    --skeleton-bg: #E7F0E2;
+    --skeleton-shine: #F8FCF5;
+
     /* ── Relief colors ────────────────────────────────────── */
     --sunset: #E89460;      /* warm orange — inline code at night */
     --sky: #8FB2C8;         /* faded daytime sky — the info family */
@@ -319,6 +324,8 @@
         --accent-hover: light-dark(#206220, #AED5FF);
         --accent-muted: light-dark(#D4EFBF, #233A51);
         --target-bg: light-dark(#6DBE4538, #7CBDFF2E);
+        --skeleton-bg: light-dark(#E7F0E2, #273142);
+        --skeleton-shine: light-dark(#F8FCF5, #3D4A60);
         --sunset: light-dark(#E89460, #F5A878);
         --sky: light-dark(#8FB2C8, #6F8EA3);
         --pine: light-dark(#206220, #8FB07A); /* lifted for night — clears AA on its own 14% tint (open-status pill) */
