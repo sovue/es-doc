@@ -80,7 +80,7 @@ sudo chown -R esdeploy:esdeploy /opt/es-doc
 ES_DOC_IMAGE=ghcr.io/sovue/es-doc
 ES_DOC_TAG=sha-0000000000000000000000000000000000000000
 ES_DOC_HTTP_PORT=8005
-ES_DOC_SITE_URL=https://es-doc.rfld.ru
+ES_DOC_SITE_URL=https://es-doc.sovue.org
 DEPLOY_PATH=/opt/es-doc
 ```
 
