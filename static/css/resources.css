@@ -343,6 +343,23 @@ a.res-thumb:focus-visible {
     background: var(--bg-light);
 }
 
+.res-sprite-trigger::after {
+    content: '';
+    display: block;
+    flex: none;
+    width: 6px;
+    height: 6px;
+    margin: -3px 1px 0 0;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg);
+}
+
+.res-sprite-trigger[aria-expanded="true"]::after {
+    margin-top: 3px;
+    transform: rotate(225deg);
+}
+
 .res-row--sprite:target:not(.is-stale-target) .res-sprite-trigger {
     background: var(--target-bg);
 }
