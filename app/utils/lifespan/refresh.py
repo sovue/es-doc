@@ -7,12 +7,11 @@ from ..config import CONFIG
 from ..file import ROOT
 from ..livereload import bump
 from ..logging import root_logger
-
 from .artists_cache import parse_artists
 from .docs_cache import cache_docs
 from .links_cache import parse_links
 from .materials_cache import parse_materials
-from .news_cache import news_posts_path, parse_news_posts, parse_news_sources
+from .news_resources_cache import parse_news_resources
 from .redirects_cache import parse_redirects
 from .resources_cache import parse_resources
 from .sprites_cache import parse_sprites
@@ -110,10 +109,7 @@ def _watchers():
         ), _refresh_resources),
 
         ('artists.yaml', _one_of(assets / 'artists.yaml'), parse_artists),
-        ('news.yaml', _one_of(assets / 'news.yaml'), parse_news_sources),
-        # The posts themselves: adding, editing or renaming one re-indexes
-        # /news, including a news/ folder created after startup.
-        ('news', _under(news_posts_path()), parse_news_posts),
+        ('news_resources.yaml', _one_of(assets / 'news_resources.yaml'), parse_news_resources),
         ('materials.yaml', _one_of(assets / 'materials.yaml'), parse_materials),
         ('links.yaml', _one_of(assets / 'links.yaml'), parse_links),
         ('redirects.yaml', _one_of(assets / 'redirects.yaml'), parse_redirects),

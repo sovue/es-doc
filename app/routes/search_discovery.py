@@ -14,8 +14,8 @@ SITEMAP_NS = 'http://www.sitemaps.org/schemas/sitemap/0.9'
 ElementTree.register_namespace('', SITEMAP_NS)
 
 STATIC_PAGES = (
-    '/', '/docs/', '/authors', '/artists', '/materials', '/news',
-    '/news/sources', '/support', '/resources/', '/resources/community',
+    '/', '/docs/', '/authors', '/artists', '/materials', '/news-resources',
+    '/support', '/resources/', '/resources/community',
 )
 
 
@@ -28,7 +28,6 @@ async def robots_txt():
 async def sitemap_xml():
     paths = list(STATIC_PAGES)
     paths.extend(f'/docs/{quote(doc["slug"], safe="")}' for doc in CONFIG.search_index)
-    paths.extend(f'/news/{quote(post["slug"], safe="")}' for post in CONFIG.news)
     paths.extend(
         f'/resources/{collection}/{category}'
         for collection, data in CONFIG.resources.items()

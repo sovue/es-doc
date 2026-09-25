@@ -6,15 +6,14 @@ from ..logging import root_logger
 logger = root_logger.getChild('lifespan').getChild('links')
 
 def _links_path():
-    # links.yaml sits at the assets root, next to news.yaml.
+    # links.yaml sits at the assets root, next to the other curated lists.
     return CONFIG.docs_path.parent / 'links.yaml'
 
 def parse_links():
-    """Load the community-resources link list from links.yaml into CONFIG.
-    Same row shape as news.yaml (name / url / note), because it's the same
-    kind of list and an author should only have to learn it once. Missing or
-    malformed entries are skipped, not fatal: a broken row must never take the
-    whole page down."""
+    """Load community resource links from links.yaml into CONFIG.
+
+    Invalid rows are skipped so one malformed entry cannot break the page.
+    """
 
     path = _links_path()
 

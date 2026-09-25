@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% set page_title = 'Новостные ресурсы — ES Doc' %}
+{% set body_class = 'bg-solid scene-page' %}
+{% set active = 'news-resources' %}
+{% set extra_css = ['/static/css/news_resources.css'] %}
+
+{% block content %}
+<div class="page">
+    <main id="main-content">
+        <section class="page-hero">
+            <div class="page-hero-inner">
+                <a href="/" class="page-back"><span aria-hidden="true">←</span> На главную</a>
+                <h1 class="page-title">Новостные ресурсы</h1>
+                <p class="page-lead">Площадки, где можно опубликовать или анонсировать мод «Бесконечного Лета».</p>
+            </div>
+        </section>
+
+        <section class="page-main page-main--news-resources" aria-label="Площадки для модов">
+            {% if news_resources %}
+            <ul class="promo-source-list" role="list">
+                {% for source in news_resources %}
+                <li class="promo-source">
+                    <div class="promo-source-copy">
+                        <div class="promo-source-heading">
+                            <h2 class="promo-source-name">{{ source.name }}</h2>
+                            <span class="promo-source-platform">{{ source.platform }}</span>
+                        </div>
+                        <p class="promo-source-description">{{ source.description }}</p>
+                    </div>
+                    <div class="promo-source-actions">
+                        {% if source.contact_url %}
+                        <a href="{{ source.contact_url }}" target="_blank" rel="noopener noreferrer">{{ source.contact_label or 'Написать' }}</a>
+                        {% endif %}
+                        <a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">{{ source.action }}</a>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="res-empty">
+                <p class="res-empty-title">Список пока пуст.</p>
+            </div>
+            {% endif %}
+        </section>
+    </main>
+
+    {% include "partials/footer.html" %}
+</div>
+{% endblock %}

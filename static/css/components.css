@@ -4,6 +4,88 @@
    so the browser fetches all three stylesheets in parallel.
    ===================================================================== */
 
+/* ── Shared image lightbox ───────────────────────────────── */
+.res-lightbox {
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow-modal);
+    max-width: min(92vw, 1200px);
+    max-height: 92vh;
+    max-height: 92dvh;
+}
+.res-lightbox::backdrop { background: var(--scrim); }
+.res-lightbox img {
+    display: block;
+    max-width: 100%;
+    max-height: calc(92vh - 58px);
+    max-height: calc(92dvh - 58px);
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+}
+.res-lightbox-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-surface);
+    border-radius: 0 0 calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px);
+}
+.res-lightbox-name {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-ui);
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.res-lightbox-raw {
+    flex-shrink: 0;
+    font-size: var(--fs-ui);
+    color: var(--accent);
+    text-decoration: none;
+}
+.res-lightbox-raw:hover { text-decoration: underline; }
+.res-lightbox-raw:focus-visible,
+.res-lightbox-close:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+}
+.res-lightbox-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    padding: 0;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-soft);
+    cursor: pointer;
+    transition: color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
+}
+.res-lightbox-close:hover { color: var(--accent); border-color: var(--accent); }
+@media (max-width: 40em) {
+    .res-lightbox-bar { gap: 12px; padding: 4px 12px; }
+    .res-lightbox-raw { display: inline-flex; align-items: center; min-height: 44px; }
+    .res-lightbox-close { width: 44px; height: 44px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .res-lightbox[open] { animation: res-zoom 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
+    .res-lightbox[open]::backdrop { animation: res-fade 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
+}
+@keyframes res-zoom { from { opacity: 0; transform: scale(0.88); } }
+@keyframes res-fade { from { opacity: 0; } }
+
 /* ── Page shell ──────────────────────────────────────────── */
 
 /* Flex-column shell so the footer floors to the viewport bottom on short pages.
@@ -1176,8 +1258,8 @@ a.section-row:focus-visible .section-arrow {
 }
 
 /* ── Empty state ─────────────────────────────────────────────
-   Lived in resources.css, where it started, while /news, /news/sources,
-   /materials and /artists used it too without loading that sheet — so
+   Lived in resources.css, where it started, while /materials and /artists
+   used it too without loading that sheet — so
    everywhere but the resource pages it rendered as bare text with a
    browser-blue link. Site-wide now, like the section rows. */
 
@@ -1419,13 +1501,12 @@ a.section-row:focus-visible .section-arrow {
 }
 
 /* ── Section bar ──
-   The five sections — Документация, Ресурсы, Новости, Полезные материалы, Художники —
-   come to ~530px of links at the header's 16px padding. On one 52px row with
-   the logo, the search field at its 240px basis (see .nav-search) and the
-   theme toggle they measure ~1094px, so the row holds from 1140px — the
-   need plus some slack for font metrics that aren't Inter's yet on a slow
-   load — and below that the links leave the row for a bar of their own
-   under the header. Two things about it are deliberate.
+   The five sections — Документация, Ресурсы, Полезные материалы, Художники,
+   Новостные ресурсы —
+   take a little over 1,000px with the logo, search field at its 240px basis
+   (see .nav-search) and the theme toggle. The 1140px breakpoint leaves room
+   for font fallback; below it the links leave the header row for a bar of
+   their own. Two things about it are deliberate.
 
    It sits *outside* the sticky <header> (header.html), so it scrolls away
    with the page. The header stays 52px at every width, which is what
@@ -1433,7 +1514,7 @@ a.section-row:focus-visible .section-arrow {
    are measured against; a two-row sticky header would also have kept ~96px
    of a phone screen for itself for good.
 
-   On a phone even the bar is too narrow (~490px of links on a 375px screen),
+   On a phone even the bar is too narrow (the five links exceed a 375px screen),
    and it scrolls sideways rather than wrapping or folding into a menu: a flat
    row of words is the nav modders already know, and a hamburger hides every
    section behind a tap. The fade at the right edge says there is more, and
@@ -1524,12 +1605,11 @@ a.section-row:focus-visible .section-arrow {
 }
 
 /* The section rows — the home page's own contents, and the same component on
-   /docs/, /news/sources, /materials and /support — put the name, its
+   /docs/, /materials and /support — put the name, its
    description and an arrow on one line, with the description clipped to
    whatever is left. That fits a desktop and nothing else: at 402px (an
-   iPhone 17) all eight home-page rows were cut, the worst of them showing
-   87px of a 365px sentence, and on the news-sources list one description
-   had been squeezed to zero width.
+   iPhone 17) the longer home-page rows were cut, the worst showing
+   87px of a 365px sentence.
    A quarter of a sentence ending in an ellipsis is not a shorter
    explanation, it is a broken one.
 
@@ -1551,9 +1631,8 @@ a.section-row:focus-visible .section-arrow {
        align, and the reservation only pushed «146» 115px away from «Фоны».
        The count reads as part of the name now, which is what it is.
        It wraps as well, like the description below it: «ПАЗ-410 :: CHANNEL
-       410hz :: Бесконечное лето» on /news/sources is 379px of unbroken line,
-       and pushed a 375px page 39px sideways (94px at 320). An ellipsis would
-       have eaten the part that says which channel it is. */
+       410hz :: Бесконечное лето» is a long unbroken name, so it wraps rather
+       than pushing a narrow page sideways or hiding which channel it is. */
     .section-name {
         min-width: 0;
         flex-shrink: 1;

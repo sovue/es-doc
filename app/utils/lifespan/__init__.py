@@ -1,17 +1,17 @@
 import asyncio
 import signal
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
 from ..config import CONFIG
 from ..livereload import shutdown as shutdown_livereload
 from ..logging import root_logger
-
 from .artists_cache import parse_artists
 from .docs_cache import cache_docs
 from .links_cache import parse_links
 from .materials_cache import parse_materials
-from .news_cache import parse_news_posts, parse_news_sources
+from .news_resources_cache import parse_news_resources
 from .redirects_cache import parse_redirects
 from .refresh import worker_refresh_caches
 from .resources_cache import parse_resources
@@ -95,14 +95,9 @@ async def lifespan(app: FastAPI):
         logger.exception('Parsing artists.yaml failed; /artists will be empty until restart.')
 
     try:
-        await asyncio.to_thread(parse_news_sources)
+        await asyncio.to_thread(parse_news_resources)
     except Exception:
-        logger.exception('Parsing news.yaml failed; /news/sources will be empty until restart.')
-
-    try:
-        await asyncio.to_thread(parse_news_posts)
-    except Exception:
-        logger.exception('Indexing news/ failed; /news will be empty until restart.')
+        logger.exception('Parsing news_resources.yaml failed; /news-resources will be empty until restart.')
 
     try:
         await asyncio.to_thread(parse_materials)

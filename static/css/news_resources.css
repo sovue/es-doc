@@ -1,0 +1,102 @@
+/* /news-resources — a concise directory of places that accept or publish ES mods. */
+
+.page-main--news-resources {
+    max-width: var(--directory-max);
+}
+
+.promo-source-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border);
+}
+
+.promo-source {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.promo-source-copy {
+    min-width: 0;
+}
+
+.promo-source-heading {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+}
+
+.promo-source-name {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: var(--fs-lead);
+    font-weight: 600;
+    line-height: var(--lh-flat);
+}
+
+.promo-source-platform {
+    color: var(--text-soft);
+    font-size: var(--fs-caption);
+}
+
+.promo-source-description {
+    margin: 6px 0 0;
+    color: var(--text-soft);
+    font-size: var(--fs-ui);
+}
+
+.promo-source-actions {
+    display: flex;
+    flex: none;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.promo-source-actions a {
+    display: inline-flex;
+    min-height: 40px;
+    align-items: center;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    background: var(--bg-surface);
+    font-size: var(--fs-ui);
+    text-decoration: none;
+    transition: border-color 0.15s var(--ease-out), color 0.15s var(--ease-out);
+}
+
+.promo-source-actions a:hover {
+    border-color: var(--accent-muted);
+    color: var(--accent-hover);
+    text-decoration: none;
+}
+
+.promo-source-actions a:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+}
+
+@media (max-width: 40em) {
+    .promo-source {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .promo-source-actions {
+        justify-content: flex-start;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .promo-source-actions a {
+        transition: none;
+    }
+}

@@ -488,28 +488,6 @@ def outline(src):
     return {'title': title, 'headings': headings, 'code_terms': _code_terms(tokens)}
 
 
-def summary(src):
-    """`(title, lead)` of a document as plain text: its h1 and its first
-    top-level paragraph. For a listing that shows a piece by its opening
-    rather than rendering all of it — the /news index. A paragraph inside a
-    callout or a list is skipped (level > 0): it is an aside, not the lead."""
-    title = ''
-    lead = ''
-
-    tokens = MD.parse(src)
-
-    for idx, token in enumerate(tokens):
-        if token.type == 'heading_open' and token.tag == 'h1' and not title:
-            title = _plain_text(tokens[idx + 1].children)
-        elif token.type == 'paragraph_open' and token.level == 0 and not lead:
-            lead = _plain_text(tokens[idx + 1].children).strip()
-
-        if title and lead:
-            break
-
-    return title, lead
-
-
 def render(src):
 
     # Empty when the doc has no H1; the caller substitutes the filename so the

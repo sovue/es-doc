@@ -439,39 +439,3 @@
     if (sortSelect && sortSelect.value !== 'az') doSort();
 })();
 
-/* ── Lightbox (smooth zoom on thumbnail click) ── */
-(function () {
-    const box = document.querySelector('.res-lightbox');
-    if (!box || typeof box.showModal !== 'function') return;
-
-    const img = box.querySelector('img');
-    const name = box.querySelector('.res-lightbox-name');
-    const raw = box.querySelector('.res-lightbox-raw:not(.res-lightbox-dl)');
-    const dl = box.querySelector('.res-lightbox-dl');
-
-    // Thumbnails on the listing pages and image-name links in the file
-    // browser both zoom.
-    document.querySelectorAll('a[data-zoom]').forEach(link => {
-        link.addEventListener('click', e => {
-            e.preventDefault();
-
-            img.src = link.href;
-            img.alt = link.dataset.zoom || '';
-            name.textContent = link.dataset.zoom;
-            raw.href = link.href;
-            dl.href = link.href;
-            dl.download = link.dataset.file || '';
-            box.showModal();
-        });
-    });
-
-    box.querySelector('.res-lightbox-close').addEventListener('click', () => box.close());
-
-    // A click on the backdrop (outside the image and the bar) closes.
-    box.addEventListener('click', e => {
-        if (e.target === box) box.close();
-    });
-
-    // Drop the src on close so a slow-loading previous image never flashes.
-    box.addEventListener('close', () => { img.src = ''; });
-})();

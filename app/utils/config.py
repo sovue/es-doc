@@ -224,19 +224,15 @@ class _ConfigContainer():
         # {name, status, preview, logo, links}.
         self.artists = []
 
-        # The project's own news posts, indexed from <assets>/news/*.md at
-        # startup (see utils/lifespan/news_cache.py), newest first. List of
-        # dicts: {slug, title, lead, date, date_iso, date_label}.
-        self.news = []
-
-        # Community news/content channels for /news/sources, parsed from
-        # news.yaml (same module). List of dicts: {name, url, note}.
-        self.news_sources = []
+        # Curated places to publish or announce Everlasting Summer mods,
+        # parsed from news_resources.yaml at startup and refreshed on edits.
+        # Rows: {name, platform, description, url, action, contact_url, contact_label}.
+        self.news_resources = []
 
         # Everything on «Ресурсы сообщества» that isn't a scanned resource:
         # archives, tool sites, packs hosted elsewhere. Parsed from links.yaml
         # at startup (see utils/lifespan/links_cache.py). Same row shape as
-        # news_sources: {name, url, note}.
+        # links: {name, url, note}.
         self.links = []
 
         # Curated short links: {key: target url}, parsed from redirects.yaml

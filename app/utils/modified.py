@@ -45,7 +45,7 @@ _MONTHS_GENITIVE = (
 
 
 def format_ru_date(day) -> str:
-    """`11 сентября 2026` — for a date read as a date (a news post's), where
+    """`11 сентября 2026` — for a publication date read as a date, where
     format_ru's timestamp would be precision nobody asked for."""
     return f'{day.day} {_MONTHS_GENITIVE[day.month - 1]} {day.year}'
 
