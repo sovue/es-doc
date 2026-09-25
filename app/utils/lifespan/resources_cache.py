@@ -225,14 +225,6 @@ EXTRA_RPY = ('scenario/zhenya.rpy',)
 PLACEHOLDER_DESC = 'Описание уточняется.'
 UNDECLARED_DESC = 'Не объявлен в игре — используется по пути к файлу.'
 
-# The base game's adult CGs (marked up in nsfw.yaml, see _load_nsfw). The
-# game itself ships only the declarations, not the files — they're cut
-# unless a separate NSFW mod is installed — so these items live in the
-# community collection (their files sit in community/images/cg, the
-# community drop-in folder) rather than the original one, and render
-# permanently blurred there.
-NSFW_DESC = 'Вырезан из файлов игры — объявление в коде осталось.'
-
 # Where each file-backed category's assets live, for the undeclared-file
 # scan. The Женя scenario keeps its files in zhenya/: its leftover overlays
 # scan as effects, its by-path-played sounds as sfx.
@@ -285,10 +277,8 @@ def _load_descriptions():
 def _load_nsfw():
     """nsfw.yaml in the assets root (next to descriptions.yaml):
     {category: [name, ...]}. The hand-edited list of resources to flag as
-    NSFW — blurred in their listing, and (for cg today, see parse_resources)
-    moved into the community collection until a file for them shows up
-    there. Not restricted to any one category, so a future entry can mark up
-    any kind of resource the same way."""
+    NSFW in their listing. Not restricted to any one category, so a future
+    entry can mark up any kind of resource the same way."""
     path = CONFIG.res_path.parent / 'nsfw.yaml'
     if not path.exists():
         return {}
@@ -664,22 +654,14 @@ def parse_resources():
     community_root = CONFIG.res_path.parent / 'community'
     community = _parse_rpy(community_root, '/resource/community', described, nsfw_marks)
     community.pop('anim')  # the community set has no effects/animations
+    community.pop('cg')  # CGs are not part of the community resource collection
     sprites_rpy = community_root / 'sprites.rpy'
     community_sprite_names = RE_SPRITE.findall(sprites_rpy.read_text('utf-8')) if sprites_rpy.exists() else []
     community['sprites'] = _group_sprites(community_sprite_names, composable=False)
 
-    # The cut adult CGs live under «Ресурсы сообщества»: valid declarations
-    # with no files in the game, waiting for community-supplied ones (looked
-    # up in community/<file> so a drop-in re-enables previews and the blur).
-    nsfw = [i for i in original['cg'] if i['nsfw']]
+    # NSFW CG declarations are cut from the original collection and are not
+    # listed in the community collection either.
     original['cg'] = [i for i in original['cg'] if not i['nsfw']]
-    for item in nsfw:
-        if item['desc'] == PLACEHOLDER_DESC:
-            item['desc'] = NSFW_DESC
-        if not item['raw'] and item['file'] and (community_root / item['file']).is_file():
-            item['raw'] = f'/resource/community/{quote(item["file"])}'
-            item['thumb'] = f'/resource/thumb/cg/{quote(item["name"])}'
-    community['cg'] = sorted(community['cg'] + nsfw, key=lambda i: i['name'])
 
     CONFIG.resources = {'original': original, 'community': community}
     # Merged into CONFIG.search_items by the docs cache refresh (docs_cache.py).
