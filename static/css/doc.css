@@ -261,7 +261,10 @@ details[open] > .sidebar-all-summary::after, details[open] > .sidebar-contents-s
 }
 .doc-width-toggle:hover { color: var(--accent); border-color: var(--accent); }
 .doc-width-toggle[aria-pressed="true"] { color: var(--accent); background: var(--accent-muted); }
-html[data-doc-width="wide"] .docs-page > .page { max-width: none; }
+html[data-doc-width="wide"] body.docs-page .page { max-width: none; }
+html[data-doc-width="wide"] body.docs-page.scene-page { background: var(--bg); }
+html[data-doc-width="wide"] body.docs-page.scene-page::before,
+html[data-doc-width="wide"] body.docs-page.scene-page::after { display: none; }
 .doc-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); }
 .doc-tools .doc-modified { margin: 0; }
 .sidebar-source-links { display: flex; flex-wrap: wrap; gap: 8px 20px; }
