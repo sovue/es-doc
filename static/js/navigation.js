@@ -118,9 +118,22 @@
 
         updateNavigation(url);
         if (pushHistory) history.pushState({}, '', url.href);
-        window.scrollTo(0, 0);
+        if (!url.hash) window.scrollTo(0, 0);
 
         await loadPageScripts(nextDocument);
+        if (id !== navigationId) return;
+
+        // Soft navigation replaces the document without the browser's native
+        // fragment handling. Resolve the hash after the new content and its
+        // page scripts are in place, or cross-page links land at the top.
+        if (url.hash) {
+            let targetId = url.hash.slice(1);
+            try { targetId = decodeURIComponent(targetId); } catch (error) {}
+            const target = document.getElementById(targetId);
+            if (target) target.scrollIntoView({ block: 'start', behavior: 'instant' });
+            else window.scrollTo(0, 0);
+        }
+
         window.dispatchEvent(new CustomEvent('esdoc:navigation', { detail: { url: url.href } }));
     };
 
