@@ -39,16 +39,9 @@ def parse_news_resources():
                    for value in (name, platform, description)) or not _is_web_url(url):
             continue
 
-        contact_url = entry.get('contact_url')
-        if not _is_web_url(contact_url):
-            contact_url = None
-
         action = entry.get('action')
         if not isinstance(action, str) or not action.strip():
             action = 'Открыть ресурс'
-        contact_label = entry.get('contact_label')
-        if not isinstance(contact_label, str):
-            contact_label = ''
 
         resources.append({
             'name': name.strip(),
@@ -56,8 +49,6 @@ def parse_news_resources():
             'description': description.strip(),
             'url': url.strip(),
             'action': action.strip(),
-            'contact_url': contact_url.strip() if contact_url else None,
-            'contact_label': contact_label.strip(),
         })
 
     CONFIG.news_resources = resources

@@ -29,9 +29,6 @@
                         <p class="promo-source-description">{{ source.description }}</p>
                     </div>
                     <div class="promo-source-actions">
-                        {% if source.contact_url %}
-                        <a href="{{ source.contact_url }}" target="_blank" rel="noopener noreferrer">{{ source.contact_label or 'Написать' }}</a>
-                        {% endif %}
                         <a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">{{ source.action }}</a>
                     </div>
                 </li>
