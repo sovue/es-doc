@@ -52,9 +52,90 @@ body {
     font-kerning: normal;
 }
 
-/* Solid background opt-in for pages where the gradient distracts
-   (home, authors, error). Doc pages keep the gradient. */
-body.bg-solid {
+/* Pages share the game's scenery in generous viewport margins, while each
+   centered reading workspace remains an opaque sheet. The still comes from
+   the same optimized asset family as the home hero. */
+body.scene-page {
+    isolation: isolate;
+    background: transparent;
+    --scene-backdrop: url('/resource/hero/ext_beach_day');
+    --scene-vignette: color-mix(in srgb, var(--text) 62%, transparent);
+    --scene-vignette-center: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+body.scene-page::before,
+body.scene-page::after {
+    content: '';
+    position: fixed;
+    pointer-events: none;
+}
+
+body.scene-page::before {
+    z-index: -2;
+    inset: -24px;
+    background-color: var(--bg);
+    background-image: var(--scene-backdrop);
+    background-position: center;
+    background-size: cover;
+    filter: blur(18px) saturate(0.78);
+    transform: scale(1.02);
+}
+
+body.scene-page::after {
+    z-index: -1;
+    inset: 0;
+    background: radial-gradient(
+        /* Percentages here are ellipse radii. Keep the falloff inside the
+           viewport so it is already visible where the opaque page ends. */
+        ellipse 60% 74% at 50% 46%,
+        var(--scene-vignette-center) 24%,
+        color-mix(in srgb, var(--scene-vignette) 60%, transparent) 54%,
+        var(--scene-vignette) 100%
+    );
+}
+
+/* Leave enough room beside the 96rem sheet for the scene to read as a frame. */
+@media (max-width: 112rem) {
+    body.scene-page::before,
+    body.scene-page::after {
+        display: none;
+    }
+}
+
+/* Keep all text, navigation and code on the same dependable paper surface. */
+body.scene-page .page {
+    position: relative;
+    z-index: 0;
+    background: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) body.scene-page {
+        --scene-backdrop: url('/resource/hero/ext_beach_night');
+        --scene-vignette: color-mix(in srgb, var(--bg) 94%, transparent);
+        --scene-vignette-center: color-mix(in srgb, var(--bg) 14%, transparent);
+    }
+}
+
+:root[data-theme="dark"] body.scene-page {
+    --scene-backdrop: url('/resource/hero/ext_beach_night');
+    --scene-vignette: color-mix(in srgb, var(--bg) 94%, transparent);
+    --scene-vignette-center: color-mix(in srgb, var(--bg) 14%, transparent);
+}
+
+@media (forced-colors: active) {
+    body.scene-page::before,
+    body.scene-page::after {
+        display: none;
+    }
+
+    body.scene-page .page {
+        background: Canvas;
+    }
+}
+
+/* Keep a flat background on pages that do not opt into the shared scene. */
+body.bg-solid:not(.scene-page) {
     background: var(--bg);
 }
 

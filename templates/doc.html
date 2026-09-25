@@ -2,7 +2,7 @@
 {% set page_title = title ~ ' — ES Doc' %}
 {% set extra_css = ['/static/css/syntax.css', '/static/css/code.css', '/static/css/doc.css'] %}
 {% set active = 'docs' %}
-{% set body_class = 'docs-page' %}
+{% set body_class = 'docs-page scene-page' %}
 
 {% macro tree_node(node) %}
 {%- if node.kind == 'divider' %}
