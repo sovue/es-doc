@@ -10,7 +10,7 @@ from ..logging import root_logger
 from .artists_cache import parse_artists
 from .docs_cache import cache_docs
 from .links_cache import parse_links
-from .literature_cache import parse_literature
+from .materials_cache import parse_materials
 from .news_cache import parse_news_posts, parse_news_sources
 from .redirects_cache import parse_redirects
 from .refresh import worker_refresh_caches
@@ -105,9 +105,9 @@ async def lifespan(app: FastAPI):
         logger.exception('Indexing news/ failed; /news will be empty until restart.')
 
     try:
-        await asyncio.to_thread(parse_literature)
+        await asyncio.to_thread(parse_materials)
     except Exception:
-        logger.exception('Parsing literature.yaml failed; /literature will be empty until restart.')
+        logger.exception('Parsing materials.yaml failed; /materials will be empty until restart.')
 
     try:
         await asyncio.to_thread(parse_links)

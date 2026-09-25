@@ -1104,20 +1104,20 @@ a.section-row:focus-visible .section-arrow {
     }
 }
 
-/* ── Reading list (/literature) ──────────────────────────── */
+/* ── Materials list (/materials) ──────────────────────────── */
 
-.lit-list {
+.materials-list {
     list-style: none;
     margin: 0;
     padding: 0;
     border-top: 1px solid var(--border);
 }
 
-.lit-list li {
+.materials-list li {
     border-bottom: 1px solid var(--border);
 }
 
-.lit-row {
+.materials-row {
     display: block;
     padding: 14px 0;
     font-size: var(--fs-body);
@@ -1125,23 +1125,31 @@ a.section-row:focus-visible .section-arrow {
     line-height: var(--lh-ui);
 }
 
+.materials-description {
+    max-width: 78ch;
+    margin: 5px 0 0;
+    color: var(--text-soft);
+    font-size: var(--fs-ui);
+    line-height: var(--lh-prose);
+}
+
 /* Linked entries follow the body-link convention (the leaf, a faint
    underline at rest, full on hover) so they read as clickable next to the
    plain-text rows, which stay ink — the green alone is under 3:1 against them
    (2.78 by day, 1.49 at night). Ink-at-rest here made links indistinguishable from text. */
-.lit-row a {
+.materials-row a {
     color: var(--accent);
     text-decoration: underline 1px var(--link-underline);
     text-underline-offset: 0.2em;
     transition: color 0.15s var(--ease-out);
 }
 
-.lit-row a:hover {
+.materials-row a:hover {
     color: var(--accent-hover);
     text-decoration-color: currentColor;
 }
 
-.lit-row a:focus-visible {
+.materials-row a:focus-visible {
     outline: var(--focus-ring);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
@@ -1152,7 +1160,7 @@ a.section-row:focus-visible .section-arrow {
    link and the file-browser rows use: padding grows the hit box, the negative
    margin keeps the line where it was. */
 @media (max-width: 48em) {
-    .lit-row a {
+    .materials-row a {
         display: inline-block;
         padding-block: 12px;
         margin-block: -12px;
@@ -1161,7 +1169,7 @@ a.section-row:focus-visible .section-arrow {
 
 /* ── Empty state ─────────────────────────────────────────────
    Lived in resources.css, where it started, while /news, /news/sources,
-   /literature and /artists used it too without loading that sheet — so
+   /materials and /artists used it too without loading that sheet — so
    everywhere but the resource pages it rendered as bare text with a
    browser-blue link. Site-wide now, like the section rows. */
 
@@ -1403,7 +1411,7 @@ a.section-row:focus-visible .section-arrow {
 }
 
 /* ── Section bar ──
-   The five sections — Документация, Ресурсы, Новости, Литература, Художники —
+   The five sections — Документация, Ресурсы, Новости, Полезные материалы, Художники —
    come to ~530px of links at the header's 16px padding. On one 52px row with
    the logo, the search field at its 240px basis (see .nav-search) and the
    theme toggle they measure ~1094px, so the row holds from 1140px — the
@@ -1508,7 +1516,7 @@ a.section-row:focus-visible .section-arrow {
 }
 
 /* The section rows — the home page's own contents, and the same component on
-   /docs/, /news/sources, /literature and /support — put the name, its
+   /docs/, /news/sources, /materials and /support — put the name, its
    description and an arrow on one line, with the description clipped to
    whatever is left. That fits a desktop and nothing else: at 402px (an
    iPhone 17) all eight home-page rows were cut, the worst of them showing
@@ -1594,7 +1602,7 @@ a.section-row:focus-visible .section-arrow {
     .section-arrow,
     .filter-input,
     .filter-select,
-    .lit-row a,
+    .materials-row a,
     .page-back,
     .to-top {
         transition: none;

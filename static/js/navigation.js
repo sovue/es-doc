@@ -19,7 +19,7 @@
         if (pathname === '/docs' || pathname.startsWith('/docs/')) return 'docs';
         if (pathname === '/resources' || pathname.startsWith('/resources/')) return 'resources';
         if (pathname === '/news' || pathname.startsWith('/news/')) return 'news';
-        if (pathname === '/literature') return 'literature';
+        if (pathname === '/materials') return 'materials';
         if (pathname === '/artists') return 'artists';
         return null;
     };

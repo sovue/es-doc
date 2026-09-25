@@ -245,10 +245,10 @@ class _ConfigContainer():
         # moving.
         self.redirects = {}
 
-        # Reading list, parsed from literature.yaml at startup (see
-        # utils/lifespan/literature_cache.py). List of dicts:
-        # {name, items: [{title, url}]}.
-        self.literature = []
+        # Curated materials, parsed from materials.yaml at startup (see
+        # utils/lifespan/materials_cache.py). List of dicts:
+        # {name, items: [{title, url, description}]}.
+        self.materials = []
 
         # Community-made warpers, parsed from warpers.yaml at startup (see
         # utils/lifespan/warpers_cache.py). List of dicts:

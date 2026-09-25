@@ -69,7 +69,7 @@ def sample(expr: str):
 
 
 def _warpers_path():
-    # warpers.yaml sits at the assets root, next to literature.yaml.
+    # warpers.yaml sits at the assets root, next to materials.yaml.
     return CONFIG.docs_path.parent / 'warpers.yaml'
 
 

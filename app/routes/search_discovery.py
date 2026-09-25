@@ -14,7 +14,7 @@ SITEMAP_NS = 'http://www.sitemaps.org/schemas/sitemap/0.9'
 ElementTree.register_namespace('', SITEMAP_NS)
 
 STATIC_PAGES = (
-    '/', '/docs/', '/authors', '/artists', '/literature', '/news',
+    '/', '/docs/', '/authors', '/artists', '/materials', '/news',
     '/news/sources', '/support', '/resources/', '/resources/community',
 )
 
