@@ -6,18 +6,17 @@
 {% set active = 'resources' %}
 {% set extra_css = ['/static/css/syntax.css', '/static/css/resources.css', '/static/css/code.css', '/static/css/warpers.css'] %}
 {# docs.js carries the copy button on fenced code and the whitespace dots;
-   warpers.js draws the curves and upgrades the names into copy buttons. #}
+   warpers.js draws the curves and upgrades names and plots into copy controls. #}
 {% set with_docs_js = true %}
 {% set with_warpers_js = true %}
 
 {# A preview is the graph plus the name you came here to copy. The canvas is
    aria-hidden: the curve has no textual equivalent, and everything it says is
-   already in the family note beside it. Built-in curves are looked up by name
-   in warpers.js; community ones ship their sampled points instead. #}
-{% macro preview(name, desc='', points=none, source='') %}
+   already in the family note beside it. Its canvas becomes a copy control for
+   the easing name when warpers.js loads. #}
+{% macro preview(name, desc='', points=none) %}
 <div class="wp-cell" id="{{ name }}">
-    <canvas class="wp-plot" aria-hidden="true"
-            {%- if source %} data-formula="{{ source }}"{% endif %}
+    <canvas class="wp-plot" aria-hidden="true" data-copy-name="{{ name }}"
             {%- if points %} data-points="{{ points|join(',') }}"{% else %} data-warper="{{ name }}"{% endif %}></canvas>
     <span class="wp-name" data-copy="{{ name }}">{{ name }}</span>
     {%- if desc %}
@@ -189,8 +188,8 @@
 
                 <p class="wp-hint">
                     Наведите курсор на график — точка проедет по кривой и по шкале под ней.
-                    Нажмите на имя, чтобы скопировать имя, а на график или на формулу —
-                    чтобы скопировать саму формулу.
+                    Нажмите на график или имя, чтобы скопировать название ease;
+                    на формулу — чтобы скопировать её.
                 </p>
             </section>
 
@@ -223,7 +222,7 @@
                 </p>
 
                 <div class="wp-specials">
-                    {% for name, desc, source in special %}{{ preview(name, desc, source=source) }}{% endfor %}
+                    {% for name, desc, _source in special %}{{ preview(name, desc) }}{% endfor %}
                 </div>
             </section>
 
@@ -251,7 +250,7 @@
                         {% if fam.formula %}<code class="wp-formula" data-formula="{{ fam.source }}">{{ fam.formula }}</code>{% endif %}
                         <p class="wp-family-note">{{ fam.note }}</p>
                     </div>
-                    {% for cell in fam.cells %}{{ preview(cell.name, source=cell.source) }}{% endfor %}
+                    {% for cell in fam.cells %}{{ preview(cell.name) }}{% endfor %}
                     {% endfor %}
 
                 </div>
@@ -288,7 +287,7 @@
 
                 <div class="wp-specials">
                     {% for item in community %}
-                    {% call preview(item.name, item.desc or '', item.points, item.expr) %}
+                    {% call preview(item.name, item.desc or '', item.points) %}
                     {%- if item.author %}
                     <span class="wp-cell-by">автор:
                         {%- if item.url %} <a href="{{ item.url }}">{{ item.author }}</a>

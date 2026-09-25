@@ -399,8 +399,8 @@
     border-color: var(--accent);
 }
 
-/* The plot is also the formula's copy control (promoted by warpers.js, so a
-   no-JS page keeps a plain picture). */
+/* The plot copies its registered easing name when warpers.js promotes it;
+   without JS it stays a plain picture. */
 .wp-plot[role="button"] {
     cursor: pointer;
 }
