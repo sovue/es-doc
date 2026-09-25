@@ -68,10 +68,29 @@
     function update() {
         frame = 0;
         const offset = (parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 64) + 24;
-        let heading = headings[0];
-        for (const candidate of headings) {
-            if (candidate.getBoundingClientRect().top > offset) break;
-            heading = candidate;
+        let heading;
+
+        // A short final section may not have enough content below it to scroll
+        // its heading up to the active-line threshold. If its hash is selected
+        // and the target has reached the document's scroll limit, honor that
+        // target instead of leaving the previous TOC entry active.
+        if (location.hash) {
+            let id = location.hash.slice(1);
+            try { id = decodeURIComponent(id); } catch (e) {}
+            const target = headings.find(candidate => candidate.id === id);
+            const maxScroll = Math.max(0, document.documentElement.scrollHeight - innerHeight);
+            if (target) {
+                const targetTop = target.getBoundingClientRect().top + scrollY;
+                if (targetTop - offset > maxScroll && scrollY >= maxScroll - 1) heading = target;
+            }
+        }
+
+        if (!heading) {
+            heading = headings[0];
+            for (const candidate of headings) {
+                if (candidate.getBoundingClientRect().top > offset) break;
+                heading = candidate;
+            }
         }
         const next = links.get(heading.id);
         if (next === active) return;
@@ -104,7 +123,7 @@
             history.pushState(null, '', link.hash);
             target.setAttribute('tabindex', '-1');
             target.focus({preventScroll: true});
-            target.scrollIntoView({block: 'start', behavior: 'instant'});
+            target.scrollIntoView({block: 'start', behavior: 'auto'});
             scheduleUpdate();
         });
     });

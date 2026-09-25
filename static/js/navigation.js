@@ -130,7 +130,7 @@
             let targetId = url.hash.slice(1);
             try { targetId = decodeURIComponent(targetId); } catch (error) {}
             const target = document.getElementById(targetId);
-            if (target) target.scrollIntoView({ block: 'start', behavior: 'instant' });
+            if (target) target.scrollIntoView({ block: 'start', behavior: 'auto' });
             else window.scrollTo(0, 0);
         }
 

@@ -250,7 +250,7 @@
         target.picker.classList.add('is-search-locked');
         close(target.picker);
         if (target.picker.contains(document.activeElement)) document.activeElement.blur();
-        target.row.scrollIntoView({ block: 'start', behavior: 'instant' });
+        target.row.scrollIntoView({ block: 'start', behavior: 'auto' });
     };
     selectHashTarget();
     window.addEventListener('hashchange', selectHashTarget);
