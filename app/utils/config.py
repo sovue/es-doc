@@ -246,8 +246,8 @@ class _ConfigContainer():
         self.redirects = {}
 
         # Curated materials, parsed from materials.yaml at startup (see
-        # utils/lifespan/materials_cache.py). List of dicts:
-        # {name, items: [{title, url, description}]}.
+        # utils/lifespan/materials_cache.py). Nested dicts:
+        # {name, items: [{title, url, description}], sections: [...]}.
         self.materials = []
 
         # Community-made warpers, parsed from warpers.yaml at startup (see

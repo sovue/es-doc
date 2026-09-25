@@ -12,8 +12,8 @@ def _materials_path():
 def parse_materials():
     """Load the curated materials from materials.yaml into CONFIG. Missing or
     malformed entries are skipped, not fatal: a broken row must never take the
-    whole page down. An item's `url` is optional — without one it renders as
-    plain text."""
+    whole page down. Sections can contain items and nested sections. An item's
+    `url` is optional — without one it renders as plain text."""
 
     path = _materials_path()
 
@@ -25,15 +25,16 @@ def parse_materials():
     data = yaml.load(path.read_text('utf-8'), yaml.SafeLoader) or {}
     raw = data.get('categories') or []
 
-    categories = []
     item_count = 0
-    for entry in raw:
+
+    def parse_section(entry):
+        nonlocal item_count
         if not isinstance(entry, dict):
-            continue
+            return None
 
         name = (entry.get('name') or '').strip()
         if not name:
-            continue
+            return None
 
         items = []
         for raw_item in entry.get('items') or []:
@@ -48,11 +49,22 @@ def parse_materials():
                 'description': (raw_item.get('description') or '').strip() or None,
             })
 
-        if not items:
-            continue
+        sections = []
+        for raw_section in entry.get('sections') or []:
+            section = parse_section(raw_section)
+            if section:
+                sections.append(section)
 
         item_count += len(items)
-        categories.append({'name': name, 'items': items})
+        if not items and not sections:
+            return None
+        return {'name': name, 'items': items, 'sections': sections}
+
+    categories = []
+    for entry in raw:
+        section = parse_section(entry)
+        if section:
+            categories.append(section)
 
     CONFIG.materials = categories
     logger.info(f'Parsed {len(categories)} categor(y/ies), {item_count} item(s) from materials.yaml.')

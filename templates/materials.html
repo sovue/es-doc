@@ -14,7 +14,7 @@
                 <a href="/" class="page-back"><span aria-hidden="true">←</span> На главную</a>
                 <h1 class="page-title">Полезные материалы</h1>
                 <p class="page-lead">
-                    Материалы для освоения основ Python.
+                    Материалы по программированию и писательскому мастерству.
                 </p>
             </div>
         </section>
@@ -22,20 +22,29 @@
         <div class="page-main">
 
             {% if categories %}
-            {% for cat in categories %}
-            <section class="contributors-section" aria-labelledby="materials-cat-{{ loop.index }}">
-                <h2 class="authors-list-label" id="materials-cat-{{ loop.index }}">{{ cat.name }}</h2>
+            {% macro render_material_section(section, level, section_id) %}
+            {% set heading_tag = 'h' ~ [level, 6]|min %}
+            <section class="contributors-section materials-section materials-section-level-{{ level }}" aria-labelledby="{{ section_id }}">
+                <{{ heading_tag }} class="authors-list-label" id="{{ section_id }}">{{ section['name'] }}</{{ heading_tag }}>
+                {% if section['items'] %}
                 <ul class="materials-list" role="list">
-                    {% for item in cat['items'] %}
+                    {% for item in section['items'] %}
                     <li class="materials-row">
                         <div class="materials-title">
-                            {% if item.url %}<a href="{{ item.url }}">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}
+                            {% if item['url'] %}<a href="{{ item['url'] }}">{{ item['title'] }}</a>{% else %}{{ item['title'] }}{% endif %}
                         </div>
-                        {% if item.description %}<p class="materials-description">{{ item.description }}</p>{% endif %}
+                        {% if item['description'] %}<p class="materials-description">{{ item['description'] }}</p>{% endif %}
                     </li>
                     {% endfor %}
                 </ul>
+                {% endif %}
+                {% for child in section['sections'] %}
+                {{ render_material_section(child, level + 1, section_id ~ '-' ~ loop.index) }}
+                {% endfor %}
             </section>
+            {% endmacro %}
+            {% for cat in categories %}
+            {{ render_material_section(cat, 2, 'materials-cat-' ~ loop.index) }}
             {% endfor %}
             {% else %}
             <div class="res-empty">

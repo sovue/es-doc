@@ -1117,6 +1117,14 @@ a.section-row:focus-visible .section-arrow {
     border-bottom: 1px solid var(--border);
 }
 
+.materials-section-level-3 + .materials-section-level-3 {
+    margin-top: 28px;
+}
+
+.materials-section-level-4 + .materials-section-level-4 {
+    margin-top: 24px;
+}
+
 .materials-row {
     display: block;
     padding: 14px 0;
