@@ -297,7 +297,7 @@ At 1280px and above, `.layout--docs` has three columns: **all articles / current
 
 The left rail opens by default and marks the current article with weight, accent and a pale tint. The right rail is labeled «На этой странице» and highlights the heading being read. Neither repeats the article's H1. Both controls are native `details`/`summary`: Enter, Space and pointer activation work without scripts, and Escape closes the enhanced panel.
 
-Breadcrumbs above the H1 establish the section and current page. «Шире» becomes available above 1536px, where extra width actually exists; it expands the shell to the window. «Обычная ширина» restores the centered measure. The choice persists under `es-doc-width`, applies before paint, and never makes a phone wider than its screen. Standard article width is a deliberate wiki compromise for prose, code and illustrations; long prose-only pages keep an 860px centered container.
+The header's width control expands every page shell to the window; «Обычная ширина» restores the centered measure. The choice persists under `es-doc-width` and applies before paint. Article text and directories retain their own readable maximums inside the wider shell.
 
 Below 1280px, the table of contents becomes a collapsed sticky disclosure above the article. Below 992px, the left tree also becomes a collapsed disclosure. An expanded compact tree/TOC has bounded vertical scroll. Each new article starts with compact panels closed. Resizing opens desktop panels and collapses compact panels; focus moves to the summary if necessary. On compact layouts, following a heading link closes the contents before scrolling and focuses the destination. Anchor offsets include the measured sticky summary height.
 

@@ -93,7 +93,7 @@
     const setButtonState = (button, playing) => {
         if (!button) return;
         button.setAttribute('aria-pressed', playing ? 'true' : 'false');
-        button.setAttribute('aria-label', playing ? 'Пауза' : 'Включить тему сайта');
+        button.setAttribute('aria-label', playing ? 'Пауза' : (button.dataset.playLabel || 'Включить тему сайта'));
     };
 
     const setRepeat = enabled => {

@@ -590,6 +590,15 @@
    Icon-only control at the end of the nav. Ships [hidden]; theme.js
    reveals it. The sun/moon swap mirrors the token conditions in vars.css:
    whichever scene is active shows its own icon. */
+.nav-display-controls {
+    display: flex;
+    align-items: center;
+    flex: none;
+    gap: 2px;
+    margin-left: auto;
+}
+
+.site-width-toggle,
 .theme-toggle {
     display: inline-flex;
     align-items: center;
@@ -607,10 +616,12 @@
     transition: color 0.15s var(--ease-out);
 }
 
+.site-width-toggle:hover,
 .theme-toggle:hover {
     color: var(--accent);
 }
 
+.site-width-toggle:focus-visible,
 .theme-toggle:focus-visible {
     outline: var(--focus-ring);
     outline-offset: -3px;
@@ -620,6 +631,22 @@
 /* Default (light scene): show the sun, hide the moon. */
 .theme-toggle-moon {
     display: none;
+}
+
+.site-width-icon {
+    display: block;
+}
+
+.site-width-arrows-in {
+    display: none;
+}
+
+:root[data-doc-width="wide"] .site-width-arrows-out {
+    display: none;
+}
+
+:root[data-doc-width="wide"] .site-width-arrows-in {
+    display: block;
 }
 
 /* Explicit night, or a dark OS preference that hasn't been overridden to
@@ -1537,7 +1564,7 @@ a.section-row:focus-visible .section-arrow {
 
     /* The row is logo, search and toggle now: the toggle takes the far edge
        instead of hugging the search field. */
-    .theme-toggle {
+    .nav-display-controls {
         margin-left: auto;
     }
 
@@ -1587,7 +1614,7 @@ a.section-row:focus-visible .section-arrow {
         margin-left: auto;
     }
 
-    .theme-toggle {
+    .nav-display-controls {
         margin-left: 0;
     }
 
@@ -1678,6 +1705,7 @@ a.section-row:focus-visible .section-arrow {
     .nav-links a,
     .nav-search-box,
     .nav-search-toggle,
+    .site-width-toggle,
     .theme-toggle,
     .site-footer a,
     .site-footer .footer-support,
@@ -1742,8 +1770,8 @@ a.section-row:focus-visible .section-arrow {
     :root { --page-gutter: 16px; --layout-gap: 20px; }
 }
 .site-nav { padding-inline: var(--page-gutter); }
-.site-nav > .theme-toggle { margin-left: auto; }
-@media (max-width: 40em) { .site-nav > .theme-toggle { margin-left: 0; } }
+.site-nav > .nav-display-controls { margin-left: auto; }
+@media (max-width: 40em) { .site-nav > .nav-display-controls { margin-left: 0; } }
 .section-bar .nav-links { padding-inline: max(0px, calc(var(--page-gutter) - 16px)); }
 @media (max-width: 40em) { .section-bar .nav-links { padding-inline: 4px 32px; } }
 .section-name, .section-desc {

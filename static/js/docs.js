@@ -36,25 +36,6 @@
         if (linkBox.bottom > railBox.bottom) rail.scrollTop += linkBox.bottom - railBox.bottom + 24;
     }
 
-    const widthButton = document.querySelector('.doc-width-toggle');
-    if (widthButton) {
-        const root = document.documentElement;
-        function syncWidth() {
-            const wide = root.dataset.docWidth === 'wide';
-            widthButton.setAttribute('aria-pressed', String(wide));
-            widthButton.querySelector('span').textContent = wide ? 'Обычная ширина' : 'Шире';
-            widthButton.title = wide ? 'Вернуть обычную ширину статьи' : 'Использовать всю ширину окна';
-        }
-        syncWidth();
-        widthButton.hidden = false;
-        widthButton.addEventListener('click', () => {
-            const wide = root.dataset.docWidth !== 'wide';
-            root.dataset.docWidth = wide ? 'wide' : 'standard';
-            try { localStorage.setItem('es-doc-width', wide ? 'wide' : 'standard'); } catch (e) {}
-            syncWidth();
-        });
-    }
-
     const links = new Map();
     document.querySelectorAll('.sidebar-toc a[href^="#"]').forEach(link => {
         let id = link.hash.slice(1);

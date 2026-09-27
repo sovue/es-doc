@@ -109,6 +109,20 @@ body.scene-page .page {
     background: var(--bg);
 }
 
+/* The width control in the shared header expands every page shell. */
+html[data-doc-width="wide"] .page {
+    max-width: none;
+}
+
+html[data-doc-width="wide"] body.scene-page {
+    background: var(--bg);
+}
+
+html[data-doc-width="wide"] body.scene-page::before,
+html[data-doc-width="wide"] body.scene-page::after {
+    display: none;
+}
+
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) body.scene-page {
         --scene-backdrop: url('/resource/hero/ext_beach_night');

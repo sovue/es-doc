@@ -11,6 +11,7 @@ from pygments.token import Comment, Whitespace
 
 from ..renpy_lexer import RenPyLexer
 from ..svg import SVG
+from .audio import audio, render_audio
 from .banner import banner, render_banner_close, render_banner_open
 from .details import (
     details,
@@ -343,8 +344,10 @@ MD.add_render_rule('fence', render_fence)
 MD.add_render_rule('code_inline', render_code_inline)
 MD.add_render_rule('image', render_image)
 MD.add_render_rule('link_open', render_link_open)
+MD.add_render_rule('audio', render_audio)
 
 MD.block.ruler.before('fence', 'table', table_block)
+MD.block.ruler.before('fence', 'audio', audio)
 MD.block.ruler.before('fence', 'info', template('info'))
 MD.block.ruler.before('fence', 'warning', template('warning'))
 MD.block.ruler.before('fence', 'tip', template('tip'))

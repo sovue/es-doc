@@ -112,9 +112,15 @@
         document.title = nextDocument.title;
         document.body.className = nextDocument.body.className;
 
-        const nextDocWidth = nextDocument.documentElement.dataset.docWidth;
-        if (nextDocWidth) document.documentElement.dataset.docWidth = nextDocWidth;
-        else delete document.documentElement.dataset.docWidth;
+        // DOMParser does not run the inline head script that restores this
+        // preference on a full page load. Read it from storage directly;
+        // otherwise a soft navigation would clear the active width mode.
+        try {
+            const widthPreference = localStorage.getItem('es-doc-width');
+            if (widthPreference === 'wide' || widthPreference === 'standard') {
+                document.documentElement.dataset.docWidth = widthPreference;
+            }
+        } catch (error) {}
 
         updateNavigation(url);
         if (pushHistory) history.pushState({}, '', url.href);
