@@ -65,18 +65,25 @@ document.querySelectorAll('span.cs').forEach(el => {
 (function () {
     if (!navigator.clipboard) return;
 
-    const status = document.getElementById('code-copy-status');
+    let status = document.getElementById('code-copy-status');
+    if (!status) {
+        status = document.createElement('p');
+        status.id = 'code-copy-status';
+        status.className = 'sr-only';
+        status.setAttribute('role', 'status');
+        status.setAttribute('aria-live', 'polite');
+        document.body.appendChild(status);
+    }
 
     /* ── Inline chips ──
        A fence isn't the only thing worth taking off the page: a colour, a
        function name, a file path in running prose is exactly what a reader
-       came for, and until now the only way to take one was to select it by
-       hand. Every inline `code` in the article copies on click, the same
-       gesture the character listings already use for a name colour.
+       came for. Inline `code` anywhere in page content copies on click, the
+       same gesture the character listings already use for a name colour.
 
        Mouse-only on purpose, and that used to be a `role="button"` +
-       `tabindex="0"` + `aria-label` promotion instead. An article runs 50+ of
-       these — on /docs/screens, 55 of them, three quarters of everything
+       `tabindex="0"` + `aria-label` promotion instead. An article can run 50+
+       of these — on /docs/screens, 55 of them, three quarters of everything
        focusable on the page — so making each one a tab stop meant a keyboard
        reader pressed Tab 55 times to cross one article, and the aria-label
        replaced the token's own text with "Скопировать: <token>", so a
@@ -90,7 +97,7 @@ document.querySelectorAll('span.cs').forEach(el => {
        one-click shortcut, and that shortcut stays for pointer users, who
        have no substitute for it. Skipped inside a link, where the click
        already means "go there". */
-    document.querySelectorAll('.content code').forEach(chip => {
+    document.querySelectorAll('#site-content code').forEach(chip => {
         if (chip.closest('pre') || chip.closest('a')) return;
 
         const value = chip.textContent;

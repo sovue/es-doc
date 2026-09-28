@@ -628,6 +628,47 @@
     color: var(--accent);
 }
 
+/* Shared inline chips and feedback for code.js copyable code. */
+:where(#site-content code:not(pre code)) {
+    /* Keep the default inline chip available on every page. The zero-specificity
+       selector lets component-specific code treatments take precedence. */
+    background: var(--code-bg-inline);
+    padding: 0.15em 0.4em;
+    border-radius: var(--radius-code);
+    font-family: var(--font-mono);
+    color: var(--code-inline);
+}
+
+:where(#site-content a code:not(pre code)) {
+    color: var(--code-link);
+    text-decoration: underline;
+    text-decoration-color: var(--border);
+    text-underline-offset: 2px;
+}
+
+:where(#site-content a:hover code:not(pre code), #site-content a:focus-visible code:not(pre code)) {
+    text-decoration-color: currentColor;
+}
+
+.code-copyable {
+    cursor: pointer;
+    transition: color 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
+}
+
+.code-copyable:hover {
+    box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.code-copyable:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 1px;
+}
+
+.code-copyable.copied {
+    color: var(--code-success);
+    box-shadow: inset 0 0 0 1px var(--code-success);
+}
+
 /* Default (light scene): show the sun, hide the moon. */
 .theme-toggle-moon {
     display: none;
@@ -1707,6 +1748,7 @@ a.section-row:focus-visible .section-arrow {
     .nav-search-toggle,
     .site-width-toggle,
     .theme-toggle,
+    .code-copyable,
     .site-footer a,
     .site-footer .footer-support,
     .thanks-list a,
