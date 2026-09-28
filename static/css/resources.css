@@ -312,6 +312,17 @@ a.res-thumb:focus-visible {
     overflow-wrap: break-word;
 }
 
+.res-title {
+    font-family: var(--font-sans);
+    font-weight: 600;
+}
+
+.res-caption {
+    font-size: var(--fs-label);
+    line-height: var(--lh-ui);
+    color: var(--text-soft);
+}
+
 /* Sprite names are families rather than one flat stream: the trigger keeps
    the familiar code visible, while its small popover exposes the three game
    distances without spending a full row on each one. */

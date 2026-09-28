@@ -28,6 +28,13 @@ def _source_file(kind, name):
     # or the community drop-in folder next to it.
     if kind == 'sprite':
         return sprite_file(name)
+    if kind == 'community':
+        listed = any(i['file'] == name and i['thumb']
+                     for category in CONFIG.resources.get('community', {}).values()
+                     for i in category)
+        source = CONFIG.res_path.parent / 'community' / name
+        root = (CONFIG.res_path.parent / 'community').resolve()
+        return source if listed and source.resolve().is_relative_to(root) and source.is_file() else None
     item = next((i for collection in CONFIG.resources.values()
                  for i in collection.get(kind, []) if i['name'] == name), None)
     if not item or not item['file']:

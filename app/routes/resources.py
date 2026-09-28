@@ -22,7 +22,7 @@ COLLECTIONS = {
     },
     'community': {
         'title': 'Ресурсы сообщества',
-        'lead': 'Ресурсы, созданные сообществом для использования в модах. Раздел ещё наполняется.',
+        'lead': 'Файлы, которыми поделилось сообщество: изображения, звуки и музыка для модов.',
     },
 }
 
@@ -97,7 +97,7 @@ def _static(collection):
 def _count(category, items):
     # Hub and switcher counts cover declared resources only; undeclared files
     # sit behind their toggle and are not part of the headline numbers.
-    if category == 'sprites':
+    if category == 'sprites' and items and 'sprites' in items[0]:
         return sum(len(group['sprites']) for group in items)
     if category == 'warpers':
         return len(items)
@@ -360,7 +360,7 @@ async def listing(collection, category, request: Request):
         'categories': switcher,
         'items': items,
         'count': _count(category, items),
-        'count_all': (len(items) if category != 'sprites'
+        'count_all': (len(items) if category != 'sprites' or collection == 'community'
                       else sum(len(g['sprites']) for g in items)),
         'has_undeclared': (category != 'sprites'
                            and any(not i['declared'] for i in items)),

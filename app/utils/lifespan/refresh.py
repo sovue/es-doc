@@ -87,6 +87,14 @@ def _watchers():
     """
     assets = _assets_root()
     res = CONFIG.res_path
+    resource_sources = _one_of(
+        res / 'resources.rpy',
+        res / 'media.rpy',
+        assets / 'descriptions.yaml',
+        assets / 'community-descriptions.yaml',
+        assets / 'nsfw.yaml',
+    )
+    community_files = _under(assets / 'community')
 
     return [
         ('config.yaml', _one_of(assets / 'config.yaml'), _refresh_config),
@@ -99,14 +107,7 @@ def _watchers():
             res / 'scenario' / 'zhenya.rpy',
         ), _refresh_sprites),
 
-        ('resources', _one_of(
-            res / 'resources.rpy',
-            res / 'media.rpy',
-            assets / 'descriptions.yaml',
-            assets / 'nsfw.yaml',
-            assets / 'community' / 'resources.rpy',
-            assets / 'community' / 'sprites.rpy',
-        ), _refresh_resources),
+        ('resources', lambda path: resource_sources(path) or community_files(path), _refresh_resources),
 
         ('artists.yaml', _one_of(assets / 'artists.yaml'), parse_artists),
         ('news_resources.yaml', _one_of(assets / 'news_resources.yaml'), parse_news_resources),

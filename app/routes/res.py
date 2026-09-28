@@ -94,15 +94,20 @@ async def tinted_page(kind, name, request: Request):
 
     return FileResponse(str(tinted_file(kind, name)), media_type='image/webp', headers=cache_headers(precompressed=True))
 
-@router.get('/thumb/{kind}/{name}')
+@router.get('/thumb/{kind}/{name:path}')
 async def thumb_page(kind, name, request: Request):
 
-    if kind not in ('bg', 'cg', 'anim', 'sprite'):
+    if kind not in ('bg', 'cg', 'anim', 'sprite', 'community'):
         raise HTTPException(404, f'Категория "{kind}" не существует.')
 
     if kind == 'sprite':
         # A sprite thumb derives from the composed sprite, so compose first.
         await _ensure_composed(name)
+    elif kind == 'community':
+        if not any(i['file'] == name and i['thumb']
+                   for items in CONFIG.resources.get('community', {}).values()
+                   for i in items):
+            raise HTTPException(404, f'Ресурс "{name}" не существует.')
     elif _find_tinted(kind, name):
         # A tinted image's thumb derives from the composed tint, so compose
         # that first (mirrors the sprite branch above).

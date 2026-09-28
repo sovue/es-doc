@@ -9,20 +9,24 @@
 {% set with_player = category_meta.media == 'audio' %}
 
 {% macro name_line(item) %}
-        <span class="res-name-line"><code class="res-name">{{ item.code }}</code>
-        {%- if not item.declared %} <span class="res-flag">не объявлен</span>{% endif %}</span>
+        <span class="res-name-line">
+        {%- if collection == 'community' %}<span class="res-name res-title">{{ item.title }}</span>
+        {%- else %}<code class="res-name">{{ item.code }}</code>
+        {%- if not item.declared %} <span class="res-flag">не объявлен</span>{% endif %}
+        {%- endif %}</span>
 {% endmacro %}
 
 {% macro image_row(item, sprite=false) %}
 {# Tinted variants are served as composed .webp, not the original file. #}
 {% set filename = (item.name + '.webp') if (item.tint or not item.file) else item.file.rsplit('/', 1)[-1] %}
-<li class="res-row{% if sprite %} res-row--sprite{% endif %}" id="{{ item.rid }}" data-name="{{ item.name }}"
+<li class="res-row{% if sprite %} res-row--sprite{% endif %}" id="{{ item.rid }}" data-name="{{ item.title or item.name }}"
+    {%- if collection == 'community' %} data-search="{{ item.title }} {{ item.file }}"{% endif %}
     {%- if not item.declared %} data-undeclared hidden{% endif %}{% if item.nsfw %} data-nsfw{% endif %}
     {%- if item.loc is not none or item.time is not none %} data-loc="{{ item.loc or '' }}" data-time="{{ item.time or '' }}"{% endif %}>
     {% if item.thumb %}
     <a class="res-thumb{% if sprite %} res-thumb--sprite{% endif %}" href="{{ item.raw }}"
        data-media-surface
-       data-zoom="{{ item.code }}" data-file="{{ filename }}" aria-label="Открыть «{{ item.code }}» в полном размере">
+       data-zoom="{{ item.title or item.code }}" data-file="{{ filename }}" aria-label="Открыть «{{ item.title or item.code }}» в полном размере">
         <img src="{{ item.thumb }}" loading="lazy" decoding="async" alt="">
     </a>
     {% else %}
@@ -31,11 +35,12 @@
     <div class="res-meta">
         {{ name_line(item) }}
         {% if item.desc %}<span class="res-desc">{{ item.desc }}</span>{% endif %}
+        {% for caption in item.captions %}<span class="res-caption">{{ caption }}</span>{% endfor %}
         {% if item.source %}<span class="res-file">{{ item.source }}</span>
         {%- elif item.file %}<span class="res-file">{{ item.file }}</span>{% endif %}
     </div>
     <div class="res-actions">
-        {{ res.copy_button(item.code) }}
+        {% if collection == 'original' %}{{ res.copy_button(item.code) }}{% endif %}
         {% if item.raw %}{{ res.dl_button(item.raw, filename) }}{% endif %}
     </div>
 </li>
@@ -88,11 +93,14 @@
 {% endmacro %}
 
 {% macro audio_row(item) %}
-<li class="res-row" id="{{ item.rid }}" data-name="{{ item.name }}"{% if not item.declared %} data-undeclared hidden{% endif %}>
-    {% if item.raw %}{{ res.play_button(item.raw, item.name) }}{% endif %}
+<li class="res-row" id="{{ item.rid }}" data-name="{{ item.title or item.name }}"
+    {%- if collection == 'community' %} data-search="{{ item.title }} {{ item.file }}"{% endif %}
+    {%- if not item.declared %} data-undeclared hidden{% endif %}>
+    {% if item.raw %}{{ res.play_button(item.raw, item.play_name or item.name) }}{% endif %}
     <div class="res-meta">
         {{ name_line(item) }}
         {% if item.desc %}<span class="res-desc">{{ item.desc }}</span>{% endif %}
+        {% for caption in item.captions %}<span class="res-caption">{{ caption }}</span>{% endfor %}
         {% if item.raw %}
         <a class="res-file" href="{{ item.raw }}">{{ item.file }}</a>
         {% elif item.file %}
@@ -100,7 +108,7 @@
         {% endif %}
     </div>
     <div class="res-actions">
-        {{ res.copy_button(item.code) }}
+        {% if collection == 'original' %}{{ res.copy_button(item.code) }}{% endif %}
         {% if item.raw %}{{ res.dl_button(item.raw, item.file.rsplit('/', 1)[-1]) }}{% endif %}
     </div>
 </li>
@@ -117,7 +125,9 @@
                 <h1 class="page-title">{{ category_meta.title }}</h1>
                 <p class="page-lead">
                     {{ category_meta.desc }}.
+                    {% if collection == 'original' %}
                     Пример использования: <code class="res-usage">{{ category_meta.usage }}</code>
+                    {% endif %}
                 </p>
             </div>
         </section>
@@ -145,7 +155,7 @@
                     <input type="search" id="res-filter-input" class="filter-input" placeholder="Фильтр по имени…"
                            autocomplete="off" spellcheck="false" aria-label="Фильтр по имени">
 
-                    {% if category == 'bg' %}
+                    {% if category == 'bg' and collection == 'original' %}
                     <select id="res-loc-select" class="filter-select" aria-label="Локация">
                         <option value="">Все локации</option>
                         {% for loc in bg_locations %}<option value="{{ loc }}">{{ loc }}</option>{% endfor %}
@@ -156,7 +166,7 @@
                     </select>
                     {% endif %}
 
-                    {% if category_meta.media != 'sprites' %}
+                    {% if category_meta.media != 'sprites' or collection == 'community' %}
                     <select id="res-sort-select" class="filter-select" aria-label="Сортировка">
                         <option value="az">А-Я</option>
                         <option value="za">Я-А</option>
@@ -178,7 +188,7 @@
                 <p class="res-filter-count filter-count" aria-live="polite" data-total="{{ count }}" data-all="{{ count_all }}"></p>
             </div>
 
-            {% if category_meta.media == 'sprites' %}
+            {% if category_meta.media == 'sprites' and collection == 'original' %}
 
             <nav class="res-jump" aria-label="Персонажи">
                 <ul role="list">

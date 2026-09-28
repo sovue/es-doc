@@ -1,6 +1,7 @@
 import ast
 import re
 import yaml
+from pathlib import Path
 from urllib.parse import quote
 
 from ..config import CONFIG
@@ -177,15 +178,6 @@ def _parse_bg_name(name):
     return loc, (time or 'other'), desc
 
 
-def _music_title(name):
-    """'a_promise_from_distant_days_v2' → 'A Promise From Distant Days (v2)'."""
-    words = name.split('_')
-    version = ''
-    if re.fullmatch(r'v\d+', words[-1]):
-        version = f' ({words.pop()})'
-    return ' '.join(w.capitalize() if w.isalpha() else w for w in words) + version
-
-
 def _fmt_num(x):
     """1.0 -> '1', 0.35 -> '0.35' — matches how these numbers are written
     in the .rpy source, for the reconstructed-expression file line."""
@@ -209,8 +201,6 @@ RE_MUSIC = re.compile(r'^\s*\$ music_list\["(\w+)"\]\s*=\s*"([^"]+)"', re.M)
 # $ sfx_bed_squeak1 = "sound/sfx/bed_squeak1.ogg"
 RE_AMBIENCE = re.compile(r'^\s*\$ (ambience_\w+)\s*=\s*"([^"]+)"', re.M)
 RE_SFX = re.compile(r'^\s*\$ (sfx_\w+)\s*=\s*"([^"]+)"', re.M)
-# Same declaration shape sprites_cache.py composes from.
-RE_SPRITE = re.compile(r'image ([\w ]+)\b[\s\S]+?im.Composite\(', re.M | re.U)
 # image blood = "zhenya/images/blood.png" — file-backed declarations without
 # a category prefix. Only the extra sources are scanned with this (the main
 # resources.rpy keeps its curated bg/cg/anim split); the game shows these
@@ -237,15 +227,38 @@ CATEGORY_DIRS = {
     'sfx': (('sound/sfx', 'zhenya/sounds'), {'.ogg', '.mp3', '.wav'}),
 }
 
+# Community files are published directly from these folders. They need no
+# Ren'Py declarations and are deliberately independent of CATEGORY_DIRS.
+COMMUNITY_EXTS = {
+    'bg': {'.jpg', '.jpeg', '.png', '.webp', '.gif'},
+    'cg': {'.jpg', '.jpeg', '.png', '.webp', '.gif'},
+    'anim': {'.jpg', '.jpeg', '.png', '.webp', '.gif'},
+    'sprites': {'.jpg', '.jpeg', '.png', '.webp', '.gif'},
+    'music': {'.ogg', '.mp3', '.wav', '.opus'},
+    'ambience': {'.ogg', '.mp3', '.wav', '.opus'},
+    'sfx': {'.ogg', '.mp3', '.wav', '.opus'},
+}
+COMMUNITY_FOLDERS = {
+    'bg': ('bg', 'images/bg'),
+    'cg': ('cg', 'images/cg'),
+    'anim': ('anim', 'images/anim'),
+    'sprites': ('sprites', 'images/sprites'),
+    'music': ('music', 'sound/music'),
+    'ambience': ('ambience', 'sound/ambience', 'sound/ambiences'),
+    'sfx': ('sfx', 'sound/sfx'),
+}
+
 
 def _item(name, code, file=None, raw=None, thumb=None, desc=None, loc=None, time=None,
-          declared=True, nsfw=False, tint=None, source=None):
+          declared=True, nsfw=False, tint=None, source=None, title=None,
+          captions=None, play_name=None):
     # Key is 'code', not 'copy': Jinja resolves dotted access against dict
     # methods first, so item.copy would return dict.copy instead of the string.
     return {
         'name': name, 'code': code, 'file': file, 'raw': raw, 'thumb': thumb,
         'desc': desc, 'loc': loc, 'time': time,
         'declared': declared, 'nsfw': nsfw, 'tint': tint,
+        'title': title, 'captions': captions or [], 'play_name': play_name,
         # What the file line shows. Plain items show `file` itself (a real
         # path); a tinted item has no file of its own — it's built from one
         # at request time — so it shows the actual code expression instead
@@ -259,8 +272,8 @@ def _load_descriptions():
     """descriptions.yaml in the assets root (next to `game`):
     {category: {name: text}}. The one hand-edited source for resource
     descriptions — undeclared files included, keyed by their file stem.
-    Entries win over the automatic bg/music descriptions and the undeclared
-    fallback; empty values fall back to them."""
+    Entries win over automatic bg descriptions and the undeclared fallback.
+    Music without an entry displays its page path."""
     path = CONFIG.res_path.parent / 'descriptions.yaml'
     if not path.exists():
         return {}
@@ -272,6 +285,66 @@ def _load_descriptions():
     except Exception:
         logger.exception('descriptions.yaml is not valid YAML; ignoring it.')
         return {}
+
+
+def _load_community_descriptions():
+    """Optional metadata keyed by paths relative to assets/community/."""
+    path = CONFIG.res_path.parent / 'community-descriptions.yaml'
+    if not path.exists():
+        return {}
+    try:
+        data = yaml.safe_load(path.read_text('utf-8')) or {}
+    except (OSError, yaml.YAMLError):
+        logger.exception('community-descriptions.yaml is invalid; ignoring it.')
+        return {}
+    if not isinstance(data, dict):
+        logger.warning('community-descriptions.yaml must map paths to metadata; ignoring it.')
+        return {}
+    return data
+
+
+def _parse_community(root: Path, described):
+    """Scan community category folders; metadata only enriches found files."""
+    collection = {category: [] for category in COMMUNITY_EXTS}
+    root_resolved = root.resolve()
+    for category, exts in COMMUNITY_EXTS.items():
+        files = sorted(file for folder in COMMUNITY_FOLDERS[category]
+                       for file in (root / folder).rglob('*'))
+        for file in files:
+            if (not file.is_file() or file.suffix.lower() not in exts
+                    or not file.resolve().is_relative_to(root_resolved)):
+                continue
+            rel = file.relative_to(root).as_posix()
+            raw = f'/resource/community/{quote(rel)}'
+            metadata = described.get(rel) or {}
+            if isinstance(metadata, str):
+                metadata = {'title': metadata}
+            if not isinstance(metadata, dict):
+                logger.warning('Invalid community metadata for %s; using filename.', rel)
+                metadata = {}
+            title = metadata.get('title') or (raw if category == 'music' else file.stem)
+            desc = metadata.get('description') or None
+            captions = metadata.get('captions') or []
+            if not isinstance(captions, list):
+                logger.warning('Invalid community captions for %s; ignoring them.', rel)
+                captions = []
+            lines = []
+            for caption in captions:
+                if isinstance(caption, dict):
+                    lines.extend(f'{key}: {value}' for key, value in caption.items())
+                elif caption:
+                    lines.append(str(caption))
+            image = category in ('bg', 'cg', 'anim', 'sprites')
+            collection[category].append(_item(
+                rel, None, rel, raw=raw,
+                thumb=f'/resource/thumb/community/{quote(rel)}' if image else None,
+                title=str(title), desc=str(desc) if desc else None,
+                captions=lines,
+                play_name=str(metadata.get('title') or raw) if not image else None,
+            ))
+            # The path is the identity; a filename can repeat in subfolders.
+            collection[category][-1]['rid'] = 'r-' + quote(rel, safe='')
+    return collection
 
 
 def _load_nsfw():
@@ -366,10 +439,11 @@ def _parse_rpy(root, raw_base, described, nsfw_marks):
     for name, file in music.items():
         if raw_base and not (root / file).exists():
             continue
+        raw = f'{raw_base}/{quote(file)}' if raw_base else None
+        title = described.get('music', {}).get(name) or raw
         collection['music'].append(_item(
             name, f'music_list["{name}"]', file,
-            raw=f'{raw_base}/{quote(file)}' if raw_base else None,
-            desc=desc_for('music', name, _music_title(name)),
+            raw=raw, desc=title, play_name=title,
         ))
 
     for regex, kind in ((RE_AMBIENCE, 'ambience'), (RE_SFX, 'sfx')):
@@ -379,10 +453,12 @@ def _parse_rpy(root, raw_base, described, nsfw_marks):
         for name, file in sounds.items():
             if raw_base and not (root / file).exists():
                 continue
+            raw = f'{raw_base}/{quote(file)}' if raw_base else None
             collection[kind].append(_item(
                 name, name, file,
-                raw=f'{raw_base}/{quote(file)}' if raw_base else None,
+                raw=raw,
                 desc=desc_for(kind, name),
+                play_name=described.get(kind, {}).get(name) or raw,
             ))
 
     for items in collection.values():
@@ -434,6 +510,8 @@ def _append_undeclared(root, collection, raw_base, described):
                     # Hand-written descriptions apply here too (keyed by the
                     # file stem in descriptions.yaml).
                     desc=described.get(kind, {}).get(name) or UNDECLARED_DESC,
+                    play_name=(described.get(kind, {}).get(name) or f'{raw_base}/{quote(rel)}')
+                    if kind in ('music', 'ambience', 'sfx') else None,
                     declared=False,
                 ))
 
@@ -648,16 +726,9 @@ def parse_resources():
     # collection has no media.rpy, so it simply doesn't get the tab.
     original['characters'] = _parse_characters(CONFIG.res_path, described)
 
-    # An optional community collection: a `community` folder next to `game`
-    # in the assets root, holding resources.rpy / sprites.rpy in the same
-    # format. Absent today — every category then renders its empty state.
+    # Community files are independent of the game's Ren'Py declarations.
     community_root = CONFIG.res_path.parent / 'community'
-    community = _parse_rpy(community_root, '/resource/community', described, nsfw_marks)
-    community.pop('anim')  # the community set has no effects/animations
-    community.pop('cg')  # CGs are not part of the community resource collection
-    sprites_rpy = community_root / 'sprites.rpy'
-    community_sprite_names = RE_SPRITE.findall(sprites_rpy.read_text('utf-8')) if sprites_rpy.exists() else []
-    community['sprites'] = _group_sprites(community_sprite_names, composable=False)
+    community = _parse_community(community_root, _load_community_descriptions())
 
     # NSFW CG declarations are cut from the original collection and are not
     # listed in the community collection either.
