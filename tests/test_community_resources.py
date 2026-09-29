@@ -17,7 +17,7 @@ from app.utils.lifespan.thumbs_cache import _source_file
 class CommunityResourcesTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.assets = Path(__file__).resolve().parents[1] / 'temp' / f'test-community-{uuid4().hex}'
-        self.assets.mkdir()
+        self.assets.mkdir(parents=True)
         self.addCleanup(shutil.rmtree, self.assets)
         self.game = self.assets / 'game'
         self.game.mkdir()

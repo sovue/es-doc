@@ -19,6 +19,12 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.0.1
 
+      - name: Check out assets
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.0.1
+        with:
+          repository: sovue/es-doc-assets
+          path: assets
+
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.0.1
         with:
@@ -31,6 +37,8 @@ jobs:
         run: pdm install --dev
 
       - name: Run tests
+        env:
+          ES_DOC_ASSETS_PATH: ${{ github.workspace }}/assets
         run: pdm run python -m unittest discover -s tests -v
 
       - name: Compile application
