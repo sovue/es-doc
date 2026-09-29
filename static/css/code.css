@@ -12,9 +12,8 @@
    Inline chip styling and copy feedback live in components.css, shared with
    pages that do not need the fenced panel palette.
 
-   Selectors stay bare (`pre`, `code`) rather than scoped: this file is
-   only loaded on pages whose only code is prose code, same as when the
-   rules lived in doc.css.
+   Panel rules stay scoped to `pre` so the shared inline code styles in
+   components.css also work on pages that load this file.
    ===================================================================== */
 
 /* A hex colour carries a dot of itself, the way the character listings do
@@ -126,18 +125,6 @@ pre {
 }
 
 
-code {
-    /* Brought back due to bug with fonts in multiline code blocks. - ohfkgsofsex */
-    background: var(--code-bg-inline);
-
-    padding: 0.15em 0.4em;
-    border-radius: var(--radius-code);
-
-    font-family: var(--font-mono);
-
-    color: var(--code-inline);
-}
-
 .code-block--numbered pre {
     /* Gutter and code as a row; `white-space: pre` still governs the line
        breaks inside each of them. */
@@ -159,6 +146,10 @@ code {
 pre code {
     background: none;
     padding: 0;
+    /* The UA's `code` monospace defaults can be smaller than the panel.
+       Match the panel's face and computed size, including its gutter. */
+    font-family: inherit;
+    font-size: inherit;
     /* Base ink for the panel. Unclassified tokens (punctuation — colons,
        brackets, commas) would otherwise inherit the page's --text, which is
        cream on the night panel; syntax classes below override this. */
