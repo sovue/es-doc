@@ -125,6 +125,19 @@ pre {
     }
 }
 
+
+code {
+    /* Brought back due to bug with fonts in multiline code blocks. - ohfkgsofsex */
+    background: var(--code-bg-inline);
+
+    padding: 0.15em 0.4em;
+    border-radius: var(--radius-code);
+
+    font-family: var(--font-mono);
+
+    color: var(--code-inline);
+}
+
 .code-block--numbered pre {
     /* Gutter and code as a row; `white-space: pre` still governs the line
        breaks inside each of them. */
