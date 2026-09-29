@@ -54,7 +54,7 @@
         '<button type="button" class="res-nowplaying-stop" aria-label="Остановить">' +
         '<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">' +
         '<rect x="1.5" y="1.5" width="9" height="9" rx="1.5"/></svg></button>' +
-        '<div class="res-nowplaying-main"><code class="res-nowplaying-name"></code>' +
+        '<div class="res-nowplaying-main"><span class="res-nowplaying-name"></span>' +
         '<div class="res-seek"><span class="res-time" data-current>0:00</span>' +
         '<input type="range" min="0" max="0" step="0.1" value="0" aria-label="Позиция воспроизведения">' +
         '<span class="res-time" data-duration>0:00</span></div></div>' +
@@ -93,7 +93,8 @@
     const setButtonState = (button, playing) => {
         if (!button) return;
         button.setAttribute('aria-pressed', playing ? 'true' : 'false');
-        button.setAttribute('aria-label', playing ? 'Пауза' : 'Включить тему сайта');
+        button.setAttribute('aria-label', playing ? 'Пауза' :
+            (button.dataset.playLabel || `Прослушать ${button.dataset.playName || 'аудиофайл'}`));
     };
 
     const setRepeat = enabled => {

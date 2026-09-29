@@ -22,9 +22,8 @@ _SAFE_SCHEME_RE = re.compile(r'^(?:https?://|/)', re.I)
 
 
 def _redirects_path():
-    # redirects.yaml sits at the assets root, beside links.yaml and news.yaml —
-    # it is the same kind of thing, a curated list the site reads and never
-    # writes.
+    # redirects.yaml sits beside links.yaml at the assets root. Like links,
+    # it is a curated list the site reads and never writes.
     return CONFIG.docs_path.parent / 'redirects.yaml'
 
 

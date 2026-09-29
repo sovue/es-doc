@@ -21,12 +21,10 @@ class SearchDiscoveryTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_sitemap_lists_public_pages_from_live_indexes(self):
         docs = [{'slug': 'Начало & старт'}, {'slug': 'unlisted_article'}]
-        news = [{'slug': '2026-09-21-update'}]
         resources = {'original': {'bg': []}, 'community': {'music': []}}
 
         with (patch.object(CONFIG, 'site_url', 'https://docs.example'),
               patch.object(CONFIG, 'search_index', docs),
-              patch.object(CONFIG, 'news', news),
               patch.object(CONFIG, 'resources', resources)):
             async with AsyncClient(transport=ASGITransport(app=app), base_url='http://localhost') as client:
                 response = await client.get('/sitemap.xml')
@@ -40,7 +38,6 @@ class SearchDiscoveryTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn('https://docs.example/docs/', urls)
         self.assertIn('https://docs.example/docs/%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE%20%26%20%D1%81%D1%82%D0%B0%D1%80%D1%82', urls)
         self.assertIn('https://docs.example/docs/unlisted_article', urls)
-        self.assertIn('https://docs.example/news/2026-09-21-update', urls)
         self.assertIn('https://docs.example/resources/original/bg', urls)
         self.assertIn('https://docs.example/resources/community/music', urls)
         self.assertIn('https://docs.example/resources/original/warpers', urls)

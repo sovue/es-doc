@@ -8,70 +8,13 @@
    palettes live in vars.css, so nothing here branches on theme.
 
    Loaded via extra_css by every template that renders fenced code
-   (doc.html, warpers.html) and paired with code.js, which reveals the copy
-   button and makes inline chips copyable.
+   (doc.html, warpers.html) and paired with code.js, which adds copy controls.
+   Inline chip styling and copy feedback live in components.css, shared with
+   pages that do not need the fenced panel palette.
 
-   Selectors stay bare (`pre`, `code`) rather than scoped: this file is
-   only loaded on pages whose only code is prose code, same as when the
-   rules lived in doc.css.
+   Panel rules stay scoped to `pre` so the shared inline code styles in
+   components.css also work on pages that load this file.
    ===================================================================== */
-
-code {
-    /* Its own token, not --code-bg: by day the fenced panel is only a breath
-       off the white page and leans on its border, which an inline chip has no
-       room for, so the chip takes a deeper, greyer leaf instead. At night both
-       resolve to the film-dark panel. */
-    background: var(--code-bg-inline);
-
-    padding: 0.15em 0.4em;
-    border-radius: var(--radius-code);
-
-    font-family: var(--font-mono);
-
-    color: var(--code-inline);
-}
-
-/* A link whose whole label is inline code. The chip's own colour won over the
-   link's, so `[`код`](…)` rendered identically to a plain code span and the
-   only thing marking it as a link was the cursor. Link ink brings it back, and
-   the underline (faint at rest, full on interaction) means it doesn't rely on
-   colour alone to read as a link. */
-a code {
-    color: var(--code-link);
-    text-decoration: underline;
-    text-decoration-color: var(--border);
-    text-underline-offset: 2px;
-}
-
-a:hover code,
-a:focus-visible code {
-    text-decoration-color: currentColor;
-}
-
-/* ── Copyable inline chips (code.js) ──
-   The chip already looks like a thing you can take; this only says it under
-   the cursor, and confirms in the same green every other copy control on the
-   site uses. No new resting state — a page of prose flickering with hoverable
-   boxes would read as a page of links. */
-
-.code-copyable {
-    cursor: pointer;
-    transition: color 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
-}
-
-.code-copyable:hover {
-    box-shadow: inset 0 0 0 1px var(--border);
-}
-
-.code-copyable:focus-visible {
-    outline: var(--focus-ring);
-    outline-offset: 1px;
-}
-
-.code-copyable.copied {
-    color: var(--code-success);
-    box-shadow: inset 0 0 0 1px var(--code-success);
-}
 
 /* A hex colour carries a dot of itself, the way the character listings do
    (.res-chip). Same size and shape, so the two read as one idea in two
@@ -181,6 +124,7 @@ pre {
     }
 }
 
+
 .code-block--numbered pre {
     /* Gutter and code as a row; `white-space: pre` still governs the line
        breaks inside each of them. */
@@ -202,6 +146,10 @@ pre {
 pre code {
     background: none;
     padding: 0;
+    /* The UA's `code` monospace defaults can be smaller than the panel.
+       Match the panel's face and computed size, including its gutter. */
+    font-family: inherit;
+    font-size: inherit;
     /* Base ink for the panel. Unclassified tokens (punctuation — colons,
        brackets, commas) would otherwise inherit the page's --text, which is
        cream on the night panel; syntax classes below override this. */
@@ -296,8 +244,7 @@ pre code {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .code-copy,
-    .code-copyable {
+    .code-copy {
         transition: none;
     }
 }

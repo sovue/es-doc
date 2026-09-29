@@ -20,7 +20,7 @@ _generation = 0
 
 # Purely a wake-up, never the payload — set and immediately cleared, so it
 # releases the streams waiting right now and latches nothing for the ones that
-# aren't. `_generation` is what actually carries the news.
+# aren't. `_generation` is what carries the change number.
 _wakeup = asyncio.Event()
 
 _shutdown = asyncio.Event()

@@ -3,7 +3,7 @@
 {% set page_title = 'ES Doc — Документация по моддингу Бесконечного Лета' %}
 {% set extra_css = ['/static/css/home.css'] %}
 {% set with_contributors_js = true %}
-{% set body_class = 'bg-solid' %}
+{% set body_class = 'scene-page' %}
 
 {% block content %}
 <div class="page">
@@ -56,6 +56,7 @@
                 <div class="hero-track" role="group" aria-label="Тема сайта">
                     <button type="button" class="hero-track-play"
                             data-play-src="{{ track.src }}" data-play-name="{{ track_name }}"
+                            data-play-label="Включить тему сайта"
                             aria-label="Включить тему сайта" aria-pressed="false" hidden>
                         <svg class="hero-track-icon-play" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                             <path d="M5 3.4v9.2a.6.6 0 0 0 .92.5l7-4.6a.6.6 0 0 0 0-1l-7-4.6A.6.6 0 0 0 5 3.4Z" fill="currentColor"/>
@@ -133,25 +134,9 @@
                     </li>
 
                     <li>
-                        <a href="/news" class="section-row">
-                            <span class="section-name">Новости проекта</span>
-                            <span class="section-desc">Новые статьи, разделы и изменения на сайте</span>
-                            <span class="section-arrow" aria-hidden="true">→</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="/news/sources" class="section-row">
-                            <span class="section-name">Новостные ресурсы</span>
-                            <span class="section-desc">Каналы и сообщества с новостями о «Бесконечном Лете»</span>
-                            <span class="section-arrow" aria-hidden="true">→</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="/literature" class="section-row">
-                            <span class="section-name">Полезная литература</span>
-                            <span class="section-desc">Книги по писательскому мастерству и Python</span>
+                        <a href="/materials" class="section-row">
+                            <span class="section-name">Полезные материалы</span>
+                            <span class="section-desc">Книги, курсы и видеолекции по Python и писательскому мастерству</span>
                             <span class="section-arrow" aria-hidden="true">→</span>
                         </a>
                     </li>
@@ -160,6 +145,14 @@
                         <a href="/artists" class="section-row">
                             <span class="section-name">Художники</span>
                             <span class="section-desc">Авторы, берущие заказы на арт для модов</span>
+                            <span class="section-arrow" aria-hidden="true">→</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="/news-resources" class="section-row">
+                            <span class="section-name">Новостные ресурсы</span>
+                            <span class="section-desc">Площадки, где можно опубликовать или анонсировать мод</span>
                             <span class="section-arrow" aria-hidden="true">→</span>
                         </a>
                     </li>

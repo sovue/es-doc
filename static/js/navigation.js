@@ -18,9 +18,9 @@
         if (pathname === '/') return '';
         if (pathname === '/docs' || pathname.startsWith('/docs/')) return 'docs';
         if (pathname === '/resources' || pathname.startsWith('/resources/')) return 'resources';
-        if (pathname === '/news' || pathname.startsWith('/news/')) return 'news';
-        if (pathname === '/literature') return 'literature';
+        if (pathname === '/materials') return 'materials';
         if (pathname === '/artists') return 'artists';
+        if (pathname === '/news-resources') return 'news-resources';
         return null;
     };
 
@@ -112,15 +112,34 @@
         document.title = nextDocument.title;
         document.body.className = nextDocument.body.className;
 
-        const nextDocWidth = nextDocument.documentElement.dataset.docWidth;
-        if (nextDocWidth) document.documentElement.dataset.docWidth = nextDocWidth;
-        else delete document.documentElement.dataset.docWidth;
+        // DOMParser does not run the inline head script that restores this
+        // preference on a full page load. Read it from storage directly;
+        // otherwise a soft navigation would clear the active width mode.
+        try {
+            const widthPreference = localStorage.getItem('es-doc-width');
+            if (widthPreference === 'wide' || widthPreference === 'standard') {
+                document.documentElement.dataset.docWidth = widthPreference;
+            }
+        } catch (error) {}
 
         updateNavigation(url);
         if (pushHistory) history.pushState({}, '', url.href);
-        window.scrollTo(0, 0);
+        if (!url.hash) window.scrollTo(0, 0);
 
         await loadPageScripts(nextDocument);
+        if (id !== navigationId) return;
+
+        // Soft navigation replaces the document without the browser's native
+        // fragment handling. Resolve the hash after the new content and its
+        // page scripts are in place, or cross-page links land at the top.
+        if (url.hash) {
+            let targetId = url.hash.slice(1);
+            try { targetId = decodeURIComponent(targetId); } catch (error) {}
+            const target = document.getElementById(targetId);
+            if (target) target.scrollIntoView({ block: 'start', behavior: 'auto' });
+            else window.scrollTo(0, 0);
+        }
+
         window.dispatchEvent(new CustomEvent('esdoc:navigation', { detail: { url: url.href } }));
     };
 

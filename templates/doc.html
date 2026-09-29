@@ -2,7 +2,7 @@
 {% set page_title = title ~ ' — ES Doc' %}
 {% set extra_css = ['/static/css/syntax.css', '/static/css/code.css', '/static/css/doc.css'] %}
 {% set active = 'docs' %}
-{% set body_class = 'docs-page' %}
+{% set body_class = 'docs-page scene-page' %}
 
 {% macro tree_node(node) %}
 {%- if node.kind == 'divider' %}
@@ -54,10 +54,6 @@
             <nav class="doc-breadcrumbs" aria-label="Хлебные крошки">
                 <a href="/docs/">Документация</a><span aria-hidden="true">/</span><span aria-current="page">{{ title }}</span>
             </nav>
-            <button type="button" class="doc-width-toggle" aria-pressed="false" hidden>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 5 3 8l3 3M10 5l3 3-3 3M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span>Шире</span>
-            </button>
         </div>
 
         {% if nav %}

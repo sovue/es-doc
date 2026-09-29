@@ -243,25 +243,6 @@ details[open] > .sidebar-all-summary::after, details[open] > .sidebar-contents-s
 .doc-toolbar { display: flex; align-items: center; gap: 16px; min-width: 0; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
 .doc-breadcrumbs { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; font-size: var(--fs-ui); line-height: var(--lh-ui); color: var(--text-soft); min-width: 0; }
 .doc-breadcrumbs > span:last-child { overflow-wrap: anywhere; }
-.doc-width-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    flex: none;
-    min-height: 36px;
-    padding: 6px 10px;
-    margin-left: auto;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--bg);
-    color: var(--text-soft);
-    font: inherit;
-    font-size: var(--fs-ui);
-    cursor: pointer;
-}
-.doc-width-toggle:hover { color: var(--accent); border-color: var(--accent); }
-.doc-width-toggle[aria-pressed="true"] { color: var(--accent); background: var(--accent-muted); }
-html[data-doc-width="wide"] .docs-page > .page { max-width: none; }
 .doc-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); }
 .doc-tools .doc-modified { margin: 0; }
 .sidebar-source-links { display: flex; flex-wrap: wrap; gap: 8px 20px; }
@@ -279,6 +260,37 @@ html[data-doc-width="wide"] .docs-page > .page { max-width: none; }
        horizontal scroll on narrow screens. pre keeps its own overflow-x. */
     overflow-wrap: break-word;
 }
+
+.doc-audio {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px 12px;
+    margin: 1.25em 0;
+}
+
+.doc-audio-play {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    background: var(--bg-surface);
+    color: var(--accent);
+    cursor: pointer;
+}
+
+.doc-audio-play:hover { border-color: var(--accent); }
+.doc-audio-play:focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
+.doc-audio-icon-pause { display: none; }
+.doc-audio-play[aria-pressed="true"] .doc-audio-icon-play { display: none; }
+.doc-audio-play[aria-pressed="true"] .doc-audio-icon-pause { display: block; }
+.doc-audio-name { min-width: 0; overflow-wrap: anywhere; }
+.doc-audio audio { min-width: 0; max-width: 100%; }
 
 /* Technical content shares the article width. Standard mode bounds the
    article to roughly 960px; wide mode is the reader's explicit preference. */

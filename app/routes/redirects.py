@@ -32,8 +32,9 @@ ALIASES = {
     '/author':        '/authors',
     '/contributors':  '/authors',
 
-    '/lit':           '/literature',
-    '/books':         '/literature',
+    '/lit':           '/materials',
+    '/books':         '/materials',
+    '/literature':    '/materials',
 }
 
 

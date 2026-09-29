@@ -4,6 +4,88 @@
    so the browser fetches all three stylesheets in parallel.
    ===================================================================== */
 
+/* ── Shared image lightbox ───────────────────────────────── */
+.res-lightbox {
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow-modal);
+    max-width: min(92vw, 1200px);
+    max-height: 92vh;
+    max-height: 92dvh;
+}
+.res-lightbox::backdrop { background: var(--scrim); }
+.res-lightbox img {
+    display: block;
+    max-width: 100%;
+    max-height: calc(92vh - 58px);
+    max-height: calc(92dvh - 58px);
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+}
+.res-lightbox-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-surface);
+    border-radius: 0 0 calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px);
+}
+.res-lightbox-name {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-ui);
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.res-lightbox-raw {
+    flex-shrink: 0;
+    font-size: var(--fs-ui);
+    color: var(--accent);
+    text-decoration: none;
+}
+.res-lightbox-raw:hover { text-decoration: underline; }
+.res-lightbox-raw:focus-visible,
+.res-lightbox-close:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+}
+.res-lightbox-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    padding: 0;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-soft);
+    cursor: pointer;
+    transition: color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
+}
+.res-lightbox-close:hover { color: var(--accent); border-color: var(--accent); }
+@media (max-width: 40em) {
+    .res-lightbox-bar { gap: 12px; padding: 4px 12px; }
+    .res-lightbox-raw { display: inline-flex; align-items: center; min-height: 44px; }
+    .res-lightbox-close { width: 44px; height: 44px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .res-lightbox[open] { animation: res-zoom 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
+    .res-lightbox[open]::backdrop { animation: res-fade 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
+}
+@keyframes res-zoom { from { opacity: 0; transform: scale(0.88); } }
+@keyframes res-fade { from { opacity: 0; } }
+
 /* ── Page shell ──────────────────────────────────────────── */
 
 /* Flex-column shell so the footer floors to the viewport bottom on short pages.
@@ -508,6 +590,15 @@
    Icon-only control at the end of the nav. Ships [hidden]; theme.js
    reveals it. The sun/moon swap mirrors the token conditions in vars.css:
    whichever scene is active shows its own icon. */
+.nav-display-controls {
+    display: flex;
+    align-items: center;
+    flex: none;
+    gap: 2px;
+    margin-left: auto;
+}
+
+.site-width-toggle,
 .theme-toggle {
     display: inline-flex;
     align-items: center;
@@ -525,19 +616,78 @@
     transition: color 0.15s var(--ease-out);
 }
 
+.site-width-toggle:hover,
 .theme-toggle:hover {
     color: var(--accent);
 }
 
+.site-width-toggle:focus-visible,
 .theme-toggle:focus-visible {
     outline: var(--focus-ring);
     outline-offset: -3px;
     color: var(--accent);
 }
 
+/* Shared inline chips and feedback for code.js copyable code. */
+:where(#site-content code:not(pre code)) {
+    /* Keep the default inline chip available on every page. The zero-specificity
+       selector lets component-specific code treatments take precedence. */
+    background: var(--code-bg-inline);
+    padding: 0.15em 0.4em;
+    border-radius: var(--radius-code);
+    font-family: var(--font-mono);
+    color: var(--code-inline);
+}
+
+:where(#site-content a code:not(pre code)) {
+    color: var(--code-link);
+    text-decoration: underline;
+    text-decoration-color: var(--border);
+    text-underline-offset: 2px;
+}
+
+:where(#site-content a:hover code:not(pre code), #site-content a:focus-visible code:not(pre code)) {
+    text-decoration-color: currentColor;
+}
+
+.code-copyable {
+    cursor: pointer;
+    transition: color 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
+}
+
+.code-copyable:hover {
+    box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.code-copyable:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 1px;
+}
+
+.code-copyable.copied {
+    color: var(--code-success);
+    box-shadow: inset 0 0 0 1px var(--code-success);
+}
+
 /* Default (light scene): show the sun, hide the moon. */
 .theme-toggle-moon {
     display: none;
+}
+
+.site-width-icon {
+    display: block;
+}
+
+.site-width-arrows-in {
+    display: none;
+}
+
+:root[data-doc-width="wide"] .site-width-arrows-out {
+    display: none;
+}
+
+:root[data-doc-width="wide"] .site-width-arrows-in {
+    display: block;
 }
 
 /* Explicit night, or a dark OS preference that hasn't been overridden to
@@ -1104,20 +1254,28 @@ a.section-row:focus-visible .section-arrow {
     }
 }
 
-/* ── Reading list (/literature) ──────────────────────────── */
+/* ── Materials list (/materials) ──────────────────────────── */
 
-.lit-list {
+.materials-list {
     list-style: none;
     margin: 0;
     padding: 0;
     border-top: 1px solid var(--border);
 }
 
-.lit-list li {
+.materials-list li {
     border-bottom: 1px solid var(--border);
 }
 
-.lit-row {
+.materials-section-level-3 + .materials-section-level-3 {
+    margin-top: 28px;
+}
+
+.materials-section-level-4 + .materials-section-level-4 {
+    margin-top: 24px;
+}
+
+.materials-row {
     display: block;
     padding: 14px 0;
     font-size: var(--fs-body);
@@ -1125,23 +1283,31 @@ a.section-row:focus-visible .section-arrow {
     line-height: var(--lh-ui);
 }
 
+.materials-description {
+    max-width: 78ch;
+    margin: 5px 0 0;
+    color: var(--text-soft);
+    font-size: var(--fs-ui);
+    line-height: var(--lh-prose);
+}
+
 /* Linked entries follow the body-link convention (the leaf, a faint
    underline at rest, full on hover) so they read as clickable next to the
    plain-text rows, which stay ink — the green alone is under 3:1 against them
    (2.78 by day, 1.49 at night). Ink-at-rest here made links indistinguishable from text. */
-.lit-row a {
+.materials-row a {
     color: var(--accent);
     text-decoration: underline 1px var(--link-underline);
     text-underline-offset: 0.2em;
     transition: color 0.15s var(--ease-out);
 }
 
-.lit-row a:hover {
+.materials-row a:hover {
     color: var(--accent-hover);
     text-decoration-color: currentColor;
 }
 
-.lit-row a:focus-visible {
+.materials-row a:focus-visible {
     outline: var(--focus-ring);
     outline-offset: 2px;
     border-radius: var(--radius-xs);
@@ -1152,7 +1318,7 @@ a.section-row:focus-visible .section-arrow {
    link and the file-browser rows use: padding grows the hit box, the negative
    margin keeps the line where it was. */
 @media (max-width: 48em) {
-    .lit-row a {
+    .materials-row a {
         display: inline-block;
         padding-block: 12px;
         margin-block: -12px;
@@ -1160,8 +1326,8 @@ a.section-row:focus-visible .section-arrow {
 }
 
 /* ── Empty state ─────────────────────────────────────────────
-   Lived in resources.css, where it started, while /news, /news/sources,
-   /literature and /artists used it too without loading that sheet — so
+   Lived in resources.css, where it started, while /materials and /artists
+   used it too without loading that sheet — so
    everywhere but the resource pages it rendered as bare text with a
    browser-blue link. Site-wide now, like the section rows. */
 
@@ -1403,13 +1569,12 @@ a.section-row:focus-visible .section-arrow {
 }
 
 /* ── Section bar ──
-   The five sections — Документация, Ресурсы, Новости, Литература, Художники —
-   come to ~530px of links at the header's 16px padding. On one 52px row with
-   the logo, the search field at its 240px basis (see .nav-search) and the
-   theme toggle they measure ~1094px, so the row holds from 1140px — the
-   need plus some slack for font metrics that aren't Inter's yet on a slow
-   load — and below that the links leave the row for a bar of their own
-   under the header. Two things about it are deliberate.
+   The five sections — Документация, Ресурсы, Полезные материалы, Художники,
+   Новостные ресурсы —
+   take a little over 1,000px with the logo, search field at its 240px basis
+   (see .nav-search) and the theme toggle. The 1140px breakpoint leaves room
+   for font fallback; below it the links leave the header row for a bar of
+   their own. Two things about it are deliberate.
 
    It sits *outside* the sticky <header> (header.html), so it scrolls away
    with the page. The header stays 52px at every width, which is what
@@ -1417,7 +1582,7 @@ a.section-row:focus-visible .section-arrow {
    are measured against; a two-row sticky header would also have kept ~96px
    of a phone screen for itself for good.
 
-   On a phone even the bar is too narrow (~490px of links on a 375px screen),
+   On a phone even the bar is too narrow (the five links exceed a 375px screen),
    and it scrolls sideways rather than wrapping or folding into a menu: a flat
    row of words is the nav modders already know, and a hamburger hides every
    section behind a tap. The fade at the right edge says there is more, and
@@ -1440,7 +1605,7 @@ a.section-row:focus-visible .section-arrow {
 
     /* The row is logo, search and toggle now: the toggle takes the far edge
        instead of hugging the search field. */
-    .theme-toggle {
+    .nav-display-controls {
         margin-left: auto;
     }
 
@@ -1490,7 +1655,7 @@ a.section-row:focus-visible .section-arrow {
         margin-left: auto;
     }
 
-    .theme-toggle {
+    .nav-display-controls {
         margin-left: 0;
     }
 
@@ -1508,12 +1673,11 @@ a.section-row:focus-visible .section-arrow {
 }
 
 /* The section rows — the home page's own contents, and the same component on
-   /docs/, /news/sources, /literature and /support — put the name, its
+   /docs/, /materials and /support — put the name, its
    description and an arrow on one line, with the description clipped to
    whatever is left. That fits a desktop and nothing else: at 402px (an
-   iPhone 17) all eight home-page rows were cut, the worst of them showing
-   87px of a 365px sentence, and on the news-sources list one description
-   had been squeezed to zero width.
+   iPhone 17) the longer home-page rows were cut, the worst showing
+   87px of a 365px sentence.
    A quarter of a sentence ending in an ellipsis is not a shorter
    explanation, it is a broken one.
 
@@ -1535,9 +1699,8 @@ a.section-row:focus-visible .section-arrow {
        align, and the reservation only pushed «146» 115px away from «Фоны».
        The count reads as part of the name now, which is what it is.
        It wraps as well, like the description below it: «ПАЗ-410 :: CHANNEL
-       410hz :: Бесконечное лето» on /news/sources is 379px of unbroken line,
-       and pushed a 375px page 39px sideways (94px at 320). An ellipsis would
-       have eaten the part that says which channel it is. */
+       410hz :: Бесконечное лето» is a long unbroken name, so it wraps rather
+       than pushing a narrow page sideways or hiding which channel it is. */
     .section-name {
         min-width: 0;
         flex-shrink: 1;
@@ -1583,7 +1746,9 @@ a.section-row:focus-visible .section-arrow {
     .nav-links a,
     .nav-search-box,
     .nav-search-toggle,
+    .site-width-toggle,
     .theme-toggle,
+    .code-copyable,
     .site-footer a,
     .site-footer .footer-support,
     .thanks-list a,
@@ -1594,7 +1759,7 @@ a.section-row:focus-visible .section-arrow {
     .section-arrow,
     .filter-input,
     .filter-select,
-    .lit-row a,
+    .materials-row a,
     .page-back,
     .to-top {
         transition: none;
@@ -1647,8 +1812,8 @@ a.section-row:focus-visible .section-arrow {
     :root { --page-gutter: 16px; --layout-gap: 20px; }
 }
 .site-nav { padding-inline: var(--page-gutter); }
-.site-nav > .theme-toggle { margin-left: auto; }
-@media (max-width: 40em) { .site-nav > .theme-toggle { margin-left: 0; } }
+.site-nav > .nav-display-controls { margin-left: auto; }
+@media (max-width: 40em) { .site-nav > .nav-display-controls { margin-left: 0; } }
 .section-bar .nav-links { padding-inline: max(0px, calc(var(--page-gutter) - 16px)); }
 @media (max-width: 40em) { .section-bar .nav-links { padding-inline: 4px 32px; } }
 .section-name, .section-desc {

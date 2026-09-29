@@ -383,12 +383,25 @@ const TICK = 3.5;
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 const palette = { line: '#000', curve: '#000', mark: '#000', mono: 'monospace' };
+const paletteProbe = document.createElement('span');
+paletteProbe.hidden = true;
+paletteProbe.setAttribute('aria-hidden', 'true');
+document.body.append(paletteProbe);
+registerCleanup(() => paletteProbe.remove());
+
+const resolvedColor = token => {
+    paletteProbe.style.color = `var(${token})`;
+    return getComputedStyle(paletteProbe).color;
+};
 
 const readPalette = () => {
     const style = getComputedStyle(document.documentElement);
-    palette.line = style.getPropertyValue('--border').trim();
-    palette.curve = style.getPropertyValue('--text-soft').trim();
-    palette.mark = style.getPropertyValue('--accent').trim();
+    // Resolve the theme functions through a real CSS color property before
+    // passing them to canvas; custom properties themselves may still contain
+    // `light-dark(...)`, which Chromium's canvas color parser can reject.
+    palette.line = resolvedColor('--border');
+    palette.curve = resolvedColor('--text-soft');
+    palette.mark = resolvedColor('--accent');
     // Scale labels are the page's own mono face, not a canvas default.
     palette.mono = style.getPropertyValue('--font-mono').trim() || 'monospace';
 };
@@ -775,13 +788,11 @@ const colorScheme = window.matchMedia('(prefers-color-scheme: dark)');
 colorScheme.addEventListener('change', refresh);
 registerCleanup(() => colorScheme.removeEventListener('change', refresh));
 
-/* ── Copying: the name, the graph, the formula ────────────── */
+/* ── Copying: the easing name and its formula ─────────────── */
 
-/* Three payloads per row and all of them worth taking away: the name goes
-   into an ATL line, the formula into the generator, into warpers.yaml or into
-   a mod's own `@renpy.atl_warper`. Nothing here is a control in the markup —
-   without a clipboard the page stays a plain reference instead of growing
-   buttons that can't do anything. */
+/* The graph and visible name copy the registered easing name for ATL; the
+   family formula chip copies the expression for the generator or a custom
+   warper. Without a clipboard the page stays a plain reference. */
 if (navigator.clipboard && window.copyControl) {
     const status = document.getElementById('code-copy-status');
 
@@ -828,8 +839,13 @@ if (navigator.clipboard && window.copyControl) {
         label.replaceWith(button);
     });
 
-    // The plot and the row's formula chip both hand over the formula — the
-    // machine-readable one, not the typeset `t²` the chip shows.
+    document.querySelectorAll('.wp-plot[data-copy-name]').forEach(plot => {
+        const value = plot.dataset.copyName;
+        if (value) copies(plot, value, `Скопировать название ease: ${value}`);
+    });
+
+    // Formula chips hand over the machine-readable expression, not the
+    // typeset `t²` they show.
     document.querySelectorAll('[data-formula]').forEach(element => {
         const value = element.dataset.formula;
         if (value) copies(element, value, `Скопировать формулу: ${value}`);

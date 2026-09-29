@@ -25,9 +25,16 @@ def _source_file(kind, name):
     # variants from their own composed file in temp/tinted (res.py's
     # /tinted/ route composes it before a thumb is ever requested); plain
     # image thumbs from the asset file, wherever it lives — the game folder
-    # or the community drop-in folder next to it (cut NSFW arts resolve there).
+    # or the community drop-in folder next to it.
     if kind == 'sprite':
         return sprite_file(name)
+    if kind == 'community':
+        listed = any(i['file'] == name and i['thumb']
+                     for category in CONFIG.resources.get('community', {}).values()
+                     for i in category)
+        source = CONFIG.res_path.parent / 'community' / name
+        root = (CONFIG.res_path.parent / 'community').resolve()
+        return source if listed and source.resolve().is_relative_to(root) and source.is_file() else None
     item = next((i for collection in CONFIG.resources.values()
                  for i in collection.get(kind, []) if i['name'] == name), None)
     if not item or not item['file']:
