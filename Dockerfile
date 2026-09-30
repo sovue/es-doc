@@ -2,15 +2,6 @@ FROM python:3.14-slim
 
 ARG ASSETS_REPO=https://github.com/sovue/es-doc-assets.git
 ARG ASSETS_REF=main
-ARG APP_REVISION=unknown
-ARG ASSETS_REVISION=unknown
-
-LABEL org.opencontainers.image.title="ES Doc" \
-      org.opencontainers.image.description="Everlasting Summer modding Wiki" \
-      org.opencontainers.image.revision="${APP_REVISION}" \
-      org.opencontainers.image.source="https://github.com/sovue/es-doc" \
-      org.opencontainers.image.vendor="Sovue" \
-      io.es-doc.assets-revision="${ASSETS_REVISION}"
 
 WORKDIR /app
 

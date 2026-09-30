@@ -15,7 +15,7 @@ pdm run dev    # http://127.0.0.1:8000
 
 ```sh
 # Сборка и запуск контейнеров
-docker-compose up --build
+docker compose up --build
 
 # Приложение будет доступно по адресу http://localhost:8005
 # TIP: не смотря на то что в main.py порт 8000, в контейнере есть еще nginx который проксирует запрос, а внешний порт у контейнера 8005
@@ -28,8 +28,8 @@ Docker Compose настраивает два контейнера:
 #### Ассеты
 
 Ассеты загружаются из репозитория [es-doc-assets](https://github.com/sovue/es-doc-assets) при сборке образа:
-- **Продакшн**: Ассеты встроены в образ при сборке (см docker-compose.yml \ Dockerfile)
-- **Разработка**: Можно монтировать локальную копию ассетов через volume (см docker-compose.yml \ Dockerfile)
+- **Продакшн**: Ассеты встроены в образ при сборке через `Dockerfile` и `compose.production.yaml`.
+- **Разработка**: Можно монтировать локальную копию ассетов через volume в `docker-compose.yml`.
 
 Для разработки с локальными ассетами:
 1. Клонируйте репозиторий ассетов: `git clone https://github.com/sovue/es-doc-assets.git`
@@ -38,64 +38,52 @@ Docker Compose настраивает два контейнера:
    volumes:
      - ../es-doc-assets:/app/content
    ```
-3. Перезапустите контейнеры: `docker-compose up --build`
+3. Перезапустите контейнеры: `docker compose up --build`
 
-### Полуавтоматический продакшен-деплой
+### Продакшен-деплой
 
-Продакшен собирается и публикуется через GitHub Actions, а запуск на сервере
-происходит после ручного одобрения защищённого окружения `production`. Образ
-получает неизменяемый тег `sha-<commit>`, поэтому повторный запуск не зависит
-от того, какой код сейчас находится в ветке `main`.
+После каждого push в `main` репозитория `es-doc` GitHub Actions сначала
+запускает проверки, затем подключается к серверу по SSH. На сервере workflow
+обновляет Git-копию до `origin/main` и выполняет
+`docker compose --env-file .env.production -f compose.production.yaml up -d --build --wait`.
+Pull request запускает только проверки. GHCR и GitHub Releases не используются.
+Ассеты из `es-doc-assets/main` попадают в образ во время сборки; отдельный push
+в репозиторий ассетов деплой не запускает.
 
 #### Одноразовая настройка сервера
 
-На сервере нужны Docker Engine с Compose Plugin и каталог, например
-`/opt/es-doc`:
+На сервере нужны Git, Docker Engine с Compose Plugin и Git-копия приложения.
+Один раз клонируйте репозиторий под пользователем деплоя, например в
+`/opt/es-doc` (у пользователя должны быть права на запись в этот каталог и
+доступ к Docker):
 
 ```sh
-mkdir -p /opt/es-doc/deploy
-cp .env.production.example /opt/es-doc/.env.production
-chmod 600 /opt/es-doc/.env.production
+git clone https://github.com/sovue/es-doc.git /opt/es-doc
+cd /opt/es-doc
+cp .env.production.example .env.production
+chmod 600 .env.production
 ```
 
-Заполните `.env.production`: укажите адрес сайта, внешний порт и тот же
-`DEPLOY_PATH`, что будет задан в GitHub Secret. Файл остаётся на сервере и не
-перезаписывается workflow. `nginx.conf`, `compose.production.yaml` и
-`deploy/deploy.sh` workflow передаёт при каждом запуске.
+Укажите адрес сайта и внешний порт в `.env.production`. Файл исключён из Git,
+поэтому обновление исходников его не затронет. Если каталог остался от старого
+деплоя и не содержит `.git`, сохраните `.env.production` и замените каталог
+на Git-копию приложения.
 
-В GitHub создайте защищённое окружение `production`, добавьте required
-reviewer и следующие secrets:
+В GitHub создайте окружение `production` и добавьте следующие secrets:
 
 - `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_PATH`;
 - `DEPLOY_SSH_KEY` — приватный ключ отдельного пользователя деплоя;
-- `DEPLOY_KNOWN_HOSTS` — заранее проверенная запись `known_hosts` для сервера;
-- `GHCR_USERNAME` и `GHCR_TOKEN` с правом `read:packages`, если пакет GHCR
-  закрытый.
+- `DEPLOY_KNOWN_HOSTS` — заранее проверенная запись `known_hosts` для сервера.
 
-#### Выпуск обновления
+`DEPLOY_PATH` должен указывать на Git-копию приложения, например `/opt/es-doc`.
 
-Откройте **Actions → Deploy → Run workflow**, выберите `app_ref` и
-`assets_ref`, затем одобрите job в окружении `production`. Для полностью
-воспроизводимого контента указывайте в `assets_ref` полный commit SHA.
-Workflow строит образ, добавляет SBOM и provenance, публикует его в GHCR и
-по SSH запускает `deploy/deploy.sh` на сервере.
+Чтобы деплой происходил сразу после успешных проверок, в настройках окружения
+`production` не должно быть правила обязательного ручного одобрения. Если такое
+правило включено, GitHub приостановит деплой до одобрения.
 
-После успешного деплоя workflow запускает очистку GHCR. По умолчанию остаются
-пять последних SHA-релизов, текущий релиз и теги, которые не соответствуют
-формату `sha-*`; старые и безымянные версии удаляются. Количество релизов
-меняется переменной `KEEP_RELEASES` в `.github/workflows/deploy.yml`. Очистка
-выполняется только после успешного запуска приложения, поэтому автоматический
-rollback не теряет предыдущий образ.
-
-Скрипт блокирует параллельные запуски, проверяет Compose-конфигурацию, ждёт
-здоровый `/healthz` перед переключением nginx и сохраняет последний успешный
-релиз. При неудаче запуска он автоматически возвращает предыдущий тег. Для
-ручного возврата к релизу, сохранённому перед последним успешным обновлением:
-
-```sh
-cd /opt/es-doc
-./deploy/deploy.sh "$(cat .previous-successful-release)"
-```
+Workflow ждёт успешного health check контейнеров и при ошибке показывает
+последние строки логов. Параллельные деплои блокируются настройкой GitHub
+Actions. Автоматического отката в этой простой схеме нет.
 
 Локальный `docker-compose.yml` остаётся workflow разработки; production
 использует отдельный `compose.production.yaml` без bind-mount исходников.

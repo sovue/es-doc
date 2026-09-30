@@ -19,6 +19,7 @@ build
 .coverage.*
 htmlcov
 .env
+.env.production
 .venv
 venv/
 ENV/
