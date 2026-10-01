@@ -31,9 +31,20 @@
                     {% for item in section['items'] %}
                     <li class="materials-row">
                         <div class="materials-title">
-                            {% if item['url'] %}<a href="{{ item['url'] }}">{{ item['title'] }}</a>{% else %}{{ item['title'] }}{% endif %}
+                            {% if item['url'] and not item['url_label'] %}<a href="{{ item['url'] }}">{{ item['title'] }}</a>{% else %}{{ item['title'] }}{% endif %}
                         </div>
                         {% if item['description'] %}<p class="materials-description">{{ item['description'] }}</p>{% endif %}
+                        {% if (item['url'] and item['url_label']) or item['files'] %}
+                        <div class="materials-actions">
+                            {% if item['url'] and item['url_label'] %}
+                            <a href="{{ item['url'] }}" aria-label="{{ item['url_label'] }} — {{ item['title'] }}">{{ item['url_label'] }}</a>
+                            {% endif %}
+                            {% for file in item['files'] %}
+                            <a href="{{ file['url'] }}" download="{{ file['filename'] }}" aria-label="Скачать {{ file['label'] }} — {{ item['title'] }}">Скачать {{ file['label'] }}</a>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% if item['url'] and item['access'] %}<p class="materials-access">{{ item['access'] }}</p>{% endif %}
                     </li>
                     {% endfor %}
                 </ul>

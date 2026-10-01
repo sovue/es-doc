@@ -1291,6 +1291,32 @@ a.section-row:focus-visible .section-arrow {
     line-height: var(--lh-prose);
 }
 
+.materials-title {
+    overflow-wrap: anywhere;
+}
+
+.materials-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    margin-top: 8px;
+    font-size: var(--fs-ui);
+}
+
+.materials-actions a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    overflow-wrap: anywhere;
+}
+
+.materials-access {
+    margin: 4px 0 0;
+    color: var(--text-soft);
+    font-size: var(--fs-ui);
+    line-height: var(--lh-prose);
+}
+
 /* Linked entries follow the body-link convention (the leaf, a faint
    underline at rest, full on hover) so they read as clickable next to the
    plain-text rows, which stay ink — the green alone is under 3:1 against them
@@ -1318,7 +1344,7 @@ a.section-row:focus-visible .section-arrow {
    link and the file-browser rows use: padding grows the hit box, the negative
    margin keeps the line where it was. */
 @media (max-width: 48em) {
-    .materials-row a {
+    .materials-title a {
         display: inline-block;
         padding-block: 12px;
         margin-block: -12px;

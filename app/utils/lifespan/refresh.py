@@ -95,6 +95,8 @@ def _watchers():
         assets / 'nsfw.yaml',
     )
     community_files = _under(assets / 'community')
+    materials_yaml = _one_of(assets / 'materials.yaml')
+    materials_files = _under(assets / 'materials')
 
     return [
         ('config.yaml', _one_of(assets / 'config.yaml'), _refresh_config),
@@ -111,7 +113,7 @@ def _watchers():
 
         ('artists.yaml', _one_of(assets / 'artists.yaml'), parse_artists),
         ('news_resources.yaml', _one_of(assets / 'news_resources.yaml'), parse_news_resources),
-        ('materials.yaml', _one_of(assets / 'materials.yaml'), parse_materials),
+        ('materials.yaml', lambda path: materials_yaml(path) or materials_files(path), parse_materials),
         ('links.yaml', _one_of(assets / 'links.yaml'), parse_links),
         ('redirects.yaml', _one_of(assets / 'redirects.yaml'), parse_redirects),
         ('warpers.yaml', _one_of(assets / 'warpers.yaml'), parse_warpers),

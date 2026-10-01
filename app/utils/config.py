@@ -243,7 +243,7 @@ class _ConfigContainer():
 
         # Curated materials, parsed from materials.yaml at startup (see
         # utils/lifespan/materials_cache.py). Nested dicts:
-        # {name, items: [{title, url, description}], sections: [...]}.
+        # {name, items: [{title, url, url_label, access, description, files}], sections: [...]}.
         self.materials = []
 
         # Community-made warpers, parsed from warpers.yaml at startup (see
