@@ -1,12 +1,15 @@
-/* Progressive enhancement for /artists: a view switcher (gallery / board /
+/* Progressive enhancement for /specialists: a view switcher (gallery / board /
    table over one dataset), name search, status filter, and sort. Controls
    ship [hidden] and are revealed here, so a no-JS visitor still gets the
    gallery as a clean, complete list. */
 (function () {
-    const root = document.querySelector('[data-artists]');
+    const root = document.querySelector('[data-specialists]');
     if (!root) return;
 
     const controls = root.querySelector('.artists-controls');
+    // Empty categories have no controls. Keep the incoming query intact so
+    // the selected view and filters survive the return to a populated one.
+    if (!controls) return;
     const search = root.querySelector('#artist-search');
     const statusSel = root.querySelector('#artist-status');
     const sortSel = root.querySelector('#artist-sort');
@@ -35,13 +38,22 @@
 
     let currentView = initialView;
     function syncUrl() {
+        if (!root.isConnected) return;
         const p = new URLSearchParams();
+        if (root.dataset.category) p.set('category', root.dataset.category);
         if (currentView !== 'gallery') p.set('view', currentView);
         if (search && search.value) p.set('q', search.value);
         if (statusSel && statusSel.value) p.set('status', statusSel.value);
         if (sortSel && sortSel.value && sortSel.value !== 'az') p.set('sort', sortSel.value);
         const qs = p.toString();
         history.replaceState(null, '', location.pathname + (qs ? '?' + qs : ''));
+        root.querySelectorAll('.specialist-category').forEach(link => {
+            const params = new URLSearchParams(p);
+            if (link.dataset.category) params.set('category', link.dataset.category);
+            else params.delete('category');
+            const query = params.toString();
+            link.href = '/specialists' + (query ? '?' + query : '');
+        });
     }
 
     /* ── External preview images: fall back to the monogram on error ── */
@@ -103,8 +115,10 @@
 
         // Board: hide a column with no remaining matches.
         root.querySelectorAll('.board-col').forEach(col => {
-            const some = Array.from(col.querySelectorAll('[data-artist]')).some(e => !e.hidden);
-            col.hidden = !some;
+            const visible = Array.from(col.querySelectorAll('[data-artist]')).filter(e => !e.hidden);
+            col.hidden = visible.length === 0;
+            const count = col.querySelector('.board-col-count');
+            if (count) count.textContent = visible.length;
         });
 
         // Shared empty-state under all views.
@@ -123,6 +137,13 @@
 
     if (search) search.addEventListener('input', scheduleApply);
     if (statusSel) statusSel.addEventListener('change', apply);
+    root.querySelectorAll('.specialist-reset').forEach(button => button.addEventListener('click', () => {
+        clearTimeout(filterTimer);
+        if (search) search.value = '';
+        if (statusSel) statusSel.value = '';
+        apply();
+        if (search) search.focus();
+    }));
 
     // Escape clears the search (mirrors resources.js); the shared
     // .filter-input styling drops the native cancel button in favour of this.

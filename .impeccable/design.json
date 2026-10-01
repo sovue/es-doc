@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-21",
+  "generatedAt": "2026-10-01T22:31:39Z",
   "title": "Design System: ES Doc",
   "extensions": {
     "colorMeta": {
@@ -182,7 +182,7 @@
       "kind": "nav",
       "refersTo": "nav-link",
       "description": "Full-height fixed-header link on the leaf shade: ink-soft at rest, ink on hover, an inset leaf-green underline when current.",
-      "html": "<nav class=\"ds-nav\" aria-label=\"Основная навигация\"><a class=\"ds-nav-link\" href=\"#\">Документация</a><a class=\"ds-nav-link\" href=\"#\">Ресурсы</a><a class=\"ds-nav-link\" href=\"#\" aria-current=\"page\">Новости</a><a class=\"ds-nav-link\" href=\"#\">Литература</a><a class=\"ds-nav-link\" href=\"#\">Художники</a></nav>",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Основная навигация\"><a class=\"ds-nav-link\" href=\"#\">Документация</a><a class=\"ds-nav-link\" href=\"#\">Ресурсы</a><a class=\"ds-nav-link\" href=\"#\">Полезные материалы</a><a class=\"ds-nav-link\" href=\"#\" aria-current=\"page\">Специалисты</a><a class=\"ds-nav-link\" href=\"#\">Новостные ресурсы</a></nav>",
       "css": ".ds-nav { display: inline-flex; align-items: stretch; min-height: 52px; background: var(--bg-chrome); border-bottom: 1px solid var(--border); } .ds-nav-link { display: flex; align-items: center; padding-inline: 16px; font-size: var(--fs-ui); color: var(--text-soft); text-decoration: none; white-space: nowrap; transition: color 0.15s var(--ease-out); } .ds-nav-link:hover { color: var(--text); } .ds-nav-link[aria-current=\"page\"] { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); } .ds-nav-link:focus-visible { color: var(--text); outline: var(--focus-ring); outline-offset: -3px; border-radius: var(--radius-xs); }"
     },
     {
@@ -190,8 +190,16 @@
       "kind": "nav",
       "refersTo": "nav-link",
       "description": "The same section links on narrow screens: a 44px leaf-shade bar under the fixed header that scrolls sideways under a right-edge fade instead of folding into a menu.",
-      "html": "<nav class=\"ds-bar\" aria-label=\"Разделы сайта\"><ul class=\"ds-bar-list\"><li><a href=\"#\">Документация</a></li><li><a href=\"#\">Ресурсы</a></li><li><a href=\"#\">Новости</a></li><li><a href=\"#\">Литература</a></li><li><a href=\"#\" aria-current=\"page\">Художники</a></li></ul></nav>",
+      "html": "<nav class=\"ds-bar\" aria-label=\"Разделы сайта\"><ul class=\"ds-bar-list\"><li><a href=\"#\">Документация</a></li><li><a href=\"#\">Ресурсы</a></li><li><a href=\"#\">Полезные материалы</a></li><li><a href=\"#\" aria-current=\"page\">Специалисты</a></li><li><a href=\"#\">Новостные ресурсы</a></li></ul></nav>",
       "css": ".ds-bar { width: 340px; background: var(--bg-chrome); border-bottom: 1px solid var(--border); } .ds-bar-list { display: flex; list-style: none; margin: 0; padding: 0 32px 0 8px; overflow-x: auto; scrollbar-width: none; -webkit-mask-image: linear-gradient(to right, black calc(100% - 32px), transparent); mask-image: linear-gradient(to right, black calc(100% - 32px), transparent); } .ds-bar-list li { display: flex; } .ds-bar-list a { display: flex; align-items: center; min-height: 44px; padding-inline: 12px; font-size: var(--fs-ui); color: var(--text-soft); text-decoration: none; white-space: nowrap; transition: color 0.15s var(--ease-out); } .ds-bar-list a:hover { color: var(--text); } .ds-bar-list a[aria-current=\"page\"] { color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); } .ds-bar-list a:focus-visible { color: var(--text); outline: var(--focus-ring); outline-offset: -3px; border-radius: var(--radius-xs); }"
+    },
+    {
+      "name": "Specialist Categories",
+      "kind": "nav",
+      "refersTo": "specialist-category",
+      "description": "Wrapping discipline links with quiet counts and 44px targets; current category uses ink, weight and an accent underline. Empty categories remain available.",
+      "html": "<nav class=\"ds-specialist-categories\" aria-label=\"Специализации\"><a class=\"ds-specialist-category\" href=\"/specialists\" aria-current=\"page\">Все <span>22</span></a><a class=\"ds-specialist-category\" href=\"/specialists?category=artists\">Художники <span>22</span></a><a class=\"ds-specialist-category\" href=\"/specialists?category=ai-artists\">Нейрохудожники <span>0</span></a><a class=\"ds-specialist-category\" href=\"/specialists?category=coders\">Кодеры <span>0</span></a><a class=\"ds-specialist-category\" href=\"/specialists?category=composers\">Композиторы <span>0</span></a><a class=\"ds-specialist-category\" href=\"/specialists?category=writers\">Сценаристы <span>0</span></a></nav>",
+      "css": ".ds-specialist-categories { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 1px solid var(--border); font-family: var(--font-sans); } .ds-specialist-category { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--text-soft); text-decoration: none; border-bottom: 2px solid transparent; font-size: var(--fs-ui); } .ds-specialist-category:hover { color: var(--accent); } .ds-specialist-category[aria-current] { color: var(--text); border-color: var(--accent); font-weight: 600; } .ds-specialist-category span { color: var(--text-soft); font-variant-numeric: tabular-nums; font-size: var(--fs-label); } .ds-specialist-category:focus-visible { outline: var(--focus-ring); outline-offset: 3px; }"
     },
     {
       "name": "Section Row",

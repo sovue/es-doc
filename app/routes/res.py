@@ -1,19 +1,31 @@
 import asyncio
-from fastapi import APIRouter, Request, HTTPException
+
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse
 
-from . import main_router
 from ..utils.config import CONFIG
 from ..utils.http import cache_headers, is_precompressed
 from ..utils.lifespan.artist_img_cache import (
-    cache_file as artist_img_file, cache_local as cache_artist_local, fetch_and_cache as fetch_artist_img,
-    is_cached as artist_img_cached, local_cache_file as artist_local_file,
+    cache_file as artist_img_file,
+)
+from ..utils.lifespan.artist_img_cache import (
+    cache_local as cache_artist_local,
+)
+from ..utils.lifespan.artist_img_cache import (
+    fetch_and_cache as fetch_artist_img,
+)
+from ..utils.lifespan.artist_img_cache import (
+    is_cached as artist_img_cached,
+)
+from ..utils.lifespan.artist_img_cache import (
+    local_cache_file as artist_local_file,
 )
 from ..utils.lifespan.hero_cache import hero_file, is_heroed, make_hero
 from ..utils.lifespan.sprites_cache import compose_sprite, is_composed, sprite_file
 from ..utils.lifespan.thumbs_cache import is_thumbed, make_thumb, thumb_file
 from ..utils.lifespan.tint_cache import compose_tint, is_tinted, tinted_file
 from ..utils.logging import root_logger
+from . import main_router
 
 router = APIRouter(prefix='/resource')
 
@@ -176,38 +188,18 @@ async def community_page(resource, request: Request):
     path = _confined_file(CONFIG.res_path.parent / 'community', resource)
     return FileResponse(str(path), headers=cache_headers(precompressed=is_precompressed(path)))
 
-def _artist_img_value(kind, slug):
-    # Fetch by reference, not by arbitrary URL/path: only values already
-    # present in artists.yaml are reachable, so this is not an open proxy.
-    # Addressed by the artist's slug (artists_cache.py), not the raw name,
-    # which is free text and may not survive the trip through a URL.
-    if kind not in ('logo', 'preview'):
-        return None
-    item = next((a for a in CONFIG.artists if a['slug'] == slug), None)
-    return item.get(kind) if item else None
-
 def _is_remote(value):
-    return value.startswith('http://') or value.startswith('https://')
+    return value.startswith(('http://', 'https://'))
 
-def _artists_local_dir():
-    # Locally-supplied artist images (dropped in by hand instead of linked
-    # from elsewhere) live here, next to `game` and `community`.
-    return CONFIG.res_path.parent / 'artists'
+async def _serve_directory_image(value, kind, slug, local_dir):
 
-@router.get('/artist/{kind}/{slug}')
-async def artist_image(kind, slug, request: Request):
-
-    value = _artist_img_value(kind, slug)
-    if not value:
-        raise HTTPException(404, f'Изображение "{kind}" для «{slug}» не существует.')
-
-    # A local file (relative path under assets/artists/) is confined against
+    # A local file (relative path under assets/specialists/) is confined against
     # path traversal like /raw and /community, then cut to its box and cached
     # like a fetched one: dropped in by hand, it can be any size at all. A
     # remote URL is fetched, re-encoded to WebP and cached, which also
     # normalises the format and sidesteps the browser's ORB block.
     if not _is_remote(value):
-        path = _confined_file(_artists_local_dir(), value)
+        path = _confined_file(local_dir, value)
         target = artist_local_file(path, kind)
 
         if not target.is_file():
@@ -233,5 +225,35 @@ async def artist_image(kind, slug, request: Request):
                     raise HTTPException(502, f'Не удалось загрузить изображение для «{slug}».') from None
 
     return FileResponse(str(artist_img_file(value, kind)), media_type='image/webp', headers=cache_headers(precompressed=True))
+
+
+def _specialist(slug):
+    item = next((person for person in CONFIG.specialists if person['slug'] == slug), None)
+    if not item:
+        raise HTTPException(404, 'Специалист не найден.')
+    return item
+
+
+@router.get('/specialist/{kind}/{slug}')
+async def specialist_image(kind, slug):
+    item = _specialist(slug)
+    if kind not in ('logo', 'preview') or not item.get(kind):
+        raise HTTPException(404, 'Изображение не найдено.')
+    return await _serve_directory_image(item[kind], kind, slug, CONFIG.res_path.parent / 'specialists')
+
+
+@router.get('/specialist/work/{slug}/{index}')
+async def specialist_work(slug: str, index: int):
+    item = _specialist(slug)
+    if index < 0 or index >= len(item['works']):
+        raise HTTPException(404, 'Пример работы не найден.')
+    work = item['works'][index]
+    root = CONFIG.res_path.parent / 'specialists'
+    if work['type'] == 'art':
+        return await _serve_directory_image(work['source'], 'preview', slug, root)
+    if work['type'] == 'track' and not _is_remote(work['source']):
+        path = _confined_file(root, work['source'])
+        return FileResponse(str(path), headers=cache_headers(precompressed=is_precompressed(path)))
+    raise HTTPException(404, 'Медиафайл не найден.')
 
 main_router.include_router(router)

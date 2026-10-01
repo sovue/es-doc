@@ -7,7 +7,6 @@ from fastapi import FastAPI
 from ..config import CONFIG
 from ..livereload import shutdown as shutdown_livereload
 from ..logging import root_logger
-from .artists_cache import parse_artists
 from .docs_cache import cache_docs
 from .links_cache import parse_links
 from .materials_cache import parse_materials
@@ -15,6 +14,7 @@ from .news_resources_cache import parse_news_resources
 from .redirects_cache import parse_redirects
 from .refresh import worker_refresh_caches
 from .resources_cache import parse_resources
+from .specialists_cache import parse_specialists
 from .sprites_cache import parse_sprites, sprites_path
 from .warpers_cache import parse_warpers
 
@@ -90,9 +90,9 @@ async def lifespan(app: FastAPI):
         logger.exception('Parsing resources failed; /resources/ pages will be empty until restart.')
 
     try:
-        await asyncio.to_thread(parse_artists)
+        await asyncio.to_thread(parse_specialists)
     except Exception:
-        logger.exception('Parsing artists.yaml failed; /artists will be empty until restart.')
+        logger.exception('Parsing specialist data failed; /specialists will be empty until refresh.')
 
     try:
         await asyncio.to_thread(parse_news_resources)

@@ -7,13 +7,13 @@ from ..config import CONFIG
 from ..file import ROOT
 from ..livereload import bump
 from ..logging import root_logger
-from .artists_cache import parse_artists
 from .docs_cache import cache_docs
 from .links_cache import parse_links
 from .materials_cache import parse_materials
 from .news_resources_cache import parse_news_resources
 from .redirects_cache import parse_redirects
 from .resources_cache import parse_resources
+from .specialists_cache import parse_specialists
 from .sprites_cache import parse_sprites
 from .warpers_cache import parse_warpers
 
@@ -111,7 +111,7 @@ def _watchers():
 
         ('resources', lambda path: resource_sources(path) or community_files(path), _refresh_resources),
 
-        ('artists.yaml', _one_of(assets / 'artists.yaml'), parse_artists),
+        ('specialists.yaml', _one_of(assets / 'specialists.yaml'), parse_specialists),
         ('news_resources.yaml', _one_of(assets / 'news_resources.yaml'), parse_news_resources),
         ('materials.yaml', lambda path: materials_yaml(path) or materials_files(path), parse_materials),
         ('links.yaml', _one_of(assets / 'links.yaml'), parse_links),

@@ -219,10 +219,9 @@ class _ConfigContainer():
         # search_items after every docs refresh.
         self.resource_search_items = []
 
-        # Commission-artist directory, parsed from artists.yaml at startup
-        # (see utils/lifespan/artists_cache.py). List of dicts:
-        # {name, status, preview, logo, links}.
-        self.artists = []
+        # Unified directory, parsed from specialists.yaml at startup
+        # (see utils/lifespan/specialists_cache.py).
+        self.specialists = []
 
         # Curated places to publish or announce Everlasting Summer mods,
         # parsed from news_resources.yaml at startup and refreshed on edits.

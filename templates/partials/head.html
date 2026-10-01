@@ -45,9 +45,9 @@
 {% endif %}{% if with_warpers_js %}<script src="{{ asset('/static/js/warpers.js') }}" data-page-script defer></script>
 {% endif %}
 {% if active == "resources" %}<script src="{{ asset('/static/js/resources.js') }}" data-page-script defer></script>
-{% endif %}{% if active == "artists" %}<script src="{{ asset('/static/js/artists.js') }}" data-page-script defer></script>
+{% endif %}{% if active == "specialists" %}<script src="{{ asset('/static/js/specialists.js') }}" data-page-script defer></script>
 {% endif %}
-{% if active == "resources" %}<script src="{{ asset('/static/js/lightbox.js') }}" data-page-script defer></script>
+{% if active == "resources" or active == "specialists" %}<script src="{{ asset('/static/js/lightbox.js') }}" data-page-script defer></script>
 {% endif %}
 {% if DEBUG %}<script src="{{ asset('/static/js/livereload.js') }}"></script>
 {% endif %}

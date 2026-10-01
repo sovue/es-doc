@@ -1,8 +1,8 @@
 from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
 
-from . import main_router
 from ..utils.config import CONFIG
+from . import main_router
 
 router = main_router
 
@@ -28,7 +28,8 @@ ALIASES = {
     '/wiki':          '/docs/',
     '/guide':         '/docs/',
 
-    '/artist':        '/artists',
+    '/artist':        '/specialists?category=artists',
+    '/specialist':    '/specialists',
     '/author':        '/authors',
     '/contributors':  '/authors',
 
