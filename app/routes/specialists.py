@@ -5,13 +5,12 @@ from fastapi.responses import RedirectResponse
 
 from ..utils.config import CONFIG
 from ..utils.file import templates
-from ..utils.specialists import CATEGORIES, WORK_LABELS
+from ..utils.specialists import CATEGORIES, STATUS_ORDER, WORK_LABELS
 from . import main_router
 
 router = main_router
 
 # Status metadata drives the pill label and the board-column order.
-STATUS_ORDER = ('open', 'unknown', 'closed')
 STATUS_LABELS = {
     'open': 'Заказы открыты',
     'unknown': 'Не уточнялось',
@@ -83,8 +82,7 @@ async def specialists_page(request: Request):
     ]
     groups = [g for g in groups if g[2]]
 
-    # Per-status counts feed the filter options; a status with no members is
-    # dropped from the dropdown (there are no "closed" artists today).
+    # Per-status counts feed the filter options; omit empty statuses.
     status_counts = [
         (status, STATUS_LABELS[status], sum(1 for a in specialists if a['status'] == status))
         for status in STATUS_ORDER

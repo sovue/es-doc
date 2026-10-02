@@ -234,12 +234,18 @@ def _specialist(slug):
     return item
 
 
+@main_router.get('/specialists/res/{resource:path}')
+async def specialist_resource(resource: str):
+    path = _confined_file(CONFIG.docs_path.parent / 'specialists', resource)
+    return FileResponse(str(path), headers=cache_headers(precompressed=is_precompressed(path)))
+
+
 @router.get('/specialist/{kind}/{slug}')
 async def specialist_image(kind, slug):
     item = _specialist(slug)
     if kind not in ('logo', 'preview') or not item.get(kind):
         raise HTTPException(404, 'Изображение не найдено.')
-    return await _serve_directory_image(item[kind], kind, slug, CONFIG.res_path.parent / 'specialists')
+    return await _serve_directory_image(item[kind], kind, slug, CONFIG.docs_path.parent / 'specialists')
 
 
 @router.get('/specialist/work/{slug}/{index}')
@@ -248,7 +254,7 @@ async def specialist_work(slug: str, index: int):
     if index < 0 or index >= len(item['works']):
         raise HTTPException(404, 'Пример работы не найден.')
     work = item['works'][index]
-    root = CONFIG.res_path.parent / 'specialists'
+    root = CONFIG.docs_path.parent / 'specialists'
     if work['type'] == 'art':
         return await _serve_directory_image(work['source'], 'preview', slug, root)
     if work['type'] == 'track' and not _is_remote(work['source']):

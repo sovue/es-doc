@@ -34,7 +34,7 @@
     const initialView = views[urlParams.get('view')] ? urlParams.get('view') : 'gallery';
     if (search && urlParams.has('q')) search.value = urlParams.get('q');
     if (statusSel && urlParams.has('status')) statusSel.value = urlParams.get('status');
-    if (sortSel && urlParams.has('sort')) sortSel.value = urlParams.get('sort');
+    if (sortSel) sortSel.value = ['open', 'az', 'za'].includes(urlParams.get('sort')) ? urlParams.get('sort') : 'open';
 
     let currentView = initialView;
     function syncUrl() {
@@ -44,7 +44,7 @@
         if (currentView !== 'gallery') p.set('view', currentView);
         if (search && search.value) p.set('q', search.value);
         if (statusSel && statusSel.value) p.set('status', statusSel.value);
-        if (sortSel && sortSel.value && sortSel.value !== 'az') p.set('sort', sortSel.value);
+        if (sortSel && sortSel.value && sortSel.value !== 'open') p.set('sort', sortSel.value);
         const qs = p.toString();
         history.replaceState(null, '', location.pathname + (qs ? '?' + qs : ''));
         root.querySelectorAll('.specialist-category').forEach(link => {
@@ -56,21 +56,28 @@
         });
     }
 
-    /* ── External preview images: fall back to the monogram on error ── */
+    /* A failed preview reveals the initial and loses its lightbox target. */
     root.querySelectorAll('.artist-preview-img').forEach(img => {
         const done = () => {
             if (!img.complete || img.naturalWidth === 0) {
-                img.closest('.artist-preview').classList.add('artist-preview--none');
-                img.remove();
+                const surface = img.closest('.artist-preview');
+                surface?.classList.add('artist-preview--none');
+                surface?.classList.remove('media-skeleton');
+                surface?.querySelector('.specialist-art-link')?.remove();
             }
         };
         img.addEventListener('error', done);
         if (img.complete) done();
     });
 
-    /* ── Logo avatars: just drop a broken one, leaving the bare name ── */
-    root.querySelectorAll('.artist-avatar').forEach(img => {
-        const drop = () => { if (!img.complete || img.naturalWidth === 0) img.remove(); };
+    /* A broken logo reveals the initial without changing the avatar size. */
+    root.querySelectorAll('.artist-avatar-img').forEach(img => {
+        const drop = () => {
+            if (!img.complete || img.naturalWidth === 0) {
+                img.closest('.artist-avatar')?.classList.remove('media-skeleton');
+                img.remove();
+            }
+        };
         img.addEventListener('error', drop);
         if (img.complete) drop();
     });
@@ -192,6 +199,6 @@
     if (sortSel) sortSel.addEventListener('change', () => { sortAll(sortSel.value); syncUrl(); });
 
     setView(initialView);
-    if (sortSel && sortSel.value !== 'az') sortAll(sortSel.value);
+    sortAll(sortSel ? sortSel.value : 'open');
     apply();
 })();

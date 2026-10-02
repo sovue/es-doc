@@ -1,11 +1,11 @@
 import re
-from urllib.parse import parse_qs, urlsplit
+from urllib.parse import parse_qs, quote, urlsplit
 
 import yaml
 
 from ..config import CONFIG
 from ..logging import root_logger
-from ..specialists import CATEGORIES, WORK_LABELS
+from ..specialists import CATEGORIES, WORK_LABELS, profile_order
 from ..translit import unique_slugs
 
 logger = root_logger.getChild('lifespan').getChild('specialists')
@@ -56,12 +56,40 @@ def _contact_link(key, value):
     return ''
 
 
+def _source(value):
+    """A web/site URL or a relative filename inside specialists/."""
+    value = _text(value)
+    if link := _link(value):
+        return link
+    try:
+        parts = urlsplit(value)
+    except ValueError:
+        return ''
+    if (not value or parts.scheme or parts.netloc or ':' in value
+            or value.startswith('/') or '\\' in value or '..' in value.split('/')):
+        return ''
+    return value
+
+
+def _source_url(source):
+    return _link(source) or '/specialists/res/' + quote(source, safe='/')
+
+
 def _rows(path, key):
     if not path.is_file():
         return []
     data = yaml.safe_load(path.read_text('utf-8'))
     rows = data.get(key) if isinstance(data, dict) else None
-    return rows if isinstance(rows, list) else []
+    if isinstance(rows, list):
+        return rows  # Compatibility with the former combined-profile format.
+    if isinstance(rows, dict):
+        return [
+            {**entry, 'categories': [category]}
+            for category in CATEGORIES
+            for entry in (rows[category] if isinstance(rows.get(category), list) else [])
+            if isinstance(entry, dict)
+        ]
+    return []
 
 
 def _parse_rows(rows):
@@ -91,35 +119,34 @@ def _parse_rows(rows):
             for k, v in raw_links.items()
             if (link := _contact_link(k, v))
         }
-        preview = _text(entry.get('preview')) or None
-        works = []
         raw_works = entry.get('works')
         if not isinstance(raw_works, list):
             raw_works = []
-        allowed = {kind for key in categories for kind in CATEGORIES[key]['types']}
-        tracks = 0
-        for work in raw_works:
-            if not isinstance(work, dict):
-                continue
-            kind = work.get('type')
-            if not isinstance(kind, str) or kind not in allowed:
-                continue
-            source = _link(work.get('url')) or _text(work.get('file'))
-            if not source or (kind not in ('art', 'track') and not _link(source)):
-                continue
-            if kind == 'track':
-                tracks += 1
-                if tracks > 2:
+        for category in categories:
+            works = []
+            tracks = 0
+            for work in raw_works:
+                if not isinstance(work, dict):
                     continue
-            works.append({'type': kind, 'title': _text(work.get('title')) or WORK_LABELS[kind], 'source': source})
-        # Existing previews are already supplied examples of artwork.
-        if preview and 'art' in allowed and not any(w['type'] == 'art' for w in works):
-            works.insert(0, {'type': 'art', 'title': 'Пример арта', 'source': preview})
-        people.append({
-            'name': name, 'status': status, 'categories': categories,
-            'preview': preview, 'logo': _text(entry.get('logo')) or None,
-            'links': links, 'works': works,
-        })
+                kind = work.get('type')
+                if not isinstance(kind, str) or kind not in CATEGORIES[category]['types']:
+                    continue
+                source = _source(work.get('url')) or _source(work.get('file'))
+                if not source:
+                    continue
+                if kind == 'track':
+                    tracks += 1
+                    if tracks > 2:
+                        continue
+                works.append({'type': kind, 'title': _text(work.get('title')) or WORK_LABELS[kind], 'source': source})
+            people.append({
+                'name': name, 'status': status, 'categories': [category],
+                'category_label': CATEGORIES[category]['label'],
+                'preview': _source(entry.get('preview')) or None,
+                'description': _text(entry.get('description')) or None,
+                'logo': _source(entry.get('logo')) or None,
+                'links': links.copy(), 'works': works,
+            })
     return sorted(people, key=lambda person: person['name'].casefold())
 
 
@@ -128,13 +155,16 @@ def parse_specialists():
     people = _parse_rows(_rows(CONFIG.docs_path.parent / 'specialists.yaml', 'specialists'))
     for person, slug in zip(people, unique_slugs((p['name'] for p in people), fallback='specialist')):
         person['slug'] = slug
-        person['logo_url'] = f'/resource/specialist/logo/{slug}' if person['logo'] else None
+        for kind in ('logo', 'preview'):
+            source = person[kind]
+            person[f'{kind}_url'] = (
+                source if source and source.startswith('/')
+                else f'/resource/specialist/{kind}/{slug}' if source else None
+            )
+        person['preview_title'] = f'Превью — {person["name"]}' if person['preview'] else ''
         for index, work in enumerate(person['works']):
             work['url'] = (f'/resource/specialist/work/{slug}/{index}'
-                           if work['type'] == 'art' or (work['type'] == 'track' and not _link(work['source']))
-                           else work['source'])
-        art = next((w for w in person['works'] if w['type'] == 'art'), None)
-        person['preview_url'] = art['url'] if art else None
-        person['preview_title'] = art['title'] if art else ''
-    CONFIG.specialists = people
+                           if work['type'] == 'art' and work['source'].startswith(('https://', 'http://'))
+                           else _source_url(work['source']))
+    CONFIG.specialists = sorted(people, key=profile_order)
     logger.info('Parsed %s specialist(s).', len(people))

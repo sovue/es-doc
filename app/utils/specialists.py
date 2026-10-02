@@ -9,3 +9,9 @@ CATEGORIES = {
 }
 
 WORK_LABELS = {'art': 'Арт', 'track': 'Трек', 'mod': 'Мод', 'project': 'Проект', 'fanfic': 'Фанфик'}
+
+STATUS_ORDER = ('open', 'unknown', 'closed')
+
+
+def profile_order(person):
+    return STATUS_ORDER.index(person['status']), person['name'].casefold()
