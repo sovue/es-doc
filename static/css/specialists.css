@@ -1,5 +1,5 @@
-/* /artists — the commission-artist directory. One dataset, three views
-   (gallery, board, table) toggled by artists.js. Follows the ES Doc tokens:
+/* /specialists — the collaborator directory. One dataset, three views
+   (gallery, board, table) toggled by specialists.js. Follows the ES Doc tokens:
    white surfaces, the 1px hairline, the leaf kept to focus/hover only. */
 
 .page-main--artists {
@@ -100,16 +100,35 @@
     overflow-wrap: anywhere;
 }
 
-/* The author's logo. Small round avatar; drops out entirely (via artists.js)
-   if the URL fails, leaving just the name. */
+/* The same round frame holds either the logo or a decorative initial. */
 .artist-avatar {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
     flex: none;
     width: 30px;
     height: 30px;
     border-radius: var(--radius-full);
-    object-fit: cover;
     background: var(--bg-light);
     border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.artist-avatar-initial {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: var(--fs-body);
+    line-height: var(--lh-flat);
+    color: var(--text-soft);
+}
+
+.artist-avatar-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: var(--bg-light);
 }
 
 .artists-table .artist-avatar {
@@ -200,6 +219,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
     gap: 18px;
+    align-items: stretch;
 }
 
 .artist-card {
@@ -224,34 +244,23 @@
     background: var(--bg-light);
     border-bottom: 1px solid var(--border);
     overflow: hidden;
+    flex: none;
 }
 
 .artist-monogram {
     font-family: var(--font-serif);
     font-weight: 700;
-    font-size: 2.6rem;
+    font-size: var(--fs-display);
     line-height: var(--lh-flat);
-    color: color-mix(in srgb, var(--text-soft) 55%, transparent);
+    color: var(--text-soft);
     user-select: none;
     -webkit-user-select: none;
 }
 
-.artist-preview-img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.artist-preview--none .specialist-art-link {
+    display: none;
 }
 
-/* No image: drop the divider so an empty tile isn't double-lined. */
-.artist-preview--none {
-    border-bottom-color: transparent;
-}
-
-/* Status recedes to a corner badge on the gallery card: it's metadata you
-   scan, not the reason you're on this page. A solid backing plate (not the
-   pill's own ~15% tint) keeps it legible over any preview photo. */
 .artist-status-badge {
     position: absolute;
     top: 8px;
@@ -262,18 +271,100 @@
     border-radius: var(--radius-full);
 }
 
+.artist-preview-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .artist-card-body {
     display: flex;
+    flex: 1;
     flex-direction: column;
     gap: 9px;
     padding: 13px 14px 15px;
 }
+
+.artist-card-head .artist-id { min-height: 30px; }
+
+.specialist-profile-category {
+    margin: 0;
+    color: var(--text-soft);
+    font-size: var(--fs-label);
+}
+
+.specialist-description {
+    margin: 0;
+    font-size: var(--fs-ui);
+    overflow-wrap: anywhere;
+    white-space: pre-line;
+}
+
+.artists-table .specialist-profile-category,
+.artists-table .specialist-description { margin-top: 6px; }
+
+.specialist-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.specialist-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    color: var(--text-soft);
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    font-size: var(--fs-ui);
+}
+
+.specialist-category:hover { color: var(--accent); }
+.specialist-category[aria-current] { color: var(--text); border-color: var(--accent); font-weight: 600; }
+.specialist-category span { color: var(--text-soft); font-variant-numeric: tabular-nums; font-size: var(--fs-label); }
+.specialist-category:focus-visible,
+.specialist-art-link:focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
+
+.specialist-category-intro { margin-bottom: 24px; }
+.specialist-category-intro h2 { margin: 0; font-size: var(--fs-subtitle); }
+.specialist-works-missing { margin: 0; color: var(--text-soft); font-size: var(--fs-ui); }
+.specialist-art-link { position: absolute; inset: 0; display: block; }
+
+.specialist-portfolio { padding-top: 12px; border-top: 1px solid var(--border); }
+.specialist-portfolio h3 { margin: 0 0 8px; font: 600 var(--fs-ui) var(--font-sans); }
+.specialist-works { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.specialist-work { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-width: 0; }
+.specialist-work-type { color: var(--text-soft); font-size: var(--fs-label); flex: none; }
+.specialist-work a { color: var(--accent); font-size: var(--fs-ui); overflow-wrap: anywhere; text-underline-offset: 3px; }
+.specialist-work a:hover { color: var(--accent-hover); }
+.specialist-work a:focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
+.specialist-track-title { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: var(--fs-ui); }
+.specialist-audio { width: 100%; min-width: 0; height: 40px; }
+.specialist-play { display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--accent); cursor: pointer; }
+.specialist-play[hidden] { display: none; }
+.specialist-play svg + svg,
+.specialist-play[aria-pressed="true"] svg:first-child { display: none; }
+.specialist-play[aria-pressed="true"] svg + svg { display: block; }
+.specialist-play:hover { background: var(--surface-hover); }
+.specialist-play:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.specialist-reset,
+.specialist-submit { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent); background: none; border: 0; padding: 0; font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.specialist-reset:focus-visible,
+.specialist-submit:focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
+.artists-table .specialist-works { min-width: 160px; }
 
 .artist-card-head {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 8px;
+    flex-wrap: wrap;
 }
 
 /* ── Board ────────────────────────────────────────────────── */
@@ -404,6 +495,8 @@
     .artist-card-head .artist-id {
         flex-direction: column;
         align-items: flex-start;
+        justify-content: flex-end;
+        min-height: calc(30px + 1lh + 6px);
         gap: 6px;
     }
 

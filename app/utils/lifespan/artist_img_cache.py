@@ -14,7 +14,7 @@ logger = root_logger.getChild('lifespan').getChild('artist-img')
 # `images.artist.preview-box` and `.logo-box` size the stored image to where it
 # is shown: a card of ~300×200 and a 30px avatar. This used to be one 1200px cap
 # for both kinds, which kept 200+ kB logos for a 30px circle, and a file dropped
-# into assets/artists/ by hand skipped the pipeline entirely (a 438 kB preview,
+# into assets/specialists/ by hand skipped the pipeline entirely (a 438 kB preview,
 # served as it was). Both routes now come out at the same size. The user-agent
 # and referer are there because fetching server-side is what sidesteps the
 # browser's ORB block, and some hosts (VK's userapi CDN) also check the referer
@@ -40,7 +40,7 @@ def _box(kind):
 
 def cache_file(url, kind):
     # Keyed by the URL and the box it was cut for, so editing a link in
-    # artists.yaml — or a box in config.yaml — points at a fresh cache entry
+    # specialists.yaml — or a box in config.yaml — points at a fresh cache entry
     # instead of serving the stale image, and one URL used as both a preview
     # and a logo gets a file per size.
     width, height = _box(kind)
@@ -85,7 +85,7 @@ async def fetch_and_cache(url, kind):
 
 def local_cache_file(path, kind):
     # A hand-supplied image is keyed by its path, mtime and size as well as the
-    # box, so replacing the file in assets/artists/ is picked up without a
+    # box, so replacing the file in assets/specialists/ is picked up without a
     # restart, the way editing a URL is.
     width, height = _box(kind)
     stat = path.stat()
@@ -96,7 +96,7 @@ def _encode_file(path, dest, box):
     _encode(path.read_bytes(), dest, box)
 
 async def cache_local(path, kind):
-    """Cut an image from assets/artists/ to its box, exactly as a fetched one
+    """Cut an image from assets/specialists/ to its box, exactly as a fetched one
     is. Raises if Pillow can't read it; the caller then serves the file as it
     is rather than lose the image."""
     await asyncio.to_thread(_encode_file, path, local_cache_file(path, kind), _box(kind))

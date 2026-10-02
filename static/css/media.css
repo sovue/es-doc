@@ -23,7 +23,8 @@ img.media-skeleton {
     opacity: 0;
 }
 
-.artist-preview.media-skeleton .artist-monogram {
+.artist-preview.media-skeleton .artist-monogram,
+.artist-avatar.media-skeleton .artist-avatar-initial {
     opacity: 0;
 }
 

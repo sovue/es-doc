@@ -127,6 +127,9 @@ components:
     textColor: "{colors.ink-soft}"
     typography: "{typography.caption}"
     height: "52px"
+  specialist-category:
+    textColor: "{colors.ink-soft}"
+    height: "44px"
   blockquote:
     backgroundColor: "{colors.leaf-paper}"
     textColor: "{colors.ink-soft}"
@@ -175,7 +178,7 @@ A white-and-leaf palette at summer noon: white for the page, the leaf's shade fo
 ### Neutral
 - **Shirt White** (`#FFFFFF`, dark `#161B26`): The page, and what sits on it — cards, pills, controls, the search field, popovers, which separate by their hairline rather than by a tint. Deep night-blue (never black) by the lake. The one pure neutral in the system (see the One White Rule).
 - **Leaf Shade** (`#EEF8E7`; at night the header takes the page's own `#161B26` and the sidebar `#1A2030`): The chrome's ground — header, section bar, the phone search sheet, the docs sidebar (`--bg-chrome`, `--bg-sidebar`). A green so pale it reads as white until it meets the page beside it, which is exactly what makes the reading column the brightest thing on screen.
-- **Leaf Paper** (`#F4F9F1`, dark `#1F2532`): Blockquotes, `:::details`, preview frames, the artist link chips, the code panel (`--bg-light`, `--code-bg`). A breath off white, leaning on its 1px border.
+- **Leaf Paper** (`#F4F9F1`, dark `#1F2532`): Blockquotes, `:::details`, preview frames, specialist contact chips, the code panel (`--bg-light`, `--code-bg`). A breath off white, leaning on its 1px border.
 - **Ink** (`#17261A`, dark `#ECE2C9`): Primary text. The leaf's darkest vein by day (15.8:1 on white), warm cream by night, never pure.
 - **Ink Soft** (`#596859`, dark `#B5A88E`): Secondary text, captions, labels, quiet wayfinding. ≥5.1:1 on the page and the chrome, and ≥4.5 even on the strongest band of the status banners it explains in.
 - **Hairline** (`#D1DDCD`, dark `#3A4254`): The universal 1px divider: header, hero, rows, cards, table cells, sidebar edge.
@@ -237,10 +240,9 @@ was true (0.9rem, 0.925rem and 0.95rem all did the same job, 0.8px apart).
 | `--fs-ui` | `0.875rem` | Inter 400/600 | Dense chrome, table bodies, and secondary prose that is genuinely secondary: hatnotes, footnote lists, banner bodies |
 | `--fs-label` | `0.75rem` | Consolas 600, tracking 0.1em, UPPERCASE | Section-directory headings, badges, social links, the raw-source link, keyboard hints, flags. Signals meta and structure, never content. |
 
-**Two sanctioned exceptions**, both sizing a glyph rather than setting a text
-role, and both allowed to stay literal: `.artist-monogram` at `2.6rem` is an
-initial drawn to fill its avatar circle, and `.fb-specimen-lg` at `1.7rem` is
-the font specimen, where the size is the thing being shown. Relative `em`
+**One sanctioned exception**, sizing a glyph rather than setting a text
+role: `.fb-specimen-lg` at `1.7rem` is the font specimen, where the size is
+the thing being shown. Relative `em`
 sizes (`.ref`, `.ref-back`, `.res-usage`) are also off the ramp on purpose:
 they follow whatever they are nested in.
 
@@ -282,7 +284,7 @@ The site is a centered documentation workspace. Center the composition, keep tex
 | Role | Value | Use |
 |---|---|---|
 | `--site-max` | `96rem` (1536px at 16px) | Centered `.page` and header row |
-| `--directory-max` | `80rem` (1280px) | Page headers, directories, resource and artist lists, footer content |
+| `--directory-max` | `80rem` (1280px) | Page headers, directories, resource and specialist lists, footer content |
 | `--rail-width` | `14rem` (224px) | Each article navigation rail |
 | `--page-gutter` | 32 / 24 / 16px | Shared outside padding, reduced at 800 / 640px |
 | `--layout-gap` | 32 / 24 / 20px | Column separation, reduced with the gutters |
@@ -307,7 +309,7 @@ The DOM order is article navigation, breadcrumbs, local contents, article. There
 
 `/docs/` has a compact header and two side-by-side thematic groups from the existing tree. Ungrouped entries span the directory; nested pages remain with their parent. Below 768px the directory is a single sequential list. Group labels use readable sans text; long article titles wrap at every width.
 
-The homepage puts «Создание мода» and «Материалы и сообщество» alongside each other, with descriptions below link names. It keeps the existing camp imagery, introduction, track and contributor content. Links identify the actual destination: «Ошибки и решения» leads to the error guide. Resource and artist directories use the same 1280px content frame. Collection tabs and category links align with their lists.
+The homepage puts «Создание мода» and «Материалы и сообщество» alongside each other, with descriptions below link names. It keeps the existing camp imagery, introduction, track and contributor content. Links identify the actual destination: «Ошибки и решения» leads to the error guide. Resource and specialist directories use the same 1280px content frame. Collection tabs and category links align with their lists.
 
 Standard header spacing is 32px above / 28px below, 40/32 for the homepage, and 24px for nested resource headers. The directory body starts 32px below its preceding region. Keep the existing 4px spacing scale; use smaller gaps within groups and larger gaps between tasks.
 
@@ -345,21 +347,29 @@ Mostly square, softened only where something is held or looked at. Structure is 
 - **Control** (4px): the search field and other compact inputs.
 - **Frame** (6px): inline code chips, blockquotes and `:::details` disclosures, and fenced panels once a narrow screen tightens them.
 - **Popover** (8px): the search listbox, the floating player bar and the resource viewer's panels.
-- **Picture** (12px): code panels, article screenshots, artist cards and their previews.
-- **Pill** (999px): the support control, status badges, play buttons and the artist monogram — the only fully round forms, each one a single control or mark.
+- **Picture** (12px): code panels, article screenshots, specialist cards and their previews.
+- **Pill** (999px): the support control, status badges, play buttons and specialist avatars — the only fully round forms, each one a single control or mark.
 
 **The Picture-Gets-The-Curve Rule.** 12px belongs to things that are pictures of something — code, screenshots, artwork. A frame around text stops at 6px, and a list gets no frame at all.
 
 ## Components
 
 ### Navigation
-Fixed 52px header carrying the five sections — Документация, Ресурсы, Полезные материалы, Художники, Новостные ресурсы — declared once in `header.html` and rendered in two places. It sits on `--bg-chrome`: Leaf Shade by day, so the white page under it is the brighter plane, and the page's own night-blue at night. Links use `align-items: stretch` so each is a full-height tap target. Ink-soft at rest, warming to ink on hover. The active page carries `aria-current="page"`, drawn as an inset 2px leaf-green underline via `box-shadow` (no layout shift), and every page of a section sets it, sub-pages included. Авторы and «Поддержать проект» are about the project rather than sections of it, and live in the footer.
+Fixed 52px header carrying the five sections — Документация, Ресурсы, Полезные материалы, Специалисты, Новостные ресурсы — declared once in `header.html` and rendered in two places. It sits on `--bg-chrome`: Leaf Shade by day, so the white page under it is the brighter plane, and the page's own night-blue at night. Links use `align-items: stretch` so each is a full-height tap target. Ink-soft at rest, warming to ink on hover. The active page carries `aria-current="page"`, drawn as an inset 2px leaf-green underline via `box-shadow` (no layout shift), and every page of a section sets it, sub-pages included. Авторы and «Поддержать проект» are about the project rather than sections of it, and live in the footer.
 
 **News resources.** `/news-resources` is a directory of places to publish or announce mods, separate from a news feed. Each flat row names the platform, gives one concise note on how to submit or publish, and links directly to the resource or contact. It follows the directory's hairline-separated rows and keeps the light/dark theme, keyboard focus, and narrow-screen actions legible.
 
 **Section bar.** At ≤1139px the links leave the header row for a 44px bar directly under it (see Layout). It is the same `.nav-links` list with the same states, so the current-page underline reads identically in both places, and only one copy is ever displayed, so a screen reader meets the list once. On a phone the bar is wider than the screen and scrolls sideways under a 32px right-edge fade rather than wrapping or folding into a menu — a flat row of words is the nav modders already know, and a hamburger hides every section behind a tap. An inline script scrolls the current section into view before first paint, and again if a width change leaves it out of sight; a section already in view stays where the reader put it.
 
 The wordmark is a lockup: a 24px mark (`/favicon.webp`) plus «ES Doc» in leaf-green Consolas, 9px apart — green type beside a red mark, the same pairing as the game's own logo, where the ladybug sits on the leaf. The mark and the favicon are deliberately the same file — one route, already cached on every page, and the tab icon matches the header it came from, so replacing the logo is a one-file swap rather than a template change. 24px because the pioneer star's points reach its box edges and it reads optically smaller than a square of the same height; at Consolas' ~10.5px cap height that lands the mark on the wordmark's weight without overpowering it. The mark carries `alt=""`: the wordmark beside it already names the link. With the section links in a bar of their own on narrow screens, the full lockup fits the header row at every width down to 320px, so nothing drops.
+
+### Specialists Directory
+
+`/specialists` extends the existing artist directory within the same white/leaf and blue-lake themes. Wrapping category links show «Все» plus Художники, Нейрохудожники, Кодеры, Композиторы and Сценаристы with quiet tabular counts. Each link has a 44px minimum height; the current category combines ink, weight 600, a 2px accent underline and `aria-current`. Category changes retain the view, name query, commission-status filter and sort, including a visit to an empty category. The legacy `/artists` address redirects to the artist category while retaining the query.
+
+Gallery, status board and table remain three views of the same profiles. Gallery cards are flat hairline frames with 12px corners and a consistent 3:2 preview area. At the user's request, absent or failed previews show a decorative PT Serif first initial; a failed image loses its lightbox link and loading skeleton. Commission status sits in the preview corner. Names use Inter with a round avatar frame that shows a decorative PT Serif initial when the logo is missing or fails; the optional logo covers that initial. A reserved identity-row height keeps neighbouring names aligned on mobile. Optional descriptions appear only when supplied, in all three views. Cards stretch to the same height within a gallery row, with work examples immediately following contacts. The all-category view labels each independent profile's discipline. Board columns hold hairline-separated rows; the table has a 700px minimum width and scrolls within its wrapper. Previews and artwork open the shared lightbox. Tracks use the shared player after enhancement, with native audio controls as the fallback. An empty category uses the existing empty-state title and «Предложить специалиста» action. Default ordering is open, unknown, closed commissions, then alphabetical names within each status; explicit alphabetical sort choices remain bookmarkable.
+
+**Content schema.** `es-doc-assets/specialists.yaml` groups separate profile lists under `specialists.artists`, `ai-artists`, `coders`, `composers` and `writers`. Each profile has `name`, optional commission `status`, contact `links`, `works`, `logo`, explicit `preview` and plain-text `description`. The same person can have independent profiles in different categories. Preview and work examples never populate each other. Local files live under `es-doc-assets/specialists/`; relative `url` or `file` examples resolve to `/specialists/res/*`, confined to that folder. Work types are art for both artist categories, up to two tracks for composers, mods/projects for coders, and mods/fanfics for writers. The migrated data preserves all original contacts and works; existing artwork previews are now explicit fields, and the coder/composer's examples are separate.
 
 ### Site Footer
 One 20px row, deliberately: this is a docs site, and the footer is wayfinding, not a second homepage. Two text links (Авторы, «Нашли ошибку?»), then the platform icons, then the support control. The row wraps, since it no longer fits below ~580px, but nothing else about it grows.

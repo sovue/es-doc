@@ -1,12 +1,15 @@
-/* Progressive enhancement for /artists: a view switcher (gallery / board /
+/* Progressive enhancement for /specialists: a view switcher (gallery / board /
    table over one dataset), name search, status filter, and sort. Controls
    ship [hidden] and are revealed here, so a no-JS visitor still gets the
    gallery as a clean, complete list. */
 (function () {
-    const root = document.querySelector('[data-artists]');
+    const root = document.querySelector('[data-specialists]');
     if (!root) return;
 
     const controls = root.querySelector('.artists-controls');
+    // Empty categories have no controls. Keep the incoming query intact so
+    // the selected view and filters survive the return to a populated one.
+    if (!controls) return;
     const search = root.querySelector('#artist-search');
     const statusSel = root.querySelector('#artist-status');
     const sortSel = root.querySelector('#artist-sort');
@@ -31,34 +34,50 @@
     const initialView = views[urlParams.get('view')] ? urlParams.get('view') : 'gallery';
     if (search && urlParams.has('q')) search.value = urlParams.get('q');
     if (statusSel && urlParams.has('status')) statusSel.value = urlParams.get('status');
-    if (sortSel && urlParams.has('sort')) sortSel.value = urlParams.get('sort');
+    if (sortSel) sortSel.value = ['open', 'az', 'za'].includes(urlParams.get('sort')) ? urlParams.get('sort') : 'open';
 
     let currentView = initialView;
     function syncUrl() {
+        if (!root.isConnected) return;
         const p = new URLSearchParams();
+        if (root.dataset.category) p.set('category', root.dataset.category);
         if (currentView !== 'gallery') p.set('view', currentView);
         if (search && search.value) p.set('q', search.value);
         if (statusSel && statusSel.value) p.set('status', statusSel.value);
-        if (sortSel && sortSel.value && sortSel.value !== 'az') p.set('sort', sortSel.value);
+        if (sortSel && sortSel.value && sortSel.value !== 'open') p.set('sort', sortSel.value);
         const qs = p.toString();
         history.replaceState(null, '', location.pathname + (qs ? '?' + qs : ''));
+        root.querySelectorAll('.specialist-category').forEach(link => {
+            const params = new URLSearchParams(p);
+            if (link.dataset.category) params.set('category', link.dataset.category);
+            else params.delete('category');
+            const query = params.toString();
+            link.href = '/specialists' + (query ? '?' + query : '');
+        });
     }
 
-    /* ── External preview images: fall back to the monogram on error ── */
+    /* A failed preview reveals the initial and loses its lightbox target. */
     root.querySelectorAll('.artist-preview-img').forEach(img => {
         const done = () => {
             if (!img.complete || img.naturalWidth === 0) {
-                img.closest('.artist-preview').classList.add('artist-preview--none');
-                img.remove();
+                const surface = img.closest('.artist-preview');
+                surface?.classList.add('artist-preview--none');
+                surface?.classList.remove('media-skeleton');
+                surface?.querySelector('.specialist-art-link')?.remove();
             }
         };
         img.addEventListener('error', done);
         if (img.complete) done();
     });
 
-    /* ── Logo avatars: just drop a broken one, leaving the bare name ── */
-    root.querySelectorAll('.artist-avatar').forEach(img => {
-        const drop = () => { if (!img.complete || img.naturalWidth === 0) img.remove(); };
+    /* A broken logo reveals the initial without changing the avatar size. */
+    root.querySelectorAll('.artist-avatar-img').forEach(img => {
+        const drop = () => {
+            if (!img.complete || img.naturalWidth === 0) {
+                img.closest('.artist-avatar')?.classList.remove('media-skeleton');
+                img.remove();
+            }
+        };
         img.addEventListener('error', drop);
         if (img.complete) drop();
     });
@@ -103,8 +122,10 @@
 
         // Board: hide a column with no remaining matches.
         root.querySelectorAll('.board-col').forEach(col => {
-            const some = Array.from(col.querySelectorAll('[data-artist]')).some(e => !e.hidden);
-            col.hidden = !some;
+            const visible = Array.from(col.querySelectorAll('[data-artist]')).filter(e => !e.hidden);
+            col.hidden = visible.length === 0;
+            const count = col.querySelector('.board-col-count');
+            if (count) count.textContent = visible.length;
         });
 
         // Shared empty-state under all views.
@@ -123,6 +144,13 @@
 
     if (search) search.addEventListener('input', scheduleApply);
     if (statusSel) statusSel.addEventListener('change', apply);
+    root.querySelectorAll('.specialist-reset').forEach(button => button.addEventListener('click', () => {
+        clearTimeout(filterTimer);
+        if (search) search.value = '';
+        if (statusSel) statusSel.value = '';
+        apply();
+        if (search) search.focus();
+    }));
 
     // Escape clears the search (mirrors resources.js); the shared
     // .filter-input styling drops the native cancel button in favour of this.
@@ -171,6 +199,6 @@
     if (sortSel) sortSel.addEventListener('change', () => { sortAll(sortSel.value); syncUrl(); });
 
     setView(initialView);
-    if (sortSel && sortSel.value !== 'az') sortAll(sortSel.value);
+    sortAll(sortSel ? sortSel.value : 'open');
     apply();
 })();

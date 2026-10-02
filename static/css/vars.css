@@ -168,9 +168,9 @@
        The bottom three carry almost everything: --fs-body for prose,
        --fs-ui for chrome and secondary prose, --fs-label for anything
        small, uppercase and mono. Reach further up only where a real
-       heading role starts. Two sizes deliberately sit off this ramp and
-       are named in DESIGN.md: the artist monogram and the font specimen,
-       both of which size a glyph rather than set a text role. */
+       heading role starts. One size deliberately sits off this ramp and
+       is named in DESIGN.md: the font specimen,
+       which sizes a glyph rather than sets a text role. */
     --fs-display: clamp(1.85rem, 4.5vw, 2.8rem);   /* home + error titles */
     --fs-page-title: clamp(1.6rem, 3.5vw, 2.2rem); /* section page titles */
     --fs-headline: 2.4rem;    /* article H1 */

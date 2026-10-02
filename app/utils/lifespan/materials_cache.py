@@ -9,7 +9,7 @@ from ..materials import material_file
 logger = root_logger.getChild('lifespan').getChild('materials')
 
 def _materials_path():
-    # materials.yaml sits at the assets root, next to artists.yaml.
+    # materials.yaml sits at the assets root, next to specialists.yaml.
     return CONFIG.docs_path.parent / 'materials.yaml'
 
 

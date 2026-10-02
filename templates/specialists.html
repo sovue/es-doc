@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 
-{% set page_title = 'Художники — ES Doc' %}
+{% set page_title = 'Специалисты — ES Doc' %}
 {% set body_class = 'bg-solid scene-page' %}
-{% set active = 'artists' %}
-{% set extra_css = ['/static/css/artists.css'] %}
+{% set active = 'specialists' %}
+{% set extra_css = ['/static/css/specialists.css'] %}
+{% from 'partials/res_macros.html' import lightbox %}
 
 {% macro status_pill(status) %}
 <span class="artist-status artist-status--{{ status }}">{{ status_labels[status] }}</span>
@@ -19,28 +20,58 @@
 {%- endif %}
 {%- endmacro %}
 
-{# Monogram sits under the image; if there's no preview (or it fails to load,
-   marked by artists.js), the image is gone/hidden and the monogram shows.
-   The status badge floats in the corner: secondary metadata, out of the way
-   of the name and contact links that follow in the card body. #}
+{# Independent preview, with an initial filling the frame when absent or broken. #}
 {% macro preview(a) %}
-<span class="artist-preview{% if not a.preview %} artist-preview--none{% endif %}" data-media-surface>
+<div class="artist-preview{% if not a.preview_url %} artist-preview--none{% endif %}" data-media-surface>
     <span class="artist-monogram" aria-hidden="true">{{ a.name[:1]|upper }}</span>
-    {%- if a.preview %}
-    <img class="artist-preview-img" src="/resource/artist/preview/{{ a.slug }}" alt="" loading="lazy" decoding="async">
-    {%- endif %}
+    {% if a.preview_url %}
+    <a class="specialist-art-link" href="{{ a.preview_url }}" data-zoom="{{ a.preview_title }}" aria-label="Посмотреть превью — {{ a.name }}">
+        <img class="artist-preview-img" src="{{ a.preview_url }}" alt="{{ a.preview_title }}" loading="lazy" decoding="async">
+    </a>
+    {% endif %}
     <span class="artist-status-badge">{{ status_pill(a.status) }}</span>
-</span>
+</div>
 {%- endmacro %}
 
-{# The author's logo as a small round avatar beside the name. Rendered only
-   when a logo is set; artists.js drops it if the URL fails to load. #}
+{% macro profile_details(a) %}
+{% if not category %}<p class="specialist-profile-category">{{ a.category_label }}</p>{% endif %}
+{% if a.description %}<p class="specialist-description">{{ a.description }}</p>{% endif %}
+{%- endmacro %}
+
+{# A round initial stays beneath an optional logo, including on load failure. #}
 {% macro name_id(a) %}
 <span class="artist-id">
-    {%- if a.logo %}<img class="artist-avatar" src="/resource/artist/logo/{{ a.slug }}" alt="" loading="lazy" decoding="async">{% endif %}
+    <span class="artist-avatar" aria-hidden="true" data-media-surface>
+        <span class="artist-avatar-initial">{{ a.name[:1]|upper }}</span>
+        {%- if a.logo_url %}<img class="artist-avatar-img" src="{{ a.logo_url }}" alt="" loading="lazy" decoding="async">{% endif %}
+    </span>
     <span class="artist-name">{{ a.name }}</span>
 </span>
 {%- endmacro %}
+
+{% macro works(a) %}
+{% if a.works %}
+<ul class="specialist-works" role="list" aria-label="Примеры работ — {{ a.name }}">
+    {% for work in a.works %}
+    <li class="specialist-work">
+        <span class="specialist-work-type">{{ work_labels[work.type] }}</span>
+        {% if work.type == 'track' %}
+        <span class="specialist-track-title">{{ work.title }}</span>
+        <button type="button" class="specialist-play" data-play-src="{{ work.url }}" data-play-name="{{ a.name }} — {{ work.title }}" aria-label="Прослушать {{ work.title }}" aria-pressed="false" hidden>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="m5 3 8 5-8 5z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 3h3v10H4zm5 0h3v10H9z"/></svg>
+        </button>
+        <audio class="specialist-audio" controls preload="none" src="{{ work.url }}" aria-label="{{ work.title }}" data-player-fallback></audio>
+        {% else %}
+        <a href="{{ work.url }}"{% if work.type == 'art' %} data-zoom="{{ work.title }}"{% endif %}>{{ work.title }}</a>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p class="specialist-works-missing">Примеры работ пока не добавлены.</p>
+{% endif %}
+{% endmacro %}
 
 {% block content %}
 <div class="page">
@@ -50,16 +81,29 @@
         <section class="page-hero">
             <div class="page-hero-inner">
                 <a href="/" class="page-back"><span aria-hidden="true">←</span> На главную</a>
-                <h1 class="page-title">Художники</h1>
+                <h1 class="page-title">Специалисты</h1>
                 <p class="page-lead">
-                    Художники, которые берут заказы для модов «Бесконечного лета».
+                    Здесь Вы можете найти соавтора для мода «Бесконечного лета».
                 </p>
             </div>
         </section>
 
-        <div class="page-main page-main--artists" data-artists>
+        <div class="page-main page-main--artists" data-specialists data-category="{{ category }}">
 
-            {% if artists %}
+            <nav class="specialist-categories" aria-label="Специализации">
+                <a class="specialist-category" href="{{ all_url }}" data-category=""{% if not category %} aria-current="page"{% endif %}>Все <span>{{ directory_total }}</span></a>
+                {% for item in categories %}
+                <a class="specialist-category" href="{{ item.url }}" data-category="{{ item.key }}"{% if category == item.key %} aria-current="page"{% endif %}>{{ item.label }} <span>{{ item.count }}</span></a>
+                {% endfor %}
+            </nav>
+
+            {% if category_info %}
+            <div class="specialist-category-intro">
+                <h2>{{ category_info.label }}</h2>
+            </div>
+            {% endif %}
+
+            {% if specialists %}
 
             <div class="artists-controls" hidden>
                 <div class="view-switch" role="group" aria-label="Вид списка">
@@ -91,7 +135,7 @@
                 <div class="artists-filters">
                     <input type="search" id="artist-search" class="filter-input"
                            placeholder="Поиск по имени…" autocomplete="off" spellcheck="false"
-                           aria-label="Поиск художника по имени">
+                           aria-label="Поиск специалиста по имени">
                     <select id="artist-status" class="filter-select" aria-label="Статус заказов">
                         <option value="">Любой статус</option>
                         {%- for status, label, count in status_counts %}
@@ -99,9 +143,9 @@
                         {%- endfor %}
                     </select>
                     <select id="artist-sort" class="filter-select" aria-label="Сортировка">
+                        <option value="open" selected>Сначала открытые</option>
                         <option value="az">А-Я</option>
                         <option value="za">Я-А</option>
-                        <option value="open">Сначала открытые</option>
                     </select>
                 </div>
 
@@ -109,16 +153,21 @@
             </div>
 
             <!-- Gallery (default; the only view a no-JS visitor sees) -->
-            <section id="view-gallery" aria-label="Галерея художников">
+            <section id="view-gallery" aria-label="Галерея специалистов">
                 <ul class="artists-gallery" role="list">
-                    {% for a in artists %}
+                    {% for a in specialists %}
                     <li class="artist-card" data-artist data-name="{{ a.name }}" data-status="{{ a.status }}">
                         {{ preview(a) }}
                         <div class="artist-card-body">
                             <div class="artist-card-head">
                                 {{ name_id(a) }}
                             </div>
+                            {{ profile_details(a) }}
                             {{ links_row(a.links) }}
+                            <div class="specialist-portfolio">
+                                <h3>Примеры работ</h3>
+                                {{ works(a) }}
+                            </div>
                         </div>
                     </li>
                     {% endfor %}
@@ -138,7 +187,9 @@
                             {% for a in members %}
                             <li class="board-card" data-artist data-name="{{ a.name }}" data-status="{{ a.status }}">
                                 {{ name_id(a) }}
+                                {{ profile_details(a) }}
                                 {{ links_row(a.links) }}
+                                {{ works(a) }}
                             </li>
                             {% endfor %}
                         </ul>
@@ -148,22 +199,24 @@
             </section>
 
             <!-- Table: dense, scannable -->
-            <section id="view-table" aria-label="Таблица художников" hidden>
+            <section id="view-table" aria-label="Таблица специалистов" hidden>
                 <div class="artists-table-wrap">
                     <table class="artists-table">
                         <thead>
                             <tr>
-                                <th scope="col">Художник</th>
+                                <th scope="col">Специалист</th>
                                 <th scope="col">Статус</th>
-                                <th scope="col">Ссылки</th>
+                                <th scope="col">Контакты</th>
+                                <th scope="col">Примеры работ</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for a in artists %}
+                            {% for a in specialists %}
                             <tr data-artist data-name="{{ a.name }}" data-status="{{ a.status }}">
-                                <td>{{ name_id(a) }}</td>
+                                <td>{{ name_id(a) }}{{ profile_details(a) }}</td>
                                 <td>{{ status_pill(a.status) }}</td>
                                 <td>{{ links_row(a.links) }}</td>
+                                <td>{{ works(a) }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -171,19 +224,23 @@
                 </div>
             </section>
 
-            <p class="artists-empty" hidden>По этому запросу ничего не нашлось.</p>
+            <div class="artists-empty" hidden>
+                <p>По этому запросу специалисты не нашлись.</p>
+                <button type="button" class="specialist-reset">Сбросить фильтры</button>
+            </div>
 
             {% else %}
             <div class="res-empty">
-                <p class="res-empty-title">Список пока пуст.</p>
-                <p>Здесь появятся художники, берущие заказы для модов. Если вы рисуете или знаете, кого добавить —
-                   <a href="/redirect/dm">расскажите нам</a>.</p>
+                <h2 class="res-empty-title">{% if category %}В этой категории пока нет специалистов{% else %}Список специалистов пока пуст{% endif %}</h2>
+                <a class="specialist-submit" href="/redirect/dm">Предложить специалиста</a>
             </div>
             {% endif %}
 
         </div>
 
     </main>
+
+    {{ lightbox() }}
 
     {% include "partials/footer.html" %}
 
