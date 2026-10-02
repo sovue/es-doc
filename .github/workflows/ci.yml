@@ -81,10 +81,20 @@ jobs:
           printf '%s\n' "${DEPLOY_SSH_KEY}" >"${key_file}"
           printf '%s\n' "${DEPLOY_KNOWN_HOSTS}" >"${known_hosts_file}"
 
+          # The remote login shell may be fish; pass the script directly to Bash.
           ssh -i "${key_file}" \
             -o UserKnownHostsFile="${known_hosts_file}" \
             -o StrictHostKeyChecking=yes \
+            -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=12 \
             "${DEPLOY_USER}@${DEPLOY_HOST}" \
-            "set -e; cd '${DEPLOY_PATH}'; git fetch origin main; git reset --hard origin/main; \
-            docker compose --env-file .env.production -f compose.production.yaml up -d --build --wait --wait-timeout 180 || \
-            { docker compose --env-file .env.production -f compose.production.yaml logs --tail=100; exit 1; }"
+            'bash -se' <<DEPLOY
+          set -Eeuo pipefail
+          cd -- $(printf '%q' "${DEPLOY_PATH}")
+          git fetch origin main
+          git reset --hard origin/main
+          docker compose --env-file .env.production -f compose.production.yaml up -d --build --wait --wait-timeout 180 || {
+            docker compose --env-file .env.production -f compose.production.yaml logs --tail=100
+            exit 1
+          }
+          DEPLOY
