@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
+      - dev
   pull_request:
     branches:
       - main
+      - dev
 
 permissions:
   contents: read
@@ -20,10 +22,8 @@ jobs:
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.0.1
 
       - name: Check out assets
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.0.1
-        with:
-          repository: sovue/es-doc-assets
-          path: assets
+        # Keep the test content outside the Docker build context.
+        run: git clone --depth 1 --branch main -- https://github.com/sovue/es-doc-assets.git "${RUNNER_TEMP}/es-doc-assets"
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.0.1
@@ -38,8 +38,11 @@ jobs:
 
       - name: Run tests
         env:
-          ES_DOC_ASSETS_PATH: ${{ github.workspace }}/assets
-        run: pdm run python -m unittest discover -s tests -v
+          ES_DOC_ASSETS_PATH: ${{ runner.temp }}/es-doc-assets
+          ES_DOC_CACHE_PATH: ${{ runner.temp }}/es-doc-cache
+        run: |
+          mkdir -p "${ES_DOC_CACHE_PATH}"
+          pdm run python -m unittest discover -s tests -v
 
       - name: Compile application
         run: pdm run python -m compileall -q app
@@ -47,9 +50,15 @@ jobs:
       - name: Validate production Compose file
         run: docker compose --env-file .env.production.example --file compose.production.yaml config --quiet
 
+      - name: Validate application Compose file
+        run: docker compose --file docker-compose.yml config --quiet
+
+      - name: Build application image
+        run: docker build --tag es-doc:ci .
+
   deploy:
     name: Deploy to production
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-24.04
     environment: production
