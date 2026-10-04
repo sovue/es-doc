@@ -115,7 +115,7 @@ jobs:
           git pull
           set -Eeuo pipefail
           # Bind mounts retain host permissions; app must read static files and templates.
-          # chmod -R a+rX /app/static /app/templates
+          chmod -R a+rX ./static ./templates
           docker compose --env-file .env.production -f docker-compose.yml up -d --no-build --force-recreate --wait --wait-timeout 180 || {
             docker compose --env-file .env.production -f docker-compose.yml logs --tail=100
             exit 1
