@@ -111,7 +111,6 @@ jobs:
           git fetch origin main
           git reset --hard origin/main
           set -Eeuo pipefail
-          chown -R app:app /app/content
           # Bind mounts retain host permissions; app must read static files and templates.
           chmod -R a+rX /app/static /app/templates
           ASSETS
