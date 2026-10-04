@@ -47,9 +47,6 @@ jobs:
       - name: Compile application
         run: pdm run python -m compileall -q app
 
-      - name: Validate production Compose file
-        run: docker compose --env-file .env.production.example --file compose.production.yaml config --quiet
-
       - name: Validate application Compose file
         run: docker compose --file docker-compose.yml config --quiet
 
@@ -100,10 +97,31 @@ jobs:
             'bash -se' <<DEPLOY
           set -Eeuo pipefail
           cd -- $(printf '%q' "${DEPLOY_PATH}")
+          # Serialize application and assets deployments across both repositories.
+          exec 9>.deploy.lock
+          flock -x 9
           git fetch origin main
           git reset --hard origin/main
-          docker compose --env-file .env.production -f compose.production.yaml up -d --build --wait --wait-timeout 180 || {
-            docker compose --env-file .env.production -f compose.production.yaml logs --tail=100
+          docker compose --env-file .env.production -f docker-compose.yml build web
+
+          docker compose --env-file .env.production -f docker-compose.yml run --rm --no-deps --user root --entrypoint bash -e ASSETS_REF=main web -se <<'ASSETS'
+          set -Eeuo pipefail
+          git -c safe.directory=/app/content -C /app/content init -q -b "\${ASSETS_BRANCH}"
+          if git -c safe.directory=/app/content -C /app/content remote get-url origin >/dev/null 2>&1; then
+            test "\$(git -c safe.directory=/app/content -C /app/content remote get-url origin)" = "\${ASSETS_REPO}"
+          else
+            git -c safe.directory=/app/content -C /app/content remote add origin "\${ASSETS_REPO}"
+          fi
+          git -c safe.directory=/app/content -C /app/content fetch --depth=1 origin "\${ASSETS_REF}"
+          git -c safe.directory=/app/content -C /app/content reset --hard FETCH_HEAD
+          git -c safe.directory=/app/content -C /app/content checkout -B "\${ASSETS_BRANCH}"
+          git -c safe.directory=/app/content -C /app/content update-ref "refs/remotes/origin/\${ASSETS_BRANCH}" HEAD
+          git -c safe.directory=/app/content -C /app/content branch --set-upstream-to="origin/\${ASSETS_BRANCH}"
+          chown -R app:app /app/content
+          ASSETS
+
+          docker compose --env-file .env.production -f docker-compose.yml up -d --no-build --force-recreate --wait --wait-timeout 180 || {
+            docker compose --env-file .env.production -f docker-compose.yml logs --tail=100
             exit 1
           }
           DEPLOY
