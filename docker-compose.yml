@@ -6,6 +6,8 @@ services:
     container_name: es-doc-web
     restart: unless-stopped
     volumes:
+      # Volume для контента (хранится локально, не в образе)
+      - es-doc-content:/app/content
       # Монтирование для разработки (раскомментируйте при наличии репы с ассетами(es-doc-assets) в директории с приложением или рядом с ним)
       # - ../es-doc-assets:/app/content
       - ./static:/app/static
@@ -15,6 +17,8 @@ services:
       - ES_DOC_ASSETS_PATH=/app/content
       - ES_DOC_CACHE_PATH=/app/temp
       - ES_DOC_SITE_URL=https://es-doc.rfld.ru
+      - ASSETS_REPO=https://github.com/sovue/es-doc-assets.git
+      - ASSETS_BRANCH=main
     expose:
       - "8000"
 
@@ -28,3 +32,6 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - web
+
+volumes:
+  es-doc-content:

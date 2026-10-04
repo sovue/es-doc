@@ -25,3 +25,5 @@ temp/
 # Config file
 config.yaml
 .env
+content/*
+!content/main

@@ -24,12 +24,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 COPY . .
 
 # Создание директории для кэша и ассетов
-RUN mkdir -p /app/temp /app/content
-
-# Клонирование ассетов по умолчанию (если не переопределено через volume в docker-compose)
-RUN git clone --depth 1 https://github.com/sovue/es-doc-assets.git /app/content-default && \
-    cp -r /app/content-default/* /app/content/ && \
-    rm -rf /app/content-default
+RUN mkdir -p /app/temp
 
 # Открываем порт 8000
 EXPOSE 8000
