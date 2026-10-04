@@ -27,7 +27,7 @@
                 <p class="page-lead">
                     Третья итерация справочного портала и базы знаний для разработки пользовательских модификаций к визуальной новелле "Бесконечное Лето".
                     Статьи о создании модов, гайды с примерами кода, полезные знания, а также ресурсы оригинальной игры и труды сообщества — всё здесь.
-                    Воспользуйтесь поиском, просмотрите статьи и ресурсы игры или начните с самого начала — <a href="/docs/first_steps">статьи о создании вашего первого мода.</a>
+                    Воспользуйтесь поиском или выберите нужный раздел на доске объявлений ниже.
                 </p>
 
                 {#- The site's theme, under the hero it scores. The same player
@@ -89,78 +89,32 @@
             <script>(function(){var b=document.querySelector('.hero-bg');if(!b||matchMedia('(prefers-reduced-motion: reduce)').matches)return;function go(){var s=getComputedStyle(b);Promise.all([2,3,4].map(function(n){var m=/url\(\s*['"]?([^'")]+)/.exec(s.getPropertyValue('--hero-'+n));if(!m)return;var i=new Image();i.src=m[1];return i.decode().catch(function(){});})).then(function(){b.classList.add('is-live');});}if(document.readyState==='complete')go();else addEventListener('load',go);})();</script>
         </section>
 
+        {% if notices %}
         <div class="page-main home-directory">
-
-            <section class="doc-sections" aria-labelledby="sections-heading">
-                <h2 id="sections-heading" class="authors-list-label">Создание мода</h2>
-
-                <ul class="sections-list" role="list">
-
-                    <li>
-                        <a href="/docs/first_steps" class="section-row">
-                            <span class="section-name">Как создать свой мод</span>
-                            <span class="section-desc">Первые шаги для переноса истории в код</span>
-                            <span class="section-arrow" aria-hidden="true">→</span>
+            {# Edit the board in home_notices.yaml at the assets repository root. #}
+            <section class="noticeboard" aria-labelledby="noticeboard-heading">
+                <ul class="noticeboard-list" role="list">
+                    {% for notice in notices %}
+                    <li class="noticeboard-item">
+                        <a href="{{ notice.url }}" class="notice"
+                           aria-labelledby="notice-title-{{ loop.index }}"
+                           {% if notice.description %}aria-describedby="notice-description-{{ loop.index }}"{% endif %}>
+                            <h3 id="notice-title-{{ loop.index }}" class="notice-title">{{ notice.title }}</h3>
+                            {% if notice.category %}<span class="notice-category">{{ notice.category }}</span>{% endif %}
+                            {% if notice.description %}<p id="notice-description-{{ loop.index }}" class="notice-description">{{ notice.description }}</p>{% endif %}
+                            <span class="notice-open" aria-hidden="true">
+                                Открыть
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M3 10h14m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
                         </a>
                     </li>
-
-                    <li>
-                        <a href="/docs/errors" class="section-row">
-                            <span class="section-name">Ошибки и решения</span>
-                            <span class="section-desc">Распространённые ошибки и способы их исправить</span>
-                            <span class="section-arrow" aria-hidden="true">→</span>
-                        </a>
-                    </li>
-
+                    {% endfor %}
                 </ul>
             </section>
-            <section class="doc-sections" aria-labelledby="community-heading">
-                <h2 id="community-heading" class="authors-list-label">Материалы и сообщество</h2>
-                <ul class="sections-list" role="list">
-                    <li>
-                        <a href="/resources/" class="section-row">
-                            <span class="section-name">Ресурсы игры</span>
-                            <span class="section-desc">Фоны, арты, спрайты, звуки и музыка «Бесконечного Лета»</span>
-                            <span class="section-arrow" aria-hidden="true">→</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="/resources/browser" class="section-row">
-                            <span class="section-name">Браузер ресурсов</span>
-                            <span class="section-desc">Все файлы игры как они представлены в архивах</span>
-                            <span class="section-arrow" aria-hidden="true">→</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="/materials" class="section-row">
-                            <span class="section-name">Полезные материалы</span>
-                            <span class="section-desc">Книги, курсы и видеолекции по Python и писательскому мастерству</span>
-                            <span class="section-arrow" aria-hidden="true">→</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="/specialists" class="section-row">
-                            <span class="section-name">Специалисты</span>
-                            <span class="section-desc">Арты, музыка, код и сценарии — авторы, контакты и примеры работ</span>
-                            <span class="section-arrow" aria-hidden="true">→</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="/news-resources" class="section-row">
-                            <span class="section-name">Новостные ресурсы</span>
-                            <span class="section-desc">Площадки, где можно опубликовать или анонсировать мод</span>
-                            <span class="section-arrow" aria-hidden="true">→</span>
-                        </a>
-                    </li>
-
-                </ul>
-            </section>
-
         </div>
+        {% endif %}
 
         <div class="home-contributors">
             <section class="contributors-section" aria-labelledby="home-authors-label">

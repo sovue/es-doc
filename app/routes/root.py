@@ -1,10 +1,10 @@
 from fastapi import Request
 from fastapi.responses import PlainTextResponse
 
-from . import main_router
 from ..utils.config import CONFIG
-from ..utils.file import templates, read_text
+from ..utils.file import read_text, templates
 from ..utils.md import render_thanks
+from . import main_router
 
 router = main_router
 
@@ -29,7 +29,12 @@ def _thanks_section():
 async def page(request: Request):
     # `track` is empty when config.yaml has no theme-track.src, and the
     # template then renders no player at all.
-    return templates.TemplateResponse(request, 'home.html', {'authors_core': _authors_core(), "thanks_section": _thanks_section(), 'track': CONFIG.theme_track})
+    return templates.TemplateResponse(request, 'home.html', {
+        'authors_core': _authors_core(),
+        'thanks_section': _thanks_section(),
+        'track': CONFIG.theme_track,
+        'notices': CONFIG.home_notices,
+    })
 
 @router.get('/authors')
 async def authors(request: Request):

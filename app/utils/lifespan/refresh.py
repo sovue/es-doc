@@ -8,6 +8,7 @@ from ..file import ROOT
 from ..livereload import bump
 from ..logging import root_logger
 from .docs_cache import cache_docs
+from .home_notices_cache import parse_home_notices
 from .links_cache import parse_links
 from .materials_cache import parse_materials
 from .news_resources_cache import parse_news_resources
@@ -125,6 +126,7 @@ def _watchers():
         ('news_resources.yaml', _one_of(assets / 'news_resources.yaml'), parse_news_resources),
         ('materials.yaml', lambda path: materials_yaml(path) or materials_files(path), parse_materials),
         ('links.yaml', _one_of(assets / 'links.yaml'), parse_links),
+        ('home_notices.yaml', _one_of(assets / 'home_notices.yaml'), parse_home_notices),
         ('redirects.yaml', _one_of(assets / 'redirects.yaml'), parse_redirects),
         ('warpers.yaml', _one_of(assets / 'warpers.yaml'), _refresh_warpers),
 
