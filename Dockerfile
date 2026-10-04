@@ -19,14 +19,8 @@ RUN addgroup --system app \
 
 COPY --chown=app:app . .
 
-RUN mkdir -p /app/temp /app/content \
+RUN mkdir -p /app/temp \
     && chown -R app:app /app
-
-RUN git clone --filter=blob:none --no-checkout "${ASSETS_REPO}" /tmp/es-doc-assets \
-    && git -C /tmp/es-doc-assets fetch --depth=1 origin "${ASSETS_REF}" \
-    && git -C /tmp/es-doc-assets archive FETCH_HEAD | tar -x -C /app/content \
-    && rm -rf /tmp/es-doc-assets \
-    && chown -R app:app /app/content
 
 ENV PATH="/app/.venv/bin:$PATH"
 

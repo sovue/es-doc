@@ -25,20 +25,36 @@ Docker Compose настраивает два контейнера:
 - **web**: Python-приложение на порту 8000 (внутренний)
 - **nginx**: Reverse proxy на порту 8005 (внешний)
 
-#### Ассеты
+#### Управление контентом
 
-Ассеты загружаются из репозитория [es-doc-assets](https://github.com/sovue/es-doc-assets) при сборке образа:
-- **Продакшн**: Ассеты встроены в образ при сборке через `Dockerfile` и `compose.production.yaml`.
-- **Разработка**: Можно монтировать локальную копию ассетов через volume в `docker-compose.yml`.
+Контент хранится в Docker volume `es-doc-content` и автоматически обновляется при запуске контейнера из репозитория [es-doc-assets](https://github.com/sovue/es-doc-assets).
 
-Для разработки с локальными ассетами:
+**Обновление контента:**
+```sh
+# Перезапустите контейнеры для автоматического git pull
+docker-compose restart web
+
+# Или для ручного обновления (внутри контейнера)
+docker-compose exec web bash -c "cd /app/content && git pull"
+```
+
+**Настройка репозитория контента:**
+Измените переменные окружения в `docker-compose.yml`:
+```yaml
+environment:
+  - ASSETS_REPO=https://github.com/sovue/es-doc-assets.git
+  - ASSETS_BRANCH=main
+```
+
+**Разработка с локальными ассетами:**
 1. Клонируйте репозиторий ассетов: `git clone https://github.com/sovue/es-doc-assets.git`
-2. Раскомментируйте строку в `docker-compose.yml`:
+2. В `docker-compose.yml` закомментируйте volume: `# - es-doc-content:/app/content`
+3. Раскомментируйте строку для локальных ассетов:
    ```yaml
    volumes:
      - ../es-doc-assets:/app/content
    ```
-3. Перезапустите контейнеры: `docker compose up --build`
+4. Перезапустите контейнеры: `docker compose up --build`
 
 ### Продакшен-деплой
 

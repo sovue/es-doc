@@ -29,3 +29,5 @@ config.yaml
 .last-successful-release
 .previous-successful-release
 .deploy.lock
+content/*
+!content/main
