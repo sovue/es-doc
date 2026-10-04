@@ -229,6 +229,9 @@ class _ConfigContainer():
         # Rows: {name, platform, description, url, action, contact_url, contact_label}.
         self.news_resources = []
 
+        # Homepage noticeboard, in display order, from assets/home_notices.yaml.
+        self.home_notices = []
+
         # Everything on «Ресурсы сообщества» that isn't a scanned resource:
         # archives, tool sites, packs hosted elsewhere. Parsed from links.yaml
         # at startup (see utils/lifespan/links_cache.py). Same row shape as

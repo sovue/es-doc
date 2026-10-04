@@ -8,6 +8,7 @@ from ..config import CONFIG
 from ..livereload import shutdown as shutdown_livereload
 from ..logging import root_logger
 from .docs_cache import cache_docs
+from .home_notices_cache import parse_home_notices
 from .links_cache import parse_links
 from .materials_cache import parse_materials
 from .news_resources_cache import parse_news_resources
@@ -108,6 +109,11 @@ async def lifespan(app: FastAPI):
         await asyncio.to_thread(parse_links)
     except Exception:
         logger.exception('Parsing links.yaml failed; the community links section will be empty until restart.')
+
+    try:
+        await asyncio.to_thread(parse_home_notices)
+    except Exception:
+        logger.exception('Parsing home_notices.yaml failed; the homepage board will be empty until refresh.')
 
     try:
         await asyncio.to_thread(parse_redirects)
