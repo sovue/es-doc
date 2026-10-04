@@ -673,14 +673,13 @@ def _parse_characters(root, described):
     return items
 
 
-def _build_search_items(collection):
-    """Flat corpus rows for the site-wide search, one per original resource.
-    `kind: res` lets the search dropdown split them from doc results."""
+def _build_search_items(collection, collection_name='original'):
+    """Flat corpus rows for either resource collection."""
     items = []
     for category in CATEGORY_TITLES:
         if category not in collection:
             continue
-        if category == 'sprites':
+        if category == 'sprites' and collection_name == 'original':
             entries = [(g, i) for g in collection[category] for i in g['sprites']]
             family_rows = {
                 item['name']: family['primary']['rid']
@@ -693,18 +692,21 @@ def _build_search_items(collection):
         for group, item in entries:
             if not item['declared']:
                 continue
-            url = f'/resources/original/{category}#{quote(item["rid"])}'
-            if category == 'sprites':
+            url = f'/resources/{collection_name}/{category}#{quote(item["rid"])}'
+            if category == 'sprites' and collection_name == 'original':
                 url = (
                     f'/resources/original/sprites?q={quote(item["code"])}'
                     f'#{quote(family_rows[item["name"]])}'
                 )
             row = {
-                'label': item['code'],
+                'label': item['code'] if collection_name == 'original' else item['title'],
                 'context': CATEGORY_TITLES[category] if not group else f'{CATEGORY_TITLES[category]} / {group["title"]}',
                 'url': url,
                 'kind': 'res',
             }
+            if collection_name == 'community':
+                row['context'] = 'Ресурсы сообщества / ' + row['context']
+                row['keywords'] = ' '.join([item['file'], *item.get('captions', [])])
             # Real descriptions (auto bg/music or hand-written) are searchable
             # too; the "уточняется" placeholder would only add noise.
             if item['desc'] and item['desc'] not in (PLACEHOLDER_DESC, UNDECLARED_DESC):
@@ -735,8 +737,10 @@ def parse_resources():
     original['cg'] = [i for i in original['cg'] if not i['nsfw']]
 
     CONFIG.resources = {'original': original, 'community': community}
-    # Merged into CONFIG.search_items by the docs cache refresh (docs_cache.py).
-    CONFIG.resource_search_items = _build_search_items(original)
+    # Merged into CONFIG.search_items at startup and after assets refreshes.
+    CONFIG.resource_search_items = (
+        _build_search_items(original) + _build_search_items(community, 'community')
+    )
 
     logger.info('Resources parsed: ' + ', '.join(
         f'{kind} {sum(len(g["sprites"]) for g in items) if kind == "sprites" else len(items)}'

@@ -22,7 +22,7 @@ test('an empty category preserves view and filters for the return to a populated
     assert.deepEqual(replacements, [], 'empty categories must keep the incoming URL state');
 });
 
-function directory(query = '') {
+function directory(query = '', hash = '') {
     const replacements = [];
     const items = [
         { dataset: { name: 'Alpha closed', status: 'closed' } },
@@ -71,12 +71,17 @@ function directory(query = '') {
     };
     vm.runInNewContext(script, {
         document: { querySelector: () => root },
-        location: { pathname: '/specialists', search: query },
+        location: { pathname: '/specialists', search: query, hash },
         history: { replaceState: (...args) => replacements.push(args[2]) },
         URLSearchParams, Intl,
     });
     return { names: items.map(item => item.dataset.name), replacements, previewRemoved, monogramVisible, previewLinkRemoved, skeletonCleared, brokenAvatarRemoved, avatarSkeletonCleared };
 }
+
+test('directory initialization preserves a search result profile anchor', () => {
+    const result = directory('?category=coders', '#specialist-luna');
+    assert.ok(result.replacements.every(url => url.endsWith('#specialist-luna')));
+});
 
 test('default sort puts open commissions first and sorts names within each status', () => {
     const result = directory();

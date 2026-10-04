@@ -215,9 +215,10 @@ class _ConfigContainer():
         # {'original': {category: items}, 'community': {...}} from the game's
         # declarations and community files (see lifespan/resources_cache.py).
         self.resources = {}
-        # Search-corpus rows for resources; docs_cache merges them into
-        # search_items after every docs refresh.
+        # Search-corpus rows for resources and browser paths; search_cache
+        # merges them with docs, sections, and specialists on refresh.
         self.resource_search_items = []
+        self.browser_search_items = []
 
         # Unified directory, parsed from specialists.yaml at startup
         # (see utils/lifespan/specialists_cache.py).
