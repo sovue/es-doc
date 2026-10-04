@@ -118,6 +118,8 @@ jobs:
           git -c safe.directory=/app/content -C /app/content update-ref "refs/remotes/origin/\${ASSETS_BRANCH}" HEAD
           git -c safe.directory=/app/content -C /app/content branch --set-upstream-to="origin/\${ASSETS_BRANCH}"
           chown -R app:app /app/content
+          # Bind mounts retain host permissions; app must read static files and templates.
+          chmod -R a+rX /app/static /app/templates
           ASSETS
 
           docker compose --env-file .env.production -f docker-compose.yml up -d --no-build --force-recreate --wait --wait-timeout 180 || {
