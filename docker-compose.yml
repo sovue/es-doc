@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     volumes:
       # Volume для контента (хранится локально, не в образе)
-      - es-doc-content:/app/content
+      - ./content:/app/content
       # Монтирование для разработки (раскомментируйте при наличии репы с ассетами(es-doc-assets) в директории с приложением или рядом с ним)
       # - ../es-doc-assets:/app/content
       - ./static:/app/static
