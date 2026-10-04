@@ -104,6 +104,7 @@ jobs:
           git pull
           cd ..
           cp -r ./es-doc-assets/* es-doc/content/
+          cd es-doc
           # Serialize application and assets deployments across both repositories.
           exec 9>.deploy.lock
           flock -x 9
