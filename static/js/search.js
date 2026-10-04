@@ -1,4 +1,4 @@
-/* Global documentation search — a thin type-ahead over the server-side search
+/* Global site search — a thin type-ahead over the server-side search
    endpoint (/api/search?q=…). The backend does the matching, scoring and
    ranking; this only debounces input, renders the ranked results, highlights
    the query, and wires keyboard/ARIA behaviour. Progressive enhancement: the
@@ -13,6 +13,10 @@
     if (!form || !input || !list) return;
 
     var LIMIT = 8;
+    var GROUPS = {
+        section: 'Разделы', doc: 'Документация', res: 'Ресурсы',
+        specialist: 'Специалисты', file: 'Файлы и папки'
+    };
     var matches = [];        // latest ranked results from the server
     var active = -1;         // index into `matches` of the highlighted option
     var seq = 0;             // request counter — drop out-of-order responses
@@ -63,10 +67,10 @@
         var html = '';
         for (var i = 0; i < matches.length; i++) {
             var m = matches[i];
-            // Resources are grouped after docs (see update()); a quiet divider
-            // marks where the doc results end.
-            if (m.kind === 'res' && (i === 0 || matches[i - 1].kind !== 'res')) {
-                html += '<li class="nav-search-sep" role="presentation" aria-hidden="true">Ресурсы</li>';
+            var kind = m.kind || 'doc';
+            if (i === 0 || (matches[i - 1].kind || 'doc') !== kind) {
+                html += '<li class="nav-search-sep" role="presentation" aria-hidden="true">' +
+                    esc(GROUPS[kind] || 'Результаты') + '</li>';
             }
             var ctx = m.context
                 ? '<span class="nav-search-ctx">' + esc(m.context) + ' › </span>'
@@ -95,10 +99,20 @@
             .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
             .then(function (results) {
                 if (mine !== seq) return;   // a later keystroke already fired
-                // Keep each kind's own ranking but show docs as one block and
-                // resources as another, so the divider always sits between them.
-                matches = results.filter(function (m) { return m.kind !== 'res'; })
-                    .concat(results.filter(function (m) { return m.kind === 'res'; }));
+                // Group by type in order of each group's highest-ranked hit.
+                // The top server result stays first, and ranking within each
+                // group is preserved for mouse and keyboard navigation alike.
+                var kinds = [];
+                results.forEach(function (m) {
+                    var kind = m.kind || 'doc';
+                    if (kinds.indexOf(kind) === -1) kinds.push(kind);
+                });
+                matches = [];
+                kinds.forEach(function (kind) {
+                    matches = matches.concat(results.filter(function (m) {
+                        return (m.kind || 'doc') === kind;
+                    }));
+                });
                 active = -1;
                 render(q);   // original case; render() lowercases for highlighting
             })

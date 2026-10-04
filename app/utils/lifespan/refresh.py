@@ -13,6 +13,7 @@ from .materials_cache import parse_materials
 from .news_resources_cache import parse_news_resources
 from .redirects_cache import parse_redirects
 from .resources_cache import parse_resources
+from .search_cache import cache_browser, rebuild_search
 from .specialists_cache import parse_specialists
 from .sprites_cache import parse_sprites
 from .warpers_cache import parse_warpers
@@ -24,11 +25,19 @@ def _assets_root():
     return CONFIG.docs_path.parent
 
 
-def _resync_search():
-    # Rebuilt resource rows must reach the merged search corpus even when no
-    # doc changed; forcing the docs cache stale makes the cache_docs pass at
-    # the end of the same batch re-merge everything.
-    CONFIG.page_last_edited = 0
+def _refresh_browser():
+    cache_browser()
+    rebuild_search()
+
+
+def _refresh_specialists():
+    parse_specialists()
+    rebuild_search()
+
+
+def _refresh_warpers():
+    parse_warpers()
+    rebuild_search()
 
 
 def _refresh_sprites():
@@ -36,12 +45,12 @@ def _refresh_sprites():
     # a sprites.rpy change re-parses both, in startup order.
     parse_sprites()
     parse_resources()
-    _resync_search()
+    rebuild_search()
 
 
 def _refresh_resources():
     parse_resources()
-    _resync_search()
+    rebuild_search()
 
 
 def _refresh_docs():
@@ -110,13 +119,14 @@ def _watchers():
         ), _refresh_sprites),
 
         ('resources', lambda path: resource_sources(path) or community_files(path), _refresh_resources),
+        ('browser', _under(res), _refresh_browser),
 
-        ('specialists.yaml', _one_of(assets / 'specialists.yaml'), parse_specialists),
+        ('specialists.yaml', _one_of(assets / 'specialists.yaml'), _refresh_specialists),
         ('news_resources.yaml', _one_of(assets / 'news_resources.yaml'), parse_news_resources),
         ('materials.yaml', lambda path: materials_yaml(path) or materials_files(path), parse_materials),
         ('links.yaml', _one_of(assets / 'links.yaml'), parse_links),
         ('redirects.yaml', _one_of(assets / 'redirects.yaml'), parse_redirects),
-        ('warpers.yaml', _one_of(assets / 'warpers.yaml'), parse_warpers),
+        ('warpers.yaml', _one_of(assets / 'warpers.yaml'), _refresh_warpers),
 
         # Everything under docs/: the articles themselves, tree.yaml, and the
         # images they embed. Docs go last in this list on purpose — see the
@@ -160,9 +170,8 @@ async def worker_refresh_caches():
             if CONFIG.debug:
                 bump()
 
-            # In declaration order, which puts docs last: a resources re-parse
-            # in this same batch marks the search corpus stale (_resync_search),
-            # and the docs pass is what merges it back in.
+            # In declaration order, with docs last so a batch also containing
+            # article changes merges the latest documentation index.
             for name, matches, refresh in watchers:
                 if not any(matches(path) for path in changed):
                     continue

@@ -196,8 +196,8 @@ def _score(label, q):
 
 def search(query, limit=8):
     """Rank the cached corpus against `query`, returning the top matches as
-    [{label, doc, anchor, context}]. Ties break on original corpus order so
-    doc titles precede their headings. Runs over CONFIG.search_items, which the
+    rows with a document/anchor or a destination URL. Ties break on original
+    corpus order so doc titles precede their headings. Runs over CONFIG.search_items, which the
     lifespan cache refresh keeps in memory — no disk access per query."""
     q = (query or '').strip().lower()
     if not q:
@@ -206,12 +206,12 @@ def search(query, limit=8):
     scored = []
     for pos, item in enumerate(CONFIG.search_items):
         s = _score(item['label'], q)
-        if s == -1 and item.get('desc'):
-            # Resource descriptions are searchable too, ranked below any
-            # label match (offset past the 0–2 label scores).
-            d = _score(item['desc'], q)
-            if d != -1:
-                s = d + 3
+        if s == -1:
+            # Descriptions and alternate names/paths rank below label matches.
+            extra = [_score(item[field], q) for field in ('desc', 'keywords') if item.get(field)]
+            matched = [score for score in extra if score != -1]
+            if matched:
+                s = min(matched) + 3
         if s != -1:
             scored.append((s, pos, item))
 

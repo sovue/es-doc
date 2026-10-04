@@ -1,5 +1,6 @@
 from ..config import CONFIG
-from ..docs import build_index, build_items, build_tree
+from ..docs import build_index, build_tree
+from .search_cache import cache_browser, rebuild_search
 
 from ..logging import root_logger
 
@@ -41,9 +42,8 @@ def cache_docs(silent=False):
         index = build_index()
 
         CONFIG.search_index = index
-        # Docs first, resources after: the search endpoint breaks score ties on
-        # corpus order, and the dropdown splits the two kinds visually.
-        CONFIG.search_items = build_items(index) + CONFIG.resource_search_items
+        cache_browser()
+        rebuild_search()
         CONFIG.docs_tree = build_tree(index)
 
         logger.info('Page file cache updated.')

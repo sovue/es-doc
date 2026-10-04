@@ -156,7 +156,7 @@
             <section id="view-gallery" aria-label="Галерея специалистов">
                 <ul class="artists-gallery" role="list">
                     {% for a in specialists %}
-                    <li class="artist-card" data-artist data-name="{{ a.name }}" data-status="{{ a.status }}">
+                    <li class="artist-card" id="specialist-{{ a.slug }}" data-artist data-name="{{ a.name }}" data-status="{{ a.status }}">
                         {{ preview(a) }}
                         <div class="artist-card-body">
                             <div class="artist-card-head">

@@ -46,7 +46,7 @@
         if (statusSel && statusSel.value) p.set('status', statusSel.value);
         if (sortSel && sortSel.value && sortSel.value !== 'open') p.set('sort', sortSel.value);
         const qs = p.toString();
-        history.replaceState(null, '', location.pathname + (qs ? '?' + qs : ''));
+        history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + (location.hash || ''));
         root.querySelectorAll('.specialist-category').forEach(link => {
             const params = new URLSearchParams(p);
             if (link.dataset.category) params.set('category', link.dataset.category);
