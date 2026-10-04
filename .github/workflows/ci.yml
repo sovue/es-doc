@@ -99,6 +99,7 @@ jobs:
           cd -- $(printf '%q' "${DEPLOY_PATH}")
           cd ..
           cd es-doc-assets
+          git checkout main
           git fetch origin main
           git reset --hard origin/main
           git pull
@@ -108,8 +109,10 @@ jobs:
           # Serialize application and assets deployments across both repositories.
           exec 9>.deploy.lock
           flock -x 9
+          git checkout main
           git fetch origin main
           git reset --hard origin/main
+          git pull
           set -Eeuo pipefail
           # Bind mounts retain host permissions; app must read static files and templates.
           # chmod -R a+rX /app/static /app/templates
