@@ -15,7 +15,7 @@ ElementTree.register_namespace('', SITEMAP_NS)
 
 STATIC_PAGES = (
     '/', '/docs/', '/authors', '/specialists', '/materials', '/news-resources',
-    '/support', '/resources/', '/resources/community',
+    '/support', '/resources/', '/resources/community', '/tools',
 )
 
 

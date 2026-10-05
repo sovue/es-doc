@@ -16,6 +16,7 @@ SECTIONS = (
     ('Браузер файлов', '/resources/browser'),
     ('Специалисты', '/specialists'),
     ('Материалы', '/materials'),
+    ('Инструменты Ren’Py / UnRpyc / UnRPA', '/tools'),
     ('Площадки для публикации', '/news-resources'),
     ('Авторы', '/authors'),
     ('Поддержка', '/support'),

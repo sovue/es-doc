@@ -1,0 +1,22 @@
+ES Doc browser tools
+
+unrpyc v2.0.3 / MIT
+https://github.com/CensoredUsername/unrpyc
+Revision: 3ae8334ed71a05535927dcc559663d3aca51215b
+Copyright (c) 2012-2024 Yuri K. Schlesner, CensoredUsername, Jackmcbarn
+Original source and license: vendor.zip / licenses/unrpyc/LICENSE
+
+unrpa / GPL-3.0-or-later / Gareth Latty
+https://github.com/Lattyware/unrpa
+Revision: 005b10abec590db374f23fd8d4b111963792a15a
+Original source and license: vendor.zip / licenses/unrpa/COPYING
+
+Pyodide 0.29.3 / MPL-2.0 and bundled component licenses
+https://github.com/pyodide/pyodide
+License: pyodide/0.29.3/LICENSE
+
+The Python packages in vendor.zip are unmodified upstream source files.
+engine.py is ES Doc's adapter for bounded reads, safe archive indexing,
+path validation, split segments, streamed ZIP output and browser progress.
+These tools do not execute game scripts or inject files into a game.
+ZIP exports include original archive contents and an esdoc-report.txt file.
