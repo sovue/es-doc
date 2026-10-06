@@ -2,7 +2,7 @@
 {% set page_title = 'Инструменты — ES Doc' %}
 {% set body_class = 'bg-solid scene-page' %}
 {% set active = 'tools' %}
-{% set extra_css = ['/static/css/tools.css'] %}
+{% set extra_css = ['/static/css/syntax.css', '/static/css/tools.css'] %}
 
 {% block content %}
 <div class="page tools-page">
@@ -46,21 +46,23 @@
                     <input type="file" id="tools-files" accept=".rpa,.rpyc,.rpymc" multiple hidden>
                     <input type="file" id="tools-folder" webkitdirectory multiple hidden>
                     <div class="tools-options" id="tools-options">
-                        <details class="tools-advanced"><summary>Настройки декомпиляции</summary>
+                        <details class="tools-advanced"><summary><span class="tools-ui-icon tools-icon-settings" aria-hidden="true"></span>Настройки декомпиляции<span class="tools-ui-icon tools-icon-chevron" aria-hidden="true"></span></summary>
+                            <div class="tools-disclosure-body">
                             <label><input type="checkbox" id="tools-try-harder" aria-describedby="tools-try-harder-help"> Расширенная декомпиляция</label>
                             <p id="tools-try-harder-help">Для .rpyc с изменённым форматом, если обычная декомпиляция не сработала. Работает медленнее.</p>
                             <label><input type="checkbox" id="tools-no-init-offset"> Не восстанавливать init offset</label>
                             <p>Полезно, если нужно сохранить явные приоритеты init-блоков.</p>
+                            </div>
                         </details>
                     </div>
                     <section id="tools-queue" class="tools-queue" hidden aria-labelledby="tools-queue-heading">
-                        <div class="tools-queue-heading"><h3 id="tools-queue-heading">Очередь файлов</h3>
+                        <div class="tools-queue-heading"><h3 id="tools-queue-heading">Добавленные файлы</h3>
                             <button type="button" class="tools-text-button" id="tools-clear">Очистить</button></div>
                         <p id="tools-count" class="tools-meta"></p>
                         <ul id="tools-file-list" class="tools-file-list" aria-label="Добавленные файлы"></ul>
                     </section>
                     <div class="tools-actions">
-                        <button type="button" class="tools-button tools-button-primary" id="tools-start" disabled>Декомпилировать</button>
+                        <button type="button" class="tools-button" id="tools-start" hidden disabled>Повторить чтение списка</button>
                         <button type="button" class="tools-button" id="tools-cancel" hidden>Отменить</button>
                     </div>
                     <div class="tools-progress" id="tools-progress" hidden>
@@ -69,15 +71,42 @@
                     </div>
                     <p id="tools-status" class="tools-status" role="status" aria-live="polite"></p>
                     <div id="tools-result" class="tools-result" hidden>
-                        <button id="tools-download-all" class="tools-button tools-button-primary" type="button" hidden>Скачать все</button>
-                        <div id="tools-downloads" class="tools-downloads"></div>
-                        <p id="tools-result-description"></p>
+                        <div class="tools-warning-host tools-result-meta">
+                            <p id="tools-result-description"></p>
+                            <details id="tools-warnings" class="tools-warnings" hidden>
+                                <summary id="tools-warnings-summary"></summary>
+                                <ul id="tools-warning-list" tabindex="0" aria-label="Причины предупреждений"></ul>
+                            </details>
+                        </div>
+                        <div id="tools-browse-actions" class="tools-browse-actions" hidden>
+                            <label id="tools-archive-label" hidden>Архив
+                                <select id="tools-archive" aria-label="Архив для просмотра"></select>
+                            </label>
+                        </div>
+                        <section id="tools-browser" class="tools-browser" aria-label="Просмотр файлов" hidden>
+                            <div class="tools-browser-head">
+                                <h3 id="tools-browser-title">Файлы</h3>
+                                <input id="tools-browser-search" class="tools-browser-search" type="search" placeholder="Поиск по имени…" aria-label="Поиск по файлам">
+                            </div>
+                            <nav id="tools-browser-crumbs" class="tools-browser-crumbs" aria-label="Путь в архиве"></nav>
+                            <p id="tools-browser-status" class="tools-meta" role="status" aria-live="polite"></p>
+                            <div class="tools-browser-layout">
+                                <ul id="tools-browser-list" class="tools-browser-list" aria-label="Файлы и папки архива"></ul>
+                                <div id="tools-browser-preview" class="tools-browser-preview" aria-label="Предпросмотр файла"></div>
+                            </div>
+                        </section>
+                        <div class="tools-export">
+                            <button id="tools-download-all" class="tools-button tools-button-primary" type="button" hidden><span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span><span>Скачать всё</span></button>
+                            <div id="tools-downloads" class="tools-downloads"></div>
+                        </div>
                     </div>
                 </div>
-                <details class="tools-help"><summary>Подробнее</summary>
+                <details class="tools-help"><summary><span class="tools-ui-icon tools-icon-info" aria-hidden="true"></span>Подробнее<span class="tools-ui-icon tools-icon-chevron" aria-hidden="true"></span></summary>
+                    <div class="tools-disclosure-body">
                     <p>UnRpyc восстанавливает .rpyc и .rpymc. Файлы Ren'Py 6/7 тоже обрабатываются, но совместимость зависит от версии игры. Комментарии и исходное форматирование в скомпилированных файлах не сохраняются.</p>
                     <p>UnRPA распаковывает RPA-2.0, RPA-3.0 и совместимые варианты, распознаваемые UnRPA. Изменённые или зашифрованные архивы могут не поддерживаться.</p>
                     <p>Исходные проекты: <a href="https://github.com/CensoredUsername/unrpyc">unrpyc</a>, <a href="https://github.com/lattyware/unrpa">unrpa</a>.</p>
+                    </div>
                 </details>
             </section>
             <section class="tools-links" aria-labelledby="tools-links-heading">

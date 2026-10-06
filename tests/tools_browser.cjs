@@ -35,14 +35,17 @@ const origin = new URL(target).origin;
         await page.keyboard.press('Escape');
 
         const finish = async () => {
+            await page.locator('#tools-download-all').click();
             await page.locator('#tools-result').waitFor({ state: 'visible', timeout: 90000 });
-            assert(await page.locator('#tools-downloads a').count());
+            await page.waitForFunction(() => document.querySelector('#tools-downloads a')
+                && document.querySelector('#tools-browser').getAttribute('aria-busy') === 'false', undefined, { timeout: 90000 });
         };
         const save = async name => {
             const promise = page.waitForEvent('download');
             await page.locator('#tools-downloads a').first().click();
             await (await promise).saveAs(path.join(root, 'temp/' + name));
-            assert.equal(await page.locator('#tools-queue').isVisible(), false);
+            assert.equal(await page.locator('#tools-queue').isVisible(),
+                (await page.locator('#tools-result-description').textContent()).includes('Ошибок:'));
         };
         const clear = async () => {
             if (await page.locator('#tools-clear').isVisible()) await page.locator('#tools-clear').click();
@@ -50,10 +53,16 @@ const origin = new URL(target).origin;
 
         // Cancellation tears down the loading worker; retry must succeed.
         await pick('files', path.join(fixtures, 'game/scenario/script.rpyc'));
-        await page.locator('#tools-start').click();
+        assert.equal(await page.locator('#tools-downloads a').count(), 0);
+        await page.locator('#tools-browser-list button').first().click();
         await page.locator('#tools-cancel').click();
         assert.match(await page.locator('#tools-status').textContent(), /отменена/);
         await page.locator('#tools-start').click();
+        await page.locator('#tools-browser-list button').first().waitFor({ state: 'visible' });
+        await page.locator('#tools-browser-list button').first().click();
+        await page.locator('#tools-browser-preview pre').waitFor({ state: 'visible' });
+        assert.match(await page.locator('#tools-browser-preview pre').textContent(), /label start:/);
+        assert(await page.locator('#tools-browser-preview pre .k').count());
         await finish();
         await save('tools-browser-rpyc.zip');
         assert.equal(await page.locator('#tools-downloads a').getAttribute('download'), 'unrpyc.zip');
@@ -61,24 +70,25 @@ const origin = new URL(target).origin;
         // A warm worker processes a recursive directory and restores paths.
         await clear();
         await page.locator('input[value="unrpyc"]').check();
-        await pick('folder', path.join(fixtures, 'game'));
-        assert.match(await page.locator('#tools-file-list').textContent(), /game\/scenario\/script.rpyc/);
-        await page.locator('#tools-start').click();
+        await pick('folder', path.join(fixtures, 'game/scenario'));
+        await page.locator('#tools-browser-search').fill('script.rpyc');
+        assert.match(await page.locator('#tools-browser-list').textContent(), /scenario\/script.rpyc/);
         await finish();
         await save('tools-browser-folder.zip');
 
         await clear();
         await page.locator('input[value="unrpa"]').check();
         await pick('files', path.join(fixtures, 'game/data.rpa'));
-        await page.locator('#tools-start').click();
+        await page.waitForFunction(() => document.querySelector('#tools-browser').getAttribute('aria-busy') === 'false');
+        assert.equal(await page.locator('#tools-downloads a').count(), 0);
         await finish();
         await save('tools-browser-extracted.zip');
-        assert.match(await page.locator('#tools-result-description').textContent(), /файлов в результате: 3/);
+        assert.match(await page.locator('#tools-result-description').textContent(), /Файлов в результате: 3/);
         assert.equal(await page.locator('#tools-downloads a').getAttribute('download'), 'data.zip');
 
         await clear();
         await pick('files', [path.join(fixtures, 'game/data.rpa'), path.join(fixtures, 'images.rpa')]);
-        await page.locator('#tools-start').click();
+        await page.waitForFunction(() => document.querySelector('#tools-browser').getAttribute('aria-busy') === 'false');
         await finish();
         assert.deepEqual(await page.locator('#tools-downloads a').evaluateAll(links => links.map(link => link.download)), ['data.zip', 'images.zip']);
         assert(await page.locator('#tools-download-all').isVisible());
@@ -94,7 +104,6 @@ const origin = new URL(target).origin;
             document.getElementById('tools-drop').dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer: transfer }));
         }, script);
         assert(await page.locator('input[value="unrpyc"]').isChecked());
-        await page.locator('#tools-start').click();
         await finish();
         assert.match(await page.locator('#tools-result-description').textContent(), /Ошибок: 1/);
         await save('tools-browser-partial.zip');
@@ -110,14 +119,13 @@ const origin = new URL(target).origin;
 
         if (process.env.UNRPYC_FIXTURE) {
             await page.locator('#tools-files').setInputFiles(process.env.UNRPYC_FIXTURE);
-            await page.locator('#tools-start').click();
             await finish();
             await save('tools-browser-upstream.zip');
         }
 
         assert.deepEqual(errors, []);
         assert.deepEqual(requests.filter(([method, url]) => method !== 'GET' || !url.startsWith(origin + '/')), []);
-        console.log('Browser processing passed: picker menu, cancellation/retry, RPYC, recursive folder, RPA with automatic decompilation, drop, partial failure, soft navigation. All requests were local GETs.');
+        console.log('Browser processing passed: picker menu, cancellation/retry, lazy RPYC/RPA previews, local syntax highlighting, bulk export, recursive folder, partial failure, soft navigation. All requests were local GETs.');
     } finally {
         await browser.close();
     }

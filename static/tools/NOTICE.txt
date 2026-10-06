@@ -19,4 +19,9 @@ The Python packages in vendor.zip are unmodified upstream source files.
 engine.py is ES Doc's adapter for bounded reads, safe archive indexing,
 path validation, split segments, streamed ZIP output and browser progress.
 These tools do not execute game scripts or inject files into a game.
-ZIP exports include original archive contents and an esdoc-report.txt file.
+ZIP exports include original archive contents and recovered source scripts.
+
+Pygments 2.20.0 / BSD-2-Clause
+https://github.com/pygments/pygments
+Original wheel and license: syntax.zip / pygments-2.20.0.dist-info/licenses/LICENSE
+Ren'Py lexer: ES Doc's shared app/utils/renpy_lexer.py.

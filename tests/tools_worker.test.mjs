@@ -12,8 +12,15 @@ async function run(mode, paths, errors = []) {
         globals: { set: (name, value) => {
             if (name === 'job_json') job = JSON.parse(value);
             else if (name === 'output_limit') limits.push(value);
-        } },
+        }, delete() {} },
         runPythonAsync: async source => {
+            if (source.includes('archive.infolist()')) {
+                return JSON.stringify([{ path: 'scenario/script.rpy', size: 12 }]);
+            }
+            if (source.includes('esdocPreview(item.filename')) {
+                self.esdocPreview('scenario/script.rpy', { toJs: () => new Uint8Array([65, 66]) });
+                return;
+            }
             if (!source.includes('engine.process')) return;
             jobs.push(job);
             self.esdocNotify({ toJs: () => ({ type: 'file', index: 0, state: 'done', path: job.files[0].path }) });
@@ -27,7 +34,7 @@ async function run(mode, paths, errors = []) {
     vm.runInContext(source.replace('let runtimePromise;', 'let runtimePromise = Promise.resolve(runtime);'), context);
     await self.onmessage({ data: { type: 'run', mode, config: {}, options: {},
         files: paths.map(path => ({ path, file: {} })) } });
-    return { messages, jobs, limits };
+    return { messages, jobs, limits, self };
 }
 
 test('multiple RPAs produce separate named ZIP streams and preserve their input sources', async () => {
@@ -54,4 +61,17 @@ test('large error lists do not exceed the JavaScript argument limit', async () =
     assert.equal(messages.at(-1).type, 'done');
     assert.equal(messages.at(-1).result.failed, errors.length);
     assert.equal(messages.at(-1).result.errors.length, errors.length);
+});
+
+test('completed output supports listing and reading files in the worker', async () => {
+    const { messages, self } = await run('unrpyc', ['script.rpyc']);
+    await self.onmessage({ data: { type: 'browse-list', blob: new Blob(), requestId: 3 } });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(messages.at(-1).entries[0].path, 'scenario/script.rpy');
+    assert.equal(messages.at(-1).entries[0].size, 12);
+    await self.onmessage({ data: { type: 'browse-read', path: 'scenario/script.rpy', requestId: 4 } });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(messages.at(-1).type, 'browse-file');
+    assert.equal(messages.at(-1).requestId, 4);
+    assert.deepEqual([...new Uint8Array(messages.at(-1).buffer)], [65, 66]);
 });

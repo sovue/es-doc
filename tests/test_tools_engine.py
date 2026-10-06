@@ -8,6 +8,7 @@ import zipfile
 import zlib
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'static/tools/vendor.zip'))
@@ -71,6 +72,53 @@ class EngineTests(unittest.TestCase):
             result, contents, _ = self.run_job([(name, data)])
             self.assertEqual(list(contents), ['script.rpy'])
             self.assertEqual(result['succeeded'], 1)
+
+    def test_catalog_lists_without_decompiling_then_reads_only_clicked_script(self):
+        with TemporaryDirectory(dir=ROOT / 'temp') as directory:
+            source = Path(directory) / 'archive'
+            source.write_bytes(archive({'scenario/a.rpyc': [(self.script(), b'')],
+                                        'other.rpyc': [(b'invalid', b'')]}))
+            with patch.object(self.engine, 'decompile', wraps=self.engine.decompile) as decompile:
+                catalog = self.engine.Catalog([{'path': 'data.rpa', 'source': str(source)}])
+                self.assertEqual(len(catalog.listing()), 2)
+                self.assertEqual(decompile.call_count, 0)
+                path, data, warnings = catalog.read('0:scenario/a.rpyc', {})
+                self.assertEqual(path, 'scenario/a.rpy')
+                self.assertIn(b'label start:', data)
+                self.assertEqual(decompile.call_count, 1)
+                self.assertEqual(catalog.read('0:scenario/a.rpyc', {}), (path, data, warnings))
+                self.assertEqual(decompile.call_count, 1)
+                catalog.read('0:scenario/a.rpyc', {'no_init_offset': True})
+                self.assertEqual(decompile.call_count, 2)
+
+    def test_lazy_preview_preserves_existing_source_and_split_segments(self):
+        with TemporaryDirectory(dir=ROOT / 'temp') as directory:
+            source = Path(directory) / 'archive'
+            source.write_bytes(archive({'script.rpyc': [(b'invalid', b'')],
+                'script.rpy': [(b'start:', b'label '), (b'\n    pass\n', b'')]}))
+            catalog = self.engine.Catalog([{'path': 'data.rpa', 'source': str(source)}])
+            path, data, warnings = catalog.read('0:script.rpyc', {})
+            self.assertEqual((path, data), ('script.rpy', b'label start:\n    pass\n'))
+            self.assertEqual(len(warnings), 1)
+
+    def test_catalog_reports_bad_archives_without_hiding_good_sources(self):
+        with TemporaryDirectory(dir=ROOT / 'temp') as directory:
+            source = Path(directory) / 'good'
+            source.write_bytes(self.script())
+            bad = Path(directory) / 'bad'
+            bad.write_bytes(archive({'../unsafe': [(b'x', b'')]}))
+            catalog = self.engine.Catalog([{'path': 'bad.rpa', 'source': str(bad)},
+                {'path': 'good.rpyc', 'source': str(source)}])
+            self.assertEqual(len(catalog.errors), 1)
+            self.assertEqual(catalog.listing()[0]['id'], '1:good.rpyc')
+
+    def test_local_highlighter_uses_shared_renpy_lexer_and_escapes_markup(self):
+        with patch.dict(sys.modules, {'renpy_lexer': __import__('app.utils.renpy_lexer', fromlist=['RenPyLexer'])}):
+            html = self.engine.preview_html('script.rpy', b'label start:\n    "<script>alert(1)</script>"\n')
+        self.assertIn('class="k"', html)
+        self.assertIn('class="w"', html)
+        self.assertNotIn('<script>', html)
+        self.assertIn('&lt;', html)
 
     def test_multiple_archives_cannot_be_merged_into_one_zip(self):
         data = archive({'script.rpy': [(b'source', b'')]})
@@ -161,6 +209,7 @@ class EngineTests(unittest.TestCase):
         result, contents, _ = self.run_job([('data.rpa', data)], 'combined')
         self.assertEqual(contents['script.rpy'], b'original source')
         self.assertEqual(result['warnings'], 1)
+        self.assertIn('сохранён без замены', result['warning_details'][0])
 
     def test_shared_pickle_segments_are_normalized_once(self):
         # Memoized lists make many paths share one list in a tiny pickle.

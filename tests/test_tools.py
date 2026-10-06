@@ -33,9 +33,21 @@ class ToolsRouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn('Попытаться снять обфускацию', response.text)
         self.assertNotIn('tools-report', response.text)
         self.assertIn('tools-download-all', response.text)
+        self.assertIn('id="tools-browser-search" class="tools-browser-search"', response.text)
+        self.assertIn('/static/css/syntax.css', response.text)
+        self.assertIn('tools-warning-host tools-result-meta', response.text)
+        self.assertIn('aria-label="Причины предупреждений"', response.text)
+        self.assertNotIn('Часть кода могла восстановиться неточно', response.text)
+        self.assertLess(response.text.index('id="tools-browser-preview"'), response.text.index('id="tools-download-all"'))
 
     async def test_engine_and_runtime_are_served_locally(self):
-        for path in ('engine.py', 'vendor.zip', 'pyodide/0.29.3/pyodide.mjs', 'pyodide/0.29.3/pyodide.asm.wasm'):
+        stylesheet = await self.get('/static/css/tools.css')
+        self.assertEqual(stylesheet.status_code, 200)
+        self.assertIn('.tools-icon-warning { --tools-icon: url("data:image/svg+xml,', stylesheet.text)
+        self.assertIn('color: var(--attention)', stylesheet.text)
+        self.assertIn('.tools-status.is-error { color: var(--danger); }', stylesheet.text)
+        self.assertIn('--tools-error-icon:', stylesheet.text)
+        for path in ('engine.py', 'vendor.zip', 'syntax.zip', 'renpy_lexer.py', 'pyodide/0.29.3/pyodide.mjs', 'pyodide/0.29.3/pyodide.asm.wasm'):
             response = await self.get('/static/tools/' + path)
             self.assertEqual(response.status_code, 200, path)
             self.assertIn('nosniff', response.headers['x-content-type-options'])

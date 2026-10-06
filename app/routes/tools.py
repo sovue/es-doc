@@ -13,6 +13,7 @@ MANIFEST = json.loads((TOOLS / 'manifest.json').read_text('utf-8'))
 RUNTIME_VERSION = MANIFEST['pyodide']
 FILES = {
     'engine.py': 'text/plain', 'vendor.zip': 'application/zip',
+    'syntax.zip': 'application/zip', 'renpy_lexer.py': 'text/plain',
     'manifest.json': 'application/json', 'NOTICE.txt': 'text/plain',
     **{f'pyodide/{RUNTIME_VERSION}/{name}': media for name, media in {
         'pyodide.mjs': 'application/javascript', 'pyodide.asm.js': 'application/javascript',
@@ -24,6 +25,8 @@ _digests = {}
 
 
 def physical_file(name):
+    if name == 'renpy_lexer.py':
+        return ROOT / 'app/utils/renpy_lexer.py'
     return TOOLS / name.replace(f'pyodide/{RUNTIME_VERSION}/', 'pyodide/')
 
 
@@ -43,6 +46,8 @@ async def tools_page(request: Request):
             'worker': asset_url('/static/js/tools-worker.js'),
             'engine': f'/static/tools/engine.py?v={digest("engine.py")}',
             'vendor': f'/static/tools/vendor.zip?v={digest("vendor.zip")}',
+            'syntax': f'/static/tools/syntax.zip?v={digest("syntax.zip")}',
+            'lexer': f'/static/tools/renpy_lexer.py?v={digest("renpy_lexer.py")}',
             'runtime': f'/static/tools/pyodide/{RUNTIME_VERSION}/',
         },
     })

@@ -4,6 +4,7 @@ import io
 import json
 import urllib.request
 import zipfile
+import argparse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -14,6 +15,21 @@ SOURCES = {
     'unrpa': ('Lattyware/unrpa', '005b10abec590db374f23fd8d4b111963792a15a'),
 }
 RUNTIME = ('pyodide.mjs', 'pyodide.asm.js', 'pyodide.asm.wasm', 'python_stdlib.zip', 'pyodide-lock.json')
+PYGMENTS = '2.20.0'
+
+
+def prepare_syntax():
+    release = json.loads(fetch(f'https://pypi.org/pypi/Pygments/{PYGMENTS}/json'))
+    wheel = next(file for file in release['urls'] if file['filename'].endswith('py3-none-any.whl'))
+    data = fetch(wheel['url'])
+    if hashlib.sha256(data).hexdigest() != wheel['digests']['sha256']:
+        raise ValueError('Pygments wheel checksum mismatch')
+    (DEST / 'syntax.zip').write_bytes(data)
+    manifest_path = DEST / 'manifest.json'
+    manifest = json.loads(manifest_path.read_text('utf-8'))
+    manifest['sources']['pygments'] = {'version': PYGMENTS, 'repository': 'https://github.com/pygments/pygments'}
+    manifest['sha256']['syntax.zip'] = hashlib.sha256(data).hexdigest()
+    manifest_path.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
 
 
 def fetch(url):
@@ -52,4 +68,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--syntax-only', action='store_true')
+    args = parser.parse_args()
+    if not args.syntax_only:
+        main()
+    prepare_syntax()

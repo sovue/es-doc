@@ -178,6 +178,105 @@ def decompile(data, options):
     return output.getvalue().encode('utf-8'), context.log_contents
 
 
+class Catalog:
+    """Index sources without extracting assets or decompiling scripts."""
+    def __init__(self, files):
+        self.files = files
+        self.entries = {}
+        self.errors = []
+        self.cached = None
+        for number, entry in enumerate(files):
+            try:
+                path = safe_path(entry['path'])
+                if path.lower().endswith('.rpa'):
+                    tool = UnRPA(entry['source'])
+                    with open(entry['source'], 'rb') as source:
+                        index = read_index(tool, source, tool.detect_version())
+                    for name, segments in index.items():
+                        self.entries[f'{number}:{name}'] = {
+                            'path': name, 'source': number, 'segments': segments,
+                            'size': sum(length for _, length, _ in segments),
+                            'originals': index,
+                        }
+                else:
+                    with open(entry['source'], 'rb') as source:
+                        source.seek(0, 2)
+                        length = source.tell()
+                    self.entries[f'{number}:{path}'] = {
+                        'path': path, 'source': number, 'size': length,
+                    }
+            except Exception as error:
+                if isinstance(error, (MemoryError, OverflowError)):
+                    raise
+                self.errors.append(f'{entry["path"]}: {error}')
+
+    def listing(self):
+        return [{'id': key, 'path': entry['path'], 'size': entry['size'],
+                 'source': entry['source']} for key, entry in self.entries.items()]
+
+    def read(self, key, options):
+        cache_key = (key, bool(options.get('try_harder')), bool(options.get('no_init_offset')))
+        if self.cached and self.cached[0] == cache_key:
+            return self.cached[1]
+        entry = self.entries[key]
+        path = entry['path']
+        warnings = []
+        # Existing source takes precedence, exactly as in a full ZIP export.
+        compiled = path.lower().endswith(('.rpyc', '.rpymc'))
+        target = str(PurePosixPath(path).with_suffix('.rpym' if path.lower().endswith('.rpymc') else '.rpy'))
+        segments = entry.get('segments')
+        if compiled and target in entry.get('originals', {}):
+            segments = entry['originals'][target]
+            warnings.append(f'Исходный файл {target} уже есть в архиве, сохранён без замены.')
+            path = target
+            compiled = False
+        with open(self.files[entry['source']]['source'], 'rb') as source:
+            if segments is None:
+                data = source.read()
+            else:
+                data = b''.join(iter(Segments(source, segments).read, b''))
+        if compiled:
+            data, logs = decompile(data, options)
+            warnings.extend(str(log) for log in logs)
+            path = target
+        result = (path, data, warnings)
+        # Cache the current preview only, not every expanded archive asset.
+        self.cached = (cache_key, result)
+        return result
+
+
+def preview_html(path, data):
+    """Use the resource browser's lexer and token palette, entirely locally."""
+    if not path.lower().endswith(('.rpy', '.rpym', '.txt', '.md', '.json', '.yaml',
+                                 '.yml', '.xml', '.html', '.css', '.js', '.py',
+                                 '.csv', '.ini', '.log', '.sh', '.bat')):
+        return None
+    if len(data) > 2 * 1024 * 1024:
+        return None
+    from pygments import highlight
+    from pygments.formatters import HtmlFormatter
+    from pygments.lexers import get_lexer_for_filename
+    from pygments.lexers.special import TextLexer
+    from pygments.filter import Filter
+    from pygments.token import Whitespace
+    from renpy_lexer import RenPyLexer
+    import re
+
+    class Spaces(Filter):
+        def filter(self, lexer, stream):
+            for token, value in stream:
+                for part in re.split('( +)', value):
+                    if part:
+                        yield (Whitespace if part.startswith(' ') else token), part
+
+    try:
+        lexer = RenPyLexer() if path.lower().endswith(('.rpy', '.rpym')) else get_lexer_for_filename(path)
+    except Exception:
+        lexer = TextLexer()
+    lexer.add_filter(Spaces())
+    return highlight(data.decode('utf-8', 'replace'), lexer, HtmlFormatter(nowrap=True))
+
+
 def process(files, mode, options, sink, notify=lambda event: None):
     if mode not in ('unrpa', 'unrpyc', 'combined'):
         raise ValueError('Unknown tool mode')
@@ -185,7 +284,13 @@ def process(files, mode, options, sink, notify=lambda event: None):
         raise ValueError('Process each RPA archive separately')
     used = set()
     input_paths = set()
-    result = {'succeeded': 0, 'failed': 0, 'written': 0, 'warnings': 0, 'errors': []}
+    result = {'succeeded': 0, 'failed': 0, 'written': 0, 'warnings': 0,
+              'warning_details': [], 'errors': []}
+
+    def warn(path, message):
+        result['warnings'] += 1
+        if len(result['warning_details']) < 100:
+            result['warning_details'].append(f'{path}: {message}')
 
     with zipfile.ZipFile(sink, 'w', compression=zipfile.ZIP_STORED, allowZip64=True) as output:
         def reserve(path):
@@ -203,8 +308,8 @@ def process(files, mode, options, sink, notify=lambda event: None):
             text, logs = decompile(data, options)
             target = str(PurePosixPath(path).with_suffix('.rpym' if path.lower().endswith('.rpymc') else '.rpy'))
             write_bytes(target, text)
-            if logs:
-                result['warnings'] += len(logs)
+            for log in logs:
+                warn(path, str(log))
 
         for number, entry in enumerate(files):
             path = entry.get('path', '')
@@ -240,7 +345,7 @@ def process(files, mode, options, sink, notify=lambda event: None):
                                 try:
                                     generated = str(PurePosixPath(target).with_suffix('.rpym' if name.lower().endswith('.rpymc') else '.rpy'))
                                     if generated in originals:
-                                        result['warnings'] += 1
+                                        warn(target, f'Исходный файл {generated} уже есть в архиве, сохранён без замены.')
                                     else:
                                         script(target, compiled.getvalue())
                                 except Exception as error:

@@ -8,6 +8,10 @@
     "unrpa": {
       "repository": "https://github.com/Lattyware/unrpa",
       "revision": "005b10abec590db374f23fd8d4b111963792a15a"
+    },
+    "pygments": {
+      "version": "2.20.0",
+      "repository": "https://github.com/pygments/pygments"
     }
   },
   "sha256": {
@@ -17,6 +21,7 @@
     "pyodide/pyodide.asm.js": "1263f02b5b26099b96112378156f242dd98b39a8201ba7765e5fe3d455c5ce91",
     "pyodide/pyodide.asm.wasm": "e2f4ee75b325e35eb31bfb8c613d4dd5098f5502c156a97847686875b5025480",
     "pyodide/pyodide.mjs": "23213d27e9dacbda6f25f955fb38dabfc40ada082c04ee253047ea5dddcaa3b5",
-    "pyodide/python_stdlib.zip": "4298b6ee445cb724c3973437da47789752b9e6ff4e26619026b283ec801fc46b"
+    "pyodide/python_stdlib.zip": "4298b6ee445cb724c3973437da47789752b9e6ff4e26619026b283ec801fc46b",
+    "syntax.zip": "81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176"
   }
 }
