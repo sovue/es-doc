@@ -102,7 +102,12 @@
 .picker-harmonies { grid-template-columns: repeat(var(--swatch-count, 5), minmax(0, 1fr)); }
 .picker-tones { grid-template-columns: repeat(11, minmax(0, 1fr)); }
 .picker-swatches { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+.picker-swatches.is-named { grid-template-columns: repeat(6, minmax(0, 1fr)); align-items: start; }
 .picker-swatch-name { font: 12px/1.5 var(--font-sans); overflow-wrap: anywhere; }
+.picker-palette-search { display: block; margin-bottom: 16px; }
+.picker-palette-search input { width: 100%; }
+.picker-palette-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.picker-palette-footer:has(:not([hidden])) { margin-top: 16px; }
 .picker-swatch { display: flex; flex-direction: column; gap: 8px; padding: 0 0 4px; align-items: center; border: 0; background: none; color: var(--text-soft); font: 12px/1.4 var(--font-mono); cursor: pointer; min-width: 0; }
 .picker-swatch > span { display: block; width: 100%; height: 48px; border: 1px solid var(--border); border-radius: var(--radius-sm); box-sizing: border-box; }
 .picker-harmonies .picker-swatch > span { height: 80px; }
@@ -139,6 +144,7 @@
     .picker-area { height: 240px; }
     .picker-slider { grid-template-columns: 110px minmax(0, 1fr) 52px; gap: 8px; }
     .picker-swatches, .picker-tones { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .picker-swatches.is-named { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .picker-harmonies { gap: 8px; }
     .picker-harmonies .picker-swatch { font-size: 12px; }
     .picker-harmonies .picker-swatch > span { height: 64px; }

@@ -45,7 +45,7 @@ function page() {
     const window = {navigator: {clipboard: {writeText: async value => copied.push(value)}},
         localStorage: {getItem: key => stored.get(key), setItem: (key, value) => stored.set(key, value)}};
     const context = vm.createContext({ document, window, AbortController, Event, setTimeout: () => 1, clearTimeout() {} });
-    for (const file of ['colors-core.js', 'colors.js']) vm.runInContext(fs.readFileSync(new URL('../static/js/' + file, import.meta.url), 'utf8'), context);
+    for (const file of ['colors-named.js', 'colors-core.js', 'colors.js']) vm.runInContext(fs.readFileSync(new URL('../static/js/' + file, import.meta.url), 'utf8'), context);
     const input = (id, value) => { const element = get('colors-' + id); element.focus(); element.value = value; element.emit('input'); };
     return { get: id => get('colors-' + id), input, copied, window, stored, document };
 }
@@ -248,4 +248,30 @@ test('mobile section jumps focus the target without changing the chosen color or
     assert.equal(ui.get('output-hex').value, '#abc8');
     assert.equal(ui.get('editor-heading').scrollOptions.block, 'start');
     ui.get('undo').click(); assert.equal(ui.get('output-hex').value, '#2f7524');
+});
+
+test('named palette includes every supplied color, limits rendering and searches names and short HEX', () => {
+    const ui = page();
+    assert.equal(ui.window.ESDocNamedColors.length, 1012);
+    assert.equal(new Set(ui.window.ESDocNamedColors.map(([, hex]) => hex)).size, 1012);
+    assert.ok(ui.window.ESDocNamedColors.every(([name, hex]) => name.trim() && /^#[a-f0-9]{6}$/.test(hex)));
+    ui.get('palette').value = 'named'; ui.get('palette').emit('change');
+    assert.equal(ui.get('swatches').children.length, 100);
+    assert.match(ui.get('palette-summary').textContent, /100.*1012/);
+    ui.get('palette-more').click(); assert.equal(ui.get('swatches').children.length, 200);
+    for (let page = 0; page < 9; page++) ui.get('palette-more').click();
+    assert.equal(ui.get('swatches').children.length, 1012);
+    assert.equal(ui.get('palette-more').hidden, true);
+    ui.input('palette-search', 'белоснежный');
+    assert.equal(ui.get('swatches').children.length, 1);
+    ui.get('swatches').children[0].children[1].emit('click');
+    assert.equal(ui.get('output-hex').value, '#fffafa');
+    ui.input('palette-search', '#fff');
+    assert.ok(ui.get('swatches').children.some(button => button.dataset.hex === '#ffffff'));
+    ui.input('palette-search', 'несуществующее название');
+    assert.equal(ui.get('palette-more').hidden, true);
+    assert.match(ui.get('swatches').children[0].textContent, /Не найдено/);
+    ui.get('palette').value = 'basic'; ui.get('palette').emit('change');
+    assert.equal(ui.get('swatches').children.length, 10);
+    assert.equal(ui.get('palette-search-control').hidden, true);
 });

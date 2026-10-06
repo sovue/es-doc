@@ -63,7 +63,11 @@
         basic: [['Чёрный','#000'],['Белый','#fff'],['Красный','#f00'],['Оранжевый','#f80'],['Жёлтый','#ff0'],['Зелёный','#0a0'],['Бирюзовый','#0cc'],['Синий','#00f'],['Фиолетовый','#80f'],['Розовый','#f08']],
         pastel: [['Пудровый','#ffd1dc'],['Персиковый','#ffdab9'],['Ванильный','#fff4b8'],['Фисташковый','#d4efbf'],['Мятный','#b5ead7'],['Небесный','#c7e9ff'],['Лавандовый','#d9c7ff'],['Сиреневый','#e6c8f2'],['Песочный','#eadbc8'],['Серый','#d8dfe8']],
         esdoc: [['Лист','#2f7524'],['Хвоя','#206220'],['Акцент','#6dbe45'],['Бумага','#f4f9f1'],['Тень','#eef8e7'],['Чернила','#17261a'],['Закат','#e89460'],['Небо','#8fb2c8'],['Озеро','#87c9ff'],['Ночь','#161b26']],
+        named: window.ESDocNamedColors,
     };
+    let paletteLimit = 100;
+    const normalizeSearch = value => value.trim().toLocaleLowerCase('ru').replaceAll('ё', 'е');
+    const namedIndex = preset.named.map(([name, hex]) => ({name, hex, search: normalizeSearch(name + ' ' + hex + ' ' + c.toHex(c.parseHex(hex)))}));
     const paintSwatches = (id, values, names = [], empty = '') => {
         const host = get(id);
         const buttons = [...host.querySelectorAll('button')];
@@ -104,8 +108,17 @@
         if (button && get('swatches').contains(button)) choose(JSON.parse(button.dataset.color));
     });
     const renderPalette = () => {
-        const values = preset[get('palette').value] || preset.basic;
-        paintSwatches('swatches', values.map(([, hex]) => c.parseHex(hex)), values.map(([name]) => name));
+        const named = get('palette').value === 'named';
+        get('palette-search-control').hidden = !named;
+        get('palette-summary').hidden = !named;
+        get('swatches').classList.toggle('is-named', named);
+        const query = normalizeSearch(get('palette-search').value);
+        const entries = named ? namedIndex.filter(entry => entry.search.includes(query)) : [];
+        const values = named ? entries.slice(0, paletteLimit).map(({name, hex}) => [name, hex]) : preset[get('palette').value] || preset.basic;
+        paintSwatches('swatches', values.map(([, hex]) => c.parseHex(hex)), values.map(([name]) => name), 'Не найдено. Измените название или HEX.');
+        const summary = 'Показано ' + values.length + ' из ' + entries.length;
+        if (get('palette-summary').textContent !== summary) get('palette-summary').textContent = summary;
+        get('palette-more').hidden = !named || values.length >= entries.length;
     };
     const renderUndo = () => {
         get('undo').disabled = !undos.length && same(committed, snapshot());
@@ -323,7 +336,9 @@
         commit(); saved = clearedSaved.map(value => ({...value})); clearedSaved = null; commit(false);
         get('status').textContent = 'Сохранённые цвета восстановлены.'; persist();
     });
-    on(get('palette'), 'change', () => { renderPalette(); });
+    on(get('palette'), 'change', () => { paletteLimit = 100; get('palette-search').value = ''; renderPalette(); });
+    on(get('palette-search'), 'input', () => { paletteLimit = 100; renderPalette(); });
+    on(get('palette-more'), 'click', () => { paletteLimit += 100; renderPalette(); });
     on(get('harmony'), 'change', render);
     on(get('preview-role'), 'change', () => { commit(); const nextRole = get('preview-role').value; const before = {...color}; color = {...other}; other = before; role = nextRole; hsv = c.rgbToHsv(color); for (const id of ids) get(id).removeAttribute('aria-invalid'); inputHelp(); render(true); commit(); });
     on(get('background'), 'input', () => {
