@@ -35,13 +35,17 @@ const origin = new URL(target).origin;
         await page.keyboard.press('Escape');
 
         const finish = async () => {
-            await page.waitForFunction(() => /Готово|Нет готовых|Обработка прервана|Не удалось/.test(document.getElementById('tools-status').textContent), { timeout: 90000 });
-            assert.match(await page.locator('#tools-status').textContent(), /^Готово/);
+            await page.locator('#tools-result').waitFor({ state: 'visible', timeout: 90000 });
+            assert(await page.locator('#tools-downloads a').count());
         };
         const save = async name => {
             const promise = page.waitForEvent('download');
-            await page.locator('#tools-download').click();
+            await page.locator('#tools-downloads a').first().click();
             await (await promise).saveAs(path.join(root, 'temp/' + name));
+            assert.equal(await page.locator('#tools-queue').isVisible(), false);
+        };
+        const clear = async () => {
+            if (await page.locator('#tools-clear').isVisible()) await page.locator('#tools-clear').click();
         };
 
         // Cancellation tears down the loading worker; retry must succeed.
@@ -52,29 +56,36 @@ const origin = new URL(target).origin;
         await page.locator('#tools-start').click();
         await finish();
         await save('tools-browser-rpyc.zip');
-        assert.match(await page.locator('#tools-report-text').textContent(), /Errors: 0/);
+        assert.equal(await page.locator('#tools-downloads a').getAttribute('download'), 'unrpyc.zip');
 
         // A warm worker processes a recursive directory and restores paths.
-        await page.locator('#tools-clear').click();
+        await clear();
         await page.locator('input[value="unrpyc"]').check();
         await pick('folder', path.join(fixtures, 'game'));
         assert.match(await page.locator('#tools-file-list').textContent(), /game\/scenario\/script.rpyc/);
         await page.locator('#tools-start').click();
         await finish();
         await save('tools-browser-folder.zip');
-        assert.match(await page.locator('#tools-report-text').textContent(), /Errors: 0/);
 
-        await page.locator('#tools-clear').click();
+        await clear();
         await page.locator('input[value="unrpa"]').check();
         await pick('files', path.join(fixtures, 'game/data.rpa'));
         await page.locator('#tools-start').click();
         await finish();
         await save('tools-browser-extracted.zip');
-        assert.match(await page.locator('#tools-report-text').textContent(), /Output files: 3/);
+        assert.match(await page.locator('#tools-result-description').textContent(), /файлов в результате: 3/);
+        assert.equal(await page.locator('#tools-downloads a').getAttribute('download'), 'data.zip');
+
+        await clear();
+        await pick('files', [path.join(fixtures, 'game/data.rpa'), path.join(fixtures, 'images.rpa')]);
+        await page.locator('#tools-start').click();
+        await finish();
+        assert.deepEqual(await page.locator('#tools-downloads a').evaluateAll(links => links.map(link => link.download)), ['data.zip', 'images.zip']);
+        assert(await page.locator('#tools-download-all').isVisible());
 
         // Drop through a real DataTransfer, alongside a corrupt input.
-        await page.locator('#tools-clear').click();
-        await page.locator('input[value="unrpyc"]').check();
+        await clear();
+        await page.locator('input[value="unrpa"]').check();
         const script = [...fs.readFileSync(path.join(fixtures, 'game/scenario/script.rpyc'))];
         await page.evaluate(bytes => {
             const transfer = new DataTransfer();
@@ -82,9 +93,10 @@ const origin = new URL(target).origin;
             transfer.items.add(new File(['invalid'], 'bad.rpyc'));
             document.getElementById('tools-drop').dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer: transfer }));
         }, script);
+        assert(await page.locator('input[value="unrpyc"]').isChecked());
         await page.locator('#tools-start').click();
         await finish();
-        assert.match(await page.locator('#tools-status').textContent(), /с ошибками/);
+        assert.match(await page.locator('#tools-result-description').textContent(), /Ошибок: 1/);
         await save('tools-browser-partial.zip');
 
         // Soft navigation must clean up the worker and initialize exactly once.

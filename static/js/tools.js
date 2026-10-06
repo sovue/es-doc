@@ -10,7 +10,7 @@
     const start = get('start'), cancel = get('cancel'), status = get('status');
     const queue = get('queue'), list = get('file-list'), progress = get('progress');
     const progressBar = get('progress-bar'), current = get('current');
-    const resultPanel = get('result'), download = get('download');
+    const resultPanel = get('result'), downloads = get('downloads'), downloadAll = get('download-all');
     const controller = new AbortController();
     const on = (element, event, callback) => element.addEventListener(event, callback, { signal: controller.signal });
     const labels = { unrpyc: 'Декомпилировать', unrpa: 'Распаковать' };
@@ -18,7 +18,8 @@
     const rows = new Map();
     const supported = Boolean(window.Worker && window.WebAssembly);
     let mode = 'unrpyc', busy = false, enumerating = false, disposed = false;
-    let worker = null, chunks = [], downloadURL = null, activeFiles = [], dragDepth = 0;
+    let worker = null, chunks = [], activeFiles = [], dragDepth = 0;
+    const outputs = [];
     let operation = 0;
 
     const say = (message, error = false) => {
@@ -26,13 +27,13 @@
         status.classList.toggle('is-error', error);
     };
     const clearResult = () => {
-        if (downloadURL) URL.revokeObjectURL(downloadURL);
-        downloadURL = null;
+        for (const output of outputs) URL.revokeObjectURL(output.url);
+        outputs.length = 0;
         chunks = [];
-        download.removeAttribute('href');
+        downloads.replaceChildren();
+        downloadAll.hidden = true;
         resultPanel.hidden = true;
         start.classList.add('tools-button-primary');
-        get('report-text').textContent = '';
     };
     const closeMenu = (restore = false) => {
         menu.hidden = true;
@@ -49,6 +50,13 @@
         get('pick-files').focus();
     };
     const selected = () => [...files.values()].filter(entry => accepts(entry.path, mode));
+    const setMode = next => {
+        mode = next;
+        for (const radio of app.querySelectorAll('[name="tool-mode"]')) radio.checked = radio.value === mode;
+        progress.hidden = true;
+        start.textContent = labels[mode];
+        get('drop-help').textContent = mode === 'unrpa' ? '.rpa' : '.rpyc, .rpymc';
+    };
     const updateControls = () => {
         const locked = busy || enumerating || !supported;
         start.disabled = locked || !selected().length;
@@ -67,7 +75,7 @@
             + (visible.length < files.size ? ` / для другого режима: ${files.size - visible.length}` : '');
         const fragment = document.createDocumentFragment();
         // Bound the DOM for folders with thousands of scripts; all queued files
-        // are still processed and represented in the downloadable report.
+        // are still processed even when their rows are not rendered.
         for (const entry of visible.slice(0, 200)) {
             const row = document.createElement('li');
             const name = document.createElement('div');
@@ -108,16 +116,18 @@
         updateControls();
         say('Чтение списка файлов…');
         let added = 0, skipped = 0, duplicates = 0;
+        const incomingModes = new Set();
         try {
             await collect(entry => {
                 if (disposed || id !== operation) throw new Error('Добавление отменено.');
                 entry.path = safePath(entry.path);
                 if (!accepts(entry.path, 'combined')) { skipped++; return; }
+                incomingModes.add(accepts(entry.path, 'unrpa') ? 'unrpa' : 'unrpyc');
                 if (files.has(entry.path)) { duplicates++; return; }
-                if (files.size >= 5000) throw new Error('В очередь можно добавить до 5 000 файлов. Обрабатывайте папку по частям.');
                 files.set(entry.path, entry);
                 added++;
             });
+            if (id === operation && incomingModes.size === 1) setMode([...incomingModes][0]);
             if (id === operation) say(`Добавлено файлов: ${added}.`
                 + (skipped ? ` Другие форматы пропущены: ${skipped}.` : '')
                 + (duplicates ? ` Повторные пути пропущены: ${duplicates}.` : '')
@@ -162,12 +172,8 @@
     on(window, 'resize', () => closeMenu());
     on(window, 'scroll', () => closeMenu());
     for (const radio of app.querySelectorAll('[name="tool-mode"]')) on(radio, 'change', () => {
-        mode = radio.value;
+        setMode(radio.value);
         clearResult();
-        progress.hidden = true;
-        start.textContent = labels[mode];
-        fileInput.accept = mode === 'unrpa' ? '.rpa' : '.rpyc,.rpymc';
-        get('drop-help').textContent = mode === 'unrpa' ? '.rpa' : '.rpyc, .rpymc';
         say('');
         render();
     });
@@ -175,7 +181,23 @@
 
     const resetWorker = () => { worker?.terminate(); worker = null; };
     const finish = () => { busy = false; progress.hidden = true; updateControls(); };
-    const fail = message => { clearResult(); resetWorker(); finish(); say(message, true); };
+    const showOutputs = () => {
+        resultPanel.hidden = false;
+        start.classList.remove('tools-button-primary');
+        downloadAll.hidden = outputs.length < 2;
+        downloadAll.textContent = `Скачать все (${outputs.length})`;
+        if (outputs.length === 1) outputs[0].link.classList.add('tools-button-primary');
+    };
+    const fail = message => {
+        chunks = [];
+        resetWorker();
+        finish();
+        if (outputs.length) {
+            showOutputs();
+            get('result-description').textContent = `Готовых архивов: ${outputs.length}.`;
+        } else clearResult();
+        say(message, true);
+    };
     on(cancel, 'click', () => {
         operation++;
         enumerating = false;
@@ -196,44 +218,60 @@
         } else if (data.type === 'file') {
             const state = rows.get(data.path);
             if (state) {
-                state.textContent = { working: 'Обработка…', done: 'Готово', error: 'Ошибка — подробности в отчёте' }[data.state];
+                state.textContent = { working: 'Обработка…', done: 'Готово', error: 'Ошибка: ' + data.error }[data.state];
                 state.classList.toggle('is-error', data.state === 'error');
             }
             current.textContent = data.path;
             if (data.state !== 'working') progressBar.value = data.index + 1;
+        } else if (data.type === 'output-start') chunks = [];
+        else if (data.type === 'output') {
+            if (data.result.written) {
+                const blob = new Blob(chunks, { type: 'application/zip' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.className = 'tools-button';
+                link.href = url;
+                link.download = data.name;
+                link.textContent = `${data.name} / ${size(blob.size)}`;
+                // Downloads do not expose a completion event to the page.
+                // Clear source selections when the user starts a download;
+                // keep result URLs available for retries and remaining ZIPs.
+                on(link, 'click', () => {
+                    files.clear();
+                    activeFiles = [];
+                    fileInput.value = '';
+                    folderInput.value = '';
+                    render();
+                });
+                outputs.push({ url, link });
+                downloads.appendChild(link);
+            }
+            chunks = [];
         } else if (data.type === 'fatal') fail('Обработка прервана. ' + data.error);
         else if (data.type === 'done') {
             const result = data.result;
-            const blob = new Blob(chunks, { type: 'application/zip' });
             chunks = [];
             finish();
-            get('report-text').textContent = result.report;
-            if (result.written) {
-                start.classList.remove('tools-button-primary');
-                downloadURL = URL.createObjectURL(blob);
-                download.href = downloadURL;
-                download.download = `esdoc-${mode}.zip`;
-                download.textContent = `Скачать ZIP / ${size(blob.size)}`;
-                resultPanel.hidden = false;
+            resultPanel.hidden = false;
+            if (outputs.length) {
+                showOutputs();
                 get('result-description').textContent = `Обработано: ${result.succeeded} / файлов в результате: ${result.written}.`
-                    + (result.failed ? ` Ошибок: ${result.failed}. Подробности в отчёте.` : '')
+                    + (result.failed ? ` Ошибок: ${result.failed}.` : '')
                     + (result.warnings ? ` Предупреждений: ${result.warnings}. Проверьте восстановленный код.` : '');
-                get('report').open = result.failed > 0;
-                say(result.failed ? 'Готово с ошибками. Подробности в отчёте.' : 'Готово.');
-                download.focus();
+                say(result.failed ? result.errors.slice(0, 3).join('\n') : 'Готово.', result.failed > 0);
+                (outputs.length > 1 ? downloadAll : outputs[0].link).focus();
             } else {
-                resultPanel.hidden = false;
-                download.hidden = true;
-                get('report').open = true;
-                get('result-description').textContent = 'Файлы не удалось обработать. Причины указаны в отчёте ниже.';
-                say('Нет готовых файлов. Причины указаны в отчёте.', true);
+                get('result-description').textContent = 'Файлы не удалось обработать.';
+                say(result.errors.slice(0, 3).join('\n') || 'Нет готовых файлов.', true);
             }
         }
     };
+    on(downloadAll, 'click', () => {
+        for (const output of outputs) output.link.click();
+    });
     on(start, 'click', () => {
         if (busy || enumerating || !selected().length) return;
         clearResult();
-        download.hidden = false;
         busy = true;
         activeFiles = selected();
         render();

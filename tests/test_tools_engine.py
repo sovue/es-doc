@@ -8,7 +8,6 @@ import zipfile
 import zlib
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'static/tools/vendor.zip'))
@@ -60,24 +59,30 @@ class EngineTests(unittest.TestCase):
         data = archive({'сцены/intro.rpy': [(b'world', b'hello '), (b'!', b'')],
                         'images/empty.png': [(b'', b'')]})
         result, contents, events = self.run_job([('game/data.rpa', data)])
-        self.assertEqual(contents['game/data/сцены/intro.rpy'], b'hello world!')
-        self.assertEqual(contents['game/data/images/empty.png'], b'')
+        self.assertEqual(contents['сцены/intro.rpy'], b'hello world!')
+        self.assertEqual(contents['images/empty.png'], b'')
+        self.assertNotIn('esdoc-report.txt', contents)
         self.assertEqual(result['succeeded'], 1)
         self.assertTrue(events)
 
-    def test_rpa2_and_multiple_archives_do_not_collide(self):
+    def test_rpa2_archives_are_processed_as_separate_outputs(self):
         data = archive({'script.rpy': [(b'label start:\n    pass\n', b'')]}, version=2)
-        result, contents, _ = self.run_job([('a.rpa', data), ('b.rpa', data)])
-        self.assertIn('a/script.rpy', contents)
-        self.assertIn('b/script.rpy', contents)
-        self.assertEqual(result['succeeded'], 2)
+        for name in ('a.rpa', 'nested/b.rpa'):
+            result, contents, _ = self.run_job([(name, data)])
+            self.assertEqual(list(contents), ['script.rpy'])
+            self.assertEqual(result['succeeded'], 1)
+
+    def test_multiple_archives_cannot_be_merged_into_one_zip(self):
+        data = archive({'script.rpy': [(b'source', b'')]})
+        with self.assertRaisesRegex(ValueError, 'separately'):
+            self.run_job([('a.rpa', data), ('b.rpa', data)])
 
     def test_hostile_archive_paths_are_rejected(self):
         for path in ('../outside', '/absolute', 'C:\\escape', 'safe/../../escape', 'bad\x00name'):
             with self.subTest(path=path):
                 result, contents, _ = self.run_job([('evil.rpa', archive({path: [(b'x', b'')]}))])
                 self.assertEqual(result['failed'], 1)
-                self.assertEqual(list(contents), ['esdoc-report.txt'])
+                self.assertEqual(contents, {})
 
     def test_pickle_globals_cannot_execute(self):
         class Evil:
@@ -87,13 +92,14 @@ class EngineTests(unittest.TestCase):
         data = b'RPA-2.0 0000000000000019\n' + payload
         result, contents, _ = self.run_job([('evil.rpa', data)])
         self.assertEqual(result['failed'], 1)
-        self.assertIn(b'global', contents['esdoc-report.txt'].lower())
+        self.assertEqual(contents, {})
+        self.assertIn('global', result['errors'][0].lower())
 
     def test_bad_file_does_not_prevent_other_outputs(self):
         result, contents, _ = self.run_job([
-            ('bad.rpa', b'invalid'), ('ok.rpa', archive({'a.txt': [(b'ok', b'')]}))])
+            ('bad.rpyc', b'invalid'), ('ok.rpyc', self.script())], 'unrpyc')
         self.assertEqual((result['succeeded'], result['failed']), (1, 1))
-        self.assertEqual(contents['ok/a.txt'], b'ok')
+        self.assertIn('label start:', contents['ok.rpy'].decode())
 
     def test_truncated_archive_is_reported(self):
         data = archive({'x': [(b'abc', b'')]})
@@ -121,9 +127,8 @@ class EngineTests(unittest.TestCase):
     def test_extract_and_decompile_keeps_compiled_original(self):
         data = archive({'scenario/script.rpyc': [(self.script(), b'')], 'a.png': [(b'image', b'')]})
         result, contents, _ = self.run_job([('game/data.rpa', data)], 'combined')
-        self.assertIn('game/data/scenario/script.rpy', contents)
-        self.assertIn('game/data/scenario/script.rpyc', contents)
-        self.assertEqual(contents['game/data/a.png'], b'image')
+        self.assertEqual(set(contents), {'scenario/script.rpy', 'scenario/script.rpyc', 'a.png'})
+        self.assertEqual(contents['a.png'], b'image')
         self.assertEqual(result['failed'], 0)
 
     def test_duplicate_input_paths_are_not_overwritten(self):
@@ -131,10 +136,10 @@ class EngineTests(unittest.TestCase):
         self.assertEqual((result['succeeded'], result['failed']), (1, 1))
         self.assertEqual(list(contents).count('script.rpy'), 1)
 
-    def test_size_limit_is_reported_and_other_files_continue(self):
-        result, contents, _ = self.run_job([('big.rpyc', b'x' * 50)], 'unrpyc', {'script_limit': 20})
-        self.assertEqual(result['failed'], 1)
-        self.assertIn(b'limit', contents['esdoc-report.txt'].lower())
+    def test_compiled_scripts_have_no_configured_size_cap(self):
+        result, contents, _ = self.run_job([('script.rpyc', self.script())], 'unrpyc', {'script_limit': 20})
+        self.assertEqual(result['failed'], 0)
+        self.assertIn('script.rpy', contents)
 
     def test_streaming_zip_sink_is_readable(self):
         chunks = []
@@ -145,29 +150,33 @@ class EngineTests(unittest.TestCase):
         with zipfile.ZipFile(io.BytesIO(b''.join(chunks))) as output:
             self.assertEqual(output.read('a.txt'), b'hello')
 
-    def test_zip_limit_is_a_fatal_error(self):
-        sink = self.engine.ChunkSink(lambda data: None, limit=5)
-        with self.assertRaises(self.engine.OutputLimitError):
-            sink.write(b'123456')
+    def test_zip_stream_has_no_768_mib_cap(self):
+        sink = self.engine.ChunkSink(lambda data: None)
+        sink.position = 800 * 1024 * 1024
+        sink.write(b'x')
+        self.assertEqual(sink.tell(), 800 * 1024 * 1024 + 1)
 
     def test_combined_preserves_existing_source(self):
         data = archive({'script.rpyc': [(self.script(), b'')], 'script.rpy': [(b'original source', b'')]})
         result, contents, _ = self.run_job([('data.rpa', data)], 'combined')
-        self.assertEqual(contents['data/script.rpy'], b'original source')
+        self.assertEqual(contents['script.rpy'], b'original source')
         self.assertEqual(result['warnings'], 1)
 
-    def test_shared_pickle_segments_have_an_aggregate_budget(self):
+    def test_shared_pickle_segments_are_normalized_once(self):
         # Memoized lists make many paths share one list in a tiny pickle.
         # Expanding each reference separately must not multiply allocations.
         key = 0xDEADBEEF
         segments = [(34 ^ key, key, b'')] * 3
         index = {'a': segments, 'b': segments, 'c': segments}
         data = b'RPA-3.0 0000000000000022 deadbeef\n' + zlib.compress(pickle.dumps(index, protocol=2))
-        with patch.object(self.engine, 'ENTRY_LIMIT', 5):
-            result, contents, _ = self.run_job([('amplified.rpa', data)])
-        self.assertEqual(result['failed'], 1)
-        self.assertEqual(list(contents), ['esdoc-report.txt'])
-        self.assertIn(b'segment limit', contents['esdoc-report.txt'].lower())
+        with TemporaryDirectory(dir=ROOT / 'temp') as directory:
+            physical = Path(directory) / 'data.rpa'
+            physical.write_bytes(data)
+            tool = self.engine.UnRPA(str(physical))
+            with physical.open('rb') as source:
+                normalized = self.engine.read_index(tool, source, tool.detect_version())
+            self.assertIs(normalized['a'], normalized['b'])
+            self.assertIs(normalized['a'], normalized['c'])
 
 
 if __name__ == '__main__':

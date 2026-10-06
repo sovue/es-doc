@@ -15,6 +15,7 @@ def main():
         'images/test.txt': [(b'resource', b'')],
     }))
     (root / 'bad.rpyc').write_bytes(b'not a compiled RenPy script')
+    (root / 'images.rpa').write_bytes(archive({'images/test.txt': [(b'second archive', b'')]}))
 
 
 if __name__ == '__main__':

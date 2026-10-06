@@ -2,6 +2,7 @@
    worker. WORKERFS reads Blob slices instead of copying a whole RPA to MEMFS. */
 let runtimePromise;
 let running = false;
+let inputOffset = 0;
 
 const checkedFetch = async url => {
     const response = await fetch(url, { credentials: 'same-origin' });
@@ -34,7 +35,11 @@ import engine
     return pyodide;
 }
 
-self.esdocNotify = event => self.postMessage(event.toJs({ dict_converter: Object.fromEntries }));
+self.esdocNotify = event => {
+    const message = event.toJs({ dict_converter: Object.fromEntries });
+    if (typeof message.index === 'number') message.index += inputOffset;
+    self.postMessage(message);
+};
 self.esdocEmit = bytes => {
     const data = bytes.toJs();
     const buffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
@@ -54,20 +59,30 @@ self.onmessage = async ({ data }) => {
             blobs: data.files.map((entry, index) => ({ name: `input-${index}`, data: entry.file })),
         }, '/input');
         mounted = true;
-        pyodide.globals.set('job_json', JSON.stringify({
-            files: data.files.map((entry, index) => ({ path: entry.path, source: `/input/input-${index}` })),
-            mode: data.mode, options: data.options,
-        }));
         self.postMessage({ type: 'ready' });
-        const result = await pyodide.runPythonAsync(`
+        const inputs = data.files.map((entry, index) => ({ path: entry.path, source: `/input/input-${index}` }));
+        const jobs = data.mode === 'combined'
+            ? inputs.map((entry, index) => ({ files: [entry], offset: index,
+                name: entry.path.split('/').pop().replace(/\.rpa$/i, '.zip') }))
+            : [{ files: inputs, offset: 0, name: 'unrpyc.zip' }];
+        const totals = { succeeded: 0, failed: 0, written: 0, warnings: 0, errors: [] };
+        for (const job of jobs) {
+            inputOffset = job.offset;
+            pyodide.globals.set('job_json', JSON.stringify({ files: job.files, mode: data.mode, options: data.options }));
+            self.postMessage({ type: 'output-start' });
+            const result = JSON.parse(await pyodide.runPythonAsync(`
 import json
 from js import esdocNotify, esdocEmit
 job = json.loads(job_json)
 sink = engine.ChunkSink(esdocEmit)
 result = engine.process(job['files'], job['mode'], job['options'], sink, esdocNotify)
 json.dumps(result, ensure_ascii=False)
-`);
-        self.postMessage({ type: 'done', result: JSON.parse(result) });
+`));
+            self.postMessage({ type: 'output', name: job.name, result });
+            for (const key of ['succeeded', 'failed', 'written', 'warnings']) totals[key] += result[key];
+            for (const error of result.errors) totals.errors.push(error);
+        }
+        self.postMessage({ type: 'done', result: totals });
     } catch (error) {
         self.postMessage({ type: 'fatal', error: String(error.message || error) });
     } finally {

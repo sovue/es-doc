@@ -14,15 +14,7 @@ import deobfuscate
 import unrpyc
 from unrpa import UnRPA
 
-SCRIPT_LIMIT = 64 * 1024 * 1024
-INDEX_LIMIT = 32 * 1024 * 1024
-ZIP_LIMIT = 768 * 1024 * 1024
-ENTRY_LIMIT = 50000
 CHUNK = 256 * 1024
-
-
-class OutputLimitError(ValueError):
-    pass
 
 
 def safe_path(value):
@@ -38,25 +30,22 @@ def safe_path(value):
     return value
 
 
-def bounded_decompress(data, limit=SCRIPT_LIMIT):
+def checked_decompress(data):
     decoder = zlib.decompressobj()
-    result = decoder.decompress(data, limit + 1)
-    if len(result) > limit or decoder.unconsumed_tail:
-        raise ValueError('Decompressed data exceeds the size limit')
+    result = decoder.decompress(data)
     if not decoder.eof:
         raise ValueError('Truncated compressed data')
     return result
 
 
-class BoundedZlib:
-    # The upstream parser and deobfuscation logic stay intact, with a bound on
-    # each decompression step. ValueError stops the fallback on oversized data.
+class CheckedZlib:
+    # Keep the upstream parser and reject truncated compressed streams.
     error = zlib.error
-    decompress = staticmethod(bounded_decompress)
+    decompress = staticmethod(checked_decompress)
 
 
-unrpyc.zlib = BoundedZlib
-deobfuscate.zlib = BoundedZlib
+unrpyc.zlib = CheckedZlib
+deobfuscate.zlib = CheckedZlib
 
 
 def legacy_bytes(value, encoding, errors='strict'):
@@ -85,29 +74,24 @@ def read_index(tool, source, version):
     offset, key = version.find_offset_and_key(source)
     source.seek(0, 2)
     size = source.tell()
-    if not 0 <= offset < size or size - offset > INDEX_LIMIT:
-        raise ValueError('Invalid archive index offset or size limit')
+    if not 0 <= offset < size:
+        raise ValueError('Invalid archive index offset')
     source.seek(offset)
-    index = IndexUnpickler(io.BytesIO(bounded_decompress(source.read(), INDEX_LIMIT)),
+    index = IndexUnpickler(io.BytesIO(checked_decompress(source.read())),
                            encoding='bytes').load()
-    if not isinstance(index, dict) or len(index) > ENTRY_LIMIT:
-        raise ValueError('Invalid archive index or entry limit exceeded')
-    # Bound the whole index before allocating normalized records: a pickle
-    # can memoize one list and reference it from thousands of dictionary keys.
-    segment_count = 0
-    for entries in index.values():
-        if not isinstance(entries, (list, tuple)) or not entries:
-            raise ValueError('Invalid archive segments')
-        segment_count += len(entries)
-        if segment_count > ENTRY_LIMIT:
-            raise ValueError('Archive aggregate segment limit exceeded')
+    if not isinstance(index, dict):
+        raise TypeError('Invalid archive index')
     normalized = {}
+    # Preserve shared pickle segment lists rather than multiplying their
+    # allocations for every path. Each unique list is validated only once.
+    records_by_id = {}
     for path, entries in index.items():
         path = safe_path(path)
         if path in normalized or not isinstance(entries, (list, tuple)) or not entries:
             raise ValueError('Duplicate path or invalid archive segments')
-        if len(entries) > ENTRY_LIMIT:
-            raise ValueError('Archive segment limit exceeded')
+        if id(entries) in records_by_id:
+            normalized[path] = records_by_id[id(entries)]
+            continue
         records = []
         for entry in entries:
             if not isinstance(entry, (list, tuple)) or len(entry) not in (2, 3):
@@ -123,7 +107,7 @@ def read_index(tool, source, version):
             if start < 0 or length < len(prefix) or start + length - len(prefix) > offset:
                 raise ValueError('Archive segment points outside file data')
             records.append((start, length, prefix))
-        normalized[path] = records
+        normalized[path] = records_by_id[id(entries)] = tuple(records)
     return normalized
 
 
@@ -158,16 +142,13 @@ class Segments:
 
 class ChunkSink:
     """Non-seekable ZIP destination, buffering only one transfer chunk."""
-    def __init__(self, emit, limit=ZIP_LIMIT):
+    def __init__(self, emit):
         self.emit = emit
         self.position = 0
         self.pending = bytearray()
-        self.limit = limit
 
     def write(self, data):
         length = len(data)
-        if self.position + length > self.limit:
-            raise OutputLimitError('ZIP exceeds the 768 MiB browser download limit; process fewer files')
         self.position += length
         self.pending.extend(data)
         while len(self.pending) >= CHUNK:
@@ -200,19 +181,17 @@ def decompile(data, options):
 def process(files, mode, options, sink, notify=lambda event: None):
     if mode not in ('unrpa', 'unrpyc', 'combined'):
         raise ValueError('Unknown tool mode')
-    report = []
-    used = {'esdoc-report.txt'}
+    if sum(entry.get('path', '').lower().endswith('.rpa') for entry in files) > 1:
+        raise ValueError('Process each RPA archive separately')
+    used = set()
     input_paths = set()
-    result = {'succeeded': 0, 'failed': 0, 'written': 0, 'warnings': 0}
-    script_limit = min(options.get('script_limit', SCRIPT_LIMIT), SCRIPT_LIMIT)
+    result = {'succeeded': 0, 'failed': 0, 'written': 0, 'warnings': 0, 'errors': []}
 
     with zipfile.ZipFile(sink, 'w', compression=zipfile.ZIP_STORED, allowZip64=True) as output:
         def reserve(path):
             path = safe_path(path)
             if path in used:
                 raise ValueError(f'Output path already exists: {path}')
-            if len(used) >= ENTRY_LIMIT:
-                raise ValueError('Output entry limit exceeded')
             used.add(path)
             return path
 
@@ -221,14 +200,11 @@ def process(files, mode, options, sink, notify=lambda event: None):
             result['written'] += 1
 
         def script(path, data):
-            if len(data) > script_limit:
-                raise ValueError('Compiled script exceeds the 64 MiB size limit')
             text, logs = decompile(data, options)
             target = str(PurePosixPath(path).with_suffix('.rpym' if path.lower().endswith('.rpymc') else '.rpy'))
             write_bytes(target, text)
             if logs:
                 result['warnings'] += len(logs)
-                report.extend(f'{path}: {line}' for line in logs)
 
         for number, entry in enumerate(files):
             path = entry.get('path', '')
@@ -240,47 +216,38 @@ def process(files, mode, options, sink, notify=lambda event: None):
                 input_paths.add(path)
                 with open(entry['source'], 'rb') as source:
                     if path.lower().endswith(('.rpyc', '.rpymc')) and mode != 'unrpa':
-                        script(path, source.read(script_limit + 1))
+                        script(path, source.read())
                     elif path.lower().endswith('.rpa') and mode != 'unrpyc':
                         tool = UnRPA(entry['source'])
                         version = tool.detect_version()
                         index = read_index(tool, source, version)
-                        root = str(PurePosixPath(path).with_suffix(''))
                         # Reserve original archive paths before generating .rpy,
                         # so an existing source script always remains untouched.
-                        originals = {f'{root}/{name}' for name in index}
+                        originals = set(index)
                         for count, (name, segments) in enumerate(index.items()):
-                            target = f'{root}/{name}'
+                            target = name
                             notify({'type': 'entry', 'index': number, 'path': target,
                                     'current': count + 1, 'total': len(index)})
                             stream = Segments(source, segments)
                             compiled = io.BytesIO() if mode == 'combined' and name.lower().endswith(('.rpyc', '.rpymc')) else None
-                            oversized = False
                             with output.open(reserve(target), 'w', force_zip64=True) as destination:
                                 for chunk in iter(stream.read, b''):
                                     destination.write(chunk)
-                                    if compiled is not None and not oversized:
-                                        if compiled.tell() + len(chunk) > script_limit:
-                                            oversized = True
-                                            compiled.close()
-                                        else:
-                                            compiled.write(chunk)
+                                    if compiled is not None:
+                                        compiled.write(chunk)
                             result['written'] += 1
                             if compiled is not None:
                                 try:
-                                    if oversized:
-                                        raise ValueError('Compiled script exceeds the 64 MiB size limit')
                                     generated = str(PurePosixPath(target).with_suffix('.rpym' if name.lower().endswith('.rpymc') else '.rpy'))
                                     if generated in originals:
-                                        report.append(f'{generated}: original source retained; decompilation skipped')
                                         result['warnings'] += 1
                                     else:
                                         script(target, compiled.getvalue())
                                 except Exception as error:
-                                    if isinstance(error, OutputLimitError):
+                                    if isinstance(error, (MemoryError, OverflowError)):
                                         raise
                                     result['failed'] += 1
-                                    report.append(f'{target}: {error}')
+                                    result['errors'].append(f'{target}: {error}')
                                 finally:
                                     compiled.close()
                     else:
@@ -288,17 +255,12 @@ def process(files, mode, options, sink, notify=lambda event: None):
                 result['succeeded'] += 1
                 notify({'type': 'file', 'index': number, 'path': path, 'state': 'done'})
             except Exception as error:
-                # Fatal ZIP sink failures must invalidate the download, since its
-                # central directory could not be completed.
-                if isinstance(error, OutputLimitError):
+                # Allocation failures can leave the current ZIP incomplete.
+                if isinstance(error, (MemoryError, OverflowError)):
                     raise
                 result['failed'] += 1
-                report.append(f'{path}: {error}')
+                result['errors'].append(f'{path}: {error}')
                 notify({'type': 'file', 'index': number, 'path': path, 'state': 'error', 'error': str(error)})
 
-        summary = (f'ES Doc / {mode}\nSuccessful inputs: {result["succeeded"]}\n'
-                   f'Errors: {result["failed"]}\nOutput files: {result["written"]}\n\n')
-        output.writestr('esdoc-report.txt', (summary + '\n'.join(report)).encode('utf-8'))
     sink.flush()
-    result['report'] = summary + '\n'.join(report)
     return result

@@ -43,7 +43,7 @@
                         <button type="button" id="tools-pick-files">Выбрать файлы…</button>
                         <button type="button" id="tools-pick-folder">Выбрать папку…</button>
                     </div>
-                    <input type="file" id="tools-files" accept=".rpyc,.rpymc" multiple hidden>
+                    <input type="file" id="tools-files" accept=".rpa,.rpyc,.rpymc" multiple hidden>
                     <input type="file" id="tools-folder" webkitdirectory multiple hidden>
                     <div class="tools-options" id="tools-options">
                         <details class="tools-advanced"><summary>Настройки декомпиляции</summary>
@@ -69,15 +69,14 @@
                     </div>
                     <p id="tools-status" class="tools-status" role="status" aria-live="polite"></p>
                     <div id="tools-result" class="tools-result" hidden>
-                        <a id="tools-download" class="tools-button tools-button-primary" download="esdoc-result.zip">Скачать ZIP</a>
+                        <button id="tools-download-all" class="tools-button tools-button-primary" type="button" hidden>Скачать все</button>
+                        <div id="tools-downloads" class="tools-downloads"></div>
                         <p id="tools-result-description"></p>
-                        <details id="tools-report"><summary>Отчёт об обработке</summary><pre id="tools-report-text"></pre></details>
                     </div>
                 </div>
                 <details class="tools-help"><summary>Подробнее</summary>
                     <p>UnRpyc восстанавливает .rpyc и .rpymc. Файлы Ren'Py 6/7 тоже обрабатываются, но совместимость зависит от версии игры. Комментарии и исходное форматирование в скомпилированных файлах не сохраняются.</p>
                     <p>UnRPA распаковывает RPA-2.0, RPA-3.0 и совместимые варианты, распознаваемые UnRPA. Изменённые или зашифрованные архивы могут не поддерживаться.</p>
-                    <p>Размер ZIP ограничен 768 МиБ. Большую игру обрабатывайте по частям. Работа инструментов выполняется на устройстве пользователя.</p>
                     <p>Исходные проекты: <a href="https://github.com/CensoredUsername/unrpyc">unrpyc</a>, <a href="https://github.com/lattyware/unrpa">unrpa</a>.</p>
                 </details>
             </section>

@@ -31,7 +31,8 @@ class ToolsRouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn('.rpa архив', response.text)
         self.assertNotIn('Результат — ZIP', response.text)
         self.assertNotIn('Попытаться снять обфускацию', response.text)
-        self.assertIn('Код внутри архивов декомпилируется автоматически', response.text)
+        self.assertNotIn('tools-report', response.text)
+        self.assertIn('tools-download-all', response.text)
 
     async def test_engine_and_runtime_are_served_locally(self):
         for path in ('engine.py', 'vendor.zip', 'pyodide/0.29.3/pyodide.mjs', 'pyodide/0.29.3/pyodide.asm.wasm'):

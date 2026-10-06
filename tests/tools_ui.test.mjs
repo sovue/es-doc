@@ -48,20 +48,29 @@ function page() {
     app.dataset = { config: '{"worker":"tools-worker.js"}' };
     const radio = new Element();
     radio.value = 'unrpa';
-    app.querySelectorAll = selector => selector === '[name="tool-mode"]' ? [radio] : [];
+    const scriptRadio = new Element();
+    scriptRadio.value = 'unrpyc';
+    app.querySelectorAll = selector => selector === '[name="tool-mode"]' ? [radio, scriptRadio] : [];
     const menu = get('tools-add-menu');
     menu.hidden = true;
     menu.children = [get('tools-pick-files'), get('tools-pick-folder')];
     const messages = [];
+    const workers = [];
+    const revoked = [];
     const window = new Element();
-    window.Worker = class { postMessage(message) { messages.push(message); } terminate() {} };
+    window.Worker = class {
+        constructor() { workers.push(this); }
+        postMessage(message) { messages.push(message); }
+        terminate() {}
+    };
     window.WebAssembly = {};
     const context = vm.createContext({ window, document, Worker: window.Worker,
-        AbortController, URL, queueMicrotask, innerWidth: 1200, innerHeight: 900 });
+        AbortController, Blob, URL: { createObjectURL: () => 'blob:' + Math.random(),
+            revokeObjectURL: url => revoked.push(url) }, queueMicrotask, innerWidth: 1200, innerHeight: 900 });
     vm.runInContext(fs.readFileSync(new URL('../static/js/tools-core.js', import.meta.url), 'utf8'), context);
     window.ESDocTools = context.ESDocTools;
     vm.runInContext(fs.readFileSync(new URL('../static/js/tools.js', import.meta.url), 'utf8'), context);
-    return { get: name => get('tools-' + name), document, radio, messages };
+    return { get: name => get('tools-' + name), document, radio, messages, workers, revoked, window };
 }
 
 test('folder menu click survives transient focus loss in embedded browsers', async () => {
@@ -103,4 +112,111 @@ test('archive extraction sends automatic decompilation to the worker', async () 
     assert.equal(messages[0].mode, 'combined');
     assert.equal(messages[0].files[0].path, 'data.rpa');
     assert.equal(get('options').hidden, false);
+});
+
+test('each archive has its named download, download-all clicks both, cleanup releases both', async () => {
+    const { get, radio, workers, revoked, window } = page();
+    radio.emit('change');
+    get('files').files = [{ name: 'a.rpa', size: 1 }, { name: 'b.rpa', size: 1 }];
+    get('files').emit('change');
+    await Promise.resolve();
+    get('start').click();
+    const send = data => workers[0].onmessage({ data });
+    const result = { succeeded: 1, failed: 0, written: 1, warnings: 0, errors: [] };
+    for (const name of ['a.zip', 'b.zip']) {
+        send({ type: 'output-start' });
+        send({ type: 'chunk', buffer: new Uint8Array([1, 2]).buffer });
+        send({ type: 'output', name, result });
+    }
+    send({ type: 'done', result: { ...result, succeeded: 2, written: 2 } });
+    const links = get('downloads').children;
+    assert.deepEqual(links.map(link => link.download), ['a.zip', 'b.zip']);
+    assert.equal(get('download-all').hidden, false);
+    get('download-all').click();
+    assert.deepEqual(links.map(link => link.clicks), [1, 1]);
+    window.__esdocToolsCleanup();
+    assert.equal(revoked.length, 2);
+    assert.equal(get('downloads').children.length, 0);
+});
+
+test('a later fatal error keeps completed ZIPs and discards only the unfinished output', async () => {
+    const { get, radio, workers, revoked } = page();
+    radio.emit('change');
+    get('files').files = [{ name: 'a.rpa', size: 1 }, { name: 'b.rpa', size: 1 }];
+    get('files').emit('change');
+    await Promise.resolve();
+    get('start').click();
+    const send = data => workers[0].onmessage({ data });
+    send({ type: 'output-start' });
+    send({ type: 'chunk', buffer: new Uint8Array([1]).buffer });
+    send({ type: 'output', name: 'a.zip', result: { written: 1 } });
+    send({ type: 'output-start' });
+    send({ type: 'chunk', buffer: new Uint8Array([2]).buffer });
+    send({ type: 'fatal', error: 'Download size limit exceeded' });
+    assert.equal(get('downloads').children.length, 1);
+    assert.equal(get('downloads').children[0].download, 'a.zip');
+    assert.equal(get('result').hidden, false);
+    assert.equal(revoked.length, 0);
+    assert.match(get('status').textContent, /limit exceeded/);
+});
+
+test('downloading clears the queue and keeps other ZIP links usable', async () => {
+    const { get, workers, revoked } = page();
+    get('files').files = [{ name: 'a.rpyc', size: 1 }];
+    get('files').emit('change');
+    await Promise.resolve();
+    get('start').click();
+    const send = data => workers[0].onmessage({ data });
+    const result = { succeeded: 1, written: 1, failed: 0, warnings: 0, errors: [] };
+    send({ type: 'output', name: 'unrpyc.zip', result });
+    send({ type: 'done', result });
+    get('downloads').children[0].click();
+    assert.equal(get('queue').hidden, true);
+    assert.equal(get('start').disabled, true);
+    assert.equal(get('downloads').children.length, 1);
+    assert.equal(revoked.length, 0);
+});
+
+test('dropping code into the archive tool switches tools and processes the dropped code', async () => {
+    const { get, radio, messages } = page();
+    radio.emit('change');
+    get('drop').emit('drop', { preventDefault() {}, dataTransfer: { files: [{ name: 'a.rpymc', size: 1 }] } });
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.equal(get('start').textContent, 'Декомпилировать');
+    get('start').click();
+    assert.equal(messages[0].mode, 'unrpyc');
+    assert.equal(messages[0].files[0].path, 'a.rpymc');
+});
+
+test('dropping an archive into the code tool switches to extraction', async () => {
+    const { get, messages } = page();
+    get('drop').emit('drop', { preventDefault() {}, dataTransfer: { files: [{ name: 'data.RPA', size: 1 }] } });
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.equal(get('start').textContent, 'Распаковать');
+    get('start').click();
+    assert.equal(messages[0].mode, 'combined');
+});
+
+test('a mixed drop keeps the chosen mode while retaining files for both tools', async () => {
+    const { get, messages } = page();
+    get('drop').emit('drop', { preventDefault() {}, dataTransfer: { files: [
+        { name: 'data.rpa', size: 1 }, { name: 'a.rpyc', size: 1 },
+    ] } });
+    await Promise.resolve();
+    await Promise.resolve();
+    get('start').click();
+    assert.equal(messages[0].mode, 'unrpyc');
+    assert.equal(messages[0].files.length, 1);
+    assert.match(get('count').textContent, /для другого режима: 1/);
+});
+
+test('more than 5000 queued files are all sent to processing', async () => {
+    const { get, messages } = page();
+    get('files').files = Array.from({ length: 5001 }, (_, i) => ({ name: i + '.rpyc', size: 1 }));
+    get('files').emit('change');
+    await Promise.resolve();
+    get('start').click();
+    assert.equal(messages[0].files.length, 5001);
 });
