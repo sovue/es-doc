@@ -7,6 +7,28 @@ const context = vm.createContext({});
 vm.runInContext(fs.readFileSync(new URL('../static/js/tools-core.js', import.meta.url), 'utf8'), context);
 const core = context.ESDocTools;
 
+test('errors preserve technical details but explain invalid input without claiming obfuscation', () => {
+    const technical = 'Traceback (most recent call last):\n  /tools/engine.py\nunrpyc.BadRpycException: Invalid RPYC';
+    const error = core.explainError(technical, 'bad.rpyc');
+    assert.equal(error.path, 'bad.rpyc');
+    assert.match(error.title, /формат сценария/);
+    assert.match(error.explanation, /файл из папки игры/);
+    assert.equal(error.tryHarder, false);
+    assert.equal(error.technical, technical);
+    const unknown = core.explainError('<script>unknown failure</script>');
+    assert.match(unknown.title, /Не удалось обработать/);
+    assert.equal(unknown.technical, '<script>unknown failure</script>');
+});
+
+test('only changed script structure offers advanced recovery; memory and network have separate advice', () => {
+    assert.equal(core.explainError('Unable to find the right slot to load from the rpyc file. The file header structure has been changed.').tryHarder, true);
+    assert.match(core.explainError('MemoryError: Out of memory').explanation, /меньше файлов/);
+    assert.match(core.explainError('TypeError: Failed to fetch dynamically imported module').explanation, /соединение/);
+    const archive = core.explainError('game/data.rpa: UnknownArchiveError: unsupported header');
+    assert.equal(archive.path, 'game/data.rpa');
+    assert.match(archive.title, /формат архива/);
+});
+
 test('filter extensions by tool, including uppercase and modules', () => {
     assert.equal(core.accepts('game/SCRIPT.RPYC', 'unrpyc'), true);
     assert.equal(core.accepts('game/file.rpymc', 'combined'), true);

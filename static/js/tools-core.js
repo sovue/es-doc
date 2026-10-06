@@ -59,5 +59,41 @@
         }
         return { path, title, explanation, technical };
     };
-    root.ESDocTools = { safePath, accepts, walkEntry, size, explainWarning };
+    const explainError = (message, filename = '') => {
+        const technical = String(message);
+        const source = technical.match(/^(.+?\.(?:rpym?c|rpa)):\s*([\s\S]*)$/i);
+        const path = filename || source?.[1] || '';
+        const normalized = (source?.[2] || technical).replace(/\s+/g, ' ').trim();
+        let title = 'Не удалось обработать файл';
+        let explanation = 'Попробуйте открыть файл ещё раз. Если ошибка повторяется, выберите другой файл из папки игры. Техническое сообщение ниже поможет разобраться в причине.';
+        let tryHarder = false;
+        if (/MemoryError|out of memory|memory access out of bounds|allocation failed/i.test(normalized)) {
+            title = 'Браузеру не хватило памяти';
+            explanation = 'Добавьте меньше файлов или обрабатывайте архивы по одному. Если ZIP уже готовы, их ссылки остаются доступны.';
+        } else if (/Failed to fetch|NetworkError|Load failed|dynamically imported module|Не удалось загрузить инструменты/i.test(normalized)) {
+            title = 'Не удалось загрузить инструменты';
+            explanation = 'Проверьте соединение с сайтом и повторите действие. Файлы остаются на вашем устройстве.';
+        } else if (/UnknownArchive|unsupported archive|archive.*(?:unknown|unsupported)|неподдерживаем.+архив/i.test(normalized)) {
+            title = 'Не удалось распознать формат архива';
+            explanation = 'Выберите оригинальный .rpa из папки игры. Изменённые или зашифрованные архивы могут не поддерживаться.';
+        } else if (/BadRpyc|Invalid RPYC|right slot to load|zlib compressed blob|Incorrect Header|Broken slot/i.test(normalized)) {
+            title = 'Не удалось распознать формат сценария';
+            tryHarder = /header.*(?:modified|changed)|structure has been changed|Incorrect Header|Broken slot/i.test(normalized);
+            explanation = 'Выберите оригинальный файл из папки игры: он может быть повреждён или иметь изменённый формат.'
+                + (tryHarder ? ' Если формат был намеренно изменён, попробуйте расширенную декомпиляцию в настройках.' : '');
+        } else if (/NotReadableError|NotAllowedError|permission denied|Недопустимый путь/i.test(normalized)) {
+            title = 'Не удалось прочитать файл или папку';
+            explanation = 'Проверьте доступ к файлам и добавьте их ещё раз. Для папки можно выбрать нужные файлы отдельно.';
+        } else if (/Не удалось запустить инструменты|Браузер не поддерживает|Браузер не смог передать/i.test(normalized)) {
+            title = 'Браузер не смог запустить обработку';
+            explanation = 'Повторите действие с меньшим набором файлов. Если ошибка повторяется, обновите страницу или попробуйте актуальный Firefox, Chrome или Edge.';
+        }
+        return { path, title, explanation, technical, tryHarder };
+    };
+    const pluralRules = new Intl.PluralRules('ru-RU');
+    const countLabel = (count, one, few, many) => {
+        const category = pluralRules.select(count);
+        return `${count.toLocaleString('ru-RU')} ${{ one, few, many }[category] || many}`;
+    };
+    root.ESDocTools = { safePath, accepts, walkEntry, size, explainWarning, explainError, countLabel };
 })(globalThis);

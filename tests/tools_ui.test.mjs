@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { test } from 'node:test';
 
-function page(search = '') {
+function page(search = '', withClipboard = false) {
     class Element {
         listeners = new Map(); children = []; hidden = false; disabled = false;
         value = ''; files = []; clicks = 0; style = {}; attributes = {};
@@ -22,10 +22,16 @@ function page(search = '') {
         setAttribute(key, value) { this.attributes[key] = value; }
         removeAttribute(key) { delete this.attributes[key]; }
         querySelectorAll() { return []; }
-        replaceChildren() { this.children = []; }
+        replaceChildren(...children) {
+            for (const child of this.children) child.parentNode = null;
+            this.children = []; this.append(...children);
+        }
         get lastElementChild() { return this.children.at(-1); }
-        appendChild(child) { this.children.push(child); }
-        append(...children) { this.children.push(...children); }
+        appendChild(child) {
+            if (child.parentNode) child.parentNode.children = child.parentNode.children.filter(item => item !== child);
+            child.parentNode = this; this.children.push(child);
+        }
+        append(...children) { for (const child of children) this.appendChild(child); }
     }
     const elements = new Map();
     const get = id => {
@@ -41,12 +47,18 @@ function page(search = '') {
     const archiveRadio = new Element(); archiveRadio.value = 'unrpa';
     const scriptRadio = new Element(); scriptRadio.value = 'unrpyc';
     const option = get('tools-no-init-offset');
+    get('tools-operation-actions').append(get('tools-start'), get('tools-cancel'));
     app.querySelectorAll = selector => selector === '[name="tool-mode"]' ? [archiveRadio, scriptRadio]
         : selector === '.tools-options input' ? [option] : [];
     const menu = get('tools-add-menu'); menu.hidden = true;
     menu.children = [get('tools-pick-files'), get('tools-pick-folder')];
     const messages = [], workers = [], revoked = [];
     const window = new Element(); window.location = { search };
+    const copied = [];
+    if (withClipboard) {
+        window.navigator = { clipboard: {} };
+        window.copyControl = (button, value) => () => copied.push(value());
+    }
     window.Worker = class {
         constructor() { workers.push(this); }
         postMessage(message) { messages.push(message); }
@@ -76,7 +88,7 @@ function page(search = '') {
         send({ type: 'done', result: total });
     };
     return { get: name => get('tools-' + name), document, archiveRadio, scriptRadio,
-        messages, workers, revoked, window, send, catalog, add, exportDone, result };
+        messages, workers, revoked, window, send, catalog, add, exportDone, result, copied };
 }
 const script = { id: '0:script.rpyc', path: 'script.rpyc', source: 0, size: 1 };
 
@@ -107,11 +119,33 @@ test('click requests one source and renders highlighted code with a separate gut
     const html = '<span class="k">label</span> start:\n';
     ui.send({ type: 'source-file', requestId: read.requestId, name: 'script.rpy', html,
         buffer: new TextEncoder().encode('label start:\n').buffer });
-    const pre = ui.get('browser-preview').children[2].children[0];
+    const pre = ui.get('browser-preview').children[1].children[0];
     assert.equal(pre.children[0].textContent, '1');
     assert.equal(pre.children[1].children[0].innerHTML, html);
-    assert.equal(ui.get('browser-preview').children[3].download, 'script.rpy');
+    assert.equal(ui.get('browser-preview').children[2].download, 'script.rpy');
     assert.equal(ui.get('downloads').children.length, 0);
+});
+
+test('preview uses the shared code panel and copies source text without the gutter', async () => {
+    const ui = page('', true); await ui.add(['script.rpyc'], [script]);
+    ui.get('browser-list').children[0].children[0].click();
+    const text = 'label start:\n    pass\n';
+    ui.send({ type: 'source-file', requestId: ui.messages.at(-1).requestId, name: 'script.rpy',
+        buffer: new TextEncoder().encode(text).buffer });
+    const frame = ui.get('browser-preview').children[1];
+    assert.equal(frame.className, 'code-block code-block--numbered tools-code-frame');
+    assert.equal(frame.children[1].className, 'code-copy');
+    const pre = frame.children[0], scroll = pre.children[1];
+    assert.equal(pre.tabIndex, 0);
+    assert.equal(pre.attributes['aria-label'], 'Код файла');
+    assert.notEqual(scroll.tabIndex, 0);
+    scroll.scrollLeft = 0;
+    let prevented = false;
+    pre.emit('keydown', { key: 'ArrowRight', preventDefault: () => { prevented = true; } });
+    assert.equal(scroll.scrollLeft, 40);
+    assert.equal(prevented, true);
+    frame.children[1].click();
+    assert.deepEqual(ui.copied, [text]);
 });
 
 test('options reprocess only the open file', async () => {
@@ -123,6 +157,51 @@ test('options reprocess only the open file', async () => {
     assert.equal(ui.messages.at(-1).type, 'source-read');
     assert.equal(ui.messages.at(-1).options.no_init_offset, true);
     assert.equal(ui.messages.filter(message => message.type === 'run').length, 0);
+});
+
+test('preview cancellation stays below its loading message and returns after completion', async () => {
+    const ui = page(); await ui.add(['script.rpyc'], [script]);
+    ui.get('browser-list').children[0].children[0].click();
+    const pending = ui.get('browser-preview').children[0];
+    assert.equal(pending.children[0].textContent, 'Декомпилируем файл…');
+    assert.equal(pending.children[1], ui.get('cancel'));
+    assert.equal(ui.get('browser-status').textContent, '');
+    ui.send({ type: 'source-file', requestId: ui.messages.at(-1).requestId, name: 'script.rpy', buffer: new ArrayBuffer(0) });
+    assert.equal(ui.get('cancel').parentNode, ui.get('operation-actions'));
+    assert.equal(ui.get('cancel').hidden, true);
+});
+
+test('switching files reuses ready previews and warnings without another worker request', async () => {
+    const ui = page(); await ui.add(['script.rpyc', 'other.rpyc']);
+    const open = index => ui.get('browser-list').children[index].children[0].click();
+    const respond = name => ui.send({ type: 'source-file', requestId: ui.messages.at(-1).requestId,
+        name, warnings: ['Warning: analysis found signs that this .rpyc file was generated by renpy version 7 or below'],
+        buffer: new TextEncoder().encode(name).buffer });
+    open(0); respond('script.rpy'); open(1); respond('other.rpy');
+    const requests = ui.messages.length;
+    open(0);
+    assert.equal(ui.messages.length, requests);
+    assert.equal(ui.get('browser-preview').children[0].children[0].textContent, 'script.rpy');
+    assert.equal(ui.get('browser-preview').children[0].children[1].hidden, false);
+    assert.equal(ui.get('cancel').hidden, true);
+    ui.get('no-init-offset').checked = true; ui.get('no-init-offset').emit('change');
+    assert.equal(ui.messages.length, requests + 1);
+    respond('script.rpy');
+    ui.get('clear').click(); await ui.add(['script.rpyc']); open(0);
+    assert.equal(ui.messages.at(-1).type, 'source-read');
+    assert.equal(ui.get('browser-preview').attributes['aria-busy'], 'true');
+});
+
+test('preview cache evicts the least recently used file after 32 ready previews', async () => {
+    const ui = page(); await ui.add(Array.from({ length: 33 }, (_, i) => `${i}.rpyc`));
+    const open = index => ui.get('browser-list').children[index].children[0].click();
+    const respond = () => ui.send({ type: 'source-file', requestId: ui.messages.at(-1).requestId,
+        name: 'script.rpy', buffer: new ArrayBuffer(10) });
+    for (let i = 0; i < 32; i++) { open(i); respond(); }
+    open(0); open(32); respond();
+    const requests = ui.messages.length;
+    open(0); assert.equal(ui.messages.length, requests);
+    open(1); assert.equal(ui.messages.length, requests + 1);
 });
 
 test('download-all processes all sources, downloads automatically, and retains retry links', async () => {
@@ -173,9 +252,18 @@ test('preview errors are recoverable without starting a full conversion', async 
     ui.get('browser-list').children[0].children[0].click();
     ui.send({ type: 'source-error', requestId: ui.messages.at(-1).requestId, error: 'Invalid RPYC' });
     assert.equal(ui.get('download-all').disabled, false);
-    assert.match(ui.get('status').textContent, /Invalid RPYC/);
+    assert.match(ui.get('status').textContent, /формат сценария/);
+    assert.doesNotMatch(ui.get('status').textContent, /Invalid RPYC/);
+    assert.equal(ui.get('browser-status').textContent, '');
+    assert.equal(ui.get('browser-preview').attributes['aria-busy'], 'false');
+    const error = ui.get('browser-preview').children[0];
+    assert.equal(error.children.at(-2).open, false);
+    assert.equal(error.children.at(-2).children[1].textContent, 'Invalid RPYC');
     ui.get('browser-list').children[0].children[0].click();
     assert.equal(ui.messages.at(-1).type, 'source-read');
+    ui.send({ type: 'source-file', requestId: ui.messages.at(-1).requestId, name: 'script.rpy',
+        buffer: new TextEncoder().encode('label start:').buffer });
+    assert.equal(ui.get('start').hidden, true);
 });
 
 test('partial export failure retains completed ZIP links', async () => {
@@ -183,7 +271,40 @@ test('partial export failure retains completed ZIP links', async () => {
     ui.send({ type: 'output', name: 'unrpyc.zip', result: ui.result });
     ui.send({ type: 'fatal', error: 'Out of memory' });
     assert.equal(ui.get('downloads').children.length, 1); assert.equal(ui.revoked.length, 0);
-    assert.match(ui.get('status').textContent, /Out of memory/);
+    assert.match(ui.get('status').textContent, /памяти/);
+    assert.doesNotMatch(ui.get('status').textContent, /Out of memory/);
+    assert.equal(ui.get('errors').hidden, false);
+});
+
+test('cancelling a pending preview replaces loading and ignores late replies before retry', async () => {
+    const ui = page(); await ui.add(['script.rpyc'], [script]);
+    ui.get('browser-list').children[0].children[0].click();
+    const read = ui.messages.at(-1);
+    const oldHandler = ui.workers.at(-1).onmessage;
+    ui.get('cancel').click();
+    assert.equal(ui.get('browser-status').textContent, '');
+    assert.match(ui.get('browser-preview').children[0].textContent, /отменён/);
+    assert.equal(ui.get('browser-preview').attributes['aria-busy'], 'false');
+    oldHandler({ data: { type: 'source-file', requestId: read.requestId, name: 'script.rpy', buffer: new ArrayBuffer(0) } });
+    assert.match(ui.get('browser-preview').children[0].textContent, /отменён/);
+    ui.get('browser-list').children[0].children[0].click();
+    assert.equal(ui.messages.at(-1).type, 'source-read');
+    ui.send({ type: 'source-file', requestId: ui.messages.at(-1).requestId, name: 'script.rpy',
+        buffer: new TextEncoder().encode('label start:').buffer });
+    assert.equal(ui.get('start').hidden, true);
+});
+
+test('fatal errors finish a pending preview and render technical text safely once', async () => {
+    const ui = page(); await ui.add(['script.rpyc'], [script]);
+    ui.get('browser-list').children[0].children[0].click();
+    ui.send({ type: 'fatal', error: 'Traceback\n<script>unknown failure</script>' });
+    assert.equal(ui.get('browser-status').textContent, '');
+    assert.doesNotMatch(ui.get('browser-preview').children[0].textContent || '', /Декомпилируем/);
+    assert.equal(ui.get('browser-preview').attributes['aria-busy'], 'false');
+    assert.doesNotMatch(ui.get('status').textContent, /Traceback|<script>/);
+    const technical = ui.get('errors').children[0].children.at(-1).children[1];
+    assert.equal(technical.textContent, 'Traceback\n<script>unknown failure</script>');
+    assert.equal(technical.innerHTML, undefined);
 });
 
 test('equal totals are not duplicated and warning causes are shown', async () => {
@@ -219,7 +340,7 @@ test('file warnings use the same indicator next to the filename, with safely ren
     assert.equal(diagnostic.children[2].children[0].textContent, 'Техническое сообщение');
     assert.equal(diagnostic.children[2].children[1].textContent, '<script>not executable</script>');
     assert.equal(warning.children[1].attributes['aria-label'], 'Причины предупреждений файла');
-    assert.equal(ui.get('browser-preview').children[3].download, 'script.rpy');
+    assert.equal(ui.get('browser-preview').children[2].download, 'script.rpy');
 });
 
 test('legacy warnings show the Russian explanation before the original log in the file preview', async () => {

@@ -2,12 +2,13 @@
     window.__esdocToolsCleanup?.();
     const app = document.getElementById('tools-app');
     if (!app) return;
-    const { accepts, safePath, walkEntry, size, explainWarning } = window.ESDocTools;
+    const { accepts, safePath, walkEntry, size, explainWarning, explainError, countLabel } = window.ESDocTools;
     const config = JSON.parse(app.dataset.config);
     const get = id => document.getElementById('tools-' + id);
     const controls = get('controls'), drop = get('drop'), menu = get('add-menu');
     const addButton = get('add'), fileInput = get('files'), folderInput = get('folder');
     const start = get('start'), cancel = get('cancel'), status = get('status');
+    const operationActions = get('operation-actions');
     const queue = get('queue'), list = get('file-list'), progress = get('progress');
     const progressBar = get('progress-bar'), current = get('current');
     const resultPanel = get('result'), downloads = get('downloads'), downloadAll = get('download-all');
@@ -16,6 +17,7 @@
     const browser = get('browser'), browserList = get('browser-list');
     const browserPreview = get('browser-preview'), browserStatus = get('browser-status');
     const browserSearch = get('browser-search'), browserCrumbs = get('browser-crumbs');
+    const errorsPanel = get('errors');
     const controller = new AbortController();
     const on = (element, event, callback) => element.addEventListener(event, callback, { signal: controller.signal });
     const files = new Map();
@@ -29,12 +31,35 @@
     let catalogEntries = [], catalogFiles = [], catalogRequest = 0, selectedEntry = null;
     let task = '', exportReady = false, catalogSubmitted = false, previewFont = null, clearOnDownload = false;
     let operation = 0;
+    let previewPending = null, pendingPreviewKey = '';
+    const previewCache = new Map();
+    const previewCacheLimit = 64 * 1024 * 1024;
+    let previewCacheBytes = 0;
+    const cachePreview = (key, data) => {
+        const bytes = data.buffer.byteLength + (data.html?.length || 0) * 2
+            + JSON.stringify(data.warnings || []).length * 2;
+        if (bytes > previewCacheLimit) return;
+        const previous = previewCache.get(key);
+        if (previous) { previewCacheBytes -= previous.bytes; previewCache.delete(key); }
+        while (previewCache.size && (previewCacheBytes + bytes > previewCacheLimit || previewCache.size >= 32)) {
+            const oldest = previewCache.keys().next().value;
+            previewCacheBytes -= previewCache.get(oldest).bytes;
+            previewCache.delete(oldest);
+        }
+        previewCache.set(key, { data, bytes });
+        previewCacheBytes += bytes;
+    };
 
     const say = (message, error = false) => {
         status.textContent = message;
         status.classList.toggle('is-error', error);
+        errorsPanel.hidden = true;
+        errorsPanel.replaceChildren();
     };
     const clearResult = () => {
+        previewCache.clear();
+        previewCacheBytes = 0;
+        pendingPreviewKey = '';
         catalogRequest++;
         browseRequest++;
         if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -61,6 +86,9 @@
         resultPanel.hidden = true;
         get('result-description').textContent = '';
         browserPreview.replaceChildren();
+        browserPreview.setAttribute('aria-busy', 'false');
+        browserStatus.textContent = '';
+        say('');
         start.classList.add('tools-button-primary');
     };
     const closeMenu = (restore = false) => {
@@ -93,6 +121,8 @@
         for (const field of app.querySelectorAll('.tools-modes input, .tools-options input')) field.disabled = locked;
         for (const button of list.querySelectorAll('button')) button.disabled = locked;
         cancel.hidden = !busy && !enumerating;
+        const cancelHost = busy && task === 'preview' && previewPending ? previewPending : operationActions;
+        if (cancel.parentNode !== cancelHost) cancelHost.appendChild(cancel);
         downloadAll.disabled = locked || (!selected().length && !outputs.length);
         browseArchive.disabled = locked;
         browser.setAttribute('aria-busy', String(busy));
@@ -104,7 +134,7 @@
         const visible = selected();
         queue.hidden = !visible.length;
         list.hidden = mode !== 'unrpa';
-        get('count').textContent = `${visible.length.toLocaleString('ru-RU')} файлов / ${size(visible.reduce((total, entry) => total + entry.file.size, 0))}`
+        get('count').textContent = `${countLabel(visible.length, 'файл', 'файла', 'файлов')} / ${size(visible.reduce((total, entry) => total + entry.file.size, 0))}`
             + (visible.length < files.size ? ` / для другого режима: ${files.size - visible.length}` : '');
         const fragment = document.createDocumentFragment();
         // Bound the DOM for folders with thousands of scripts; all queued files
@@ -141,7 +171,7 @@
         }
         if (visible.length > 200) {
             const remainder = document.createElement('li');
-            remainder.textContent = `И ещё ${visible.length - 200} файлов. Будут обработаны все.`;
+            remainder.textContent = `И ещё ${countLabel(visible.length - 200, 'файл', 'файла', 'файлов')}. Будут обработаны все.`;
             fragment.appendChild(remainder);
         }
         list.appendChild(fragment);
@@ -175,7 +205,7 @@
                 + (!selected().length && files.size ? ' Выберите подходящий режим выше.' : '')
                 + (!files.size ? ' Выберите .rpyc, .rpymc или .rpa.' : ''));
         } catch (error) {
-            if (id === operation) say(error.message, true);
+            if (id === operation) showErrors([error.message]);
         } finally {
             if (!disposed && id === operation) {
                 enumerating = false;
@@ -241,7 +271,13 @@
         worker = null;
         catalogSubmitted = false;
     };
-    const finish = () => { busy = false; progress.hidden = true; updateControls(); };
+    const finish = () => {
+        busy = false;
+        progress.hidden = true;
+        updateControls();
+        previewPending = null;
+        pendingPreviewKey = '';
+    };
     const showOutputs = () => {
         resultPanel.hidden = false;
         start.classList.remove('tools-button-primary');
@@ -253,29 +289,45 @@
     const options = () => ({ try_harder: get('try-harder').checked, no_init_offset: get('no-init-offset').checked });
     const readBrowse = entry => {
         if (busy) return;
+        retryAvailable = false;
+        say('');
         selectedEntry = entry;
-        busy = true;
-        task = 'preview';
-        browserPreview.setAttribute('aria-busy', 'true');
-        browserPreview.replaceChildren();
-        const pending = document.createElement('p');
-        pending.className = 'tools-preview-empty';
-        pending.textContent = /\.(rpyc|rpymc)$/i.test(entry.path) ? 'Декомпилируем файл…' : 'Открываем файл…';
-        browserPreview.appendChild(pending);
-        if (previewUrl) URL.revokeObjectURL(previewUrl);
-        if (previewFont) document.fonts.delete(previewFont);
-        previewFont = null;
-        previewUrl = null;
+        const previewOptions = options();
+        const cacheKey = JSON.stringify([entry.id, previewOptions]);
         for (const button of browserList.querySelectorAll('[data-entry-id]')) {
             if (button.getAttribute('data-entry-id') === entry.id) button.setAttribute('aria-current', 'true');
             else button.removeAttribute('aria-current');
         }
-        browserStatus.textContent = pending.textContent;
+        const cached = previewCache.get(cacheKey);
+        if (cached) {
+            // Touch the entry so the least recently used preview is evicted first.
+            previewCache.delete(cacheKey);
+            previewCache.set(cacheKey, cached);
+            showPreview(cached.data);
+            updateControls();
+            return;
+        }
+        pendingPreviewKey = cacheKey;
+        busy = true;
+        task = 'preview';
+        browserPreview.setAttribute('aria-busy', 'true');
+        browserPreview.replaceChildren();
+        previewPending = document.createElement('div');
+        previewPending.className = 'tools-preview-pending';
+        const pending = document.createElement('p');
+        pending.textContent = /\.(rpyc|rpymc)$/i.test(entry.path) ? 'Декомпилируем файл…' : 'Открываем файл…';
+        previewPending.appendChild(pending);
+        browserPreview.appendChild(previewPending);
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        if (previewFont) document.fonts.delete(previewFont);
+        previewFont = null;
+        previewUrl = null;
+        browserStatus.textContent = '';
         updateControls();
         try {
             ensureWorker();
             if (!catalogSubmitted) submitCatalog();
-            worker.postMessage({ type: 'source-read', id: entry.id, options: options(), requestId: ++browseRequest });
+            worker.postMessage({ type: 'source-read', id: entry.id, options: previewOptions, requestId: ++browseRequest });
         } catch (error) { fail(error.message); }
     };
     const renderBrowse = () => {
@@ -363,7 +415,7 @@
             empty.textContent = query ? 'Файлы не найдены' : 'В этой папке нет файлов';
             browserList.appendChild(empty);
         }
-        browserStatus.textContent = `${folders.size + entries.length} элементов`
+        browserStatus.textContent = countLabel(folders.size + entries.length, 'элемент', 'элемента', 'элементов')
             + (entries.length > 500 ? ' (показаны первые 500; уточните поиск)' : '');
     };
     const renderWarnings = (panel, summary, list, count, messages) => {
@@ -407,6 +459,8 @@
             const text = document.createElement('p');
             text.className = 'tools-warning-original';
             text.textContent = warning.technical;
+            text.tabIndex = 0;
+            text.setAttribute('aria-label', 'Техническое сообщение');
             original.append(originalSummary, text);
             item.append(title, explanation, original);
             list.appendChild(item);
@@ -484,31 +538,37 @@
             browserPreview.appendChild(note);
         } else if (/\.(rpy|rpym|txt|md|json|yaml|yml|xml|html|css|js|py|csv|ini|log|sh|bat)$/i.test(path)) {
             const text = new TextDecoder().decode(data.buffer);
-            const toolbar = document.createElement('div');
-            toolbar.className = 'tools-preview-toolbar';
             const copy = document.createElement('button');
             copy.type = 'button';
-            copy.className = 'tools-icon-button';
+            copy.className = 'code-copy';
             copy.title = 'Скопировать код';
             copy.setAttribute('aria-label', 'Скопировать код');
-            copy.innerHTML = '<span class="tools-ui-icon tools-icon-copy" aria-hidden="true"></span>';
-            if (window.copyControl && window.navigator?.clipboard) {
-                copy.addEventListener('click', window.copyControl(copy, () => text, { message: 'Код скопирован.', status: browserStatus }));
-                toolbar.appendChild(copy);
-            }
+            // Same copy/check icons and shared CSS as fenced code blocks.
+            copy.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">'
+                + '<rect x="4.5" y="4.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/>'
+                + '<path d="M9.5 3V2.5A1.5 1.5 0 0 0 8 1H2.5A1.5 1.5 0 0 0 1 2.5V8a1.5 1.5 0 0 0 1.5 1.5H3" stroke="currentColor" stroke-width="1.3"/></svg>'
+                + '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">'
+                + '<path d="M2 7.5L5.5 11L12 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
             const frame = document.createElement('div');
-            frame.className = 'tools-code-frame';
+            frame.className = 'code-block code-block--numbered tools-code-frame';
             const pre = document.createElement('pre');
-            pre.className = 'tools-code';
+            pre.tabIndex = 0;
+            pre.setAttribute('aria-label', 'Код файла');
             const gutter = document.createElement('span');
-            gutter.className = 'tools-code-gutter';
+            gutter.className = 'code-gutter';
             gutter.setAttribute('aria-hidden', 'true');
             const lines = text.replace(/\n$/, '').split('\n');
             gutter.textContent = lines.map((_, i) => String(i + 1)).join('\n');
             const scroll = document.createElement('span');
             scroll.className = 'code-scroll';
-            scroll.tabIndex = 0;
-            scroll.setAttribute('aria-label', 'Код файла');
+            // Focus the bounded viewport, not its very tall code column:
+            // focusing that column can scroll the panel halfway through a file.
+            pre.addEventListener('keydown', event => {
+                if (event.target !== pre || event.altKey || event.ctrlKey || event.metaKey) return;
+                if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+                event.preventDefault();
+                scroll.scrollLeft += event.key === 'ArrowRight' ? 40 : -40;
+            });
             const code = document.createElement('code');
             // Only HTML escaped by our local Pygments formatter is inserted.
             if (data.html) code.innerHTML = data.html;
@@ -516,7 +576,11 @@
             scroll.appendChild(code);
             pre.append(gutter, scroll);
             frame.appendChild(pre);
-            browserPreview.append(toolbar, frame);
+            if (window.copyControl && window.navigator?.clipboard) {
+                copy.addEventListener('click', window.copyControl(copy, () => text, { message: 'Код скопирован.', status: browserStatus }));
+                frame.appendChild(copy);
+            }
+            browserPreview.appendChild(frame);
         } else {
             const note = document.createElement('p');
             note.textContent = 'Предпросмотр для этого формата недоступен.';
@@ -554,7 +618,73 @@
     };
     on(browseArchive, 'change', openBrowse);
     on(browserSearch, 'input', renderBrowse);
+    const errorDiagnostic = error => {
+        const block = document.createElement('div');
+        block.className = 'tools-diagnostic';
+        if (error.path) {
+            const path = document.createElement('h4');
+            path.className = 'tools-diagnostic-path';
+            path.textContent = error.path;
+            block.appendChild(path);
+        }
+        const title = document.createElement('strong');
+        title.textContent = error.title;
+        const explanation = document.createElement('p');
+        explanation.textContent = error.explanation;
+        const details = document.createElement('details');
+        details.className = 'tools-warning-details';
+        details.open = false;
+        const summary = document.createElement('summary');
+        summary.textContent = 'Техническое сообщение';
+        const technical = document.createElement('p');
+        technical.className = 'tools-warning-original';
+        technical.textContent = error.technical;
+        technical.tabIndex = 0;
+        technical.setAttribute('aria-label', 'Техническое сообщение');
+        details.append(summary, technical);
+        block.append(title, explanation, details);
+        return block;
+    };
+    const showErrors = messages => {
+        const errors = messages.slice(0, 100).map(message => explainError(message));
+        say(messages.length === 1 ? errors[0].title + (errors[0].path ? `: ${errors[0].path}` : '') + '.'
+            : `Не удалось обработать файлов: ${messages.length.toLocaleString('ru-RU')}. Причины указаны ниже.`, true);
+        errorsPanel.hidden = false;
+        for (const error of errors) errorsPanel.appendChild(errorDiagnostic(error));
+        if (messages.length > 100) {
+            const remainder = document.createElement('p');
+            remainder.textContent = `Показаны причины первых 100 ошибок из ${messages.length.toLocaleString('ru-RU')}. Обрабатывайте файлы меньшими наборами, чтобы увидеть остальные.`;
+            errorsPanel.appendChild(remainder);
+        }
+    };
+    const endPreview = message => {
+        browserPreview.setAttribute('aria-busy', 'false');
+        browserStatus.textContent = '';
+        browserPreview.replaceChildren();
+        const note = document.createElement('p');
+        note.className = 'tools-preview-empty';
+        note.textContent = message;
+        browserPreview.appendChild(note);
+    };
+    const showPreviewError = message => {
+        const error = explainError(message, selectedEntry?.path);
+        endPreview('');
+        const diagnostic = errorDiagnostic(error);
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.className = 'tools-button';
+        retry.textContent = 'Повторить просмотр';
+        on(retry, 'click', () => { if (selectedEntry) readBrowse(selectedEntry); });
+        diagnostic.appendChild(retry);
+        browserPreview.replaceChildren();
+        browserPreview.appendChild(diagnostic);
+        say(error.title + (error.path ? `: ${error.path}` : '') + '.', true);
+    };
     const fail = message => {
+        const interrupted = task;
+        task = '';
+        catalogRequest++;
+        browseRequest++;
         chunks = [];
         resetWorker();
         retryAvailable = true;
@@ -563,10 +693,13 @@
             showOutputs();
             get('result-description').textContent = `Готовых архивов: ${outputs.length}.`;
         }
-        say(message, true);
-        browserPreview.setAttribute('aria-busy', 'false');
+        if (interrupted === 'preview' || interrupted === 'catalog') endPreview('Просмотр прерван. Повторите действие или выберите другой файл.');
+        browserStatus.textContent = '';
+        showErrors([message]);
     };
     on(cancel, 'click', () => {
+        const interrupted = task;
+        task = '';
         operation++;
         enumerating = false;
         resetWorker();
@@ -576,7 +709,8 @@
         retryAvailable = true;
         finish();
         render();
-        browserPreview.setAttribute('aria-busy', 'false');
+        if (interrupted === 'preview' || interrupted === 'catalog') endPreview('Просмотр отменён. Выберите файл, чтобы открыть его ещё раз.');
+        browserStatus.textContent = '';
         say('Обработка отменена. Добавленные файлы сохранены.');
     });
     const handleMessage = ({ data }) => {
@@ -587,25 +721,34 @@
             task = '';
             finish();
             openBrowse();
-            say(data.errors.length ? data.errors.join('\n') : '', data.errors.length > 0);
+            if (data.errors.length) showErrors(data.errors);
+            else say('');
             return;
         }
         if (data.type === 'source-file' && data.requestId === browseRequest) {
+            cachePreview(pendingPreviewKey, data);
             task = '';
             finish();
             showPreview(data);
             say('');
             return;
         }
-        if (data.type === 'source-error' && (data.requestId === browseRequest || data.requestId === catalogRequest)) {
+        if (data.type === 'source-error' && (data.operation === 'catalog' ? data.requestId === catalogRequest
+            : data.operation === 'source-read' ? data.requestId === browseRequest
+                : data.requestId === browseRequest || data.requestId === catalogRequest)) {
             const wasCatalog = data.operation === 'catalog' || task === 'catalog';
             if (wasCatalog) catalogSubmitted = false;
             retryAvailable = wasCatalog;
             task = '';
             finish();
-            browserPreview.setAttribute('aria-busy', 'false');
-            browserStatus.textContent = data.error;
-            say(data.error, true);
+            if (wasCatalog) {
+                // A queued read depends on this catalog. Do not let it complete
+                // against a failed or previous mount after we unlock controls.
+                browseRequest++;
+                resetWorker();
+                endPreview('Список файлов не прочитан. Повторите чтение списка или добавьте другой файл.');
+                showErrors([data.error]);
+            } else showPreviewError(data.error);
             return;
         }
         if (!busy) return;
@@ -618,7 +761,8 @@
         } else if (data.type === 'file') {
             const state = rows.get(data.path);
             if (state) {
-                state.textContent = { working: 'Обработка…', done: 'Готово', error: 'Ошибка: ' + data.error }[data.state];
+                state.textContent = data.state === 'error' ? explainError(data.error).title
+                    : { working: 'Обработка…', done: 'Готово' }[data.state];
                 state.classList.toggle('is-error', data.state === 'error');
             }
             current.textContent = data.path;
@@ -648,7 +792,7 @@
                 downloads.appendChild(link);
             }
             chunks = [];
-        } else if (data.type === 'fatal') fail('Обработка прервана. ' + data.error);
+        } else if (data.type === 'fatal') fail(data.error);
         else if (data.type === 'done') {
             const result = data.result;
             chunks = [];
@@ -664,11 +808,12 @@
                     + (result.failed ? ` Ошибок: ${result.failed}.` : '');
                 renderWarnings(warningsPanel, get('warnings-summary'), warningList,
                     result.warnings, result.warning_details || []);
-                say(result.failed ? result.errors.slice(0, 3).join('\n') : 'Готово.', result.failed > 0);
+                if (result.failed) showErrors(result.errors.length ? result.errors : ['Нет готовых файлов.']);
+                else say('Готово.');
                 for (const output of outputs) output.link.click();
             } else {
                 get('result-description').textContent = 'Файлы не удалось обработать.';
-                say(result.errors.slice(0, 3).join('\n') || 'Нет готовых файлов.', true);
+                showErrors(result.errors.length ? result.errors : ['Нет готовых файлов.']);
             }
         }
     };
