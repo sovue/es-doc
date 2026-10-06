@@ -19,16 +19,15 @@ class ToolsRouteTests(unittest.IsolatedAsyncioTestCase):
             return await client.get(path)
 
     async def test_tools_page_has_local_processing_and_both_pickers(self):
-        response = await self.get('/tools')
+        response = await self.get('/tools/unpack')
         self.assertEqual(response.status_code, 200)
-        self.assertIn('Инструменты — ES Doc', response.text)
+        self.assertIn('Распаковщик RPA/RPYC — ES Doc', response.text)
         self.assertIn('webkitdirectory', response.text)
         self.assertIn('multiple', response.text)
         self.assertIn('tools-worker.js', response.text)
         self.assertIn('aria-current="page">Инструменты', response.text)
-        self.assertEqual(response.text.count('name="tool-mode"'), 2)
-        self.assertIn('Из .rpyc/.rpymc в исходники .rpy/.rpym.', response.text)
-        self.assertIn('Ресурсы из .rpa.', response.text)
+        self.assertNotIn('name="tool-mode"', response.text)
+        self.assertIn('.rpa, .rpyc, .rpymc', response.text)
         self.assertNotIn('Результат — ZIP', response.text)
         self.assertNotIn('Попытаться снять обфускацию', response.text)
         self.assertNotIn('tools-report', response.text)
@@ -40,10 +39,27 @@ class ToolsRouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn('Часть кода могла восстановиться неточно', response.text)
         self.assertLess(response.text.index('id="tools-browser-preview"'), response.text.index('id="tools-download-all"'))
 
+    async def test_hub_links_to_tools_without_loading_unpacker(self):
+        response = await self.get('/tools')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('href="/tools/unpack"', response.text)
+        self.assertIn('href="/tools/colors"', response.text)
+        self.assertNotIn('tools-worker.js', response.text)
+        self.assertNotIn('/static/js/tools.js', response.text)
+
+    async def test_color_page_has_its_own_controls_and_scripts(self):
+        response = await self.get('/tools/colors')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('colors-core.js', response.text)
+        self.assertIn('colors.js', response.text)
+        self.assertIn('href="/tools"', response.text)
+        self.assertNotIn('tools-worker.js', response.text)
+        self.assertNotIn('/static/js/tools.js', response.text)
+
     async def test_engine_and_runtime_are_served_locally(self):
         stylesheet = await self.get('/static/css/tools.css')
         self.assertEqual(stylesheet.status_code, 200)
-        self.assertIn('.tools-icon-warning { --tools-icon: url("data:image/svg+xml,', stylesheet.text)
+        self.assertIn('.tools-icon-warning { --tools-icon: url("/static/icons/circle-alert.svg?v=', stylesheet.text)
         self.assertIn('color: var(--attention)', stylesheet.text)
         self.assertIn('.tools-status.is-error { color: var(--danger); }', stylesheet.text)
         self.assertIn('--tools-error-icon:', stylesheet.text)
@@ -56,5 +72,6 @@ class ToolsRouteTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_tools_is_in_sitemap_and_global_search(self):
         response = await self.get('/sitemap.xml')
-        self.assertIn('/tools</loc>', response.text)
-        self.assertIn('/tools', [item['url'] for item in _section_items()])
+        for path in ('/tools', '/tools/unpack', '/tools/colors'):
+            self.assertIn(path + '</loc>', response.text)
+            self.assertIn(path, [item['url'] for item in _section_items()])

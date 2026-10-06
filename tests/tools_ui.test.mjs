@@ -40,7 +40,7 @@ function page(search = '', withClipboard = false) {
     };
     const document = new Element();
     document.getElementById = get;
-    document.createElement = () => new Element();
+    document.createElement = tag => Object.assign(new Element(), { tagName: tag.toUpperCase() });
     document.createDocumentFragment = () => new Element();
     const app = get('tools-app');
     app.dataset = { config: '{"worker":"tools-worker.js"}' };
@@ -52,7 +52,7 @@ function page(search = '', withClipboard = false) {
         : selector === '.tools-options input' ? [option] : [];
     const menu = get('tools-add-menu'); menu.hidden = true;
     menu.children = [get('tools-pick-files'), get('tools-pick-folder')];
-    const messages = [], workers = [], revoked = [];
+    const messages = [], workers = [], revoked = [], blobs = [];
     const window = new Element(); window.location = { search };
     const copied = [];
     if (withClipboard) {
@@ -66,8 +66,9 @@ function page(search = '', withClipboard = false) {
     };
     window.WebAssembly = {};
     const context = vm.createContext({ window, document, Worker: window.Worker,
-        AbortController, Blob, URLSearchParams, URL: { createObjectURL: () => 'blob:' + Math.random(),
+        AbortController, Blob, URLSearchParams, URL: { createObjectURL: blob => { blobs.push(blob); return 'blob:' + Math.random(); },
             revokeObjectURL: url => revoked.push(url) }, TextDecoder, queueMicrotask, innerWidth: 1200, innerHeight: 900 });
+    vm.runInContext(fs.readFileSync(new URL('../static/js/icons.js', import.meta.url), 'utf8'), context);
     vm.runInContext(fs.readFileSync(new URL('../static/js/tools-core.js', import.meta.url), 'utf8'), context);
     window.ESDocTools = context.ESDocTools;
     vm.runInContext(fs.readFileSync(new URL('../static/js/tools.js', import.meta.url), 'utf8'), context);
@@ -88,9 +89,29 @@ function page(search = '', withClipboard = false) {
         send({ type: 'done', result: total });
     };
     return { get: name => get('tools-' + name), document, archiveRadio, scriptRadio,
-        messages, workers, revoked, window, send, catalog, add, exportDone, result, copied };
+        messages, workers, revoked, blobs, window, send, catalog, add, exportDone, result, copied };
 }
 const script = { id: '0:script.rpyc', path: 'script.rpyc', source: 0, size: 1 };
+
+for (const [name, mime] of [['track.OPUS', 'audio/ogg'], ['track.FLAC', 'audio/flac']]) {
+    test(`archive previews ${name} as playable audio and retains its download`, async () => {
+        const ui = page('?mode=unrpa');
+        const entry = { id: '0:' + name, path: name, source: 0, size: 3 };
+        await ui.add(['music.rpa'], [entry]);
+        const button = ui.get('browser-list').children[0].children[0];
+        button.click();
+        ui.send({ type: 'source-file', requestId: ui.messages.at(-1).requestId, name,
+            buffer: new Uint8Array([1, 2, 3]).buffer });
+        assert.equal(ui.blobs.at(-1).type, mime);
+        const media = ui.get('browser-preview').children[1];
+        assert.equal(media.tagName, 'AUDIO');
+        assert.equal(media.controls, true);
+        assert.equal(media.preload, 'metadata');
+        assert.match(media.src, /^blob:/);
+        assert.equal(ui.get('browser-preview').children[2].download, name);
+        assert.equal(button.children[0].className, 'tools-ui-icon tools-icon-media');
+    });
+}
 
 test('picker menu survives transient focus loss and closes when tabbing out', () => {
     const { get, document } = page();
@@ -108,7 +129,7 @@ test('adding scripts prepares a catalog without decompiling or auto-opening', as
     assert.equal(ui.messages.length, 0);
     assert.equal(ui.get('browser').hidden, false);
     assert.equal(ui.get('browser-preview').children[0].textContent, 'Файл не выбран');
-    assert.equal(ui.get('start').hidden, true); assert.equal(ui.get('file-list').hidden, true);
+    assert.equal(ui.get('start').hidden, true); assert.equal(ui.get('file-list').hidden, false);
 });
 
 test('click requests one source and renders highlighted code with a separate gutter', async () => {
@@ -206,7 +227,7 @@ test('preview cache evicts the least recently used file after 32 ready previews'
 
 test('download-all processes all sources, downloads automatically, and retains retry links', async () => {
     const ui = page(); await ui.add(['script.rpyc'], [script]); ui.get('download-all').click();
-    assert.equal(ui.messages.at(-1).type, 'run'); assert.equal(ui.messages.at(-1).mode, 'unrpyc');
+    assert.equal(ui.messages.at(-1).type, 'run'); assert.equal(ui.messages.at(-1).mode, 'combined');
     ui.exportDone();
     assert.equal(ui.get('downloads').children[0].download, 'unrpyc.zip');
     assert.equal(ui.get('downloads').children[0].clicks, 1);
@@ -227,17 +248,43 @@ test('archives show contents before extraction and each exports as a separate ZI
     assert.deepEqual(ui.get('downloads').children.map(link => link.clicks), [1, 1]);
 });
 
-test('clearing only the current mode preserves the other queue', async () => {
+test('clearing a mixed queue removes every source', async () => {
     const ui = page(); await ui.add(['script.rpyc', 'data.rpa'], [script]);
     ui.get('clear').click(); assert.equal(ui.get('queue').hidden, true);
-    ui.archiveRadio.emit('change'); assert.equal(ui.messages.at(-1).type, 'catalog');
-    assert.equal(ui.messages.at(-1).files[0].path, 'data.rpa');
+    assert.equal(ui.get('download-all').hidden, true);
+    assert.equal(ui.get('count').textContent.startsWith('0 '), true);
 });
 
-test('bulk download clears only its own mode', async () => {
-    const ui = page(); await ui.add(['script.rpyc', 'data.rpa'], [script]);
-    ui.get('download-all').click(); ui.exportDone(); ui.archiveRadio.emit('change');
-    assert.equal(ui.messages.at(-1).files[0].path, 'data.rpa');
+test('mixed archives and standalone scripts share one export and source browser', async () => {
+    const ui = page();
+    await ui.add(['script.rpyc', 'data.rpa'], [script,
+        { id: '1:script.rpyc', path: 'script.rpyc', source: 1, size: 9 }]);
+    assert.equal(ui.get('archive').value, 'scripts');
+    assert.equal(ui.get('browser-list').children.length, 1);
+    assert.equal(ui.get('browse-actions').hidden, false);
+    ui.get('archive').value = '1'; ui.get('archive').emit('change');
+    assert.equal(ui.get('browser-title').textContent, 'data.rpa');
+    assert.equal(ui.get('browser-list').children[0].children.length, 2,
+        'Archive entries cannot remove a same-named standalone source');
+    ui.get('download-all').click();
+    assert.equal(ui.messages.at(-1).mode, 'combined');
+    assert.equal(ui.messages.at(-1).files.length, 2);
+    ui.exportDone(['unrpyc.zip', 'data.zip']);
+    assert.equal(ui.get('queue').hidden, true);
+    assert.deepEqual(ui.get('downloads').children.map(link => link.clicks), [1, 1]);
+});
+
+test('export progress advances by completed sources even when worker groups nonadjacent scripts', async () => {
+    const ui = page(); await ui.add(['script.rpyc', 'data.rpa', 'other.rpyc'], [script]);
+    ui.get('download-all').click(); ui.send({ type: 'ready' });
+    ui.send({ type: 'file', path: 'script.rpyc', index: 0, state: 'done' });
+    assert.equal(ui.get('progress-bar').value, 1);
+    ui.send({ type: 'file', path: 'other.rpyc', index: 2, state: 'done' });
+    assert.equal(ui.get('progress-bar').value, 2);
+    ui.send({ type: 'entry', path: 'resource.png', index: 1, current: 1, total: 2 });
+    assert.equal(ui.get('progress-bar').value, 2.5);
+    ui.send({ type: 'file', path: 'data.rpa', index: 1, state: 'done' });
+    assert.equal(ui.get('progress-bar').value, 3);
 });
 
 test('cancellation keeps sources and permits reindexing', async () => {
@@ -395,10 +442,10 @@ test('5001 sources are all exported despite limiting rendered rows', async () =>
     ui.get('download-all').click(); assert.equal(ui.messages.at(-1).files.length, 5001);
 });
 
-test('a drop selects its mode without processing files', async () => {
+test('a script drop keeps the unified accepted formats without processing files', async () => {
     const ui = page('?mode=unrpa');
     ui.get('drop').emit('drop', { preventDefault() {}, dataTransfer: { files: [{ name: 'a.rpymc', size: 1 }] } });
     await Promise.resolve(); await Promise.resolve();
-    assert.equal(ui.get('drop-help').textContent, '.rpyc, .rpymc');
+    assert.equal(ui.get('drop-help').textContent, '.rpa, .rpyc, .rpymc');
     assert.equal(ui.messages.length, 0);
 });

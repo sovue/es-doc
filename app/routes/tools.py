@@ -41,7 +41,17 @@ def digest(name):
 
 @main_router.get('/tools')
 async def tools_page(request: Request):
-    return templates.TemplateResponse(request, 'tools.html', {
+    return templates.TemplateResponse(request, 'tools.html', {})
+
+
+@main_router.get('/tools/colors')
+async def colors_page(request: Request):
+    return templates.TemplateResponse(request, 'tools_colors.html', {})
+
+
+@main_router.get('/tools/unpack')
+async def unpack_page(request: Request):
+    return templates.TemplateResponse(request, 'tools_unpack.html', {
         'tools_config': {
             'worker': asset_url('/static/js/tools-worker.js'),
             'engine': f'/static/tools/engine.py?v={digest("engine.py")}',

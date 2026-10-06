@@ -31,7 +31,7 @@
     --rail-width: 14rem;
     color-scheme: light dark;
 
-    /* ── Surfaces (Light · a white shirt, the leaf's shade) ── */
+    /* ── Surfaces (Light / a white shirt, the leaf's shade) ── */
     /* White is the brand's own colour here, not a missing tint: the logo is
        drawn on it. It is the page and the things that sit on the page —
        cards, controls, popovers — and the only pure neutral in the file. */
@@ -79,7 +79,7 @@
     /* ── Lines ────────────────────────────────────────────── */
     --border: #D1DDCD;
 
-    /* ── Code (Light · a leaf-paper sheet on a white desk) ─── */
+    /* ── Code (Light / a leaf-paper sheet on a white desk) ─── */
     /* The fenced panel takes the leaf paper and leans on its 1px border, the
        way blockquotes do; inline code needs to read as a chip inside a line of
        prose, so it takes a greyer, deeper chip of its own. */

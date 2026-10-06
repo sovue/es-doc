@@ -43,7 +43,7 @@ SPECIAL = [
 # above is typeset for reading, this one pastes into the generator, into
 # warpers.yaml and into a mod.
 FAMILIES = [
-    ('Sine', '', '1 − cos(t · π/2)',
+    ('Sine', '', '1 − cos(t * π/2)',
      'Мягкое сглаживание на косинусе. Единственная тройка без суффикса и разумный выбор по умолчанию.',
      'easeout', '1 - cos({t} * pi / 2)'),
     ('Quad', '_quad', 't²',
@@ -58,13 +58,13 @@ FAMILIES = [
     ('Quint', '_quint', 't⁵',
      'Та же кривая, но жёстче. На длинной анимации читается уже как рывок.',
      'easeout', '{t} ** 5'),
-    ('Expo', '_expo', '2^(10 · (t − 1))',
+    ('Expo', '_expo', '2^(10 * (t − 1))',
      'Самый крутой из плавных: начало движения почти не видно.',
      'easeout', '2 ** (10 * ({t} - 1))'),
     ('Circ', '_circ', '1 − √(1 − t²)',
      'Дуга окружности: спокойное начало и обрыв в конце, резче, чем ожидаешь по названию.',
      'easeout', '1 - sqrt(1 - {t} * {t})'),
-    ('Back', '_back', 't² · (2.7015 · t − 1.7015)',
+    ('Back', '_back', 't² * (2.7015 * t − 1.7015)',
      'Замах: значение сначала уходит в обратную сторону и только потом идёт к цели.',
      'easeout', '{t} * {t} * (2.7015 * {t} - 1.7015)'),
     # Elastic and bounce are the two families the engine writes as easein_ and

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% set page_title = 'Распаковщик RPA/RPYC — ES Doc' %}
+{% set body_class = 'bg-solid scene-page' %}
+{% set active = 'tools' %}
+{% set with_unpacker_js = true %}
+{% set extra_css = ['/static/css/code.css', '/static/css/syntax.css', '/static/css/tools.css'] %}
+
+{% block content %}
+<div class="page tools-page">
+    <main id="main-content">
+        <section class="page-hero">
+            <div class="page-hero-inner">
+                <a href="/tools" class="page-back"><span aria-hidden="true">{{ lucide_icon('arrow-left') }}</span> Инструменты</a>
+                <h1 class="page-title">Распаковщик RPA/RPYC</h1>
+            </div>
+        </section>
+        <div class="page-main">
+            <section class="tools-workspace" id="tools-app" aria-labelledby="local-tools-heading"
+                     data-config='{{ tools_config|tojson }}'>
+                <div class="tools-heading">
+                    <h2 id="local-tools-heading">Файлы Ren’Py</h2>
+                    <p>Обработка на вашем устройстве. Файлы не отправляются на сервер.</p>
+                </div>
+                <noscript><p>Для обработки файлов включите JavaScript. </p></noscript>
+                <div id="tools-controls" hidden>
+                    <div class="tools-drop" id="tools-drop" tabindex="0" role="group" aria-label="Добавить файлы или папку"
+                         aria-describedby="tools-drop-help">
+                        {{ lucide_icon('folder-up', 32, 'tools-drop-icon') }}
+                        <p class="tools-drop-title">Перетащите файлы или папку сюда</p>
+                        <p id="tools-drop-help">.rpa, .rpyc, .rpymc</p>
+                        <button class="tools-button" type="button" id="tools-add" aria-expanded="false" aria-controls="tools-add-menu">Добавить файлы или папку <span aria-hidden="true">{{ lucide_icon('chevron-down', 14) }}</span></button>
+                    </div>
+                    <div class="tools-add-menu" id="tools-add-menu" hidden aria-label="Способ добавления">
+                        <button type="button" id="tools-pick-files">Выбрать файлы…</button>
+                        <button type="button" id="tools-pick-folder">Выбрать папку…</button>
+                    </div>
+                    <input type="file" id="tools-files" accept=".rpa,.rpyc,.rpymc" multiple hidden>
+                    <input type="file" id="tools-folder" webkitdirectory multiple hidden>
+                    <div class="tools-options" id="tools-options">
+                        <details class="tools-advanced"><summary><span class="tools-ui-icon tools-icon-settings" aria-hidden="true"></span>Настройки декомпиляции<span class="tools-ui-icon tools-icon-chevron" aria-hidden="true"></span></summary>
+                            <div class="tools-disclosure-body">
+                            <p>Применяются и к ресурсам внутри .rpa: при распаковке они тоже декомпилируются.</p>
+                            <label><input type="checkbox" id="tools-try-harder" aria-describedby="tools-try-harder-help"> Расширенная декомпиляция</label>
+                            <p id="tools-try-harder-help">Для .rpyc с изменённым форматом, если обычная декомпиляция не сработала. Работает медленнее.</p>
+                            <label><input type="checkbox" id="tools-no-init-offset"> Не восстанавливать init offset</label>
+                            <p>Полезно, если нужно сохранить явные приоритеты init-блоков.</p>
+                            </div>
+                        </details>
+                    </div>
+                    <section id="tools-queue" class="tools-queue" hidden aria-labelledby="tools-queue-heading">
+                        <div class="tools-queue-heading">
+                            <div class="tools-queue-summary"><h3 id="tools-queue-heading">Добавленные файлы</h3><p id="tools-count" class="tools-meta"></p></div>
+                            <button type="button" class="tools-clear" id="tools-clear" title="Очистить добавленные файлы" aria-label="Очистить добавленные файлы">
+                                {{ lucide_icon('trash', 24) }}
+                            </button>
+                        </div>
+                        <ul id="tools-file-list" class="tools-file-list" aria-label="Добавленные файлы"></ul>
+                    </section>
+                    <div class="tools-progress" id="tools-progress" hidden>
+                        <progress id="tools-progress-bar" aria-label="Прогресс обработки"></progress>
+                        <p id="tools-current" class="tools-meta"></p>
+                    </div>
+                    <p id="tools-status" class="tools-status" role="status" aria-live="polite"></p>
+                    <div id="tools-operation-actions" class="tools-actions">
+                        <button type="button" class="tools-button" id="tools-start" hidden disabled>Повторить чтение списка</button>
+                        <button type="button" class="tools-button" id="tools-cancel" hidden>Отменить</button>
+                    </div>
+                    <div id="tools-errors" class="tools-errors" hidden aria-label="Причины ошибок"></div>
+                    <div id="tools-result" class="tools-result" hidden>
+                        <div class="tools-warning-host tools-result-meta">
+                            <p id="tools-result-description"></p>
+                            <details id="tools-warnings" class="tools-warnings" hidden>
+                                <summary id="tools-warnings-summary"></summary>
+                                <ul id="tools-warning-list" tabindex="0" aria-label="Причины предупреждений"></ul>
+                            </details>
+                        </div>
+                        <div id="tools-browse-actions" class="tools-browse-actions" hidden>
+                            <label id="tools-archive-label" hidden>Источник
+                                <select id="tools-archive" aria-label="Источник для просмотра"></select>
+                            </label>
+                        </div>
+                        <section id="tools-browser" class="tools-browser" aria-label="Просмотр файлов" hidden>
+                            <div class="tools-browser-head">
+                                <h3 id="tools-browser-title">Файлы</h3>
+                                <input id="tools-browser-search" class="tools-browser-search" type="search" placeholder="Поиск по имени…" aria-label="Поиск по файлам">
+                            </div>
+                            <nav id="tools-browser-crumbs" class="tools-browser-crumbs" aria-label="Путь к файлу"></nav>
+                            <p id="tools-browser-status" class="tools-meta" role="status" aria-live="polite"></p>
+                            <div class="tools-browser-layout">
+                                <ul id="tools-browser-list" class="tools-browser-list" aria-label="Файлы и папки"></ul>
+                                <div id="tools-browser-preview" class="tools-browser-preview" aria-label="Предпросмотр файла"></div>
+                            </div>
+                        </section>
+                        <div class="tools-export">
+                            <button id="tools-download-all" class="tools-button tools-button-primary" type="button" hidden><span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span><span>Скачать всё</span></button>
+                            <div id="tools-downloads" class="tools-downloads"></div>
+                        </div>
+                    </div>
+                </div>
+                <details class="tools-help"><summary><span class="tools-ui-icon tools-icon-info" aria-hidden="true"></span>Подробнее<span class="tools-ui-icon tools-icon-chevron" aria-hidden="true"></span></summary>
+                    <div class="tools-disclosure-body">
+                    <p>Предпросмотр обрабатывает только выбранный файл. Декомпилированные скрипты сохраняются в unrpyc.zip, для каждого .rpa создаётся отдельный ZIP с папками и файлами архива. Сценарии .rpyc/.rpymc внутри него восстанавливаются в .rpy/.rpym. Если исходник уже есть, он сохраняется без замены.</p>
+                    <p>UnRpyc восстанавливает .rpyc и .rpymc. Файлы Ren'Py 6/7 тоже обрабатываются, но совместимость зависит от версии игры. Комментарии и исходное форматирование в скомпилированных файлах не сохраняются.</p>
+                    <p>UnRPA распаковывает RPA-2.0, RPA-3.0 и совместимые варианты, распознаваемые UnRPA. Изменённые или зашифрованные архивы могут не поддерживаться.</p>
+                    <p>Исходные проекты: <a href="https://github.com/CensoredUsername/unrpyc">unrpyc</a>, <a href="https://github.com/lattyware/unrpa">unrpa</a>.</p>
+                    </div>
+                </details>
+            </section>
+        </div>
+    </main>
+    {% include "partials/footer.html" %}
+</div>
+{% endblock %}

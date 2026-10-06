@@ -23,9 +23,9 @@
     const files = new Map();
     const rows = new Map();
     const supported = Boolean(window.Worker && window.WebAssembly);
-    let mode = new URLSearchParams(window.location.search).get('mode') === 'unrpa' ? 'unrpa' : 'unrpyc';
     let busy = false, enumerating = false, disposed = false, retryAvailable = false;
     let worker = null, chunks = [], activeFiles = [], dragDepth = 0;
+    let processedFiles = 0;
     const outputs = [];
     let browseEntries = [], browseFolder = '', browseRequest = 0, previewUrl = null;
     let catalogEntries = [], catalogFiles = [], catalogRequest = 0, selectedEntry = null;
@@ -105,20 +105,15 @@
         addButton.setAttribute('aria-expanded', 'true');
         get('pick-files').focus();
     };
-    const selected = () => [...files.values()].filter(entry => accepts(entry.path, mode));
-    const setMode = next => {
-        mode = next;
-        for (const radio of app.querySelectorAll('[name="tool-mode"]')) radio.checked = radio.value === mode;
-        progress.hidden = true;
-        get('drop-help').textContent = mode === 'unrpa' ? '.rpa' : '.rpyc, .rpymc';
-    };
+    const selected = () => [...files.values()];
+    const isArchive = entry => /\.rpa$/i.test(entry.path);
     const updateControls = () => {
         const locked = busy || enumerating || !supported;
         start.disabled = locked || !selected().length;
         start.hidden = !retryAvailable || locked || !selected().length;
         addButton.disabled = locked;
         get('clear').disabled = locked || !selected().length;
-        for (const field of app.querySelectorAll('.tools-modes input, .tools-options input')) field.disabled = locked;
+        for (const field of app.querySelectorAll('.tools-options input')) field.disabled = locked;
         for (const button of list.querySelectorAll('button')) button.disabled = locked;
         cancel.hidden = !busy && !enumerating;
         const cancelHost = busy && task === 'preview' && previewPending ? previewPending : operationActions;
@@ -133,9 +128,8 @@
         rows.clear();
         const visible = selected();
         queue.hidden = !visible.length;
-        list.hidden = mode !== 'unrpa';
-        get('count').textContent = `${countLabel(visible.length, 'файл', 'файла', 'файлов')} / ${size(visible.reduce((total, entry) => total + entry.file.size, 0))}`
-            + (visible.length < files.size ? ` / для другого режима: ${files.size - visible.length}` : '');
+        list.hidden = false;
+        get('count').textContent = `${countLabel(visible.length, 'файл', 'файла', 'файлов')} / ${size(visible.reduce((total, entry) => total + entry.file.size, 0))}`;
         const fragment = document.createDocumentFragment();
         // Bound the DOM for folders with thousands of scripts; all queued files
         // are still processed even when their rows are not rendered.
@@ -148,8 +142,12 @@
             open.className = 'tools-text-button';
             open.textContent = entry.path;
             open.addEventListener('click', () => {
-                browseArchive.value = String(catalogFiles.findIndex(item => item.path === entry.path));
+                browseArchive.value = isArchive(entry) ? String(catalogFiles.findIndex(item => item.path === entry.path)) : 'scripts';
                 openBrowse();
+                if (!isArchive(entry)) {
+                    const source = catalogEntries.find(item => item.path === entry.path && catalogFiles[item.source]?.path === entry.path);
+                    if (source) readBrowse(source);
+                }
             });
             name.appendChild(open);
             const state = document.createElement('span');
@@ -163,7 +161,7 @@
             remove.type = 'button';
             remove.className = 'tools-remove';
             remove.setAttribute('aria-label', 'Убрать ' + entry.path);
-            remove.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+            remove.innerHTML = window.ESDocIcons.svg('x', 16);
             remove.addEventListener('click', () => { files.delete(entry.path); clearResult(); retryAvailable = false; render(); loadCatalog(); });
             row.append(name, bytes, remove);
             rows.set(entry.path, state);
@@ -187,22 +185,18 @@
         updateControls();
         say('Чтение списка файлов…');
         let added = 0, skipped = 0, duplicates = 0;
-        const incomingModes = new Set();
         try {
             await collect(entry => {
                 if (disposed || id !== operation) throw new Error('Добавление отменено.');
                 entry.path = safePath(entry.path);
                 if (!accepts(entry.path, 'combined')) { skipped++; return; }
-                incomingModes.add(accepts(entry.path, 'unrpa') ? 'unrpa' : 'unrpyc');
                 if (files.has(entry.path)) { duplicates++; return; }
                 files.set(entry.path, entry);
                 added++;
             });
-            if (id === operation && incomingModes.size === 1) setMode([...incomingModes][0]);
             if (id === operation) say(`Добавлено файлов: ${added}.`
                 + (skipped ? ` Другие форматы пропущены: ${skipped}.` : '')
                 + (duplicates ? ` Повторные пути пропущены: ${duplicates}.` : '')
-                + (!selected().length && files.size ? ' Выберите подходящий режим выше.' : '')
                 + (!files.size ? ' Выберите .rpyc, .rpymc или .rpa.' : ''));
         } catch (error) {
             if (id === operation) showErrors([error.message]);
@@ -246,20 +240,13 @@
     });
     on(window, 'resize', () => closeMenu());
     on(window, 'scroll', () => closeMenu());
-    for (const radio of app.querySelectorAll('[name="tool-mode"]')) on(radio, 'change', () => {
-        setMode(radio.value);
-        clearResult();
-        say('');
-        render();
-        loadCatalog();
-    });
     on(get('clear'), 'click', () => {
         for (const entry of selected()) files.delete(entry.path);
         clearResult();
         resetWorker();
         retryAvailable = false;
         progress.hidden = true;
-        say('Очередь выбранного режима очищена.');
+        say('Добавленные файлы удалены.');
         render();
     });
 
@@ -389,10 +376,10 @@
         for (const entry of entries.slice(0, 500)) {
             const kind = /\.(rpyc|rpymc|rpy|rpym|py|js|json|css|txt)$/i.test(entry.path) ? 'code'
                 : /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(entry.path) ? 'image'
-                : /\.(ogg|mp3|wav|mp4|webm)$/i.test(entry.path) ? 'media' : 'file';
+                : /\.(ogg|mp3|wav|opus|flac|mp4|webm)$/i.test(entry.path) ? 'media' : 'file';
             row(query ? entry.path : entry.path.slice(browseFolder.length), size(entry.size), () => readBrowse(entry), kind,
                 selectedEntry?.id === entry.id, entry.id);
-            if (mode === 'unrpyc' && files.has(entry.path)) {
+            if (catalogFiles[entry.source]?.path === entry.path && !isArchive(catalogFiles[entry.source]) && files.has(entry.path)) {
                 const remove = document.createElement('button');
                 remove.type = 'button';
                 remove.className = 'tools-icon-button tools-remove-source';
@@ -480,7 +467,7 @@
         const path = data.name;
         const extension = path.split('.').pop().toLowerCase();
         const mime = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif',
-            svg: 'image/svg+xml', ogg: 'audio/ogg', mp3: 'audio/mpeg', wav: 'audio/wav',
+            svg: 'image/svg+xml', ogg: 'audio/ogg', mp3: 'audio/mpeg', wav: 'audio/wav', opus: 'audio/ogg', flac: 'audio/flac',
             mp4: 'video/mp4', webm: 'video/webm', ttf: 'font/ttf', otf: 'font/otf', woff: 'font/woff', woff2: 'font/woff2' }[extension] || 'application/octet-stream';
         previewUrl = URL.createObjectURL(new Blob([data.buffer], { type: mime }));
         browserPreview.replaceChildren();
@@ -544,11 +531,7 @@
             copy.title = 'Скопировать код';
             copy.setAttribute('aria-label', 'Скопировать код');
             // Same copy/check icons and shared CSS as fenced code blocks.
-            copy.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">'
-                + '<rect x="4.5" y="4.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/>'
-                + '<path d="M9.5 3V2.5A1.5 1.5 0 0 0 8 1H2.5A1.5 1.5 0 0 0 1 2.5V8a1.5 1.5 0 0 0 1.5 1.5H3" stroke="currentColor" stroke-width="1.3"/></svg>'
-                + '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">'
-                + '<path d="M2 7.5L5.5 11L12 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+            copy.innerHTML = window.ESDocIcons.svg('copy', 14) + window.ESDocIcons.svg('check', 14);
             const frame = document.createElement('div');
             frame.className = 'code-block code-block--numbered tools-code-frame';
             const pre = document.createElement('pre');
@@ -603,7 +586,9 @@
         previewFont = null;
         previewUrl = null;
         const source = Number(browseArchive.value) || 0;
-        browseEntries = mode === 'unrpa' ? catalogEntries.filter(entry => entry.source === source) : catalogEntries;
+        const scripts = browseArchive.value === 'scripts';
+        browseEntries = catalogEntries.filter(entry => scripts
+            ? catalogFiles[entry.source] && !isArchive(catalogFiles[entry.source]) : entry.source === source);
         browseFolder = '';
         browserSearch.value = '';
         browserList.replaceChildren();
@@ -613,7 +598,7 @@
         empty.textContent = 'Файл не выбран';
         browserPreview.appendChild(empty);
         browser.hidden = false;
-        get('browser-title').textContent = mode === 'unrpa' ? catalogFiles[source]?.path || 'Файлы' : 'Файлы';
+        get('browser-title').textContent = scripts ? 'Сценарии' : catalogFiles[source]?.path || 'Файлы';
         renderBrowse();
     };
     on(browseArchive, 'change', openBrowse);
@@ -753,11 +738,11 @@
         }
         if (!busy) return;
         if (data.type === 'loading') say(data.text);
-        else if (data.type === 'ready') { say('Инструменты готовы. Обработка файлов…'); progressBar.max = activeFiles.length; progressBar.value = 0; }
+        else if (data.type === 'ready') { say('Инструменты готовы. Обработка файлов…'); processedFiles = 0; progressBar.max = activeFiles.length; progressBar.value = 0; }
         else if (data.type === 'chunk') chunks.push(new Blob([data.buffer]));
         else if (data.type === 'entry') {
             current.textContent = `${data.path} / ${data.current} из ${data.total}`;
-            progressBar.value = data.index + data.current / data.total;
+            progressBar.value = processedFiles + data.current / data.total;
         } else if (data.type === 'file') {
             const state = rows.get(data.path);
             if (state) {
@@ -766,7 +751,7 @@
                 state.classList.toggle('is-error', data.state === 'error');
             }
             current.textContent = data.path;
-            if (data.state !== 'working') progressBar.value = data.index + 1;
+            if (data.state !== 'working') progressBar.value = ++processedFiles;
         } else if (data.type === 'output-start') chunks = [];
         else if (data.type === 'output') {
             if (data.result.written) {
@@ -836,24 +821,32 @@
         if (!supported || busy || enumerating || !selected().length) return;
         catalogFiles = selected();
         retryAvailable = false;
-        catalogEntries = mode === 'unrpyc' ? catalogFiles.map((entry, source) => ({
+        const archives = catalogFiles.map((entry, source) => ({ entry, source })).filter(({ entry }) => isArchive(entry));
+        const scripts = catalogFiles.map((entry, source) => ({
             id: `${source}:${entry.path}`, path: entry.path, size: entry.file.size, source,
-        })) : [];
+        })).filter(entry => !isArchive(catalogFiles[entry.source]));
+        catalogEntries = scripts;
         browseArchive.replaceChildren();
-        for (const [index, entry] of catalogFiles.entries()) {
+        if (scripts.length) {
             const option = document.createElement('option');
-            option.value = String(index);
+            option.value = 'scripts';
+            option.textContent = 'Сценарии';
+            browseArchive.appendChild(option);
+        }
+        for (const { source, entry } of archives) {
+            const option = document.createElement('option');
+            option.value = String(source);
             option.textContent = entry.path;
             browseArchive.appendChild(option);
         }
-        browseArchive.value = '0';
-        browseActions.hidden = mode !== 'unrpa' || catalogFiles.length < 2;
+        browseArchive.value = scripts.length ? 'scripts' : String(archives[0]?.source || 0);
+        browseActions.hidden = archives.length + (scripts.length ? 1 : 0) < 2;
         get('archive-label').hidden = browseActions.hidden;
         resultPanel.hidden = false;
         downloadAll.hidden = false;
         downloadAll.innerHTML = '<span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span><span>Скачать всё в ZIP</span>';
         openBrowse();
-        if (mode === 'unrpyc') {
+        if (!archives.length) {
             updateControls();
             return;
         }
@@ -861,7 +854,7 @@
         task = 'catalog';
         retryAvailable = false;
         updateControls();
-        browserStatus.textContent = mode === 'unrpa' ? 'Читаем оглавление архива…' : 'Подготовка файлов…';
+        browserStatus.textContent = 'Читаем оглавление архивов…';
         try {
             ensureWorker();
             submitCatalog();
@@ -887,7 +880,7 @@
         say('Подготовка к обработке…');
         try {
             ensureWorker();
-            worker.postMessage({ type: 'run', config, mode: mode === 'unrpa' ? 'combined' : mode, files: activeFiles,
+            worker.postMessage({ type: 'run', config, mode: 'combined', files: activeFiles,
                 options: options() });
         } catch (error) { fail(error.message); }
     };
@@ -952,6 +945,6 @@
         return;
     }
     controls.hidden = false;
-    setMode(mode);
+    get('drop-help').textContent = '.rpa, .rpyc, .rpymc';
     render();
 })();

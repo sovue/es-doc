@@ -1,7 +1,7 @@
 /* All runtime and Python code is served by ES Doc; user Files stay in this
    worker. WORKERFS reads Blob slices instead of copying a whole RPA to MEMFS. */
 let runtimePromise;
-let inputOffset = 0;
+let inputIndices = [];
 let browseMounted = false;
 let commandQueue = Promise.resolve();
 let previewRequestId = 0;
@@ -46,7 +46,7 @@ import engine
 
 self.esdocNotify = event => {
     const message = event.toJs({ dict_converter: Object.fromEntries });
-    if (typeof message.index === 'number') message.index += inputOffset;
+    if (typeof message.index === 'number') message.index = inputIndices[message.index] ?? message.index;
     self.postMessage(message);
 };
 self.esdocEmit = bytes => {
@@ -165,13 +165,25 @@ async function run(data) {
         mounted = true;
         self.postMessage({ type: 'ready' });
         const inputs = data.files.map((entry, index) => ({ path: entry.path, source: `/input/input-${index}` }));
-        const jobs = data.mode === 'combined'
-            ? inputs.map((entry, index) => ({ files: [entry], offset: index,
-                name: entry.path.split('/').pop().replace(/\.rpa$/i, '.zip') }))
-            : [{ files: inputs, offset: 0, name: 'unrpyc.zip' }];
+        const indexed = inputs.map((entry, index) => ({ entry, index }));
+        const scripts = indexed.filter(({ entry }) => !/\.rpa$/i.test(entry.path));
+        const jobs = data.mode === 'combined' ? [
+            ...(scripts.length ? [{ files: scripts.map(({ entry }) => entry),
+                indices: scripts.map(({ index }) => index), name: 'unrpyc.zip' }] : []),
+            ...indexed.filter(({ entry }) => /\.rpa$/i.test(entry.path)).map(({ entry, index }) => ({
+                files: [entry], indices: [index], name: entry.path.split('/').pop().replace(/\.rpa$/i, '.zip'),
+            })),
+        ] : [{ files: inputs, indices: indexed.map(({ index }) => index), name: 'unrpyc.zip' }];
+        const names = new Set();
+        for (const job of jobs) {
+            const base = job.name;
+            let suffix = 2;
+            while (names.has(job.name)) job.name = base.replace(/\.zip$/, `-${suffix++}.zip`);
+            names.add(job.name);
+        }
         const totals = { succeeded: 0, failed: 0, written: 0, warnings: 0, warning_details: [], errors: [] };
         for (const job of jobs) {
-            inputOffset = job.offset;
+            inputIndices = job.indices;
             pyodide.globals.set('job_json', JSON.stringify({ files: job.files, mode: data.mode, options: data.options }));
             self.postMessage({ type: 'output-start' });
             const result = JSON.parse(await pyodide.runPythonAsync(`

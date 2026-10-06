@@ -51,8 +51,11 @@
 {% endif %}
 {% if active == "resources" or active == "specialists" %}<script src="{{ asset('/static/js/lightbox.js') }}" data-page-script defer></script>
 {% endif %}
-{% if active == "tools" %}<script src="{{ asset('/static/js/tools-core.js') }}" data-page-script defer></script>
+{% if with_unpacker_js %}<script src="{{ asset('/static/js/tools-core.js') }}" data-page-script defer></script>
 <script src="{{ asset('/static/js/tools.js') }}" data-page-script defer></script>
+{% endif %}
+{% if with_colors_js %}<script src="{{ asset('/static/js/colors-core.js') }}" data-page-script defer></script>
+<script src="{{ asset('/static/js/colors.js') }}" data-page-script defer></script>
 {% endif %}
 {% if DEBUG %}<script src="{{ asset('/static/js/livereload.js') }}"></script>
 {% endif %}

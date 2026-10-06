@@ -42,7 +42,8 @@ with open('/data.rpa', 'wb') as source:
     source.write(f'RPA-2.0 {archive_offset:016x}\n'.encode() + compiled + zlib.compress(pickle.dumps(index, protocol=2)))
 `);
     const waiting = new Map();
-    const self = { postMessage: message => waiting.get(message.requestId)?.(message) };
+    const messages = [];
+    const self = { postMessage: message => { messages.push(message); waiting.get(message.requestId)?.(message); } };
     // Node has no browser Blob mount. Keep the actual Python ZIP reads and
     // conversions, with the completed archive already written to MEMFS.
     const runtime = {
@@ -55,6 +56,8 @@ with open('/data.rpa', 'wb') as source:
     vm.runInContext(worker.replace('let runtimePromise;', 'let runtimePromise = Promise.resolve(runtime);'), context);
     globalThis.esdocPreview = self.esdocPreview;
     globalThis.esdocSourcePreview = self.esdocSourcePreview;
+    globalThis.esdocEmit = self.esdocEmit;
+    globalThis.esdocNotify = self.esdocNotify;
     const request = data => new Promise(resolve => {
         waiting.set(data.requestId, message => { waiting.delete(data.requestId); resolve(message); });
         self.onmessage({ data });
@@ -89,8 +92,51 @@ json.dumps(result)
             assert.match(opened.html, /class="k"/);
             assert.match(opened.html, /class="w"/);
         }
+        pyodide.FS.mkdirTree('/input');
+        for (const [index, source] of ['/script.rpyc', '/data.rpa', '/script.rpyc'].entries()) {
+            pyodide.FS.writeFile(`/input/input-${index}`, pyodide.FS.readFile(source));
+        }
+        messages.length = 0;
+        await vm.runInContext(`run({mode: 'combined', files: [
+            {path: 'script.rpyc'}, {path: 'data.rpa'}, {path: 'other.rpyc'}], options: {}})`, context);
+        const outputs = messages.filter(message => message.type === 'output');
+        assert.equal(outputs.length, 2, 'All standalone scripts share one ZIP beside the archive ZIP');
+        const scriptOutput = outputs.find(message => message.name === 'unrpyc.zip');
+        assert.ok(scriptOutput, 'Standalone scripts must download with a ZIP filename');
+        assert.equal(scriptOutput.result.succeeded, 2);
+        assert.equal(outputs.find(message => message.name === 'data.zip').result.succeeded, 1);
+        assert.equal(messages.at(-1).type, 'done');
+        assert.equal(messages.at(-1).result.succeeded, 3);
+        let chunks = [];
+        for (const message of messages) {
+            if (message.type === 'output-start') chunks = [];
+            if (message.type === 'chunk') chunks.push(Buffer.from(message.buffer));
+            if (message.type === 'output') {
+                pyodide.FS.writeFile('/verify.zip', Buffer.concat(chunks));
+                const paths = JSON.parse(await pyodide.runPythonAsync(`
+with zipfile.ZipFile('/verify.zip') as output:
+    output_paths = sorted(output.namelist())
+json.dumps(output_paths)
+`));
+                assert.deepEqual(paths, message.name === 'unrpyc.zip'
+                    ? ['other.rpy', 'script.rpy'] : ['scenario/script.rpy', 'scenario/script.rpyc']);
+            }
+        }
+        for (const path of ['script.rpyc', 'data.rpa', 'other.rpyc']) {
+            const event = messages.find(message => message.type === 'file' && message.path === path);
+            assert.equal(event.index, ['script.rpyc', 'data.rpa', 'other.rpyc'].indexOf(path), 'Progress refers to the original queue index');
+        }
+        messages.length = 0;
+        pyodide.FS.writeFile('/input/input-2', pyodide.FS.readFile('/data.rpa'));
+        await vm.runInContext(`run({mode: 'combined', files: [
+            {path: 'script.rpyc'}, {path: 'unrpyc.rpa'}, {path: 'folder/unrpyc.rpa'}], options: {}})`, context);
+        assert.deepEqual(messages.filter(message => message.type === 'output').map(message => message.name),
+            ['unrpyc.zip', 'unrpyc-2.zip', 'unrpyc-3.zip'], 'ZIP filenames must be unique across scripts and archives');
+        assert.equal(messages.at(-1).result.failed, 0);
     } finally {
         delete globalThis.esdocPreview;
         delete globalThis.esdocSourcePreview;
+        delete globalThis.esdocEmit;
+        delete globalThis.esdocNotify;
     }
 });

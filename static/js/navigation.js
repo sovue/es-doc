@@ -19,7 +19,7 @@
         if (pathname === '/docs' || pathname.startsWith('/docs/')) return 'docs';
         if (pathname === '/resources' || pathname.startsWith('/resources/')) return 'resources';
         if (pathname === '/materials') return 'materials';
-        if (pathname === '/tools') return 'tools';
+        if (pathname === '/tools' || pathname.startsWith('/tools/')) return 'tools';
         if (pathname === '/specialists' || pathname === '/artists') return 'specialists';
         if (pathname === '/news-resources') return 'news-resources';
         return null;
@@ -110,6 +110,7 @@
 
         window.__esdocWarperCleanup?.();
         window.__esdocToolsCleanup?.();
+        window.__esdocColorsCleanup?.();
         content.innerHTML = nextContent.innerHTML;
         document.title = nextDocument.title;
         document.body.className = nextDocument.body.className;
