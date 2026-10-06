@@ -34,7 +34,7 @@
         <section class="page-hero page-hero--tight">
             <div class="page-hero-inner">
                 <a href="/resources/{% if collection != 'original' %}{{ collection }}{% endif %}" class="page-back">
-                    <span aria-hidden="true">←</span> {{ collection_meta.title }}</a>
+                    <span aria-hidden="true">{{ lucide_icon('arrow-left') }}</span> {{ collection_meta.title }}</a>
                 <h1 class="page-title">{{ category_meta.title }}</h1>
                 <p class="page-lead">
                     {{ category_meta.desc }}.
@@ -121,9 +121,7 @@
                     </label>
 
                     <button type="button" class="wp-lab-play">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-                            <path d="M3 1.9a.6.6 0 0 1 .9-.52l6 3.6a.6.6 0 0 1 0 1.04l-6 3.6a.6.6 0 0 1-.9-.52z"/>
-                        </svg>
+                        {{ lucide_icon('play', 16) }}
                         Проиграть
                     </button>
                 </div>

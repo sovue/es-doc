@@ -1,20 +1,11 @@
-from .file import ROOT
+from .icons import lucide_icon
 
-_IMG = ROOT / 'static' / 'img'
-
-# Callout icons (`:::info`, `:::warning`, …) and the stub-banner icons, inlined
-# into the rendered HTML so they inherit `currentColor` from the box they sit in
-# and cost no extra request. Banner icons are selected by config.yaml.
+# Stable Markdown/config names mapped to our shared Lucide icon catalog.
 SVG = {
-    'info':      (_IMG / 'info.svg').read_text('utf-8'),
-    'warning':   (_IMG / 'warning.svg').read_text('utf-8'),
-    'tip':       (_IMG / 'tip.svg').read_text('utf-8'),
-    'attention': (_IMG / 'attention.svg').read_text('utf-8'),
-    # An octagon, not another triangle: danger and warning necessarily share a
-    # near-identical background wash (see vars.css), so the silhouette is what
-    # tells them apart at a glance.
-    'danger':    (_IMG / 'danger.svg').read_text('utf-8'),
-
-    'wip':       (_IMG / 'wip.svg').read_text('utf-8'),
-    'outdated':  (_IMG / 'outdated.svg').read_text('utf-8'),
+    key: str(lucide_icon(name, 24, 'icon'))
+    for key, name in {
+        'info': 'info', 'warning': 'triangle-alert', 'tip': 'lightbulb',
+        'attention': 'circle-alert', 'danger': 'octagon-alert',
+        'wip': 'construction', 'outdated': 'clock',
+    }.items()
 }

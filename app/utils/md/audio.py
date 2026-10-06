@@ -1,3 +1,4 @@
+from ..icons import lucide_icon
 import re
 from urllib.parse import unquote, urlparse
 
@@ -52,13 +53,8 @@ def render_audio(self, tokens, idx, options, env):
         f'<button type="button" class="doc-audio-play" data-play-src="{src}" '
         f'data-play-name="{name}" data-play-label="{label}" aria-label="{label}" '
         'aria-pressed="false" hidden>'
-        '<svg class="doc-audio-icon-play" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">'
-        '<path d="M5 3.4v9.2a.6.6 0 0 0 .92.5l7-4.6a.6.6 0 0 0 0-1l-7-4.6A.6.6 0 0 0 5 3.4Z" fill="currentColor"/>'
-        '</svg>'
-        '<svg class="doc-audio-icon-pause" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">'
-        '<rect x="4" y="3" width="3.2" height="10" rx="1" fill="currentColor"/>'
-        '<rect x="8.8" y="3" width="3.2" height="10" rx="1" fill="currentColor"/>'
-        '</svg>'
+        f'{lucide_icon("play", 16, "doc-audio-icon-play")}'
+        f'{lucide_icon("pause", 16, "doc-audio-icon-pause")}'
         '</button>'
         f'<span class="doc-audio-name">{name}</span>'
         f'<audio data-player-fallback src="{src}" preload="none" controls></audio>'

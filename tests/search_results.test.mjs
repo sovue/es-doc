@@ -23,6 +23,7 @@ async function searchBox(rows) {
     const status = {};
     const form = { querySelector: () => status, contains: () => false };
     const window = { location: { href: '' } };
+    vm.runInNewContext(readFileSync(new URL('../static/js/icons.js', import.meta.url), 'utf8'), { window });
     let update;
     vm.runInNewContext(script, {
         document: {

@@ -30,7 +30,7 @@
 <li>
     <a href="/docs/{{ node.slug|urlencode }}" class="doc-tree-row">
         <span class="section-name">{{ node.title }}</span>
-        <span class="section-arrow" aria-hidden="true">→</span>
+        <span class="section-arrow" aria-hidden="true">{{ lucide_icon('arrow-right') }}</span>
     </a>
     {% if node.children %}
     <ul class="doc-tree-nest" role="list">
@@ -48,7 +48,7 @@
 
         <section class="page-hero">
             <div class="page-hero-inner">
-                <a href="/" class="page-back"><span aria-hidden="true">←</span> На главную</a>
+                <a href="/" class="page-back"><span aria-hidden="true">{{ lucide_icon('arrow-left') }}</span> На главную</a>
                 <h1 class="page-title page-title--lg">{{ 'Результаты поиска' if query else 'Документация' }}</h1>
                 <p class="page-lead">
                     {% if query %}
@@ -73,7 +73,7 @@
                     <li><a class="section-row" href="{{ result.url if result.url else '/docs/' ~ (result.doc|urlencode) ~ ('#' ~ (result.anchor|urlencode) if result.anchor else '') }}">
                         <span class="section-name">{{ result.label }}</span>
                         {% if result.context %}<span class="section-desc">{{ result.context }}</span>{% endif %}
-                        <span class="section-arrow" aria-hidden="true">→</span>
+                        <span class="section-arrow" aria-hidden="true">{{ lucide_icon('arrow-right') }}</span>
                     </a></li>
                     {% endfor %}
                 </ul>

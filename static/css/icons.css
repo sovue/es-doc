@@ -1,0 +1,16 @@
+/* All authored UI glyphs use the locally vendored Lucide geometry. */
+.lucide { display: inline-block; flex: none; vertical-align: middle; }
+
+/* Mask backgrounds otherwise become Canvas in Windows high-contrast mode. */
+@media (forced-colors: active) {
+    :root .sidebar-all-summary::after,
+    :root .sidebar-contents-summary::after,
+    :root .details-summary::before,
+    :root .res-sprite-trigger::after,
+    :root .fb-crumbs-list li:not(:first-child)::before,
+    :root .wp-name--copy.copied::after,
+    :root .tools-warning-details > summary::before {
+        background: CanvasText;
+        forced-color-adjust: none;
+    }
+}

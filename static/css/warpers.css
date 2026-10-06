@@ -457,7 +457,15 @@
 }
 
 .wp-name--copy.copied::after {
-    content: " ✓";
+    content: "";
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-left: 4px;
+    vertical-align: middle;
+    background: currentColor;
+    mask: url("/static/icons/check.svg?v=b931ad1ca897") center / contain no-repeat;
+    -webkit-mask: url("/static/icons/check.svg?v=b931ad1ca897") center / contain no-repeat;
 }
 
 .wp-cell-desc {

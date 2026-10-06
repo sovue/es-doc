@@ -227,16 +227,17 @@ img {
 .sidebar-all-summary::-webkit-details-marker, .sidebar-contents-summary::-webkit-details-marker { display: none; }
 .sidebar-all-summary::after, .sidebar-contents-summary::after {
     content: '';
-    width: 6px;
-    height: 6px;
-    border-right: 1.5px solid currentColor;
-    border-bottom: 1.5px solid currentColor;
-    transform: rotate(-45deg);
+    width: 18px;
+    height: 18px;
+    background: currentColor;
+    mask: url("/static/icons/chevron-right.svg?v=5fab34b14d1b") center / contain no-repeat;
+    -webkit-mask: url("/static/icons/chevron-right.svg?v=5fab34b14d1b") center / contain no-repeat;
+    transform: rotate(0);
     margin-left: auto;
     margin-right: 4px;
     flex: none;
 }
-details[open] > .sidebar-all-summary::after, details[open] > .sidebar-contents-summary::after { transform: rotate(45deg); }
+details[open] > .sidebar-all-summary::after, details[open] > .sidebar-contents-summary::after { transform: rotate(90deg); }
 .sidebar-toc .h3 { margin-left: 12px; }
 .sidebar-toc .h4 { margin-left: 24px; }
 .sidebar-toc .h5, .sidebar-toc .h6 { margin-left: 32px; }
@@ -541,7 +542,7 @@ details[open] > .sidebar-all-summary::after, details[open] > .sidebar-contents-s
     }
 }
 
-/* ── Callouts (info · warning · danger · attention · tip) ──
+/* ── Callouts (info / warning / danger / attention / tip) ──
    Five boxes that differ only in hue, so the shape is written once and each
    name just declares its three colours. Another callout is one more line
    here, one per selector list below, plus a `template()` registration in
@@ -679,24 +680,25 @@ details[open] > .sidebar-all-summary::after, details[open] > .sidebar-contents-s
     display: none;
 }
 
-/* Chevron drawn in CSS rather than shipped as a glyph, so it never lands in
+/* Lucide chevron masked in CSS, so it never lands in
    the summary's text content, and turns to point down when the box opens. */
 .details-summary::before {
     content: '';
     flex-shrink: 0;
 
-    width: 0.45em;
-    height: 0.45em;
-
-    border-right: 2px solid var(--accent);
-    border-bottom: 2px solid var(--accent);
-    transform: rotate(-45deg);
+    width: 18px;
+    height: 18px;
+    color: var(--accent);
+    background: currentColor;
+    mask: url("/static/icons/chevron-right.svg?v=5fab34b14d1b") center / contain no-repeat;
+    -webkit-mask: url("/static/icons/chevron-right.svg?v=5fab34b14d1b") center / contain no-repeat;
+    transform: rotate(0);
 
     transition: transform 0.15s var(--ease-out);
 }
 
 .details[open] > .details-summary::before {
-    transform: rotate(45deg);
+    transform: rotate(90deg);
 }
 
 .details-summary:hover {
@@ -719,7 +721,7 @@ details[open] > .sidebar-all-summary::after, details[open] > .sidebar-contents-s
 .details-body > :first-child { margin-top: 0; }
 .details-body > :last-child { margin-bottom: 0; }
 
-/* ── Article-status banners (stub · wip · outdated) ───────
+/* ── Article-status banners (stub / wip / outdated) ───────
    Page-level, not inline, but built from the same family as the callouts
    above: a top+bottom hairline in the status colour over the same faint
    gradient wash, reusing each status's existing -bg/-bg1 tint rather than

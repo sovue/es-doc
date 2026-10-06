@@ -1,3 +1,4 @@
+from ..icons import lucide_icon
 import re
 
 def slugify(text):
@@ -116,5 +117,5 @@ def render_heading_open(self, tokens, idx, options, env):
         # heading's own id, the way "copy link to heading" works everywhere
         # else it's implemented this way (GitHub, MDN).
         f'<a href="#{slug}" title="Получить ссылку на заголовок &#34;{inline.content}&#34;..." '
-        f'class="anchor" aria-hidden="true" tabindex="-1">#</a>'
+        f'class="anchor" aria-hidden="true" tabindex="-1">{lucide_icon("hash", 18)}</a>'
     )

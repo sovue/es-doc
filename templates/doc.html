@@ -82,7 +82,7 @@
                     and ink-soft, so «Следующая статья» keeps the eye. -#}
                 {% if prev_doc %}
                 <a href="/docs/{{ prev_doc.slug|urlencode }}" class="doc-prev-link">
-                    <span class="doc-prev-arrow" aria-hidden="true">←</span>
+                    <span class="doc-prev-arrow" aria-hidden="true">{{ lucide_icon('arrow-left') }}</span>
                     <span class="doc-prev-meta">
                         <span class="doc-prev-label">Предыдущая</span>
                         <span class="doc-prev-title">{{ prev_doc.title }}</span>
@@ -96,7 +96,7 @@
                         <span class="doc-next-label">Следующая статья</span>
                         <span class="doc-next-title">{{ next_doc.title }}</span>
                     </span>
-                    <span class="doc-next-arrow" aria-hidden="true">→</span>
+                    <span class="doc-next-arrow" aria-hidden="true">{{ lucide_icon('arrow-right') }}</span>
                 </a>
                 {% endif %}
             </nav>

@@ -18,6 +18,10 @@ test('warpers script can be loaded again after soft navigation', () => {
         console: { warn() {} },
         document: {
             documentElement: {},
+            body: { append() {} },
+            createElement() {
+                return { style: {}, setAttribute() {}, remove() {} };
+            },
             querySelector() { return null; },
             querySelectorAll() { return []; },
         },

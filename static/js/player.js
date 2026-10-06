@@ -47,24 +47,17 @@
     bar.setAttribute('aria-label', 'Сейчас играет');
     bar.innerHTML =
         '<button type="button" class="res-nowplaying-pause" aria-label="Пауза">' +
-        '<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">' +
-        '<rect x="2" y="1.5" width="3" height="9" rx="0.8"/><rect x="7" y="1.5" width="3" height="9" rx="0.8"/></svg>' +
-        '<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">' +
-        '<path d="M3 1.9a.6.6 0 0 1 .9-.52l6 3.6a.6.6 0 0 1 0 1.04l-6 3.6a.6.6 0 0 1-.9-.52z"/></svg></button>' +
+        window.ESDocIcons.svg('pause', 16) +
+        window.ESDocIcons.svg('play', 16) + '</button>' +
         '<button type="button" class="res-nowplaying-stop" aria-label="Остановить">' +
-        '<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">' +
-        '<rect x="1.5" y="1.5" width="9" height="9" rx="1.5"/></svg></button>' +
+        window.ESDocIcons.svg('square', 16) + '</button>' +
         '<div class="res-nowplaying-main"><span class="res-nowplaying-name"></span>' +
         '<div class="res-seek"><span class="res-time" data-current>0:00</span>' +
         '<input type="range" min="0" max="0" step="0.1" value="0" aria-label="Позиция воспроизведения">' +
         '<span class="res-time" data-duration>0:00</span></div></div>' +
         '<button type="button" class="res-nowplaying-repeat" aria-label="Повтор выключен" aria-pressed="false" title="Повторить произведение">' +
-        '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
-        '<path d="M3 5.2h7.7l-1.5-1.5M13 10.8H5.3l1.5 1.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>' +
-        '<path d="M10.7 3.7 12.4 5.2 10.7 6.7M5.3 9.3 3.6 10.8l1.7 1.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
-        '<label class="res-volume"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
-        '<path d="M2.5 6v4h2.6L8.7 13V3L5.1 6z" fill="currentColor"/>' +
-        '<path d="M10.8 5.5a3.4 3.4 0 0 1 0 5M12.6 3.7a6 6 0 0 1 0 8.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>' +
+        window.ESDocIcons.svg('repeat', 18) + '</button>' +
+        '<label class="res-volume">' + window.ESDocIcons.svg('volume-2', 18) +
         '<input type="range" min="0" max="1" step="0.05" aria-label="Громкость прослушивания"></label>';
     document.body.appendChild(bar);
 

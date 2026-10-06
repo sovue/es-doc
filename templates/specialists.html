@@ -58,8 +58,8 @@
         {% if work.type == 'track' %}
         <span class="specialist-track-title">{{ work.title }}</span>
         <button type="button" class="specialist-play" data-play-src="{{ work.url }}" data-play-name="{{ a.name }} — {{ work.title }}" aria-label="Прослушать {{ work.title }}" aria-pressed="false" hidden>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="m5 3 8 5-8 5z"/></svg>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4 3h3v10H4zm5 0h3v10H9z"/></svg>
+            {{ lucide_icon('play', 16) }}
+            {{ lucide_icon('pause', 16) }}
         </button>
         <audio class="specialist-audio" controls preload="none" src="{{ work.url }}" aria-label="{{ work.title }}" data-player-fallback></audio>
         {% else %}
@@ -80,7 +80,7 @@
 
         <section class="page-hero">
             <div class="page-hero-inner">
-                <a href="/" class="page-back"><span aria-hidden="true">←</span> На главную</a>
+                <a href="/" class="page-back"><span aria-hidden="true">{{ lucide_icon('arrow-left') }}</span> На главную</a>
                 <h1 class="page-title">Специалисты</h1>
                 <p class="page-lead">
                     Здесь Вы можете найти соавтора для мода «Бесконечного лета».
@@ -108,26 +108,15 @@
             <div class="artists-controls" hidden>
                 <div class="view-switch" role="group" aria-label="Вид списка">
                     <button type="button" class="view-btn view-btn--active" data-view="gallery" aria-pressed="true">
-                        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                            <rect x="1.5" y="1.5" width="5.4" height="5.4" rx="1" stroke="currentColor" stroke-width="1.3"/>
-                            <rect x="9.1" y="1.5" width="5.4" height="5.4" rx="1" stroke="currentColor" stroke-width="1.3"/>
-                            <rect x="1.5" y="9.1" width="5.4" height="5.4" rx="1" stroke="currentColor" stroke-width="1.3"/>
-                            <rect x="9.1" y="9.1" width="5.4" height="5.4" rx="1" stroke="currentColor" stroke-width="1.3"/>
-                        </svg>
+                        {{ lucide_icon('layout-grid', 15) }}
                         Галерея
                     </button>
                     <button type="button" class="view-btn" data-view="board" aria-pressed="false">
-                        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                            <rect x="1.5" y="1.5" width="3.8" height="13" rx="1" stroke="currentColor" stroke-width="1.3"/>
-                            <rect x="6.1" y="1.5" width="3.8" height="9" rx="1" stroke="currentColor" stroke-width="1.3"/>
-                            <rect x="10.7" y="1.5" width="3.8" height="11" rx="1" stroke="currentColor" stroke-width="1.3"/>
-                        </svg>
+                        {{ lucide_icon('columns-3', 15) }}
                         Доска
                     </button>
                     <button type="button" class="view-btn" data-view="table" aria-pressed="false">
-                        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                            <path d="M1.5 3.2h13M1.5 8h13M1.5 12.8h13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-                        </svg>
+                        {{ lucide_icon('list', 15) }}
                         Таблица
                     </button>
                 </div>

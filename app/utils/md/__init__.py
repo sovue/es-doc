@@ -11,6 +11,7 @@ from pygments.token import Comment, Whitespace
 
 from ..renpy_lexer import RenPyLexer
 from ..svg import SVG
+from ..icons import lucide_icon
 from .audio import audio, render_audio
 from .banner import banner, render_banner_close, render_banner_open
 from .details import (
@@ -209,14 +210,8 @@ def highlight_code(code, lang, attrs):
 # copy buttons (res_macros.html).
 CODE_COPY_BUTTON = (
     '<button type="button" class="code-copy" aria-label="Скопировать код" hidden>'
-    '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">'
-    '<rect x="4.5" y="4.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/>'
-    '<path d="M9.5 3V2.5A1.5 1.5 0 0 0 8 1H2.5A1.5 1.5 0 0 0 1 2.5V8a1.5 1.5 0 0 0 1.5 1.5H3" stroke="currentColor" stroke-width="1.3"/>'
-    '</svg>'
-    '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">'
-    '<path d="M2 7.5L5.5 11L12 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'
-    '</svg>'
-    '</button>'
+    + str(lucide_icon('copy', 14)) + str(lucide_icon('check', 14))
+    + '</button>'
 )
 
 def render_fence(self, tokens, idx, options, env):

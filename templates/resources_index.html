@@ -13,7 +13,7 @@
 
         <section class="page-hero">
             <div class="page-hero-inner">
-                <a href="/" class="page-back"><span aria-hidden="true">←</span> На главную</a>
+                <a href="/" class="page-back"><span aria-hidden="true">{{ lucide_icon('arrow-left') }}</span> На главную</a>
                 <h1 class="page-title page-title--lg">Ресурсы</h1>
                 <p class="page-lead">{{ collection_meta.lead }}</p>
             </div>
@@ -32,7 +32,7 @@
                             <span class="section-name">{{ cat.title }}</span>
                             <span class="section-desc">{{ cat.desc }}</span>
                             <span class="res-count">{{ cat.count }}</span>
-                            <span class="section-arrow" aria-hidden="true">→</span>
+                            <span class="section-arrow" aria-hidden="true">{{ lucide_icon('arrow-right') }}</span>
                         </a>
                     </li>
                     {% endfor %}
@@ -62,7 +62,7 @@
                         <a href="{{ link.url }}" class="section-row">
                             <span class="section-name">{{ link.name }}</span>
                             {% if link.note %}<span class="section-desc">{{ link.note }}</span>{% endif %}
-                            <span class="section-arrow" aria-hidden="true">→</span>
+                            <span class="section-arrow" aria-hidden="true">{{ lucide_icon('arrow-right') }}</span>
                         </a>
                     </li>
                     {% endfor %}
