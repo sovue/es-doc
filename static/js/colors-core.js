@@ -83,6 +83,18 @@
         const hex = parseHex(value);
         if (hex) return hex;
         const text = value.trim();
+        const renpy = text.match(/^renpy\.Color\(\s*(["'])(#[a-f\d]{3,8})\1\s*(?:,\s*alpha\s*=\s*([\d.]+)\s*)?\)$/i);
+        if (renpy) {
+            const result = parseHex(renpy[2]);
+            if (!result) return null;
+            if (renpy[3] !== undefined) {
+                const opacity = parseNumber(renpy[3], 0, 1);
+                // Ren'Py ignores the alpha argument if the color already contains it.
+                if (opacity === null || [4, 8].includes(renpy[2].length - 1)) return null;
+                result.a = opacity;
+            }
+            return result;
+        }
         const alpha = text => text === undefined ? 1 : text.endsWith('%')
             ? parseNumber(text.slice(0, -1), 0, 100) === null ? null : Number(text.slice(0, -1)) / 100
             : parseNumber(text, 0, 1);
@@ -159,6 +171,7 @@
         return `oklch(${decimal(lab.l * 100, 3)}% ${decimal(chroma, 5)} ${decimal(hue, 2)}${color.a < 1 ? ' / ' + decimal(color.a) : ''})`;
     };
     const cssRgb = color => `rgb(${color.r} ${color.g} ${color.b}${color.a < 1 ? ' / ' + decimal(color.a) : ''})`;
+    const renpyColor = color => `renpy.Color("${toHex(color, false, false)}"${color.a < 1 ? ', alpha=' + decimal(color.a) : ''})`;
     const harmony = (color, kind) => {
         const hsl = rgbToHsl(color);
         const offsets = {analogous: [-30, -15, 0, 15, 30], complementary: [0, 180], split: [0, 150, 210], triadic: [0, 120, 240], tetradic: [0, 90, 180, 270]};
@@ -176,7 +189,7 @@
     window.ESDocColors = Object.freeze({
         clamp, decimal, parseHex, shortenHex, toHex, parseNumber,
         hsvToRgb, rgbToHsv, rgbToHsl, pythonRgb, pythonRgba, cssHsl,
-        hslToRgb, parseColor, cssRgb, rgbToOklab, oklabToRgb, cssOklch,
+        hslToRgb, parseColor, cssRgb, renpyColor, rgbToOklab, oklabToRgb, cssOklch,
         luminance, composite, contrast, harmony, shades,
     });
 })();

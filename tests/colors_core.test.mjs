@@ -13,6 +13,17 @@ const core = () => {
 const plain = value => JSON.parse(JSON.stringify(value));
 const near = (actual, expected, epsilon = 0.000001) => assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} ≈ ${expected}`);
 
+test('RenPy Color literals preserve alpha and reject executable or invalid input', () => {
+    const c = core();
+    assert.equal(c.renpyColor(c.parseHex('#123')), 'renpy.Color("#112233")');
+    assert.equal(c.renpyColor({r: 17, g: 34, b: 51, a: .5}), 'renpy.Color("#112233", alpha=0.5)');
+    assert.deepEqual(plain(c.parseColor('renpy.Color("#123", alpha=0.5)')), {r:17,g:34,b:51,a:.5});
+    assert.deepEqual(plain(c.parseColor("renpy.Color('#1234')")), plain(c.parseHex('#1234')));
+    for (const value of ['renpy.Color("#123", alpha=2)', 'renpy.Color("#123", alpha=-1)', 'renpy.Color("#1234", alpha=0.5)', 'renpy.Color(__import__("os"))', 'renpy.Color("#123"); run()', 'renpy.Color("#123\')']) {
+        assert.equal(c.parseColor(value), null, value);
+    }
+});
+
 test('HEX expands short RGB and RGBA without losing alpha', () => {
     assert.deepEqual(plain(core().parseHex('  #AbC  ')), { r: 170, g: 187, b: 204, a: 1 });
     const color = core().parseHex('#1234');
