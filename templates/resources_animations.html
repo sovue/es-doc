@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% import "partials/res_macros.html" as res %}
+
+{% set page_title = 'Анимации оригинала — ES Doc' %}
+{% set body_class = 'bg-solid scene-page' %}
+{% set active = 'resources' %}
+
+{% block content %}
+<div class="page">
+    <main id="main-content">
+        <section class="page-hero page-hero--tight">
+            <div class="page-hero-inner">
+                <a href="/resources/browser" class="page-back"><span aria-hidden="true">{{ lucide_icon('arrow-left') }}</span> Браузер ресурсов</a>
+                <h1 class="page-title">Анимации оригинала</h1>
+                <p class="page-lead">Кадры игры собраны в эффекты из её кода. Нажмите «Показать», чтобы запустить превью; в каждый момент воспроизводится только один эффект.</p>
+            </div>
+        </section>
+
+        {{ res.tabs('animations') }}
+
+        <div class="page-main page-main--res">
+            {% if animations %}
+            <ul class="animation-gallery" role="list">
+                {% for animation in animations %}
+                <li class="animation-card" data-animation-card data-kind="{{ animation.kind }}"
+                    data-loop="{{ 'true' if animation.get('loop', true) else 'false' }}"
+                    {% if animation.get('duration') %}data-duration="{{ animation.duration }}"{% endif %}
+                    {% if animation.get('hold') %}data-hold="{{ animation.hold }}"{% endif %}
+                    {% if animation.get('motion') %}data-motion="{{ animation.motion }}"{% endif %}
+                    {% if animation.get('particles') %}data-particles="{{ animation.particles }}"{% endif %}>
+                    <div class="animation-stage animation-stage--{{ animation.kind }}{% if animation.get('fit') %} animation-stage--{{ animation.fit }}{% endif %}"
+                         data-stage aria-label="Превью: {{ animation.title }}">
+                        {% if animation.kind == 'sequence' %}
+                        <img class="animation-frame animation-frame--back" src="{{ animation.frames[0].src }}" alt="" decoding="async">
+                        <img class="animation-frame animation-frame--front is-visible" src="{{ animation.frames[0].src }}" alt="" decoding="async">
+                        {% elif animation.kind == 'lids' %}
+                        <img class="animation-scene" src="{{ animation.background_src }}" alt="" decoding="async">
+                        <img class="animation-lid animation-lid--upper" src="{{ animation.src }}" alt="" decoding="async">
+                        <img class="animation-lid animation-lid--lower" src="{{ animation.second_src }}" alt="" decoding="async">
+                        {% elif animation.kind == 'snow' %}
+                        <canvas class="animation-snow" data-snow-src="{{ animation.src }}" aria-hidden="true"></canvas>
+                        {% elif animation.kind == 'shake' %}
+                        <img class="animation-shake-base" src="{{ animation.variants[0].src }}" alt="" decoding="async">
+                        <img class="animation-shake-echo" src="{{ animation.variants[0].src }}" alt="" decoding="async">
+                        <img class="animation-shake-overlay" src="{{ animation.overlay_src }}" alt="" decoding="async">
+                        {% elif animation.kind == 'flash' or animation.kind == 'blackout' %}
+                        <img class="animation-frame animation-frame--back is-visible" src="{{ animation.src }}" alt="" decoding="async">
+                        <img class="animation-frame animation-frame--front" src="{{ animation.src }}" alt="" decoding="async">
+                        <span class="animation-effect-overlay" aria-hidden="true"></span>
+                        {% endif %}
+                    </div>
+                    <div class="animation-card-body">
+                        <h2>{{ animation.title }}</h2>
+                        {% if animation.description %}<p>{{ animation.description }}</p>{% endif %}
+                        {% if animation.variants %}
+                        <label class="animation-variant-label">
+                            <span>{% if animation.kind == 'snow' %}Плотность{% else %}Сцена{% endif %}</span>
+                            <select data-variant>
+                                {% for variant in animation.variants %}
+                                <option value="{{ loop.index0 }}" {% if variant.src %}data-src="{{ variant.src }}"{% endif %}
+                                        {% if variant.particles %}data-particles="{{ variant.particles }}"{% endif %}>{{ variant.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        {% endif %}
+                        <div class="animation-card-actions">
+                            <button class="animation-play" type="button" data-play aria-pressed="false">Показать</button>
+                            <a href="{{ animation.source_url }}">Код оригинала</a>
+                        </div>
+                    </div>
+                    <script type="application/json" class="animation-definition">{{ animation|tojson }}</script>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="res-empty">
+                <p class="res-empty-title">Файлы анимаций не найдены.</p>
+                <p>Проверьте, что подключена папка ресурсов оригинала.</p>
+            </div>
+            {% endif %}
+            <p class="sr-only" id="animation-status" role="status" aria-live="polite"></p>
+        </div>
+    </main>
+    {% include "partials/footer.html" %}
+</div>
+{% endblock %}

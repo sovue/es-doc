@@ -222,6 +222,7 @@ async def browser(request: Request, path=''):
             'raw': f'/resource/raw/{quote(rel)}',
             'sub': ' / '.join(sub),
             'view': view,
+            'show_animation_link': rel in ('media.rpy', 'images/anim/media.rpy'),
         })
 
     dirs, files = [], []
@@ -263,6 +264,7 @@ async def browser(request: Request, path=''):
         'total': len(dirs) + len(files),
         'stats': stats,
         'folder': crumbs[-1][0],
+        'show_animation_link': rel == 'images/anim',
     })
 
 
