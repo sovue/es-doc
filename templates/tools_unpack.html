@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% set page_title = 'Распаковщик RPA/RPYC — ES Doc' %}
+{% set page_title = 'Распаковщик RPA/RPYC/PYC — ES Doc' %}
 {% set body_class = 'bg-solid scene-page' %}
 {% set active = 'tools' %}
 {% set with_unpacker_js = true %}
@@ -11,14 +11,14 @@
         <section class="page-hero">
             <div class="page-hero-inner">
                 <a href="/tools" class="page-back"><span aria-hidden="true">{{ lucide_icon('arrow-left') }}</span> Инструменты</a>
-                <h1 class="page-title">Распаковщик RPA/RPYC</h1>
+                <h1 class="page-title">Распаковщик RPA/RPYC/PYC</h1>
             </div>
         </section>
         <div class="page-main">
             <section class="tools-workspace" id="tools-app" aria-labelledby="local-tools-heading"
                      data-config='{{ tools_config|tojson }}'>
                 <div class="tools-heading">
-                    <h2 id="local-tools-heading">Файлы Ren’Py</h2>
+                    <h2 id="local-tools-heading">Файлы Ren'Py</h2>
                     <p>Обработка на вашем устройстве. Файлы не отправляются на сервер.</p>
                 </div>
                 <noscript><p>Для обработки файлов включите JavaScript. </p></noscript>
@@ -27,21 +27,21 @@
                          aria-describedby="tools-drop-help">
                         {{ lucide_icon('folder-up', 32, 'tools-drop-icon') }}
                         <p class="tools-drop-title">Перетащите файлы или папку сюда</p>
-                        <p id="tools-drop-help">.rpa, .rpyc, .rpymc</p>
+                        <p id="tools-drop-help">.rpa, .rpyc, .rpymc, .pyc</p>
                         <button class="tools-button" type="button" id="tools-add" aria-expanded="false" aria-controls="tools-add-menu">Добавить файлы или папку <span aria-hidden="true">{{ lucide_icon('chevron-down', 14) }}</span></button>
                     </div>
                     <div class="tools-add-menu" id="tools-add-menu" hidden aria-label="Способ добавления">
                         <button type="button" id="tools-pick-files">Выбрать файлы…</button>
                         <button type="button" id="tools-pick-folder">Выбрать папку…</button>
                     </div>
-                    <input type="file" id="tools-files" accept=".rpa,.rpyc,.rpymc" multiple hidden>
+                    <input type="file" id="tools-files" accept=".rpa,.rpyc,.rpymc,.pyc" multiple hidden>
                     <input type="file" id="tools-folder" webkitdirectory multiple hidden>
                     <div class="tools-options" id="tools-options">
                         <details class="tools-advanced"><summary><span class="tools-ui-icon tools-icon-settings" aria-hidden="true"></span>Настройки декомпиляции<span class="tools-ui-icon tools-icon-chevron" aria-hidden="true"></span></summary>
                             <div class="tools-disclosure-body">
                             <p>Применяются и к ресурсам внутри .rpa: при распаковке они тоже декомпилируются.</p>
                             <label><input type="checkbox" id="tools-try-harder" aria-describedby="tools-try-harder-help"> Расширенная декомпиляция</label>
-                            <p id="tools-try-harder-help">Для .rpyc с изменённым форматом, если обычная декомпиляция не сработала. Работает медленнее.</p>
+                            <p id="tools-try-harder-help">Для изменённых RPYC и RPA, если декомпиляция/распаковка не сработала. Работает медленнее.</p>
                             <label><input type="checkbox" id="tools-no-init-offset"> Не восстанавливать init offset</label>
                             <p>Полезно, если нужно сохранить явные приоритеты init-блоков.</p>
                             </div>
@@ -99,10 +99,12 @@
                 </div>
                 <details class="tools-help"><summary><span class="tools-ui-icon tools-icon-info" aria-hidden="true"></span>Подробнее<span class="tools-ui-icon tools-icon-chevron" aria-hidden="true"></span></summary>
                     <div class="tools-disclosure-body">
-                    <p>Предпросмотр обрабатывает только выбранный файл. Декомпилированные скрипты сохраняются в unrpyc.zip, для каждого .rpa создаётся отдельный ZIP с папками и файлами архива. Сценарии .rpyc/.rpymc внутри него восстанавливаются в .rpy/.rpym. Если исходник уже есть, он сохраняется без замены.</p>
+                    <p>Предпросмотр обрабатывает только выбранный файл. Декомпилированные скрипты сохраняются в unrpyc.zip, для каждого .rpa создаётся отдельный ZIP с папками и файлами архива. Сценарии .rpyc/.rpymc внутри него восстанавливаются в .rpy/.rpym, поддерживаемые .pyc в .py. Если исходник уже есть, он сохраняется без замены.</p>
                     <p>UnRpyc восстанавливает .rpyc и .rpymc. Файлы Ren'Py 6/7 тоже обрабатываются, но совместимость зависит от версии игры. Комментарии и исходное форматирование в скомпилированных файлах не сохраняются.</p>
+                    <p>Расширенная декомпиляция добавляет извлечённые блоки в конец скрипта для изучения и адаптации с сохранением исходных контейнеров. Если Python-блок содержит только байткод, вместо него остаются комментарий и pass с предупреждением.</p>
+                    <p>uncompyle6 восстанавливает .pyc с байткодом Python 2.0–3.8. Версии 3.9 и новее не поддерживаются. Для файлов из __pycache__ исходник получает обычное имя .py. Комментарии и исходное форматирование не восстанавливаются.</p>
                     <p>UnRPA распаковывает RPA-2.0, RPA-3.0 и совместимые варианты, распознаваемые UnRPA. Изменённые или зашифрованные архивы могут не поддерживаться.</p>
-                    <p>Исходные проекты: <a href="https://github.com/CensoredUsername/unrpyc">unrpyc</a>, <a href="https://github.com/lattyware/unrpa">unrpa</a>.</p>
+                    <p>Исходные проекты: <a href="https://github.com/CensoredUsername/unrpyc">unrpyc</a>, <a href="https://github.com/lattyware/unrpa">unrpa</a>, <a href="https://github.com/rocky/python-uncompyle6">uncompyle6</a>, <a href="https://github.com/rocky/python-xdis">xdis</a>.</p>
                     </div>
                 </details>
             </section>

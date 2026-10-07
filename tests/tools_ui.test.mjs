@@ -49,7 +49,7 @@ function page(search = '', withClipboard = false) {
     const option = get('tools-no-init-offset');
     get('tools-operation-actions').append(get('tools-start'), get('tools-cancel'));
     app.querySelectorAll = selector => selector === '[name="tool-mode"]' ? [archiveRadio, scriptRadio]
-        : selector === '.tools-options input' ? [option] : [];
+        : selector === '.tools-options input' ? [option, get('tools-try-harder')] : [];
     const menu = get('tools-add-menu'); menu.hidden = true;
     menu.children = [get('tools-pick-files'), get('tools-pick-folder')];
     const messages = [], workers = [], revoked = [], blobs = [];
@@ -92,6 +92,20 @@ function page(search = '', withClipboard = false) {
         messages, workers, revoked, blobs, window, send, catalog, add, exportDone, result, copied };
 }
 const script = { id: '0:script.rpyc', path: 'script.rpyc', source: 0, size: 1 };
+
+test('PYC accepts uploads and shows Python source preview', async () => {
+    const ui = page()
+    const entry = { id: '0:module.pyc', path: 'module.pyc', source: 0, size: 100 }
+    await ui.add(['module.pyc'], [entry])
+    ui.get('browser-list').children[0].children[0].click()
+    assert.equal(ui.get('browser-preview').children[0].children[0].textContent, 'Декомпилируем файл…')
+    const pending = ui.messages.at(-1)
+    assert.equal(pending.type, 'source-read')
+    ui.send({ type: 'source-file', requestId: pending.requestId, name: 'module.py',
+        buffer: new TextEncoder().encode('answer = 42\n').buffer, warnings: [], html: null })
+    assert.equal(ui.get('browser-preview').children[2].download, 'module.py')
+    assert.match(ui.get('browser-preview').children[1].children[0].children[1].children[0].textContent, /answer = 42/)
+})
 
 for (const [name, mime] of [['track.OPUS', 'audio/ogg'], ['track.FLAC', 'audio/flac']]) {
     test(`archive previews ${name} as playable audio and retains its download`, async () => {
@@ -178,6 +192,22 @@ test('options reprocess only the open file', async () => {
     assert.equal(ui.messages.at(-1).type, 'source-read');
     assert.equal(ui.messages.at(-1).options.no_init_offset, true);
     assert.equal(ui.messages.filter(message => message.type === 'run').length, 0);
+});
+
+test('advanced recovery reindexes archives and passes options to catalog and export', async () => {
+    const ui = page();
+    const entry = { id: '0:script.rpyc', path: 'script.rpyc', source: 0, size: 10 };
+    await ui.add(['custom.rpa'], [entry]);
+    assert.equal(Boolean(ui.messages.at(-1).options.try_harder), false);
+    ui.get('try-harder').checked = true;
+    ui.get('try-harder').emit('change');
+    const catalog = ui.messages.at(-1);
+    assert.equal(catalog.type, 'catalog');
+    assert.equal(catalog.options.try_harder, true);
+    ui.send({ type: 'catalog', requestId: catalog.requestId, entries: [entry], errors: [] });
+    ui.get('download-all').click();
+    assert.equal(ui.messages.at(-1).type, 'run');
+    assert.equal(ui.messages.at(-1).options.try_harder, true);
 });
 
 test('preview cancellation stays below its loading message and returns after completion', async () => {
@@ -446,6 +476,6 @@ test('a script drop keeps the unified accepted formats without processing files'
     const ui = page('?mode=unrpa');
     ui.get('drop').emit('drop', { preventDefault() {}, dataTransfer: { files: [{ name: 'a.rpymc', size: 1 }] } });
     await Promise.resolve(); await Promise.resolve();
-    assert.equal(ui.get('drop-help').textContent, '.rpa, .rpyc, .rpymc');
+    assert.equal(ui.get('drop-help').textContent, '.rpa, .rpyc, .rpymc, .pyc');
     assert.equal(ui.messages.length, 0);
 });

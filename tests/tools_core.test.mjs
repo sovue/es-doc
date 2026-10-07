@@ -7,6 +7,24 @@ const context = vm.createContext({});
 vm.runInContext(fs.readFileSync(new URL('../static/js/tools-core.js', import.meta.url), 'utf8'), context);
 const core = context.ESDocTools;
 
+test('PYC is accepted and unsupported versions have specific advice', () => {
+    assert.equal(core.accepts('module.PYC', 'combined'), true)
+    assert.equal(core.accepts('module.pyc', 'unrpyc'), true)
+    assert.equal(core.accepts('module.pyc', 'unrpa'), false)
+    const error = core.explainError('module.pyc: PYC: байткод Python 3.9 не поддерживается. Доступны версии до Python 3.8.')
+    assert.equal(error.path, 'module.pyc')
+    assert.match(error.title, /Версия Python не поддерживается/)
+    assert.match(error.explanation, /оригинал/)
+    assert.equal(error.tryHarder, false)
+})
+
+test('PYC source-preservation warning identifies the original input', () => {
+    const warning = core.explainWarning('pkg/module.pyc: Исходный файл pkg/module.py уже есть в архиве, сохранён без замены.')
+    assert.equal(warning.path, 'pkg/module.pyc')
+    assert.equal(warning.title, 'Сохранён готовый исходник')
+    assert.match(warning.explanation, /\.py/)
+})
+
 test('errors preserve technical details but explain invalid input without claiming obfuscation', () => {
     const technical = 'Traceback (most recent call last):\n  /tools/engine.py\nunrpyc.BadRpycException: Invalid RPYC';
     const error = core.explainError(technical, 'bad.rpyc');
@@ -67,7 +85,7 @@ test('legacy RenPy warnings explain successful decompilation and possible inaccu
         const warning = core.explainWarning(message);
         assert.equal(warning.path, 'game/сцены/script.rpyc');
         assert.match(warning.explanation, /Файл декомпилирован\./);
-        assert.match(warning.explanation, new RegExp(`Ren’Py ${version} или более ранней`));
+        assert.match(warning.explanation, new RegExp(`Ren'Py ${version} или более ранней`));
         assert.match(warning.explanation, /вероятно/);
         assert.match(warning.explanation, /возможны ошибки и неточности/);
         assert.equal(warning.technical, message);
@@ -98,5 +116,18 @@ test('unknown messages retain original details and do not invent a specific caus
     assert.equal(warning.technical, message);
     assert.match(warning.explanation, /Файл получен/);
     assert.equal(warning.path, '');
+});
+
+test('container warnings distinguish extracted blocks and missing Python source', () => {
+    const partial = core.explainWarning('script.rpyc: Контейнер: Python-блок содержит только байткод. Исходник не восстановлен, в .rpy оставлены комментарий и pass.')
+    assert.equal(partial.title, 'Python-блок восстановлен частично');
+    assert.match(partial.explanation, /pass/);
+    assert.match(partial.explanation, /не восстановлен/);
+    const extracted = core.explainWarning('Контейнер: восстановлено блоков: 18. Они добавлены ниже основного скрипта для чтения и адаптации.')
+    assert.equal(extracted.title, 'Извлечены блоки сценария')
+    assert.match(extracted.explanation, /загрузчик/i);
+    const failed = core.explainWarning('Контейнер: блок 0 не восстановлен (ValueError). Исходный контейнер оставлен в .rpy.')
+    assert.equal(failed.title, 'Не удалось раскрыть контейнер')
+    assert.match(failed.explanation, /сохранён/);
 });
 

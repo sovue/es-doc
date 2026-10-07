@@ -30,7 +30,7 @@ h2 {
     padding-bottom: 0.2em;
 }
 
-/* h3–h6 had no authored size at all and fell through to the browser’s own
+/* h3–h6 had no authored size at all and fell through to the browser's own
    stylesheet, which sizes them off the parent: h3 landed at 18.7px, h4 at
    exactly the paragraph size, h5 at 13.3px and h6 at 10.7px — below the
    Label step. Two of the longest guides in the assets repo carry 23 h3s and

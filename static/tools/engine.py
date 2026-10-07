@@ -1,16 +1,19 @@
 """Browser adapter for the unmodified, pinned unrpyc and unrpa packages.
 
 The same adapter is exercised by CPython tests and by Pyodide in a Worker.
-No user-supplied code is executed; archive indexes use a restricted unpickler.
+No user-supplied code is executed. archive indexes use a restricted unpickler.
 """
 import io
 import pickle
+import re
 import zipfile
 import zlib
 from pathlib import PurePosixPath
 
 import decompiler
 import deobfuscate
+import pyc_decompiler
+import recovery
 import unrpyc
 from unrpa import UnRPA
 
@@ -94,6 +97,18 @@ def read_index(tool, source, version):
             continue
         records = []
         for entry in entries:
+            extended_index = getattr(version, 'extended_index', False)
+            if extended_index and isinstance(entry, (list, tuple)) and len(entry) in (4, 5, 6, 7):
+                # This extended layout ignores first/end/end2/dlen2 metadata. Its dlen
+                # describes physical bytes, with the prefix added separately.
+                shift = 0 if len(entry) == 4 else 1
+                prefix_at = 2 if len(entry) == 4 else (3 if len(entry) == 5 else 4)
+                metadata = list(entry[:shift]) + list(entry[prefix_at + 1:])
+                if any(not isinstance(value, (str, bytes)) for value in metadata):
+                    raise ValueError('Invalid extended archive metadata')
+                if len(entry) >= 6 and type(entry[3]) is not int:
+                    raise ValueError('Invalid extended archive secondary length')
+                entry = (entry[shift], entry[shift + 1], entry[prefix_at])
             if not isinstance(entry, (list, tuple)) or len(entry) not in (2, 3):
                 raise ValueError('Invalid archive segment')
             start, length = entry[:2]
@@ -104,11 +119,44 @@ def read_index(tool, source, version):
                 raise ValueError('Invalid archive segment types')
             if key is not None:
                 start, length = start ^ key, length ^ key
+            if extended_index:
+                length += len(prefix)
             if start < 0 or length < len(prefix) or start + length - len(prefix) > offset:
                 raise ValueError('Archive segment points outside file data')
             records.append((start, length, prefix))
         normalized[path] = records_by_id[id(entries)] = tuple(records)
     return normalized
+
+
+class RenamedRPA3:
+    def __init__(self, extended_index=False):
+        self.extended_index = extended_index
+
+    def find_offset_and_key(self, source):
+        source.seek(0)
+        header = source.read(34)
+        return int(header[8:24], 16), int(header[25:33], 16)
+
+
+def archive_index(tool, source, options):
+    try:
+        return read_index(tool, source, tool.detect_version())
+    except (MemoryError, OverflowError):
+        raise
+    except Exception:
+        if not options.get('try_harder'):
+            raise
+        source.seek(0)
+        header = source.read(34)
+        # Known ZiX formats transform assets too and require a matching loader.
+        # Never silently treat their header as a renamed plain RPA-3 archive.
+        if header.startswith((b'ZiX-12A', b'ZiX-12B', b'ALT-1.0')):
+            raise ValueError('Эта защита RPA требует соответствующий renpy/loader.py '
+                             'и отдельный декодер данных архива.') from None
+        if not re.fullmatch(rb'.{8}[0-9a-fA-F]{16} [0-9a-fA-F]{8}\n', header, re.DOTALL):
+            raise
+        source.seek(0)
+        return read_index(tool, source, RenamedRPA3(extended_index=header.startswith(b'xehsoidx')))
 
 
 class Segments:
@@ -166,21 +214,47 @@ class ChunkSink:
             self.pending.clear()
 
 
+def source_name(path):
+    file = PurePosixPath(path)
+    if path.lower().endswith('.pyc'):
+        name = re.sub(r'\.(?:cpython-\d+|pypy\d+)(?:\.opt-\d+)?\.pyc$', '.py', file.name, flags=re.IGNORECASE)
+        if name != file.name and file.parent.name == '__pycache__':
+            return str(file.parent.parent / name)
+        return str(file.with_suffix('.py'))
+    return str(file.with_suffix('.rpym' if path.lower().endswith('.rpymc') else '.rpy'))
+
+
 def decompile(data, options):
     context = unrpyc.Context()
     stream = io.BytesIO(data)
-    ast = (deobfuscate.read_ast(stream, context) if options.get('try_harder')
-           else unrpyc.read_ast_from_file(stream, context))
-    output = io.StringIO()
+    if options.get('try_harder'):
+        try:
+            ast = recovery.statements((None, unrpyc.read_ast_from_file(stream, context)))
+        except (MemoryError, OverflowError):
+            raise
+        except Exception:  # noqa: BLE001 - retry unsupported input with inert recovery
+            context = unrpyc.Context()
+            ast = recovery.read_ast(data, context)
+    else:
+        ast = unrpyc.read_ast_from_file(stream, context)
     settings = decompiler.Options(log=context.log_contents,
                                    init_offset=not options.get('no_init_offset', False))
-    decompiler.pprint(output, ast, settings)
-    return output.getvalue().encode('utf-8'), context.log_contents
+
+    def render(nodes):
+        output = io.StringIO()
+        if options.get('try_harder'):
+            recovery.RecoveryDecompiler(output, settings).dump(nodes)
+        else:
+            decompiler.pprint(output, nodes, settings)
+        return output.getvalue()
+
+    extra = recovery.recover_containers(ast, render, context) if options.get('try_harder') else []
+    return (render(ast) + ''.join(extra)).encode('utf-8'), context.log_contents
 
 
 class Catalog:
     """Index sources without extracting assets or decompiling scripts."""
-    def __init__(self, files):
+    def __init__(self, files, options=None):
         self.files = files
         self.entries = {}
         self.errors = []
@@ -191,7 +265,7 @@ class Catalog:
                 if path.lower().endswith('.rpa'):
                     tool = UnRPA(entry['source'])
                     with open(entry['source'], 'rb') as source:
-                        index = read_index(tool, source, tool.detect_version())
+                        index = archive_index(tool, source, options or {})
                     for name, segments in index.items():
                         self.entries[f'{number}:{name}'] = {
                             'path': name, 'source': number, 'segments': segments,
@@ -222,8 +296,8 @@ class Catalog:
         path = entry['path']
         warnings = []
         # Existing source takes precedence, exactly as in a full ZIP export.
-        compiled = path.lower().endswith(('.rpyc', '.rpymc'))
-        target = str(PurePosixPath(path).with_suffix('.rpym' if path.lower().endswith('.rpymc') else '.rpy'))
+        compiled = path.lower().endswith(('.rpyc', '.rpymc', '.pyc'))
+        target = source_name(path)
         segments = entry.get('segments')
         if compiled and target in entry.get('originals', {}):
             segments = entry['originals'][target]
@@ -236,7 +310,7 @@ class Catalog:
             else:
                 data = b''.join(iter(Segments(source, segments).read, b''))
         if compiled:
-            data, logs = decompile(data, options)
+            data, logs = pyc_decompiler.decompile(data) if path.lower().endswith('.pyc') else decompile(data, options)
             warnings.extend(str(log) for log in logs)
             path = target
         result = (path, data, warnings)
@@ -254,13 +328,13 @@ def preview_html(path, data):
     if len(data) > 2 * 1024 * 1024:
         return None
     from pygments import highlight
+    from pygments.filter import Filter
     from pygments.formatters import HtmlFormatter
     from pygments.lexers import get_lexer_for_filename
     from pygments.lexers.special import TextLexer
-    from pygments.filter import Filter
     from pygments.token import Whitespace
+    from pygments.util import ClassNotFound
     from renpy_lexer import RenPyLexer
-    import re
 
     class Spaces(Filter):
         def filter(self, lexer, stream):
@@ -271,7 +345,7 @@ def preview_html(path, data):
 
     try:
         lexer = RenPyLexer() if path.lower().endswith(('.rpy', '.rpym')) else get_lexer_for_filename(path)
-    except Exception:
+    except ClassNotFound:
         lexer = TextLexer()
     lexer.add_filter(Spaces())
     return highlight(data.decode('utf-8', 'replace'), lexer, HtmlFormatter(nowrap=True))
@@ -305,8 +379,8 @@ def process(files, mode, options, sink, notify=lambda event: None):
             result['written'] += 1
 
         def script(path, data):
-            text, logs = decompile(data, options)
-            target = str(PurePosixPath(path).with_suffix('.rpym' if path.lower().endswith('.rpymc') else '.rpy'))
+            text, logs = pyc_decompiler.decompile(data) if path.lower().endswith('.pyc') else decompile(data, options)
+            target = source_name(path)
             write_bytes(target, text)
             for log in logs:
                 warn(path, str(log))
@@ -320,12 +394,14 @@ def process(files, mode, options, sink, notify=lambda event: None):
                     raise ValueError('Duplicate input path')
                 input_paths.add(path)
                 with open(entry['source'], 'rb') as source:
-                    if path.lower().endswith(('.rpyc', '.rpymc')) and mode != 'unrpa':
-                        script(path, source.read())
+                    if path.lower().endswith(('.rpyc', '.rpymc', '.pyc')) and mode != 'unrpa':
+                        data = source.read()
+                        if path.lower().endswith('.pyc'):
+                            write_bytes(path, data)
+                        script(path, data)
                     elif path.lower().endswith('.rpa') and mode != 'unrpyc':
                         tool = UnRPA(entry['source'])
-                        version = tool.detect_version()
-                        index = read_index(tool, source, version)
+                        index = archive_index(tool, source, options)
                         # Reserve original archive paths before generating .rpy,
                         # so an existing source script always remains untouched.
                         originals = set(index)
@@ -334,7 +410,7 @@ def process(files, mode, options, sink, notify=lambda event: None):
                             notify({'type': 'entry', 'index': number, 'path': target,
                                     'current': count + 1, 'total': len(index)})
                             stream = Segments(source, segments)
-                            compiled = io.BytesIO() if mode == 'combined' and name.lower().endswith(('.rpyc', '.rpymc')) else None
+                            compiled = io.BytesIO() if mode == 'combined' and name.lower().endswith(('.rpyc', '.rpymc', '.pyc')) else None
                             with output.open(reserve(target), 'w', force_zip64=True) as destination:
                                 for chunk in iter(stream.read, b''):
                                     destination.write(chunk)
@@ -343,7 +419,7 @@ def process(files, mode, options, sink, notify=lambda event: None):
                             result['written'] += 1
                             if compiled is not None:
                                 try:
-                                    generated = str(PurePosixPath(target).with_suffix('.rpym' if name.lower().endswith('.rpymc') else '.rpy'))
+                                    generated = source_name(target)
                                     if generated in originals:
                                         warn(target, f'Исходный файл {generated} уже есть в архиве, сохранён без замены.')
                                     else:

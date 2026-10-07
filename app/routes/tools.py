@@ -12,7 +12,8 @@ TOOLS = ROOT / 'static/tools'
 MANIFEST = json.loads((TOOLS / 'manifest.json').read_text('utf-8'))
 RUNTIME_VERSION = MANIFEST['pyodide']
 FILES = {
-    'engine.py': 'text/plain', 'vendor.zip': 'application/zip',
+    'engine.py': 'text/plain', 'recovery.py': 'text/plain', 'vendor.zip': 'application/zip',
+    'pyc_decompiler.py': 'text/plain', 'bytecode.zip': 'application/zip',
     'syntax.zip': 'application/zip', 'renpy_lexer.py': 'text/plain',
     'manifest.json': 'application/json', 'NOTICE.txt': 'text/plain',
     **{f'pyodide/{RUNTIME_VERSION}/{name}': media for name, media in {
@@ -55,6 +56,9 @@ async def unpack_page(request: Request):
         'tools_config': {
             'worker': asset_url('/static/js/tools-worker.js'),
             'engine': f'/static/tools/engine.py?v={digest("engine.py")}',
+            'recovery': f'/static/tools/recovery.py?v={digest("recovery.py")}',
+            'pyc': f'/static/tools/pyc_decompiler.py?v={digest("pyc_decompiler.py")}',
+            'bytecode': f'/static/tools/bytecode.zip?v={digest("bytecode.zip")}',
             'vendor': f'/static/tools/vendor.zip?v={digest("vendor.zip")}',
             'syntax': f'/static/tools/syntax.zip?v={digest("syntax.zip")}',
             'lexer': f'/static/tools/renpy_lexer.py?v={digest("renpy_lexer.py")}',

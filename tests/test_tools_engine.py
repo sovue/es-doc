@@ -1,3 +1,4 @@
+import base64
 import importlib.util
 import io
 import pickle
@@ -11,6 +12,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'static/tools'))
 sys.path.insert(0, str(ROOT / 'static/tools/vendor.zip'))
 spec = importlib.util.spec_from_file_location('tools_engine', ROOT / 'static/tools/engine.py')
 
@@ -34,6 +36,36 @@ def archive(entries, version=3, key=0xDEADBEEF):
               else f'RPA-2.0 {offset:016x}\n').encode()
     body[:len(header)] = header
     return bytes(body)
+
+
+def extended_index_archive(records=7, prefix=b''):
+    key = 0x42424242
+    payload = b'body'
+    index_offset = 34 + len(payload)
+    offset, length = 34 ^ key, len(payload) ^ key
+    record = {
+        4: (offset, length, prefix, b'end metadata'),
+        5: (b'first metadata', offset, length, prefix, b'end metadata'),
+        6: (b'first metadata', offset, length, length, prefix, b'end metadata'),
+        7: (b'first metadata', offset, length, length, prefix, b'end metadata', b'end2 metadata'),
+    }[records]
+    index = {'test.txt': [record]}
+    return f'xehsoidx{index_offset:016x} {key:08x}\n'.encode() + payload + zlib.compress(pickle.dumps(index, protocol=2))
+
+
+def protocol2_fixture(value):
+    from decompiler import magic
+    class FixturePickler(magic.SafePickler):
+        def save_global(self, obj, name=None):
+            if isinstance(obj, magic.FakeClassType):
+                self.write(pickle.GLOBAL + f'{obj.__module__}\n{obj.__name__}\n'.encode())
+                self.memoize(obj)
+            else:
+                super().save_global(obj, name)
+
+    out = io.BytesIO()
+    FixturePickler(out, protocol=2).dump(value)
+    return out.getvalue()
 
 
 class EngineTests(unittest.TestCase):
@@ -178,6 +210,240 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(set(contents), {'scenario/script.rpy', 'scenario/script.rpyc', 'a.png'})
         self.assertEqual(contents['a.png'], b'image')
         self.assertEqual(result['failed'], 0)
+
+    def python_node(self, source):
+        import decompiler.renpycompat as compat
+        node = compat.CLASS_FACTORY('Python', 'renpy.ast')()
+        class PyCode(compat.magic.FakeStrict):
+            __module__ = 'renpy.ast'
+
+            def __getstate__(self):
+                return (1, self.source, self.location, self.mode)
+
+        code = PyCode()
+        code.__dict__.update(source='\n' + source, location=('wrapper.rpy', 1), mode='exec')
+        node.__dict__.update(code=code, hide=False, store='store', linenumber=1)
+        return node
+
+    def python_script(self, source):
+        import decompiler.renpycompat as compat
+        node = self.python_node(source)
+        payload = zlib.compress(compat.pickle_safe_dumps(({}, [node])))
+        return b'RENPY RPC2' + struct.pack('<III', 1, 34, len(payload)) + b'\0' * 12 + payload
+
+    def container_payload(self, method_reference=False):
+        import decompiler.renpycompat as compat
+        raw = zlib.decompress(self.script()[34:])
+        _, stmts = compat.pickle_safe_loads(raw)
+        initcode = []
+        if method_reference:
+            # Container init lists can contain pickled bound-method reducers.
+            class Reference:
+                def __reduce__(self):
+                    return compat.CLASS_FACTORY('method_unpickle', 'renpy.python'), (stmts[0], 'execute_init')
+            initcode = [(0, Reference())]
+        return compat.pickle_safe_dumps((stmts, initcode)).hex()
+
+    def test_advanced_recovers_container_ast_and_source_literals(self):
+        value = self.container_payload(method_reference=True)
+        source = 'label recovered_text:\n    "Текст из контейнера"\n'
+        wrapper = self.python_script(f'vpps_code_0 = {value!r}\nvpps_code_1 = {(source.encode().hex() + chr(10))!r}')
+        ordinary, _ = self.engine.decompile(wrapper, {})
+        self.assertNotIn(b'label start:', ordinary)
+        result, contents, _ = self.run_job([('wrapper.rpyc', wrapper)], 'unrpyc', {'try_harder': True})
+        self.assertEqual(result['failed'], 0, result['errors'])
+        text = contents['wrapper.rpy'].decode()
+        self.assertIn('label start:', text)
+        self.assertIn('label recovered_text:', text)
+        self.assertIn('Текст из контейнера', text)
+        self.assertIn(value, text)  # Keep the original wrapper and its variable references.
+
+    def test_advanced_recovers_direct_container_loader_literal(self):
+        wrapper = self.python_script(f'import vpps_lib\nvpps_lib.load_script({self.container_payload()!r})')
+        text, _ = self.engine.decompile(wrapper, {'try_harder': True})
+        self.assertIn(b'label start:', text)
+
+    def test_advanced_recovers_nested_hex_base64_zlib_and_xor(self):
+        raw = zlib.decompress(self.script()[34:])
+        for data in (raw.hex().encode(), base64.b64encode(raw.hex().encode()),
+                     zlib.compress(base64.b64encode(raw)),
+                     bytes(byte ^ 0xA7 for byte in self.script())):
+            with self.subTest(prefix=data[:12]):
+                text, _ = self.engine.decompile(data, {'try_harder': True})
+                self.assertIn('Привет, мододел!', text.decode())
+
+    def test_advanced_handles_encoded_slot_ending_at_eof(self):
+        payload = base64.b64encode(zlib.decompress(self.script()[34:]).hex().encode())
+        data = b'RENPY RPC2' + struct.pack('<III', 1, 34, len(payload)) + b'\0' * 12 + payload
+        text, _ = self.engine.decompile(data, {'try_harder': True})
+        self.assertIn(b'label start:', text)
+
+    def test_advanced_does_not_evaluate_nonconstant_container_expressions(self):
+        source = "vpps_code_0 = __import__('os').getcwd()\n"
+        with patch('os.getcwd', side_effect=AssertionError('Game code executed')):
+            text, _ = self.engine.decompile(self.python_script(source), {'try_harder': True})
+        self.assertIn(b'__import__', text)
+
+    def test_advanced_preserves_bad_container_block_and_reports_it(self):
+        wrapper = self.python_script("vpps_code_0 = 'broken'\n")
+        text, logs = self.engine.decompile(wrapper, {'try_harder': True})
+        self.assertIn(b"'broken'", text)
+        self.assertTrue(any('Контейнер:' in str(log) and 'блок 0' in str(log) for log in logs))
+        self.assertFalse(any('vpps' in str(log).lower() for log in logs))
+
+    def test_advanced_recovers_custom_rpa_magic_for_export_and_preview(self):
+        original = archive({'scenario/script.rpyc': [(self.script(), b'')], 'image.png': [(b'image', b'')]})
+        data = b'CUSTOM!!' + original[8:]
+        result, contents, _ = self.run_job([('custom.rpa', data)], 'combined', {'try_harder': True})
+        self.assertEqual(result['failed'], 0, result['errors'])
+        self.assertEqual(contents['image.png'], b'image')
+        self.assertIn(b'label start:', contents['scenario/script.rpy'])
+        with TemporaryDirectory(dir=ROOT / 'temp') as directory:
+            path = Path(directory) / 'custom.rpa'
+            path.write_bytes(data)
+            files = [{'path': 'custom.rpa', 'source': str(path)}]
+            self.assertTrue(self.engine.Catalog(files).errors)
+            catalog = self.engine.Catalog(files, {'try_harder': True})
+            self.assertFalse(catalog.errors)
+            name, text, _ = catalog.read('0:scenario/script.rpyc', {'try_harder': True})
+            self.assertEqual(name, 'scenario/script.rpy')
+            self.assertIn(b'label start:', text)
+
+    def test_advanced_container_preview_matches_export(self):
+        data = self.python_script(f'vpps_code_0 = {self.container_payload()!r}')
+        options = {'try_harder': True}
+        _, contents, _ = self.run_job([('script.rpyc', data)], 'unrpyc', options)
+        with TemporaryDirectory(dir=ROOT / 'temp') as directory:
+            source = Path(directory) / 'script.rpyc'
+            source.write_bytes(data)
+            catalog = self.engine.Catalog([{'path': 'script.rpyc', 'source': str(source)}])
+            _, text, _ = catalog.read('0:script.rpyc', options)
+        self.assertEqual(text, contents['script.rpy'])
+
+    def test_advanced_container_bytecode_is_inert_and_reported_as_partial(self):
+        import decompiler.renpycompat as compat
+        class VppsPyCode(compat.magic.FakeStrict):
+            __module__ = 'vpps_lib.vpps_lib'
+
+            def __getstate__(self):
+                return (1, b'foreign Python marshal bytecode', ('test.rpy', 1), 'exec')
+
+        node = compat.CLASS_FACTORY('VppsPython', 'vpps_lib.vpps_lib')()
+        node.__dict__.update(code=VppsPyCode(), hide=False, store='store', linenumber=1)
+        payload = zlib.compress(protocol2_fixture(({}, [node])))
+        with patch('marshal.loads', side_effect=AssertionError('Bytecode loaded')):
+            text, logs = self.engine.decompile(payload, {'try_harder': True})
+        self.assertIn(b'python:', text)
+        self.assertIn(b'    pass', text)
+        self.assertTrue(any('байткод' in str(log) for log in logs))
+        self.assertNotIn('vpps', text.decode().lower())
+        self.assertFalse(any('vpps' in str(log).lower() for log in logs))
+
+    def test_advanced_regular_script_has_no_recovery_warning(self):
+        text, logs = self.engine.decompile(self.script(), {'try_harder': True})
+        self.assertIn(b'label start:', text)
+        self.assertFalse(logs)
+
+    def test_advanced_pickles_never_execute_a_reducer(self):
+        class Evil:
+            def __reduce__(self):
+                return eval, ("__import__('os').getcwd()",)
+
+        malicious = pickle.dumps(({}, [Evil()]), protocol=2)
+        wrapper = self.python_script(f'vpps_code_0 = {malicious.hex()!r}')
+        with patch('os.getcwd', side_effect=AssertionError('Reducer executed')):
+            with self.assertRaises(ValueError):
+                self.engine.decompile(malicious, {'try_harder': True})
+            text, logs = self.engine.decompile(wrapper, {'try_harder': True})
+        self.assertIn(malicious.hex().encode(), text)
+        self.assertTrue(any('не восстановлен' in str(log) for log in logs))
+
+    def test_advanced_changed_rpyc_magic_and_escaped_layers(self):
+        compiled = self.script()
+        raw = zlib.decompress(compiled[34:])
+        payload = compiled[34:]
+        shifted_header = b'RENPY RPC2JUNK' + struct.pack('<III', 1, 38, len(payload)) + b'\0' * 12 + payload
+        for data in (b'CUSTOM!!!!' + compiled[10:], shifted_header,
+                     ''.join(f'\\x{byte:02x}' for byte in raw).encode()):
+            text, _ = self.engine.decompile(data, {'try_harder': True})
+            self.assertIn(b'label start:', text)
+
+    def test_advanced_container_preserves_wrapper_dependencies_and_inline_statements(self):
+        wrapper = self.python_script(f'vpps_code_0 = {self.container_payload()!r}; print("after")\n'
+                                     'import vpps_lib\nvpps_lib.load_script(vpps_code_0)')
+        text, _ = self.engine.decompile(wrapper, {'try_harder': True})
+        self.assertIn(b'vpps_code_0 =', text)
+        self.assertIn(b'; print("after")', text)
+        self.assertIn(b'vpps_lib.load_script(vpps_code_0)', text)
+        self.assertIn(b'label start:', text)
+
+    def test_advanced_archive_fallback_still_rejects_unsafe_paths_and_bad_segments(self):
+        for original in (archive({'../evil': [(b'x', b'')]}),
+                         archive({'ok': [(b'x', b'')]} )[:-3]):
+            result, contents, _ = self.run_job([('custom.rpa', b'CUSTOM!!' + original[8:])],
+                                                 'combined', {'try_harder': True})
+            self.assertEqual(result['failed'], 1)
+            self.assertFalse(contents)
+
+    def test_advanced_extended_index_layouts_and_prefix_lengths(self):
+        for records in (4, 5, 6, 7):
+            for prefix in (b'', b'prefix '):
+                with self.subTest(records=records, prefix=prefix):
+                    result, contents, _ = self.run_job([('extended.rpa', extended_index_archive(records, prefix))],
+                                                     'combined', {'try_harder': True})
+                    self.assertEqual(result['failed'], 0, result['errors'])
+                    self.assertEqual(contents['test.txt'], prefix + b'body')
+
+    def test_extended_custom_index_is_opt_in(self):
+        result, _, _ = self.run_job([('extended.rpa', extended_index_archive())])
+        self.assertEqual(result['failed'], 1)
+
+    def test_advanced_post_user_statement_keeps_its_source_statement(self):
+        import decompiler.renpycompat as compat
+        parent = compat.CLASS_FACTORY('UserStatement', 'renpy.ast')()
+        parent.__dict__.update(line='custom_statement "value"', block=[], linenumber=1)
+        post = compat.CLASS_FACTORY('PostUserStatement', 'renpy.ast')()
+        post.__dict__.update(parent=parent, linenumber=2)
+        data = zlib.compress(compat.pickle_safe_dumps(({}, [parent, post])))
+        text, logs = self.engine.decompile(data, {'try_harder': True})
+        self.assertEqual(text.count(b'custom_statement "value"'), 1)
+        self.assertFalse(any('Unknown AST node' in str(log) for log in logs))
+
+    def test_advanced_container_sections_preserve_independent_init_priorities(self):
+        import decompiler.renpycompat as compat
+        nested_python = self.python_node('nested = True')
+        nested_init = compat.CLASS_FACTORY('Init', 'renpy.ast')()
+        nested_init.__dict__.update(priority=0, linenumber=1, block=[nested_python])
+        nested_value = compat.pickle_safe_dumps(([nested_init], [])).hex()
+        literal = 'init python:\n    literal_block = True\n'
+        sources = [f'vpps_code_0 = {nested_value!r}\nvpps_code_1 = {(literal.encode().hex() + chr(10))!r}',
+                   'main_two = True', 'main_three = True']
+        main_nodes = []
+        for index, source in enumerate(sources):
+            python = self.python_node(source)
+            init = compat.CLASS_FACTORY('Init', 'renpy.ast')()
+            init.__dict__.update(priority=100, linenumber=index * 4 + 1, block=[python])
+            main_nodes.append(init)
+        data = zlib.compress(compat.pickle_safe_dumps(({}, main_nodes)))
+        text, _ = self.engine.decompile(data, {'try_harder': True})
+        # Interpret the output's init priorities in order, as Ren'Py would.
+        offset = 0
+        priorities = []
+        for line in text.decode().splitlines():
+            if line.startswith('init offset = '):
+                offset = int(line.rsplit(' ', 1)[1])
+            elif line.startswith('init ') and line.endswith('python:'):
+                parts = line.split()
+                priorities.append(offset + (int(parts[1]) if parts[1].lstrip('-').isdigit() else 0))
+        self.assertEqual(priorities, [100, 100, 100, 0, 0])
+
+    def test_advanced_bytes_reducer_accepts_only_empty_bytes(self):
+        self.assertEqual(self.engine.recovery.safe_loads(pickle.dumps(b'', protocol=2)), b'')
+        class Allocate:
+            def __reduce__(self):
+                return bytes, (42,)
+        with self.assertRaises(TypeError):
+            self.engine.recovery.safe_loads(pickle.dumps(Allocate(), protocol=2))
 
     def test_duplicate_input_paths_are_not_overwritten(self):
         result, contents, _ = self.run_job([('script.rpyc', self.script()), ('script.rpyc', self.script())], 'unrpyc')

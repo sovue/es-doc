@@ -12,6 +12,33 @@
     "pygments": {
       "version": "2.20.0",
       "repository": "https://github.com/pygments/pygments"
+    },
+    "bytecode": {
+      "uncompyle6": {
+        "version": "3.9.3",
+        "url": "https://files.pythonhosted.org/packages/48/ab/baf6ecbfa3ed1551852e813999220c957b0d585867df466aa631c4829908/uncompyle6-3.9.3-py36-none-any.whl",
+        "sha256": "7f3e21e650400ae144d2189a503b8febf9e76bec6b1b9761a78001896dd43672"
+      },
+      "xdis": {
+        "version": "6.1.8",
+        "url": "https://files.pythonhosted.org/packages/ae/e7/9f12bf8e8caab1845a2895df536e30c9cd5a86bf30d655a86bb97aa60686/xdis-6.1.8-py310-none-any.whl",
+        "sha256": "b91a784627f18154e2607784ceafdc78b32f5ee235fa33d2ee1b0d00c89edf27"
+      },
+      "spark-parser": {
+        "version": "1.9.0",
+        "url": "https://files.pythonhosted.org/packages/32/49/9ffca7bd17648e6bcc3371960abf4aaf53e5fe1249bdef9bc8c7ae23fd9c/spark_parser-1.9.0-py2-none-any.whl",
+        "sha256": "fb17b1dc56de2d2554ae2c95705b2a5940a04b3a0aa43dcdf2fd609ad3edbf22"
+      },
+      "click": {
+        "version": "8.5.0",
+        "url": "https://files.pythonhosted.org/packages/58/50/6c0d534c5f134586a8e1ba4e330569e32f057e33372ae556463212fb4cd3/click-8.5.0-py3-none-any.whl",
+        "sha256": "255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360"
+      },
+      "six": {
+        "version": "1.17.0",
+        "url": "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl",
+        "sha256": "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
+      }
     }
   },
   "sha256": {
@@ -22,6 +49,7 @@
     "pyodide/pyodide.asm.wasm": "e2f4ee75b325e35eb31bfb8c613d4dd5098f5502c156a97847686875b5025480",
     "pyodide/pyodide.mjs": "23213d27e9dacbda6f25f955fb38dabfc40ada082c04ee253047ea5dddcaa3b5",
     "pyodide/python_stdlib.zip": "4298b6ee445cb724c3973437da47789752b9e6ff4e26619026b283ec801fc46b",
-    "syntax.zip": "81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176"
+    "syntax.zip": "81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176",
+    "bytecode.zip": "694746899d00d484e34c9192bb5748c1f73cce3ecab4e4f402ed2c57bdaae589"
   }
 }

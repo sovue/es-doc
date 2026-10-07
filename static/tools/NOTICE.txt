@@ -20,8 +20,35 @@ engine.py is ES Doc's adapter for bounded reads, safe archive indexing,
 path validation, split segments, streamed ZIP output and browser progress.
 These tools do not execute game scripts or inject files into a game.
 ZIP exports include original archive contents and recovered source scripts.
+recovery.py adds static script-container recovery, inert compatibility records,
+encoding-layer recovery and constant-byte XOR recognition for RPYC signatures.
+The advanced archive adapter supports the xehsoidx header and extended
+4/5/6/7-field index records based on the corresponding archive loader.
+Container format reference: a locally inspected decoder and script-loading
+library provided by the user. No game content is bundled.
+Bytecode-only Python blocks are marked as partial recovery. Game loaders are
+not rewritten or executed. Original containers remain alongside readable
+sections for inspection/adaptation. Unknown custom encryption is not auto-supported.
 
 Pygments 2.20.0 / BSD-2-Clause
 https://github.com/pygments/pygments
 Original wheel and license: syntax.zip / pygments-2.20.0.dist-info/licenses/LICENSE
 Ren'Py lexer: ES Doc's shared app/utils/renpy_lexer.py.
+
+PYC decompilation uses unmodified pure-Python wheels in bytecode.zip:
+uncompyle6 3.9.3 / GPL-3.0-or-later / Rocky Bernstein and contributors
+https://github.com/rocky/python-uncompyle6
+xdis 6.1.8 / GPL-2.0-or-later / Rocky Bernstein and contributors
+https://github.com/rocky/python-xdis
+spark-parser 1.9.0 / MIT / Rocky Bernstein and contributors
+https://github.com/rocky/python-spark
+click 8.5.0 / BSD-3-Clause / Pallets
+https://github.com/pallets/click
+six 1.17.0 / MIT / Benjamin Peterson
+https://github.com/benjaminp/six
+Original licenses, copyright notices and metadata are included in each wheel's
+dist-info directory inside bytecode.zip. Wheel URLs and SHA-256 digests are
+recorded in manifest.json. Rebuild with prepare_tools.py --bytecode-only.
+pyc_decompiler.py reads foreign marshal data without running module code.
+Supported bytecode versions: Python 2.0 through 3.8, subject to upstream support.
+Original PYC files are kept in ZIP exports even when recovery fails.

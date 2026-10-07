@@ -17,7 +17,7 @@ SECTIONS = (
     ('Специалисты', '/specialists'),
     ('Материалы', '/materials'),
     ('Инструменты', '/tools'),
-    ('Распаковщик RPA/RPYC Ren’Py / UnRpyc / UnRPA', '/tools/unpack'),
+    ('Распаковщик RPA/RPYC/PYC RenPy / Python / UnRpyc / UnRPA / uncompyle6', '/tools/unpack'),
     ('Палитра цветов / Цвет / HEX / RGB / Палитры', '/tools/colors'),
     ('Площадки для публикации', '/news-resources'),
     ('Авторы', '/authors'),

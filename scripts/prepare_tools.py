@@ -1,10 +1,10 @@
-"""Rebuild pinned browser dependencies. Run explicitly; never at server startup."""
+"""Rebuild pinned browser dependencies explicitly, never at server startup."""
+import argparse
 import hashlib
 import io
 import json
 import urllib.request
 import zipfile
-import argparse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,6 +16,41 @@ SOURCES = {
 }
 RUNTIME = ('pyodide.mjs', 'pyodide.asm.js', 'pyodide.asm.wasm', 'python_stdlib.zip', 'pyodide-lock.json')
 PYGMENTS = '2.20.0'
+BYTECODE_PACKAGES = {
+    'uncompyle6': '3.9.3', 'xdis': '6.1.8', 'spark-parser': '1.9.0',
+    'click': '8.5.0', 'six': '1.17.0',
+}
+
+
+def prepare_bytecode():
+    """Bundle verified pure-Python wheels with their original licenses."""
+    sources = {}
+    files = {}
+    for name, version in BYTECODE_PACKAGES.items():
+        release = json.loads(fetch(f'https://pypi.org/pypi/{name}/{version}/json'))
+        wheel = next(file for file in release['urls'] if file['filename'].endswith('none-any.whl'))
+        data = fetch(wheel['url'])
+        checksum = hashlib.sha256(data).hexdigest()
+        if checksum != wheel['digests']['sha256']:
+            raise ValueError(f'{name} wheel checksum mismatch')
+        sources[name] = {'version': version, 'url': wheel['url'], 'sha256': checksum}
+        with zipfile.ZipFile(io.BytesIO(data)) as bundled:
+            for path in bundled.namelist():
+                if path.endswith('/'):
+                    continue
+                if path in files:
+                    raise ValueError(f'Duplicate wheel path: {path}')
+                files[path] = bundled.read(path)
+    with zipfile.ZipFile(DEST / 'bytecode.zip', 'w') as output:
+        for path, data in sorted(files.items()):
+            info = zipfile.ZipInfo(path, (2026, 10, 7, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            output.writestr(info, data)
+    manifest_path = DEST / 'manifest.json'
+    manifest = json.loads(manifest_path.read_text('utf-8'))
+    manifest['sources']['bytecode'] = sources
+    manifest['sha256']['bytecode.zip'] = hashlib.sha256((DEST / 'bytecode.zip').read_bytes()).hexdigest()
+    manifest_path.write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
 
 
 def prepare_syntax():
@@ -70,7 +105,12 @@ def main():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--syntax-only', action='store_true')
+    parser.add_argument('--bytecode-only', action='store_true')
     args = parser.parse_args()
-    if not args.syntax_only:
-        main()
-    prepare_syntax()
+    if args.bytecode_only:
+        prepare_bytecode()
+    else:
+        if not args.syntax_only:
+            main()
+        prepare_syntax()
+        prepare_bytecode()

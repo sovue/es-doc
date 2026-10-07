@@ -20,23 +20,31 @@ async function initialize(config) {
         indexURL: new URL(config.runtime, self.location.origin).href,
         stdout: () => {}, stderr: () => {},
     });
-    const [vendor, engine, syntax, lexer] = await Promise.all([
+    const [vendor, engine, recovery, syntax, lexer, bytecode, pyc] = await Promise.all([
         checkedFetch(config.vendor).then(response => response.arrayBuffer()),
         checkedFetch(config.engine).then(response => response.text()),
+        checkedFetch(config.recovery).then(response => response.text()),
         checkedFetch(config.syntax).then(response => response.arrayBuffer()),
         checkedFetch(config.lexer).then(response => response.text()),
+        checkedFetch(config.bytecode).then(response => response.arrayBuffer()),
+        checkedFetch(config.pyc).then(response => response.text()),
     ]);
     pyodide.FS.mkdirTree('/tools');
     pyodide.FS.writeFile('/tools/vendor.zip', new Uint8Array(vendor));
     pyodide.FS.writeFile('/tools/engine.py', engine, { encoding: 'utf8' });
+    pyodide.FS.writeFile('/tools/recovery.py', recovery, { encoding: 'utf8' });
     pyodide.FS.writeFile('/tools/syntax.zip', new Uint8Array(syntax));
     pyodide.FS.writeFile('/tools/renpy_lexer.py', lexer, { encoding: 'utf8' });
+    pyodide.FS.writeFile('/tools/bytecode.zip', new Uint8Array(bytecode))
+    pyodide.FS.writeFile('/tools/pyc_decompiler.py', pyc, { encoding: 'utf8' })
     await pyodide.runPythonAsync(`
 import sys, zipfile
 sys.path.insert(0, '/tools')
 with zipfile.ZipFile('/tools/vendor.zip') as bundled:
     bundled.extractall('/tools')
 with zipfile.ZipFile('/tools/syntax.zip') as bundled:
+    bundled.extractall('/tools')
+with zipfile.ZipFile('/tools/bytecode.zip') as bundled:
     bundled.extractall('/tools')
 import engine
 `);
@@ -79,12 +87,13 @@ async function source(data) {
                 blobs: data.files.map((entry, index) => ({ name: `input-${index}`, data: entry.file })),
             }, '/catalog');
             catalogMounted = true;
+            pyodide.globals.set('catalog_options_json', JSON.stringify(data.options || {}));
             pyodide.globals.set('catalog_json', JSON.stringify(data.files.map((entry, index) => ({
                 path: entry.path, source: `/catalog/input-${index}`,
             }))));
             const listing = JSON.parse(await pyodide.runPythonAsync(`
 import json
-catalog = engine.Catalog(json.loads(catalog_json))
+catalog = engine.Catalog(json.loads(catalog_json), json.loads(catalog_options_json))
 json.dumps({'entries': catalog.listing(), 'errors': catalog.errors}, ensure_ascii=False)
 `));
             self.postMessage({ type: 'catalog', ...listing, requestId: data.requestId });
@@ -105,7 +114,7 @@ esdocSourcePreview(json.dumps({'name': preview_name, 'html': preview_markup, 'wa
         self.postMessage({ type: 'source-error', operation: data.type, error: String(error.message || error), requestId: data.requestId });
     } finally {
         if (pyodide) await pyodide.runPythonAsync(`
-for key in ('catalog_json', 'read_json', 'read_job', 'preview_name', 'preview_data', 'preview_warnings', 'preview_markup'):
+for key in ('catalog_json', 'catalog_options_json', 'read_json', 'read_job', 'preview_name', 'preview_data', 'preview_warnings', 'preview_markup'):
     globals().pop(key, None)
 import gc
 gc.collect()

@@ -197,7 +197,7 @@
             if (id === operation) say(`Добавлено файлов: ${added}.`
                 + (skipped ? ` Другие форматы пропущены: ${skipped}.` : '')
                 + (duplicates ? ` Повторные пути пропущены: ${duplicates}.` : '')
-                + (!files.size ? ' Выберите .rpyc, .rpymc или .rpa.' : ''));
+                + (!files.size ? ' Выберите .rpyc, .rpymc, .pyc или .rpa.' : ''));
         } catch (error) {
             if (id === operation) showErrors([error.message]);
         } finally {
@@ -302,7 +302,7 @@
         previewPending = document.createElement('div');
         previewPending.className = 'tools-preview-pending';
         const pending = document.createElement('p');
-        pending.textContent = /\.(rpyc|rpymc)$/i.test(entry.path) ? 'Декомпилируем файл…' : 'Открываем файл…';
+        pending.textContent = /\.(rpyc|rpymc|pyc)$/i.test(entry.path) ? 'Декомпилируем файл…' : 'Открываем файл…';
         previewPending.appendChild(pending);
         browserPreview.appendChild(previewPending);
         if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -374,7 +374,7 @@
             row(folder + '/', 'папка', () => { browseFolder += folder + '/'; renderBrowse(); }, 'folder');
         }
         for (const entry of entries.slice(0, 500)) {
-            const kind = /\.(rpyc|rpymc|rpy|rpym|py|js|json|css|txt)$/i.test(entry.path) ? 'code'
+            const kind = /\.(rpyc|rpymc|pyc|rpy|rpym|py|js|json|css|txt)$/i.test(entry.path) ? 'code'
                 : /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(entry.path) ? 'image'
                 : /\.(ogg|mp3|wav|opus|flac|mp4|webm)$/i.test(entry.path) ? 'media' : 'file';
             row(query ? entry.path : entry.path.slice(browseFolder.length), size(entry.size), () => readBrowse(entry), kind,
@@ -814,7 +814,7 @@
         worker.onmessageerror = () => fail('Браузер не смог передать файлы инструменту. Попробуйте добавить меньше файлов.');
     };
     const submitCatalog = () => {
-        worker.postMessage({ type: 'catalog', files: catalogFiles, config, requestId: ++catalogRequest });
+        worker.postMessage({ type: 'catalog', files: catalogFiles, config, options: options(), requestId: ++catalogRequest });
         catalogSubmitted = true;
     };
     const loadCatalog = () => {
@@ -893,6 +893,13 @@
         downloadAll.hidden = !selected().length;
         updateControls();
         if (selected().length) downloadAll.innerHTML = '<span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span><span>Скачать всё в ZIP</span>';
+        if (option === get('try-harder')) {
+            catalogSubmitted = false;
+            if (selected().some(isArchive)) {
+                loadCatalog();
+                return;
+            }
+        }
         if (selectedEntry) readBrowse(selectedEntry);
     });
 
@@ -945,6 +952,6 @@
         return;
     }
     controls.hidden = false;
-    get('drop-help').textContent = '.rpa, .rpyc, .rpymc';
+    get('drop-help').textContent = '.rpa, .rpyc, .rpymc, .pyc';
     render();
 })();
