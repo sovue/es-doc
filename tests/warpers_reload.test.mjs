@@ -8,13 +8,13 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const source = fs.readFileSync(path.join(root, 'static/js/warpers.js'), 'utf8');
 
-test('warpers script can be loaded again after soft navigation', () => {
+function createPageContext(copyNames = []) {
     const mediaQuery = {
         matches: false,
         addEventListener() {},
         removeEventListener() {},
     };
-    const context = vm.createContext({
+    return vm.createContext({
         console: { warn() {} },
         document: {
             documentElement: {},
@@ -23,7 +23,9 @@ test('warpers script can be loaded again after soft navigation', () => {
                 return { style: {}, setAttribute() {}, remove() {} };
             },
             querySelector() { return null; },
-            querySelectorAll() { return []; },
+            querySelectorAll(selector) {
+                return selector === '.wp-cell .res-copy[data-copy]' ? copyNames : [];
+            },
         },
         getComputedStyle() {
             return { getPropertyValue() { return ''; } };
@@ -43,9 +45,20 @@ test('warpers script can be loaded again after soft navigation', () => {
         isFinite,
         Math,
     });
+}
+
+test('warpers script can be loaded again after soft navigation', () => {
+    const context = createPageContext();
 
     assert.doesNotThrow(() => {
         vm.runInContext(source, context);
         vm.runInContext(source, context);
     });
+});
+
+test('warper names stay visible when the Clipboard API is unavailable', () => {
+    const nameButton = { hidden: true, disabled: false, dataset: { copy: 'easeout_cubic' } };
+    vm.runInContext(source, createPageContext([nameButton]));
+    assert.equal(nameButton.hidden, false, 'clipboard enhancement must not hide the warper name');
+    assert.equal(nameButton.disabled, true, 'unsupported copying must not offer a dead action');
 });

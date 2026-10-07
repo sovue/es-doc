@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% set page_title = 'Варперы — Инструменты — ES Doc' %}
+{% set body_class = 'bg-solid scene-page' %}
+{% set active = 'tools' %}
+{% set extra_css = ['/static/css/syntax.css', '/static/css/resources.css', '/static/css/code.css', '/static/css/warpers.css'] %}
+{% set with_docs_js = true %}
+{% set with_warpers_js = true %}
+{% from 'partials/res_macros.html' import copy_button %}
+
+{% macro preview(name, desc='', points=none, context='') %}
+<div class="wp-cell" id="{{ name }}">
+    <a class="wp-select" href="#wp-lab-label" data-test-warper="{{ name }}" aria-label="Проверить {{ name }}{% if context %}: {{ context }}{% endif %}">
+        <canvas class="wp-plot" aria-hidden="true" {% if points %}data-points="{{ points|join(',') }}"{% else %}data-warper="{{ name }}"{% endif %}></canvas>
+    </a>
+    {{ copy_button(name, label=name) }}
+    <noscript><code>{{ name }}</code></noscript>
+    <div class="wp-cell-meta">
+        <span class="wp-cell-desc">{{ desc or context }}</span>
+    </div>
+    {{ caller() if caller else '' }}
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="page">
+
+    <main id="main-content">
+
+        <section class="page-hero page-hero--tight">
+            <div class="page-hero-inner">
+                <a href="/tools" class="page-back">{{ lucide_icon('arrow-left') }} Инструменты</a>
+                <h1 class="page-title">Варперы</h1>
+                <p class="page-lead">Варперы задают, как меняется значение свойства
+                    в анимации ATL — языке анимаций Ren'Py.</p>
+                <nav class="wp-jumps" aria-label="Разделы варперов">
+                    <a href="#wp-special-label">Особые</a>
+                    <a href="#wp-families-label">Семейства</a>
+                    <a href="#wp-community-label">Варперы сообщества</a>
+                    <a href="#wp-lab-label">Тестер варпера {{ lucide_icon('chevron-down', 14) }}</a>
+                </nav>
+            </div>
+        </section>
+
+        <div class="wp-main">
+
+            <p class="wp-catalog-hint">Нажмите на график, чтобы открыть варпер в тестере.
+                Кнопка копирования {{ lucide_icon('copy', 14) }} копирует его имя для ATL.</p>
+            <section class="wp-section" aria-labelledby="wp-special-label">
+                <h2 class="authors-list-label" id="wp-special-label">Особые</h2>
+                <p class="wp-section-note wp-prose">
+                    <code>pause</code> и <code>instant</code> меняют значение скачком,
+                    <code>linear</code> — с постоянной скоростью.
+                </p>
+
+                <div class="wp-specials">
+                    {% for name, desc, _source in special %}{{ preview(name, desc) }}{% endfor %}
+                </div>
+            </section>
+
+            <section class="wp-section" aria-labelledby="wp-families-label">
+                <h2 class="authors-list-label" id="wp-families-label">Семейства</h2>
+                <p class="wp-section-note wp-prose">
+                    Три варианта каждого семейства: разгон, торможение и их сочетание.
+                    Формула под названием относится к варианту <code>easeout</code>.
+                </p>
+
+                <nav class="wp-family-nav" aria-label="Семейства варперов">
+                    {% for fam in families %}<a href="#wp-family-{{ loop.index }}">{{ fam.title }}</a>{% endfor %}
+                </nav>
+                <label class="wp-family-jump" hidden><span class="wp-lab-label">Перейти к семейству</span>
+                    <select class="filter-select" id="wp-family-jump">
+                        <option value="">Выберите семейство</option>
+                        {% for fam in families %}<option value="wp-family-{{ loop.index }}">{{ fam.title }}</option>{% endfor %}
+                    </select>
+                </label>
+
+                <div class="wp-matrix">
+                    <div class="wp-matrix-head" aria-hidden="true">
+                        <span>Семейство</span>
+                        {% for prefix, short, long in columns %}<div><code>{{ prefix }}…</code><span>{{ short }}</span></div>{% endfor %}
+                    </div>
+                    {% for fam in families %}
+                    <section class="wp-family-row" aria-labelledby="wp-family-{{ loop.index }}">
+                        <div class="wp-row-label">
+                            <h3 class="wp-family" id="wp-family-{{ loop.index }}">{{ fam.title }}</h3>
+                            {% if fam.formula %}<code class="wp-formula">{{ fam.formula }}</code>{% endif %}
+                            <p class="wp-family-note">{{ fam.note }}</p>
+                        </div>
+                        {% for cell in fam.cells %}{{ preview(cell.name, context=columns[loop.index0][1]) }}{% endfor %}
+                    </section>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="wp-section" aria-labelledby="wp-community-label">
+                <h2 class="authors-list-label" id="wp-community-label">Варперы сообщества</h2>
+                <p class="wp-section-note wp-prose">Для использования этих варперов в моде
+                    зарегистрируйте их через <code>@renpy.atl_warper</code>.
+                    <a href="#wp-custom-label">Как добавить свой варпер</a>.</p>
+                {% if community %}
+                <div class="wp-specials">
+                    {% for item in community %}
+                    {% call preview(item.name, item.desc or '', item.points) %}
+
+                    {% if item.author %}<span class="wp-cell-by">автор:
+                        {% if item.url %}<a href="{{ item.url }}">{{ item.author }}</a>
+                        {% else %}{{ item.author }}{% endif %}</span>{% endif %}
+                    {% endcall %}
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="wp-prose wp-hint">В каталоге пока нет варперов сообщества.
+                    Свою формулу можно проверить в тестере и <a href="/redirect/dm">прислать нам</a>.</p>
+                {% endif %}
+            </section>
+
+            <section class="wp-section wp-lab" aria-labelledby="wp-lab-label" hidden>
+                <h2 id="wp-lab-label" tabindex="-1">Тестер варпера</h2>
+                <p class="wp-section-note wp-prose">В тестере кривая показана на перемещении,
+                    масштабе и прозрачности. Контурные маркеры показывают линейное изменение за то же время.</p>
+                <div class="wp-lab-layout">
+                <div class="wp-lab-editor">
+                <div class="wp-inputs"><div class="wp-lab-controls">
+                    <label class="wp-lab-field"><span class="wp-lab-label">Варпер</span>
+                        <select class="filter-select" id="wp-lab-warper">
+                            <option value="" data-custom="1">Своя формула</option>
+                            <optgroup label="Особые">
+                                {% for name, desc, source in special %}<option value="{{ name }}" data-expr="{{ source }}" data-description="{{ desc }}">{{ name }}</option>{% endfor %}
+                            </optgroup>
+                            {% for fam in families %}
+                            <optgroup label="{{ fam.title }}">
+                                {% for cell in fam.cells %}<option value="{{ cell.name }}" data-expr="{{ cell.source }}" data-description="{{ cell.description }}"{% if cell.name == 'easeout_cubic' %} selected{% endif %}>{{ cell.name }}</option>{% endfor %}
+                            </optgroup>
+                            {% endfor %}
+                            {% if community %}<optgroup label="Кастомные">
+                                {% for item in community %}<option value="{{ item.name }}" data-expr="{{ item.expr }}" data-description="{{ item.desc or '' }}" data-custom="1">{{ item.name }}</option>{% endfor %}
+                            </optgroup>{% endif %}
+                        </select>
+                    </label>
+                    <label class="wp-lab-field wp-lab-field--time"><span class="wp-lab-label">Длительность, с</span>
+                        <input class="filter-input" id="wp-lab-time" type="number" min="0.2" step="any" value="1.5" inputmode="decimal" aria-describedby="wp-lab-time-note">
+                    </label>
+
+                </div>
+                <div class="wp-expression-group">
+                <label class="wp-lab-field wp-expression"><span class="wp-lab-label">Формула f(t)</span>
+                    <input class="filter-input" id="wp-lab-expr" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" value="t ** 3" aria-describedby="wp-lab-note">
+                </label>
+                <label class="wp-lab-field wp-lab-field--name"><span class="wp-lab-label">Имя своего варпера для ATL</span>
+                    <input class="filter-input" id="wp-lab-name" type="text" spellcheck="false" autocomplete="off" autocapitalize="off" value="my_warper" aria-describedby="wp-lab-name-note">
+                </label>
+                <p class="wp-lab-note" id="wp-lab-name-note" role="status"></p>
+                </div></div>
+                <p class="wp-lab-note is-error" id="wp-lab-time-note" role="status" hidden></p>
+                <p class="wp-lab-note" id="wp-lab-note" role="status"></p>
+
+                    <div class="wp-formula-examples" role="group" aria-label="Примеры формул">
+                        <button type="button" data-expression="t ** 2">Разгон: t ** 2</button>
+                        <button type="button" data-expression="1 - (1 - t) ** 3">Торможение</button>
+                        <button type="button" data-expression="t * t * (2.4 * t - 1.4)">Замах</button>
+                    </div>
+                <div class="wp-transport">
+                    <button type="button" class="wp-lab-play">Проиграть</button>
+                    <button type="button" class="wp-lab-reset">В начало</button>
+                    <label class="wp-repeat"><input id="wp-lab-repeat" type="checkbox"> Повторять</label>
+                </div>
+                <div class="wp-comparison-key"><span class="wp-key-selected">Выбранная кривая</span><span class="wp-key-linear">Линейная: f(t) = t</span></div>
+                <div class="wp-workbench">
+                    <div class="wp-graph">
+                        <canvas class="wp-lab-curve" role="img" aria-label="График формулы и линейная кривая для сравнения" aria-describedby="wp-lab-description wp-lab-values"></canvas>
+                        <p class="wp-selection-note" id="wp-lab-description" aria-live="polite" hidden></p>
+                        <p class="wp-lab-note" id="wp-lab-values"></p>
+                    </div>
+                    <div class="wp-demos">
+                        {% for prop, title, range in [('xalign', 'Перемещение', 'xalign 0 → 1'), ('zoom', 'Масштаб', 'zoom 0.5 → 1'), ('alpha', 'Прозрачность', 'alpha 0 → 1')] %}
+                        <figure class="wp-demo">
+                            <figcaption>{{ title }} <code>{{ range }}</code></figcaption>
+                            <div class="wp-demo-stage wp-demo-stage--{{ prop }}" aria-hidden="true">
+                                <div class="wp-demo-lane"><span class="wp-demo-object" data-demo="{{ prop }}"></span></div>
+                                <div class="wp-demo-lane wp-demo-lane--linear"><span class="wp-demo-object wp-demo-object--linear" data-linear="{{ prop }}"></span></div>
+                            </div>
+                        </figure>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <label class="wp-scrub"><span>Момент анимации</span><input id="wp-lab-scrub" type="range" min="0" max="1" step="0.001" value="0" aria-label="Момент анимации от 0 до 1"></label>
+                <output id="wp-lab-progress" aria-live="off">t = 0.00 / f(t) = 0.000</output>
+                <section class="wp-formula-help" aria-labelledby="wp-formula-help-label">
+                    <h3 id="wp-formula-help-label">Как написать формулу</h3>
+                    <p><code>t</code> — прошедшая доля времени: 0 в начале, 1 в конце.
+                        Обычно <code>f(0) = 0</code>, <code>f(1) = 1</code>.
+                        Значения вне диапазона 0–1 дают отклонение за начальную или конечную точку.
+                        Для <code>alpha</code> результат ограничивается диапазоном 0–1.</p>
+                    <p>Операторы: <code>+ - * / // % **</code>, сравнения, <code>and or not</code>, <code>a if условие else b</code>. Функции: <code>sin cos tan asin acos atan sqrt exp log floor ceil round abs min max pow</code>. Константы: <code>pi e</code>.</p>
+
+                </section>
+                </div>
+                <section class="wp-export" aria-labelledby="wp-export-label">
+                    <h3 id="wp-export-label">Код для Ren'Py</h3>
+                    <p class="wp-hint" id="wp-lab-code-file"></p>
+                    <p class="wp-lab-note" id="wp-lab-code-empty" hidden></p>
+                    <div id="wp-lab-code-output">
+                        <div class="code-block wp-lab-code">{{ code_copy_button|safe }}<pre><code class="language-renpy" id="wp-lab-snippet"></code></pre></div>
+                    </div>
+                </section>
+                {% if backgrounds %}
+                <section class="wp-scene" aria-labelledby="wp-scene-label">
+                    <h3 id="wp-scene-label">Попробовать на фоне игры</h3>
+                    <div class="wp-bg-search" hidden>
+                        <label class="wp-lab-field" for="wp-bg-search"><span class="wp-lab-label">Найти фон</span>
+                            <input class="filter-input" id="wp-bg-search" type="search" placeholder="Пляж, ночь или ext_beach" autocomplete="off" aria-controls="wp-lab-bg" aria-describedby="wp-bg-status">
+                        </label>
+                        <button class="wp-bg-clear" type="button" hidden>Сбросить поиск</button>
+                    </div>
+                    <div class="wp-lab-controls">
+                        <label class="wp-lab-field"><span class="wp-lab-label">Фон</span>
+                            <select class="filter-select" id="wp-lab-bg" aria-describedby="wp-bg-status">
+                                {% for group in backgrounds|groupby('location') %}
+                                <optgroup label="{{ group.grouper }}">
+                                    {% for bg in group.list %}<option value="{{ bg.preview }}" data-name="{{ bg.name }}" {% if bg.name == backgrounds[0].name %}selected{% endif %}>{{ bg.description }}{% if bg.description != bg.name %} ({{ bg.name }}){% endif %}</option>{% endfor %}
+                                </optgroup>
+                                {% endfor %}
+                            </select>
+                        </label>
+                        <label class="wp-lab-field"><span class="wp-lab-label">Свойство</span>
+                            <select class="filter-select" id="wp-lab-prop"><option value="xalign">Панорама</option><option value="zoom">Приближение</option><option value="alpha">Проявление</option></select>
+                        </label>
+                    </div>
+                    <p class="wp-lab-note" id="wp-bg-status" role="status" aria-live="polite">Фонов: {{ backgrounds|length }}.</p>
+                    <div class="wp-scene-controls">
+                        <p class="wp-hint" id="wp-lab-scene-range"></p>
+                        <button type="button" class="wp-lab-play">Проиграть</button>
+                    </div>
+                    <div class="wp-lab-stage" data-media-surface><img class="wp-lab-img" src="{{ backgrounds[0].preview }}" alt="{{ backgrounds[0].name }}" loading="lazy" decoding="async"></div>
+                </section>
+                {% endif %}
+                </div>
+                <section class="wp-atl-examples" aria-labelledby="wp-atl-examples-label">
+                    <h3 id="wp-atl-examples-label">Примеры ATL</h3>
+                    <p class="wp-lab-note" id="wp-lab-examples-empty" hidden>Исправьте ввод, чтобы получить примеры ATL.</p>
+                    <div class="wp-atl-examples-grid" id="wp-lab-examples-output">
+                        {% for suffix, title in [('move', 'Перемещение'), ('scale', 'Масштаб'), ('fade', 'Прозрачность')] %}
+                        <div>
+                            <h4>{{ title }}</h4>
+                            <div class="code-block wp-lab-code">{{ code_copy_button|safe }}<pre><code class="language-renpy" id="wp-lab-example-{{ suffix }}"></code></pre></div>
+                            <p class="wp-hint"><code>show sl smile pioneer at warper_{{ suffix }}</code></p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+            </section>
+            <noscript><p class="wp-prose">Для тестера варпера включите JavaScript. Имена и примеры ATL доступны без него.</p></noscript>
+
+            <details class="wp-guide wp-prose"><summary id="wp-usage-label">Где использовать варперы</summary>
+
+
+                <p>
+                    В ATL укажите имя варпера, длительность в секундах и конечные значения свойств:
+                </p>
+
+                {{ samples.atl|safe }}
+
+                <p>
+                    Если варпер передаётся через переменную, используйте <code>warp</code>:
+                </p>
+
+                {{ samples.warp|safe }}
+
+                <p>
+                    Через модуль <code>_warper</code> варпер можно передать в параметр
+                    <code>time_warp</code> перехода:
+                </p>
+
+                {{ samples.transition|safe }}
+
+
+            </details>
+
+            <section class="wp-section wp-prose" aria-labelledby="wp-custom-label">
+                <h2 class="authors-list-label" id="wp-custom-label">Свой варпер</h2>
+                <p>Функция варпера получает долю времени <code>t</code> от 0 до 1
+                    и возвращает долю изменения свойства. Декоратор <code>@renpy.atl_warper</code>
+                    регистрирует её для ATL. Сохраните объявление в <code>game/00_warpers.rpy</code>:
+                    файл должен читаться раньше скриптов, использующих варпер.</p>
+                {{ samples.custom|safe }}
+                <p>Возвращаемое значение может выходить за пределы 0–1.
+                    Проверьте график и значения в начале и конце анимации в тестере.</p>
+                <p>Чтобы добавить кривую в каталог сайта, задайте её в <code>warpers.yaml</code>
+                    в корне <a href="https://github.com/sovue/es-doc-assets">репозитория ассетов</a>.
+                    <code>name</code> и <code>expr</code> обязательны, описание, автор и ссылка — по желанию.</p>
+                {{ samples.catalog|safe }}
+            </section>
+
+        </div>
+
+    </main>
+
+    {% include "partials/footer.html" %}
+
+</div>
+
+<p class="sr-only" role="status" aria-live="polite" id="code-copy-status"></p>
+{% endblock %}

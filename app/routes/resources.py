@@ -11,7 +11,6 @@ from ..utils.file import templates
 from ..utils.lifespan.resources_cache import BG_TIME_LABELS, CATEGORY_TITLES
 from ..utils.md import highlight_code, CODE_COPY_BUTTON
 from ..utils.md.lines import numbered_view
-from ..utils import warpers as warpers_util
 
 router = APIRouter(prefix='/resources')
 
@@ -54,15 +53,6 @@ CATEGORIES = {
         'usage': 'show anim blink_down',
         'media': 'image',
     },
-    # The one category that isn't scanned out of game/: warpers belong to the
-    # engine, so the original collection's list is static (utils/warpers.py)
-    # and the community's is data-driven (CONFIG.warpers). See STATIC below.
-    'warpers': {
-        'title': 'Варперы',
-        'desc': 'Кривые сглаживания для анимаций ATL',
-        'usage': 'easeout_cubic 1.5 xalign 1.0',
-        'media': 'warpers',
-    },
     'sfx': {
         'desc': 'Одиночные звуки для канала sound',
         'usage': 'play sound sfx_dinner_horn_processed',
@@ -85,31 +75,18 @@ for slug, meta in CATEGORIES.items():
         meta['title'] = CATEGORY_TITLES[slug]
 
 
-# Categories whose items don't come from the assets scan, per collection.
-# The original's warpers are the engine's own set; the community's are
-# whatever warpers.yaml holds — an empty section until it does.
-def _static(collection):
-    if collection == 'original':
-        return {'warpers': warpers_util.NAMES}
-    return {'warpers': CONFIG.warpers}
-
-
 def _count(category, items):
     # Hub and switcher counts cover declared resources only; undeclared files
     # sit behind their toggle and are not part of the headline numbers.
     if category == 'sprites' and items and 'sprites' in items[0]:
         return sum(len(group['sprites']) for group in items)
-    if category == 'warpers':
-        return len(items)
     return sum(1 for i in items if i['declared'])
 
 
 def _collection_or_404(collection):
     if collection not in COLLECTIONS or collection not in CONFIG.resources:
         raise HTTPException(404, f'Коллекция "{collection}" не существует.')
-    # Static categories sit alongside the scanned ones, so everything past
-    # this point can treat one collection as a single {category: items} map.
-    return {**CONFIG.resources[collection], **_static(collection)}
+    return CONFIG.resources[collection]
 
 
 def _hub(request, collection):
@@ -291,6 +268,11 @@ async def browser(request: Request, path=''):
 
 @router.get('/{collection}/{category}')
 async def listing(collection, category, request: Request):
+    # This generic route is registered before the dedicated tool routes.
+    if category == 'warpers' and collection in COLLECTIONS:
+        from .warpers import warpers_redirect
+        return await warpers_redirect()
+
     data = _collection_or_404(collection)
 
     if category not in CATEGORIES or category not in data:
@@ -298,46 +280,11 @@ async def listing(collection, category, request: Request):
 
     items = data[category]
 
-    # The switcher is shared by every category page, warpers included.
+    # The switcher is shared by every resource category page.
     switcher = [
         {'slug': slug, 'count': _count(slug, data[slug]), **CATEGORIES[slug]}
         for slug in CATEGORIES if slug in data
     ]
-
-    if category == 'warpers':
-        # The sandbox at the top of the page animates a real background, so it
-        # borrows the original collection's bg list — declared, non-NSFW and
-        # actually present on disk. Both collections' warpers get to drive it.
-        # `preview` is what the sandbox actually loads: the hero downscale
-        # (1600px WebP, built for the home slideshow) rather than the raw game
-        # JPG, which runs 700 KB for a frame shown at a third of that. Tinted
-        # backgrounds have no hero — /resource/hero only downscales plain
-        # declared files — so those keep the raw path.
-        backgrounds = [
-            {'name': i['name'], 'code': i['code'], 'raw': i['raw'],
-             'preview': i['raw'] if i.get('tint') else f"/resource/hero/{quote(i['name'])}"}
-            for i in CONFIG.resources.get('original', {}).get('bg', [])
-            if i['declared'] and i['raw'] and not i['nsfw']
-        ]
-
-        return templates.TemplateResponse(request, 'resources_warpers.html', {
-            'collection': collection,
-            'collection_meta': COLLECTIONS[collection],
-            'category': category,
-            'category_meta': CATEGORIES[category],
-            'categories': switcher,
-            'count': len(items),
-            # The engine's own set is a fixed matrix of families; the
-            # community's is a flat list of contributed curves.
-            'builtin': collection == 'original',
-            'columns': warpers_util.COLUMNS,
-            'special': warpers_util.SPECIAL,
-            'families': warpers_util.families(),
-            'samples': warpers_util.samples(),
-            'community': items if collection != 'original' else [],
-            'backgrounds': backgrounds,
-            'code_copy_button': CODE_COPY_BUTTON,
-        })
 
     # The other collection's tab keeps the category when it exists there,
     # falling back to that collection's hub.

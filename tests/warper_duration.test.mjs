@@ -20,4 +20,8 @@ test('keeps durations above ten seconds in generated code', () => {
     }`);
 
     assert.equal(readDuration('67'), 67);
+    assert.ok(Number.isNaN(readDuration('-1')));
+    assert.ok(Number.isNaN(readDuration('')));
+    assert.ok(Number.isNaN(readDuration('0.1')));
+    assert.equal(readDuration('0.2'), 0.2);
 });

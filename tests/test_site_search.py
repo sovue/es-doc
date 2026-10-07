@@ -146,7 +146,7 @@ class SiteSearchTests(unittest.IsolatedAsyncioTestCase):
         self.populate()
         source = self.put('warpers.yaml', 'warpers:\n  - name: custom_curve\n    desc: Плавный замах\n    expr: t*t\n')
         self.refresh(source)
-        expected = '/resources/community/warpers#custom_curve'
+        expected = '/tools/warpers#custom_curve'
         for query in ('custom_curve', 'замах'):
             self.assertIn(expected, [row.get('url') for row in search(query)])
         self.put('warpers.yaml', 'warpers: []\n')

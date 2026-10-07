@@ -40,7 +40,7 @@ class SearchDiscoveryTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn('https://docs.example/docs/unlisted_article', urls)
         self.assertIn('https://docs.example/resources/original/bg', urls)
         self.assertIn('https://docs.example/resources/community/music', urls)
-        self.assertIn('https://docs.example/resources/original/warpers', urls)
+        self.assertIn('https://docs.example/tools/warpers', urls)
         self.assertNotIn('https://docs.example/api/search', urls)
         self.assertNotIn('https://docs.example/resources/browser', urls)
         self.assertNotIn('http://localhost/', urls)
