@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import test from 'node:test';
 
-function page() {
+function page(options = {}) {
     class Element {
         value = ''; textContent = ''; hidden = true; children = []; attributes = {}; dataset = {};
         listeners = new Map(); style = { setProperty() {} };
@@ -17,12 +17,14 @@ function page() {
         setAttribute(key, value) { this.attributes[key] = value; }
         getAttribute(key) { return this.attributes[key] ?? null; }
         removeAttribute(key) { delete this.attributes[key]; }
-        querySelectorAll() { return this.children.filter(child => child.tagName === 'BUTTON'); }
+        querySelectorAll() { return this.children.flatMap(child => [...(child.tagName === 'BUTTON' ? [child] : []), ...child.querySelectorAll()]); }
         replaceChildren() { this.children = []; }
         append(...children) { for (const child of children) this.appendChild(child); }
         appendChild(child) { child.parentElement = this; this.children.push(child); }
         closest() { return this.tagName === 'BUTTON' ? this : this.parentElement?.closest(); }
         focus() { document.activeElement = this; }
+        showModal() { this.open = true; }
+        close() { if (this.open) { this.open = false; this.emit('close'); } }
         scrollIntoView(options) { this.scrollOptions = options; }
         select() {}
         click() { this.emit('click'); }
@@ -42,20 +44,24 @@ function page() {
     get('colors-preview-role').value = 'text'; get('colors-harmony').value = 'analogous';
     const copied = [];
     const stored = new Map();
-    const window = {navigator: {clipboard: {writeText: async value => copied.push(value)}},
+    const timers = new Map();
+    const window = {...options, navigator: {clipboard: {writeText: async value => copied.push(value)}},
         localStorage: {getItem: key => stored.get(key), setItem: (key, value) => stored.set(key, value)}};
-    const context = vm.createContext({ document, window, AbortController, Event, setTimeout: () => 1, clearTimeout() {} });
+    let timerId = 0;
+    const context = vm.createContext({ document, window, AbortController, Event, setTimeout: callback => { timers.set(++timerId, callback); return timerId; }, clearTimeout: id => timers.delete(id) });
     for (const file of ['colors-named.js', 'colors-core.js', 'colors.js']) vm.runInContext(fs.readFileSync(new URL('../static/js/' + file, import.meta.url), 'utf8'), context);
     const input = (id, value) => { const element = get('colors-' + id); element.focus(); element.value = value; element.emit('input'); };
-    return { get: id => get('colors-' + id), input, copied, window, stored, document };
+    return { get: id => get('colors-' + id), input, copied, window, stored, document, runTimers: () => { for (const callback of timers.values()) callback(); timers.clear(); } };
 }
 
-test('valid hex synchronizes outputs while preserving active input and RGB excludes alpha', async () => {
+test('valid hex synchronizes outputs while preserving active input and RenPy includes alpha', async () => {
     const ui = page(); ui.input('hex', '#AABBCCDD');
     assert.equal(ui.get('hex').value, '#AABBCCDD');
     assert.equal(ui.get('output-hex').value, '#abcd');
     assert.equal(ui.get('r').value, 170);
-    ui.get('copy-rgb').emit('click'); await Promise.resolve(); assert.deepEqual(ui.copied, ['(170, 187, 204)']);
+    assert.equal(ui.get('output-rgb').value, '(170, 187, 204)');
+    assert.equal(ui.get('output-rgba').value, '(170, 187, 204, 0.866667)');
+    ui.get('copy-renpy').emit('click'); await Promise.resolve(); assert.deepEqual(ui.copied, ['renpy.Color("#aabbcc", alpha=0.866667)']);
     ui.input('hex', '#aabbcd'); assert.equal(ui.get('output-hex').value, '#aabbcd');
 });
 
@@ -72,32 +78,31 @@ test('invalid channel and HEX edits retain the last valid color until corrected'
 test('HEX automatically includes alpha and still shortens losslessly', () => {
     const ui = page(); ui.input('hex', '#11223344');
     assert.equal(ui.get('output-hex').value, '#1234');
-    assert.equal(ui.get('output-rgb').value, '(17, 34, 51)');
+    assert.equal(ui.get('output-renpy').value, 'renpy.Color("#112233", alpha=0.266667)');
 });
 
 test('HSV keyboard and pointer update channels and selected hue survives black', () => {
     const ui = page(); ui.input('hex', '#f00');
     let prevented = false;
     ui.get('sv').emit('keydown', { key: 'ArrowDown', shiftKey: true, preventDefault() { prevented = true; } });
-    assert.equal(prevented, true); assert.equal(ui.get('output-rgb').value, '(230, 0, 0)');
+    assert.equal(prevented, true); assert.equal(ui.get('output-renpy').value, 'renpy.Color("#e60000")');
     ui.get('sv').emit('pointerdown', { button: 0, pointerId: 1, clientX: 100, clientY: 50 });
-    assert.equal(ui.get('output-rgb').value, '(128, 64, 64)');
+    assert.equal(ui.get('output-renpy').value, 'renpy.Color("#804040")');
     ui.input('v', '0'); ui.get('hue').value = '240'; ui.get('hue').emit('input');
     ui.input('a', '.5');
     ui.get('alpha').value = '75'; ui.get('alpha').emit('input');
-    ui.input('v', '100'); assert.equal(ui.get('output-rgb').value, '(128, 128, 255)');
-    assert.equal(ui.get('output-rgba').value, '(128, 128, 255, 0.75)');
+    ui.input('v', '100'); assert.equal(ui.get('output-renpy').value, 'renpy.Color("#8080ff", alpha=0.75)');
 });
 
 test('changing palette and selecting a swatch resets alpha and invalid inputs', () => {
     const ui = page(); ui.input('a', '.5'); ui.input('hex', '#badvalue');
     ui.get('palette').value = 'esdoc'; ui.get('palette').emit('change');
     assert.equal(ui.get('swatches').children.length, 10);
-    ui.get('swatches').children[0].emit('click');
+    ui.get('swatches').children[0].children[3].emit('click');
     assert.equal(ui.get('output-hex').value, '#2f7524');
     assert.equal(ui.get('a').value, '1');
     assert.equal(ui.get('hex').getAttribute('aria-invalid'), null);
-    assert.equal(ui.get('swatches').children[0].getAttribute('aria-pressed'), 'true');
+    assert.equal(ui.get('swatches').children[0].children[3].getAttribute('aria-pressed'), 'true');
 });
 
 test('soft navigation cleanup removes color input listeners', () => {
@@ -124,14 +129,14 @@ test('saved colors persist once and recent colors stay bounded across many commi
     assert.equal(JSON.parse(ui.stored.get('es-colors-recent')).length, 12);
 });
 
-test('row copies Python RGB and clipboard failure selects its editable field', async () => {
+test('row copies RenPy Color and clipboard failure selects its editable field', async () => {
     const ui = page(); ui.input('hex', '#11223344');
-    ui.get('copy-rgb').click(); await new Promise(resolve => setImmediate(resolve));
-    assert.deepEqual(ui.copied, ['(17, 34, 51)']);
+    ui.get('copy-renpy').click(); await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(ui.copied, ['renpy.Color("#112233", alpha=0.266667)']);
     ui.window.navigator.clipboard.writeText = async () => { throw new Error('Denied'); };
-    ui.get('copy-rgb').click(); await new Promise(resolve => setImmediate(resolve));
+    ui.get('copy-renpy').click(); await new Promise(resolve => setImmediate(resolve));
     assert.match(ui.get('status').textContent, /Ctrl\+C/);
-    assert.equal(ui.document.activeElement, ui.get('output-rgb'));
+    assert.equal(ui.document.activeElement, ui.get('output-renpy'));
 });
 
 test('contrast preview swaps colors and warns when foreground matches the background', () => {
@@ -153,9 +158,9 @@ test('tab keyboard navigation updates tab stops and panels', () => {
     assert.equal(ui.document.activeElement, ui.get('tab-shades'));
 });
 
-test('all six editable formats update the same color and invalid text retains it', () => {
+test('all seven editable formats update the same color and invalid text retains it', () => {
     const ui = page();
-    for (const [format,value] of [['hex','#f008'],['rgb','(0, 255, 0)'],['rgba','(0, 0, 255, 0.5)'],['css','rgb(255 0 0 / 25%)'],['hsl','hsl(120 100% 50% / .75)'],['oklch','oklch(62.7955% 0.25768 29.23 / .5)']]) {
+    for (const [format,value] of [['hex','#f008'],['rgb','(0, 255, 0)'],['rgba','(0, 0, 255, 0.5)'],['renpy','renpy.Color("#0000ff", alpha=0.5)'],['css','rgb(255 0 0 / 25%)'],['hsl','hsl(120 100% 50% / .75)'],['oklch','oklch(62.7955% 0.25768 29.23 / .5)']]) {
         ui.input('output-' + format, value);
         assert.equal(ui.get('output-' + format).getAttribute('aria-invalid'), null, format);
         assert.equal(ui.get('output-' + format).value, value, 'active typing');
@@ -163,10 +168,11 @@ test('all six editable formats update the same color and invalid text retains it
     assert.equal(ui.get('r').value, 255);
     assert.equal(ui.get('a').value, '0.5');
     ui.input('output-rgb', '(1, 2, 3)'); assert.equal(ui.get('a').value, '0.5');
+    ui.input('output-renpy', 'renpy.Color("#010203", alpha=0.5)'); assert.equal(ui.get('a').value, '0.5');
     const before = ui.get('output-hex').value;
-    ui.input('output-rgb','(999, 2, 3)');
+    ui.input('output-renpy','renpy.Color("#010203", alpha=999)');
     assert.equal(ui.get('output-hex').value, before);
-    assert.equal(ui.get('output-rgb').getAttribute('aria-invalid'),'true');
+    assert.equal(ui.get('output-renpy').getAttribute('aria-invalid'),'true');
 });
 
 test('numeric arrows and global undo work while an input remains focused', () => {
@@ -264,7 +270,7 @@ test('named palette includes every supplied color, limits rendering and searches
     assert.equal(ui.get('palette-more').hidden, true);
     ui.input('palette-search', 'белоснежный');
     assert.equal(ui.get('swatches').children.length, 1);
-    ui.get('swatches').children[0].children[1].emit('click');
+    ui.get('swatches').children[0].children[3].children[0].emit('click');
     assert.equal(ui.get('output-hex').value, '#fffafa');
     ui.input('palette-search', '#fff');
     assert.ok(ui.get('swatches').children.some(button => button.dataset.hex === '#ffffff'));
@@ -274,4 +280,47 @@ test('named palette includes every supplied color, limits rendering and searches
     ui.get('palette').value = 'basic'; ui.get('palette').emit('change');
     assert.equal(ui.get('swatches').children.length, 10);
     assert.equal(ui.get('palette-search-control').hidden, true);
+});
+
+test('palette rows choose base colors and side variants through delegated clicks', () => {
+    const ui = page();
+    const row = ui.get('swatches').children[2];
+    assert.equal(row.children.length, 7);
+    assert.equal(row.children[3].children[0].textContent, 'Красный');
+    row.children[0].click();
+    assert.equal(ui.get('output-hex').value, ui.window.ESDocColors.toHex(JSON.parse(row.children[0].dataset.color)));
+    assert.equal(row.children[0].getAttribute('aria-pressed'), 'true');
+    assert.equal(row.children[3].getAttribute('aria-pressed'), 'false');
+    row.children[3].click();
+    assert.equal(ui.get('output-hex').value, '#f00');
+});
+
+test('shortcut dialog closes and restores focus without changing the color', () => {
+    const ui = page(); const before = ui.get('output-hex').value;
+    ui.get('shortcuts-open').click(); assert.equal(ui.get('shortcuts').open, true);
+    ui.get('shortcuts-close').click(); assert.equal(ui.get('shortcuts').open, false);
+    assert.equal(ui.document.activeElement, ui.get('shortcuts-open'));
+    assert.equal(ui.get('output-hex').value, before);
+});
+
+test('screen pipette overlay is removed on selection, cancellation, failure and navigation', async () => {
+    let resolvePick, rejectPick, signal;
+    const ui = page({isSecureContext: true, EyeDropper: class {
+        open(options) { signal = options.signal; return new Promise((resolve, reject) => { resolvePick = resolve; rejectPick = reject; }); }
+    }});
+    ui.get('eyedropper').click();
+    assert.equal(ui.get('eyedropper-overlay').hidden, true); ui.runTimers();
+    assert.equal(ui.get('eyedropper-overlay').hidden, false); assert.equal(ui.get('eyedropper').disabled, true);
+    resolvePick({sRGBHex: '#123456'}); await new Promise(resolve => setImmediate(resolve));
+    assert.equal(ui.get('output-hex').value, '#123456'); assert.equal(ui.get('eyedropper-overlay').hidden, true);
+    for (const name of ['AbortError', 'OperationError']) {
+        ui.get('eyedropper').click(); rejectPick({name}); await new Promise(resolve => setImmediate(resolve));
+        assert.equal(ui.get('eyedropper-overlay').hidden, true); assert.equal(ui.get('eyedropper').disabled, false);
+        assert.equal(ui.get('output-hex').value, '#123456');
+    }
+    ui.get('eyedropper').click(); ui.window.__esdocColorsCleanup();
+    ui.runTimers();
+    assert.equal(signal.aborted, true); assert.equal(ui.get('eyedropper-overlay').hidden, true);
+    resolvePick({sRGBHex: '#f00'}); await new Promise(resolve => setImmediate(resolve));
+    assert.equal(ui.get('output-hex').value, '#123456');
 });

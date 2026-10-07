@@ -20,13 +20,14 @@
     <div class="picker-workbench">
         <div class="picker-result">
             <div class="picker-section-head"><h2 id="colors-code-heading" tabindex="-1">Для кода</h2><button id="colors-save" class="picker-button" type="button">{{ lucide_icon('palette', 18) }} Сохранить цвет</button></div>
-            <div class="picker-formats" aria-label="Форматы цвета">{% for id, label in [('hex', 'HEX'), ('rgb', 'RGB / Python'), ('rgba', 'RGBA / Python'), ('css', 'RGB / CSS'), ('hsl', 'HSL / CSS'), ('oklch', 'OKLCH / CSS')] %}<div class="picker-format"><label for="colors-output-{{ id }}">{{ label }}</label><div class="picker-format-value">{% if id == 'oklch' %}<textarea id="colors-output-{{ id }}" rows="2" spellcheck="false" autocomplete="off" aria-describedby="colors-error-output-{{ id }}"></textarea>{% else %}<input id="colors-output-{{ id }}" type="text" spellcheck="false" autocomplete="off" aria-describedby="colors-error-output-{{ id }}">{% endif %}{{ copy_button('copy-' + id, 'Скопировать ' + label) }}</div>{{ field_error('output-' + id) }}</div>{% endfor %}</div>
+            <div class="picker-formats" aria-label="Форматы цвета">{% for id, label in [('hex', 'HEX'), ('rgb', 'RGB / Python'), ('rgba', 'RGBA / Python'), ('css', 'RGB / CSS'), ('hsl', 'HSL / CSS'), ('oklch', 'OKLCH / CSS'), ('renpy', 'renpy.Color')] %}<div class="picker-format"><label for="colors-output-{{ id }}">{{ label }}</label><div class="picker-format-value">{% if id in ['oklch', 'renpy'] %}<textarea id="colors-output-{{ id }}" rows="2" spellcheck="false" autocomplete="off" aria-describedby="colors-error-output-{{ id }}"></textarea>{% else %}<input id="colors-output-{{ id }}" type="text" spellcheck="false" autocomplete="off" aria-describedby="colors-error-output-{{ id }}">{% endif %}{{ copy_button('copy-' + id, 'Скопировать ' + label) }}</div>{{ field_error('output-' + id) }}</div>{% endfor %}</div>
             <p id="colors-status" class="picker-status" role="status" aria-live="polite"></p><input id="colors-copy-fallback" type="text" readonly aria-label="Значение для ручного копирования" hidden>
         </div>
         <div class="picker-editor">
             <div class="picker-section-head"><h2 id="colors-editor-heading" tabindex="-1">Выбор цвета</h2><fieldset class="picker-segments"><legend class="sr-only">Способ выбора цвета</legend><label><input type="radio" name="color-surface" value="field" checked>Поле</label><label><input type="radio" name="color-surface" value="wheel">Круг</label></fieldset></div>
-    <details class="picker-shortcuts">
-        <summary>Управление {{ lucide_icon('chevron-down', 16) }}</summary>
+    <button id="colors-shortcuts-open" class="picker-button picker-shortcuts-trigger" type="button" aria-haspopup="dialog" aria-controls="colors-shortcuts">{{ lucide_icon('info', 18) }} Управление</button>
+    <dialog id="colors-shortcuts" class="picker-shortcuts" aria-labelledby="colors-shortcuts-title">
+        <div class="picker-section-head"><h2 id="colors-shortcuts-title">Управление</h2><button id="colors-shortcuts-close" class="picker-icon" type="button" aria-label="Закрыть управление" autofocus>{{ lucide_icon('x', 20) }}</button></div>
         <p>На поле стрелки меняют насыщенность и яркость. На круге: влево и вправо — тон, вверх и вниз — насыщенность.</p>
         <p>Shift увеличивает шаг до 10%.</p>
         <p>Home и End выбирают границу текущего канала.</p>
@@ -34,7 +35,7 @@
         <p>Ctrl+Shift+Z повторяет его.</p>
         <p>В полях каналов стрелки вверх и вниз меняют значение, Shift увеличивает шаг. Ctrl+Z и Ctrl+Shift+Z работают во всём инструменте.</p>
         <p>Отмена также восстанавливает сохранённые цвета после очистки.</p>
-    </details>
+    </dialog>
             <div id="colors-sv" class="picker-area" tabindex="0" role="group" aria-label="Насыщенность и яркость" aria-describedby="colors-area-help"><span id="colors-cursor" class="picker-cursor" aria-hidden="true"></span><input id="colors-s-range" class="sr-only" tabindex="-1" type="range" min="0" max="100" step="1" aria-label="Насыщенность" aria-roledescription="Двумерный цветовой ползунок"><input id="colors-v-range" class="sr-only" tabindex="-1" type="range" min="0" max="100" step="1" aria-label="Яркость" aria-roledescription="Двумерный цветовой ползунок"></div>
             <div class="picker-area-meta"><span><span id="colors-area-help">Насыщенность</span> <output id="colors-area-value"></output></span><span><span id="colors-area-second">Яркость</span> <output id="colors-area-second-value"></output></span></div>
             <div class="picker-slider"><label for="colors-hue">Тон</label><input id="colors-hue" class="picker-range picker-hue" type="range" min="0" max="360" step="1"><output id="colors-hue-value"></output></div>
@@ -63,4 +64,7 @@
         <section id="colors-panel-image" class="picker-tab-panel" role="tabpanel" aria-labelledby="colors-tab-image" hidden><div class="picker-palette-head"><h2>Цвет из изображения</h2><button id="colors-image-add" class="picker-button" type="button">{{ lucide_icon('image-up', 18) }} Открыть изображение</button><input id="colors-image-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" hidden></div><p id="colors-image-status" class="picker-help" role="status" aria-live="polite">PNG, JPEG, WebP, GIF или AVIF. Изображение не загружается на сервер.</p><div id="colors-image-stage" class="picker-image-stage" hidden><canvas id="colors-image-canvas" tabindex="0" aria-label="Изображение для выбора цвета. Стрелки перемещают точку, Enter выбирает цвет."></canvas><span id="colors-image-cursor" aria-hidden="true"></span></div><p id="colors-image-meta" class="picker-image-meta" hidden></p><div id="colors-image-palette" class="picker-swatches" aria-label="Основные цвета изображения"></div></section>
     </div>
 </section></div></main>{% include "partials/footer.html" %}</div>
+    <div id="colors-eyedropper-overlay" class="picker-eyedropper-overlay" hidden>
+        <div class="picker-eyedropper-help" role="status" aria-live="polite"><h2>{{ lucide_icon('pipette', 20) }} Пипетка</h2><p><kbd>ЛКМ</kbd> Выбрать цвет</p><p><kbd>ПКМ</kbd> Выбрать цвет</p><p><kbd>Esc</kbd> Отменить выбор</p></div>
+    </div>
 {% endblock %}

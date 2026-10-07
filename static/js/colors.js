@@ -6,11 +6,12 @@
     const c = window.ESDocColors, get = id => document.getElementById('colors-' + id);
     const controller = new AbortController();
     const on = (element, event, callback) => element.addEventListener(event, callback, {signal: controller.signal});
-    const outputIds = ['hex','rgb','rgba','css','hsl','oklch'];
+    const outputIds = ['hex','rgb','rgba','css','hsl','oklch','renpy'];
     const ids = ['hex', 'r', 'g', 'b', 'a', 'h', 's', 'v', 'hh', 'ss', 'll', ...outputIds.map(id => 'output-' + id), 'background'];
     let color = c.parseHex('#2f7524'), hsv = c.rgbToHsv(color), other = c.parseHex('#fff');
     let role = 'text', surface = 'field', pointer = null, disposed = false, imageRequest = 0, imagePoint = {x: 0, y: 0};
     const undos = [], redos = [], copyTimers = new Map();
+    let eyedropperOverlayTimer;
     const same = (first, second) => JSON.stringify(first) === JSON.stringify(second);
     const readList = key => {
         try {
@@ -58,7 +59,7 @@
         get('input-help').textContent = text; get('input-help').hidden = !text;
     };
     const fieldError = (id, message) => { get(id).setAttribute('aria-invalid', 'true'); errors.set(id, message); inputHelp(); };
-    const formats = () => ({hex: c.toHex(color), rgb: c.pythonRgb(color), rgba: c.pythonRgba(color), css: c.cssRgb(color), hsl: c.cssHsl(color), oklch: c.cssOklch(color)});
+    const formats = () => ({hex: c.toHex(color), rgb: c.pythonRgb(color), rgba: c.pythonRgba(color), css: c.cssRgb(color), hsl: c.cssHsl(color), oklch: c.cssOklch(color), renpy: c.renpyColor(color)});
     const preset = {
         basic: [['Чёрный','#000'],['Белый','#fff'],['Красный','#f00'],['Оранжевый','#f80'],['Жёлтый','#ff0'],['Зелёный','#0a0'],['Бирюзовый','#0cc'],['Синий','#00f'],['Фиолетовый','#80f'],['Розовый','#f08']],
         pastel: [['Пудровый','#ffd1dc'],['Персиковый','#ffdab9'],['Ванильный','#fff4b8'],['Фисташковый','#d4efbf'],['Мятный','#b5ead7'],['Небесный','#c7e9ff'],['Лавандовый','#d9c7ff'],['Сиреневый','#e6c8f2'],['Песочный','#eadbc8'],['Серый','#d8dfe8']],
@@ -104,18 +105,55 @@
         });
     };
     on(get('swatches'), 'click', event => {
-        const button = event.target.closest?.('button.picker-swatch');
+        const button = event.target.closest?.('button[data-color]');
         if (button && get('swatches').contains(button)) choose(JSON.parse(button.dataset.color));
     });
+    let paletteKey = '';
+    const paintPalette = entries => {
+        const host = get('swatches'), key = JSON.stringify(entries);
+        if (key !== paletteKey) {
+            paletteKey = key; host.replaceChildren();
+            if (!entries.length) {
+                const note = document.createElement('p');
+                note.className = 'picker-empty'; note.textContent = 'Не найдено. Измените название или HEX.'; host.appendChild(note);
+            }
+            for (const [name, hex] of entries) {
+                const base = c.parseHex(hex), hsl = c.rgbToHsl(base);
+                const row = document.createElement('div'); row.className = 'picker-palette-row'; row.dataset.hex = c.toHex(base, false, false);
+                const variants = [.65, .75, .85].map(l => c.hslToRgb({h: hsl.h, s: hsl.s ? 100 : 0, l: l * 100}));
+                for (const [index, value] of [...variants, base, ...variants.slice().reverse()].entries()) {
+                    const button = document.createElement('button'), valueHex = c.toHex(value, false, false);
+                    button.type = 'button'; button.className = index === 3 ? 'picker-palette-color' : 'picker-palette-variant';
+                    button.dataset.color = JSON.stringify(value);
+                    button.dataset.hex = valueHex;
+                    button.style.backgroundColor = c.cssRgb(value);
+                    button.style.color = c.contrast({r:23,g:38,b:26,a:1}, value) >= 4.5 ? '#17261a'
+                        : c.contrast({r:0,g:0,b:0,a:1}, value) >= 4.5 ? '#000' : '#fff';
+                    button.title = name + ' / ' + valueHex;
+                    button.setAttribute('aria-label', (index === 3 ? name : 'Оттенок: ' + name) + ', ' + valueHex);
+                    if (index === 3) {
+                        const label = document.createElement('span'), code = document.createElement('code');
+                        label.textContent = name; code.textContent = valueHex; button.append(label, code);
+                    }
+                    row.appendChild(button);
+                }
+                host.appendChild(row);
+            }
+        }
+        const selectedHex = c.toHex(color, color.a < 1, false);
+        for (const button of host.querySelectorAll('button')) {
+            const pressed = String(button.dataset.hex === selectedHex);
+            if (button.getAttribute('aria-pressed') !== pressed) button.setAttribute('aria-pressed', pressed);
+        }
+    };
     const renderPalette = () => {
         const named = get('palette').value === 'named';
         get('palette-search-control').hidden = !named;
         get('palette-summary').hidden = !named;
-        get('swatches').classList.toggle('is-named', named);
         const query = normalizeSearch(get('palette-search').value);
         const entries = named ? namedIndex.filter(entry => entry.search.includes(query)) : [];
         const values = named ? entries.slice(0, paletteLimit).map(({name, hex}) => [name, hex]) : preset[get('palette').value] || preset.basic;
-        paintSwatches('swatches', values.map(([, hex]) => c.parseHex(hex)), values.map(([name]) => name), 'Не найдено. Измените название или HEX.');
+        paintPalette(values);
         const summary = 'Показано ' + values.length + ' из ' + entries.length;
         if (get('palette-summary').textContent !== summary) get('palette-summary').textContent = summary;
         get('palette-more').hidden = !named || values.length >= entries.length;
@@ -238,7 +276,8 @@
         const input = get('output-' + format);
         on(input, 'input', () => {
             const text = input.value.trim();
-            const matches = format === 'hex' ? !!c.parseHex(text) : format === 'rgb' ? /^\([^,]+,[^,]+,[^,]+\)$/.test(text)
+            const matches = format === 'hex' ? !!c.parseHex(text) : format === 'renpy' ? /^renpy\.Color\(/i.test(text)
+                : format === 'rgb' ? /^\([^,]+,[^,]+,[^,]+\)$/.test(text)
                 : format === 'rgba' ? /^\([^,]+,[^,]+,[^,]+,[^,]+\)$/.test(text)
                 : new RegExp('^' + (format === 'css' ? 'rgba?' : format === 'hsl' ? 'hsla?' : 'oklch') + '\\(', 'i').test(text);
             const parsed = matches ? c.parseColor(text) : null;
@@ -246,6 +285,7 @@
                 get('copy-' + format).disabled = true;
                 const examples = {hex: 'HEX: #abc или #aabbcc; с прозрачностью #abcd или #aabbccdd.',
                     rgb: 'RGB: (R, G, B), целые каналы от 0 до 255.', rgba: 'RGBA: (R, G, B, A), каналы от 0 до 255, прозрачность от 0 до 1.',
+                    renpy: 'Ren’Py: renpy.Color("#aabbcc") или renpy.Color("#aabbcc", alpha=0.5). Прозрачность — от 0 до 1.',
                     css: 'CSS RGB: rgb(255 0 0 / 50%), каналы от 0 до 255.', hsl: 'HSL: hsl(120 100% 50% / 0.5), насыщенность и светлота от 0 до 100%.',
                     oklch: 'OKLCH: oklch(62.8% 0.258 29.2 / 0.5), светлота от 0 до 100%, цветность неотрицательная.'};
                 fieldError('output-' + format, examples[format]); return;
@@ -371,13 +411,24 @@
     for (const [section, target] of [['code','code-heading'],['editor','editor-heading'],['contrast','contrast-heading']]) {
         on(get('jump-' + section), 'click', () => { get(target).focus({preventScroll: true}); get(target).scrollIntoView({block: 'start', behavior: 'auto'}); });
     }
+    const shortcuts = get('shortcuts');
+    on(get('shortcuts-open'), 'click', () => shortcuts.showModal());
+    on(get('shortcuts-close'), 'click', () => shortcuts.close());
+    on(shortcuts, 'click', event => {
+        const rect = shortcuts.getBoundingClientRect();
+        if (event.target === shortcuts && (event.clientX < rect.left || event.clientX > rect.left + rect.width || event.clientY < rect.top || event.clientY > rect.top + rect.height)) shortcuts.close();
+    });
+    on(shortcuts, 'close', () => { if (!disposed) get('shortcuts-open').focus({preventScroll: true}); });
     if (window.EyeDropper && window.isSecureContext) {
         get('eyedropper').hidden = false;
         on(get('eyedropper'), 'click', async () => {
             get('eyedropper').disabled = true;
+            // Chromium snapshots the screen on open. Delay the dimmer until after
+            // that capture so the magnifier samples the original page colors.
+            eyedropperOverlayTimer = setTimeout(() => { if (!disposed) get('eyedropper-overlay').hidden = false; }, 300);
             try { const result = await new window.EyeDropper().open({signal: controller.signal}); if (!disposed) choose(c.parseHex(result.sRGBHex)); }
             catch (error) { if (!disposed) get('status').textContent = error.name === 'AbortError' ? 'Выбор пипеткой отменён.' : 'Не удалось открыть пипетку. Используйте поле или изображение.'; }
-            finally { if (!disposed) get('eyedropper').disabled = false; }
+            finally { clearTimeout(eyedropperOverlayTimer); if (!disposed) { get('eyedropper').disabled = false; get('eyedropper-overlay').hidden = true; get('eyedropper').focus({preventScroll: true}); } }
         });
     }
     const canvas = get('image-canvas');
@@ -447,6 +498,8 @@
     });
     window.__esdocColorsCleanup = () => {
         disposed = true; imageRequest++; controller.abort();
+        clearTimeout(eyedropperOverlayTimer);
+        shortcuts.close(); get('eyedropper-overlay').hidden = true;
         for (const timer of copyTimers.values()) clearTimeout(timer);
         canvas.width = canvas.height = 0;
         window.__esdocColorsCleanup = null;
