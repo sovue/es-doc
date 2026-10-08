@@ -918,9 +918,6 @@ if (navigator.clipboard && window.copyControl) {
     const codeOutput = lab.querySelector('#wp-lab-code-output');
     const codeEmpty = lab.querySelector('#wp-lab-code-empty');
     const codeFile = lab.querySelector('#wp-lab-code-file');
-    const examplesOutput = lab.querySelector('#wp-lab-examples-output');
-    const examplesEmpty = lab.querySelector('#wp-lab-examples-empty');
-    const exampleSnippets = Object.fromEntries(['move', 'scale', 'fade'].map(suffix => [suffix, lab.querySelector(`#wp-lab-example-${suffix}`)]));
     const demos = Object.fromEntries([...lab.querySelectorAll('[data-demo]')].map(node => [node.dataset.demo, node]));
     const linear = Object.fromEntries([...lab.querySelectorAll('[data-linear]')].map(node => [node.dataset.linear, node]));
     const curveCanvas = lab.querySelector('.wp-lab-curve');
@@ -928,7 +925,6 @@ if (navigator.clipboard && window.copyControl) {
     curve.linearReference = true;
     track(curve);
 
-    const background = lab.querySelector('#wp-lab-bg');
     const property = lab.querySelector('#wp-lab-prop');
     const image = lab.querySelector('.wp-lab-img');
     const sceneRange = lab.querySelector('#wp-lab-scene-range');
@@ -1020,18 +1016,15 @@ if (navigator.clipboard && window.copyControl) {
         timeNote.textContent = timeValid ? '' : 'Введите длительность от 0,2 секунды.';
         playButtons.forEach(button => { button.disabled = !valid || !timeValid; });
         scrub.disabled = !valid;
-        codeOutput.hidden = !valid || !nameValid || !isCustom();
+        codeOutput.hidden = !valid || !nameValid || (!isCustom() && !timeValid);
         codeEmpty.hidden = !codeOutput.hidden;
         codeEmpty.textContent = !valid || !nameValid
             ? 'Исправьте формулу или имя, чтобы получить код варпера.'
-            : 'Встроенный варпер уже зарегистрирован в Ren\'Py. Отдельное объявление не требуется.';
-        examplesOutput.hidden = !valid || !nameValid || !timeValid;
-        examplesEmpty.hidden = !examplesOutput.hidden;
+            : 'Исправьте длительность, чтобы получить код ATL.';
         codeFile.textContent = isCustom()
             ? 'Сохраните объявление в game/00_warpers.rpy, до файлов с использованием этого варпера.'
             : '';
         snippet.textContent = '';
-        for (const example of Object.values(exampleSnippets)) example.textContent = '';
         if (!valid || !nameValid) return;
         if (isCustom()) {
             snippet.append(
@@ -1044,15 +1037,11 @@ if (navigator.clipboard && window.copyControl) {
             );
         }
         if (!timeValid) return;
-        for (const [suffix, prop, from, to] of [
-            ['move', 'xalign', '0.0', '1.0'],
-            ['scale', 'zoom', '0.5', '1.0'],
-            ['fade', 'alpha', '0.0', '1.0'],
-        ]) {
-            exampleSnippets[suffix].append(token('k', 'transform'), ' ', token('nf', `warper_${suffix}`), ':\n',
-                indent(), token('n', prop), ' ', token('m', from), '\n', indent(),
-                token('kt', name), ' ', token('m', String(duration())), ' ', token('n', prop), ' ', token('m', to), '\n\n');
-        }
+        const prop = property.value;
+        const [from, to] = {xalign: ['0.0', '1.0'], zoom: ['0.5', '1.0'], alpha: ['0.0', '1.0']}[prop];
+        snippet.append(token('k', 'transform'), ' ', token('nf', 'warper_preview'), ':\n',
+            indent(), token('n', prop), ' ', token('m', from), '\n', indent(),
+            token('kt', name), ' ', token('m', String(duration())), ' ', token('n', prop), ' ', token('m', to), '\n');
     };
 
     const validate = () => {
@@ -1107,7 +1096,12 @@ if (navigator.clipboard && window.copyControl) {
         else nameInput.value = 'my_warper';
         scrub.value = 0;
         validate();
-        document.querySelectorAll('[data-test-warper]').forEach(link => {
+        property.addEventListener('change', () => {
+        if (sceneRange) sceneRange.textContent = {xalign: 'Сдвиг фона: от 12% до −12% ширины. Масштаб: 1,4.', zoom: 'Масштаб фона: от 1,05 до 1,45.', alpha: 'Прозрачность фона: от 0 до 1.'}[property.value];
+        if (valid) apply(Number(scrub.value));
+        write();
+    });
+    document.querySelectorAll('[data-test-warper]').forEach(link => {
             if (pick.value && link.dataset.testWarper === pick.value) link.setAttribute('aria-current', 'true');
             else link.removeAttribute('aria-current');
         });
@@ -1121,7 +1115,12 @@ if (navigator.clipboard && window.copyControl) {
         description.textContent = '';
         description.hidden = true;
         customFormula = formulaInput.value;
-        document.querySelectorAll('[data-test-warper]').forEach(link => link.removeAttribute('aria-current'));
+        property.addEventListener('change', () => {
+        if (sceneRange) sceneRange.textContent = {xalign: 'Сдвиг фона: от 12% до −12% ширины. Масштаб: 1,4.', zoom: 'Масштаб фона: от 1,05 до 1,45.', alpha: 'Прозрачность фона: от 0 до 1.'}[property.value];
+        if (valid) apply(Number(scrub.value));
+        write();
+    });
+    document.querySelectorAll('[data-test-warper]').forEach(link => link.removeAttribute('aria-current'));
         curveCanvas.setAttribute('aria-label', 'График своей формулы и линейная кривая для сравнения');
         validate();
     });
@@ -1153,71 +1152,19 @@ if (navigator.clipboard && window.copyControl) {
         clock.seek(Number(scrub.value), Number.isFinite(duration()) ? duration() * 1000 : 1500);
         if (valid) apply(Number(scrub.value));
     });
-    if (image) {
-        const search = lab.querySelector('#wp-bg-search');
-        const clearSearch = lab.querySelector('.wp-bg-clear');
-        const searchStatus = lab.querySelector('#wp-bg-status');
-        const choices = [...background.options].map(option => ({
-            option: option.cloneNode(true),
-            group: option.parentElement.label,
-        }));
-        const normalizeSearch = text => text.normalize('NFKC').toLocaleLowerCase('ru')
-            .replace(/ё/g, 'е').replace(/[_\s]+/g, ' ').trim();
-        const filterBackgrounds = () => {
-            const selected = background.value;
-            const words = normalizeSearch(search.value).split(' ').filter(Boolean);
-            const matches = choices.filter(({ option, group }) => {
-                const text = normalizeSearch(`${option.dataset.name} ${option.textContent} ${group}`);
-                return words.every(word => text.includes(word));
-            });
-            const fragment = document.createDocumentFragment();
-            const appendGroup = (label, items) => {
-                const group = document.createElement('optgroup');
-                group.label = label;
-                for (const item of items) group.append(item.option.cloneNode(true));
-                fragment.append(group);
-            };
-            const pinned = choices.find(item => item.option.value === selected);
-            const retainSelected = pinned && !matches.includes(pinned);
-            if (retainSelected) appendGroup('Выбранный фон', [pinned]);
-            for (const group of new Set(matches.map(item => item.group))) {
-                appendGroup(group, matches.filter(item => item.group === group));
-            }
-            background.replaceChildren(fragment);
-            background.value = selected;
-            clearSearch.hidden = !search.value;
-            searchStatus.textContent = words.length
-                ? (matches.length ? `Найдено: ${matches.length} из ${choices.length}.` : 'Ничего не найдено. Измените запрос или сбросьте поиск.')
-                    + (retainSelected ? ' Выбранный фон сохранён.' : '')
-                : `Фонов: ${choices.length}.`;
-        };
-        search.closest('.wp-bg-search').hidden = false;
-        search.addEventListener('input', filterBackgrounds);
-        clearSearch.addEventListener('click', () => {
-            search.value = '';
-            filterBackgrounds();
-            search.focus();
-        });
-        background.addEventListener('change', filterBackgrounds);
-        const describeScene = () => {
-            sceneRange.textContent = {
-                xalign: 'Сдвиг фона: от 12% до −12% ширины. Масштаб: 1,4.',
-                zoom: 'Масштаб фона: от 1,05 до 1,45.',
-                alpha: 'Прозрачность фона: от 0 до 1.',
-            }[property.value];
-        };
-        const loadBackground = () => {
-            image.src = background.value;
-            image.alt = background.selectedOptions[0]?.dataset.name || '';
-            if (valid) apply(Number(scrub.value));
-        };
-        background.addEventListener('change', loadBackground);
-        property.addEventListener('change', () => {
-            describeScene();
-            if (valid) apply(Number(scrub.value));
-        });
+    const describeScene = () => {
+        if (sceneRange) sceneRange.textContent = {
+            xalign: 'Сдвиг фона: от 12% до −12% ширины. Масштаб: 1,4.',
+            zoom: 'Масштаб фона: от 1,05 до 1,45.',
+            alpha: 'Прозрачность фона: от 0 до 1.',
+        }[property.value];
+    };
+    property.addEventListener('change', () => {
         describeScene();
-    }
+        if (valid) apply(Number(scrub.value));
+        write();
+    });
+    describeScene();
     document.querySelectorAll('[data-test-warper]').forEach(link => {
         link.addEventListener('click', event => {
             if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
@@ -1238,19 +1185,12 @@ if (navigator.clipboard && window.copyControl) {
         target.focus({ preventScroll: true });
         target.scrollIntoView({ behavior: 'instant', block: 'start' });
     };
-    const familyJump = document.querySelector('#wp-family-jump');
-    familyJump.closest('label').hidden = false;
-    familyJump.addEventListener('change', () => {
-        const target = document.getElementById(familyJump.value);
-        if (target) jumpTo(target);
-    });
     document.querySelectorAll('.wp-jumps a, .wp-main a[href^="#"]:not([data-test-warper])').forEach(link => {
         link.addEventListener('click', event => {
             if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
             const target = document.getElementById(link.hash.slice(1));
             if (!target) return;
             event.preventDefault();
-            if (link.closest('.wp-family-nav')) familyJump.value = target.id;
             jumpTo(target);
         });
     });

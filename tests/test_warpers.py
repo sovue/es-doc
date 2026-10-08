@@ -51,7 +51,7 @@ class WarperToolTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn('data-expr="t*t"', response.text)
         self.assertIn('easein_cubic', response.text)
 
-    async def test_backgrounds_have_location_groups_and_searchable_descriptions(self):
+    async def test_scene_uses_one_background_before_export_without_extra_sections(self):
         def bg(name, loc, desc, **extra):
             return {'name': name, 'loc': loc, 'desc': desc, 'raw': '/images/' + name + '.jpg',
                     'declared': True, 'nsfw': False, **extra}
@@ -63,10 +63,10 @@ class WarperToolTests(unittest.IsolatedAsyncioTestCase):
         ]}}
         with patch.object(CONFIG, 'resources', resources):
             response = await self.get('/tools/warpers')
-        self.assertIn('<optgroup label="Пляж">', response.text)
-        self.assertIn('<optgroup label="Прочее">', response.text)
-        self.assertIn('Пляж — снаружи, ночь', response.text)
-        self.assertIn('id="wp-bg-search"', response.text)
+        self.assertIn('src="/resource/hero/ext_beach_day"', response.text)
+        self.assertLess(response.text.index('id="wp-scene-label"'), response.text.index('id="wp-export-label"'))
+        for removed in ('id="wp-bg-search"', 'id="wp-lab-bg"', 'wp-family-nav', 'wp-family-jump', 'wp-atl-examples', 'wp-guide', 'id="wp-custom-label"'):
+            self.assertNotIn(removed, response.text)
         self.assertNotIn('excluded', response.text)
 
 

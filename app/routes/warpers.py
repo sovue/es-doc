@@ -34,8 +34,7 @@ async def warpers_page(request: Request):
         'columns': warpers_util.COLUMNS,
         'special': warpers_util.SPECIAL,
         'families': warpers_util.families(),
-        'samples': warpers_util.samples(),
         'community': CONFIG.warpers,
-        'backgrounds': backgrounds,
+        'background': next((bg for bg in backgrounds if bg['name'] == 'ext_beach_day'), backgrounds[0] if backgrounds else None),
         'code_copy_button': CODE_COPY_BUTTON,
     })
