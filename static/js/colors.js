@@ -11,7 +11,7 @@
     let color = c.parseHex('#2f7524'), hsv = c.rgbToHsv(color), other = c.parseHex('#fff');
     let role = 'text', surface = 'field', pointer = null, disposed = false, imageRequest = 0, imagePoint = {x: 0, y: 0};
     const undos = [], redos = [], copyTimers = new Map();
-    let eyedropperOverlayTimer;
+    let eyedropperOverlayTimer, eyedropperController;
     const same = (first, second) => JSON.stringify(first) === JSON.stringify(second);
     const readList = key => {
         try {
@@ -63,7 +63,12 @@
     const preset = {
         basic: [['Чёрный','#000'],['Белый','#fff'],['Красный','#f00'],['Оранжевый','#f80'],['Жёлтый','#ff0'],['Зелёный','#0a0'],['Бирюзовый','#0cc'],['Синий','#00f'],['Фиолетовый','#80f'],['Розовый','#f08']],
         pastel: [['Пудровый','#ffd1dc'],['Персиковый','#ffdab9'],['Ванильный','#fff4b8'],['Фисташковый','#d4efbf'],['Мятный','#b5ead7'],['Небесный','#c7e9ff'],['Лавандовый','#d9c7ff'],['Сиреневый','#e6c8f2'],['Песочный','#eadbc8'],['Серый','#d8dfe8']],
-        esdoc: [['Лист','#2f7524'],['Хвоя','#206220'],['Акцент','#6dbe45'],['Бумага','#f4f9f1'],['Тень','#eef8e7'],['Чернила','#17261a'],['Закат','#e89460'],['Небо','#8fb2c8'],['Озеро','#87c9ff'],['Ночь','#161b26']],
+        characters: [
+            ['Диалог','#e2c778'], ['Алиса','#ffaa00'], ['Виола','#a5a5ff'],
+            ['Мику','#00deff'], ['Ольга Дмитриевна','#00ea32'], ['Семён','#e1dd7d'],
+            ['Женя','#72a0ff'], ['Пионер','#e60101'], ['Шурик','#fff226'],
+            ['Славя','#ffd200'], ['Лена','#b956ff'], ['Ульяна','#ff3200'], ['Юля','#4eff00'],
+        ],
         named: window.ESDocNamedColors,
     };
     let paletteLimit = 100;
@@ -419,16 +424,33 @@
         if (event.target === shortcuts && (event.clientX < rect.left || event.clientX > rect.left + rect.width || event.clientY < rect.top || event.clientY > rect.top + rect.height)) shortcuts.close();
     });
     on(shortcuts, 'close', () => { if (!disposed) get('shortcuts-open').focus({preventScroll: true}); });
+    // Cancel events delivered to the page. Native browser eyedropper UI may
+    // consume mouse input before it reaches the document.
+    const cancelEyedropper = event => {
+        if (!eyedropperController || eyedropperController.signal.aborted) return;
+        event.preventDefault();
+        eyedropperController.abort();
+        clearTimeout(eyedropperOverlayTimer);
+        get('eyedropper-overlay').hidden = true;
+        get('status').textContent = 'Выбор пипеткой отменён.';
+    };
+    on(document, 'pointerdown', event => { if (event.button === 2) cancelEyedropper(event); });
+    on(document, 'contextmenu', cancelEyedropper);
+    on(document, 'keydown', event => { if (event.key === 'Escape') cancelEyedropper(event); });
     if (window.EyeDropper && window.isSecureContext) {
         get('eyedropper').hidden = false;
         on(get('eyedropper'), 'click', async () => {
+            const pickController = new AbortController();
+            eyedropperController = pickController;
+            const abortPick = () => pickController.abort();
+            controller.signal.addEventListener('abort', abortPick, {once: true});
             get('eyedropper').disabled = true;
             // Chromium snapshots the screen on open. Delay the dimmer until after
             // that capture so the magnifier samples the original page colors.
             eyedropperOverlayTimer = setTimeout(() => { if (!disposed) get('eyedropper-overlay').hidden = false; }, 300);
-            try { const result = await new window.EyeDropper().open({signal: controller.signal}); if (!disposed) choose(c.parseHex(result.sRGBHex)); }
+            try { const result = await new window.EyeDropper().open({signal: pickController.signal}); if (!disposed && !pickController.signal.aborted) choose(c.parseHex(result.sRGBHex)); }
             catch (error) { if (!disposed) get('status').textContent = error.name === 'AbortError' ? 'Выбор пипеткой отменён.' : 'Не удалось открыть пипетку. Используйте поле или изображение.'; }
-            finally { clearTimeout(eyedropperOverlayTimer); if (!disposed) { get('eyedropper').disabled = false; get('eyedropper-overlay').hidden = true; get('eyedropper').focus({preventScroll: true}); } }
+            finally { controller.signal.removeEventListener('abort', abortPick); if (eyedropperController === pickController) eyedropperController = null; clearTimeout(eyedropperOverlayTimer); if (!disposed) { get('eyedropper').disabled = false; get('eyedropper-overlay').hidden = true; get('eyedropper').focus({preventScroll: true}); } }
         });
     }
     const canvas = get('image-canvas');

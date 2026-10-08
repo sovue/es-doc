@@ -96,13 +96,36 @@ test('HSV keyboard and pointer update channels and selected hue survives black',
 
 test('changing palette and selecting a swatch resets alpha and invalid inputs', () => {
     const ui = page(); ui.input('a', '.5'); ui.input('hex', '#badvalue');
-    ui.get('palette').value = 'esdoc'; ui.get('palette').emit('change');
-    assert.equal(ui.get('swatches').children.length, 10);
+    ui.get('palette').value = 'characters'; ui.get('palette').emit('change');
+    assert.equal(ui.get('swatches').children.length, 13);
     ui.get('swatches').children[0].children[3].emit('click');
-    assert.equal(ui.get('output-hex').value, '#2f7524');
+    assert.equal(ui.get('output-hex').value, '#e2c778');
     assert.equal(ui.get('a').value, '1');
     assert.equal(ui.get('hex').getAttribute('aria-invalid'), null);
     assert.equal(ui.get('swatches').children[0].children[3].getAttribute('aria-pressed'), 'true');
+});
+
+test('right click or Escape cancels the eyedropper without applying a late result', async () => {
+    let resolvePick, signal;
+    const ui = page({isSecureContext: true, EyeDropper: class {
+        open(options) { signal = options.signal; return new Promise(resolve => { resolvePick = resolve; }); }
+    }});
+    const original = ui.get('output-hex').value;
+    for (const [type, event] of [['pointerdown', {button: 2}], ['contextmenu', {}], ['keydown', {key: 'Escape'}]]) {
+        ui.get('eyedropper').click();
+        let prevented = false;
+        ui.document.emit(type, {...event, preventDefault() { prevented = true; }});
+        assert.equal(prevented, true);
+        assert.equal(signal.aborted, true);
+        resolvePick({sRGBHex: '#f00'});
+        await new Promise(resolve => setImmediate(resolve));
+        assert.equal(ui.get('output-hex').value, original);
+        assert.equal(ui.get('eyedropper-overlay').hidden, true);
+        assert.equal(ui.get('eyedropper').disabled, false);
+    }
+    let prevented = false;
+    ui.document.emit('contextmenu', {preventDefault() { prevented = true; }});
+    assert.equal(prevented, false, 'regular context menus still work outside picking');
 });
 
 test('soft navigation cleanup removes color input listeners', () => {
