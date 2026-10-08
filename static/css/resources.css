@@ -1246,3 +1246,38 @@ video.fb-media {
 .res-tabs, .res-cats ul {
     padding-inline: max(var(--page-gutter), calc((100% - var(--directory-max)) / 2 + var(--page-gutter)));
 }
+
+.fb-animation-link {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 24px;
+    padding: 14px 52px 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-block);
+    background: var(--bg-light);
+    color: var(--text-soft);
+    text-decoration: none;
+}
+
+.fb-animation-link:hover .fb-animation-link-title {
+    color: var(--link-hover);
+}
+
+.fb-animation-link-title {
+    color: var(--text);
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.fb-animation-link-arrow {
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    display: grid;
+    place-items: center;
+    color: var(--link);
+    transform: translateY(-50%);
+}

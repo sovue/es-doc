@@ -4,7 +4,8 @@
 {% set page_title = category_meta.title + ' — ' + collection_meta.title + ' — ES Doc' %}
 {% set body_class = 'bg-solid scene-page' %}
 {% set active = 'resources' %}
-{% set extra_css = ['/static/css/resources.css'] %}
+{% set with_animation_js = collection == 'original' and category == 'anim' %}
+{% set extra_css = ['/static/css/resources.css'] + (['/static/css/animations.css'] if with_animation_js else []) %}
 {# Only the sound categories have anything to play. #}
 {% set with_player = category_meta.media == 'audio' %}
 
@@ -147,6 +148,21 @@
         </nav>
 
         <div class="page-main page-main--res">
+
+            {% if with_animation_js %}
+            <nav class="res-jump" aria-label="Содержимое раздела">
+                <ul role="list">
+                    <li><a href="#animation-previews">Предпросмотр анимаций</a></li>
+                    <li><a href="#animation-files">Кадры и эффекты</a></li>
+                </ul>
+            </nav>
+            <section class="animation-section" aria-labelledby="animation-previews">
+                <h2 class="res-group-title" id="animation-previews">Предпросмотр анимаций</h2>
+                {% include "partials/animation_gallery.html" %}
+                <noscript><p>Для воспроизведения анимаций включите JavaScript. Кадры и ссылки на код доступны ниже.</p></noscript>
+            </section>
+            <h2 class="res-group-title" id="animation-files">Кадры и эффекты</h2>
+            {% endif %}
 
             {% if count_all %}
 

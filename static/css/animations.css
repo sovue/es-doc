@@ -71,7 +71,6 @@
 
 .animation-lid {
     z-index: 1;
-    transition: transform 1.5s cubic-bezier(.4, 0, .2, 1);
 }
 
 .animation-lid--upper {
@@ -98,23 +97,14 @@
 
 .animation-stage--shake .animation-shake-echo {
     clip-path: inset(0);
-    opacity: 0.42;
+    opacity: 1;
 }
 
 .animation-stage--shake .animation-shake-overlay {
     z-index: 1;
 }
 
-.animation-stage--shake.is-playing .animation-shake-echo {
-    animation: animation-shake .8s steps(1, end) infinite;
-}
-
-@keyframes animation-shake {
-    0%, 50% { transform: translate(0, 0); }
-    25% { transform: translate(2.6%, 4.6%); }
-    75% { transform: translate(-2.6%, 4.6%); }
-}
-
+.animation-stage--sequence .animation-effect-overlay,
 .animation-stage--flash .animation-effect-overlay,
 .animation-stage--blackout .animation-effect-overlay {
     position: absolute;
@@ -125,6 +115,7 @@
     pointer-events: none;
 }
 
+.animation-stage--sequence .animation-effect-overlay,
 .animation-stage--blackout .animation-effect-overlay {
     background: #000;
 }
@@ -133,7 +124,7 @@
     padding: 15px 17px 17px;
 }
 
-.animation-card-body h2 {
+.animation-card-body h3 {
     margin: 0;
     font-family: var(--font-serif);
     font-size: 1.25rem;
@@ -159,6 +150,7 @@
 
 .animation-variant-label select {
     min-width: 0;
+    max-width: 100%;
     min-height: 36px;
     padding: 5px 28px 5px 9px;
     border: 1px solid var(--border);
@@ -178,7 +170,8 @@
 .animation-card-actions {
     display: flex;
     align-items: center;
-    gap: 16px;
+    flex-wrap: wrap;
+    gap: 10px 16px;
 }
 
 .animation-play {
@@ -208,41 +201,6 @@
     font-size: var(--fs-caption);
 }
 
-.fb-animation-link {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    margin-bottom: 24px;
-    padding: 14px 52px 14px 16px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-block);
-    background: var(--bg-light);
-    color: var(--text-soft);
-    text-decoration: none;
-}
-
-.fb-animation-link:hover .fb-animation-link-title {
-    color: var(--link-hover);
-}
-
-.fb-animation-link-title {
-    color: var(--text);
-    font-family: var(--font-serif);
-    font-size: 1.1rem;
-    font-weight: 700;
-}
-
-.fb-animation-link-arrow {
-    position: absolute;
-    top: 50%;
-    right: 16px;
-    display: grid;
-    place-items: center;
-    color: var(--link);
-    transform: translateY(-50%);
-}
-
 @media (max-width: 48em) {
     .animation-gallery {
         grid-template-columns: minmax(0, 1fr);
@@ -254,10 +212,11 @@
     }
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .animation-stage--shake.is-playing .animation-shake-echo,
-    .animation-lid {
-        animation: none;
-        transition: none;
-    }
-}
+.animation-section { margin-bottom: 36px; }
+.animation-name { display: block; margin-top: 5px; color: var(--text-soft); overflow-wrap: anywhere; }
+.animation-related { margin-top: 12px; font-size: var(--fs-caption); }
+.animation-related summary { cursor: pointer; color: var(--link); }
+.animation-related ul { margin: 8px 0 0; padding-left: 18px; overflow-wrap: anywhere; }
+.animation-related a { color: var(--link); }
+.animation-card-body .animation-error { min-height: 0; color: var(--text); }
+.animation-play[hidden], .animation-error[hidden] { display: none; }

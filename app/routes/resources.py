@@ -3,14 +3,16 @@ import os
 from pathlib import Path
 from urllib.parse import quote
 
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import RedirectResponse
 
-from . import main_router
+from ..utils.animations import available_previews
 from ..utils.config import CONFIG
 from ..utils.file import templates
 from ..utils.lifespan.resources_cache import BG_TIME_LABELS, CATEGORY_TITLES
-from ..utils.md import highlight_code, CODE_COPY_BUTTON
+from ..utils.md import highlight_code
 from ..utils.md.lines import numbered_view
+from . import main_router
 
 router = APIRouter(prefix='/resources')
 
@@ -115,6 +117,11 @@ async def index(request: Request):
 @router.get('/community')
 async def community(request: Request):
     return _hub(request, 'community')
+
+
+@router.get('/animations', include_in_schema=False)
+async def animations_redirect():
+    return RedirectResponse('/resources/original/anim#animation-previews', status_code=301)
 
 
 # ── «Браузер ресурсов»: a read-only explorer over the game folder ──────
@@ -316,6 +323,8 @@ async def listing(collection, category, request: Request):
         'other_href': other_href,
         'bg_locations': bg_locations,
         'bg_times': bg_times,
+        'animations': available_previews(CONFIG.res_path)
+        if collection == 'original' and category == 'anim' else None,
     })
 
 

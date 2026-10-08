@@ -1,38 +1,14 @@
-{% extends "base.html" %}
-{% import "partials/res_macros.html" as res %}
-
-{% set page_title = 'Анимации оригинала — ES Doc' %}
-{% set body_class = 'bg-solid scene-page' %}
-{% set active = 'resources' %}
-
-{% block content %}
-<div class="page">
-    <main id="main-content">
-        <section class="page-hero page-hero--tight">
-            <div class="page-hero-inner">
-                <a href="/resources/browser" class="page-back"><span aria-hidden="true">{{ lucide_icon('arrow-left') }}</span> Браузер ресурсов</a>
-                <h1 class="page-title">Анимации оригинала</h1>
-                <p class="page-lead">Кадры игры собраны в эффекты из её кода. Нажмите «Показать», чтобы запустить превью; в каждый момент воспроизводится только один эффект.</p>
-            </div>
-        </section>
-
-        {{ res.tabs('animations') }}
-
-        <div class="page-main page-main--res">
             {% if animations %}
             <ul class="animation-gallery" role="list">
                 {% for animation in animations %}
-                <li class="animation-card" data-animation-card data-kind="{{ animation.kind }}"
-                    data-loop="{{ 'true' if animation.get('loop', true) else 'false' }}"
-                    {% if animation.get('duration') %}data-duration="{{ animation.duration }}"{% endif %}
-                    {% if animation.get('hold') %}data-hold="{{ animation.hold }}"{% endif %}
-                    {% if animation.get('motion') %}data-motion="{{ animation.motion }}"{% endif %}
-                    {% if animation.get('particles') %}data-particles="{{ animation.particles }}"{% endif %}>
+                <li id="animation-{{ loop.index }}" class="animation-card" data-animation-card data-kind="{{ animation.kind }}">
                     <div class="animation-stage animation-stage--{{ animation.kind }}{% if animation.get('fit') %} animation-stage--{{ animation.fit }}{% endif %}"
-                         data-stage aria-label="Превью: {{ animation.title }}">
+                         data-stage role="img" aria-label="Превью: {{ animation.title }}">
                         {% if animation.kind == 'sequence' %}
+                        {% if animation.background_src %}<img class="animation-scene" src="{{ animation.background_src }}" alt="" decoding="async">{% endif %}
                         <img class="animation-frame animation-frame--back" src="{{ animation.frames[0].src }}" alt="" decoding="async">
                         <img class="animation-frame animation-frame--front is-visible" src="{{ animation.frames[0].src }}" alt="" decoding="async">
+                        <span class="animation-effect-overlay" aria-hidden="true"></span>
                         {% elif animation.kind == 'lids' %}
                         <img class="animation-scene" src="{{ animation.background_src }}" alt="" decoding="async">
                         <img class="animation-lid animation-lid--upper" src="{{ animation.src }}" alt="" decoding="async">
@@ -50,7 +26,8 @@
                         {% endif %}
                     </div>
                     <div class="animation-card-body">
-                        <h2>{{ animation.title }}</h2>
+                        <h3>{{ animation.title }}</h3>
+                        <code class="animation-name">{{ animation.name }}</code>
                         {% if animation.description %}<p>{{ animation.description }}</p>{% endif %}
                         {% if animation.variants %}
                         <label class="animation-variant-label">
@@ -64,9 +41,16 @@
                         </label>
                         {% endif %}
                         <div class="animation-card-actions">
-                            <button class="animation-play" type="button" data-play aria-pressed="false">Показать</button>
-                            <a href="{{ animation.source_url }}">Код оригинала</a>
+                            <button class="animation-play" type="button" data-play aria-pressed="false" hidden>Показать</button>
+                            <a data-source href="{{ animation.source_url }}">Код оригинала</a>
                         </div>
+                        {% if animation.related %}
+                        <details class="animation-related">
+                            <summary>Исходные ресурсы</summary>
+                            <ul>{% for resource in animation.related %}<li><a href="{{ resource.href }}"><code>{{ resource.name }}</code></a></li>{% endfor %}</ul>
+                        </details>
+                        {% endif %}
+                        <p class="animation-error" data-error role="status" hidden></p>
                     </div>
                     <script type="application/json" class="animation-definition">{{ animation|tojson }}</script>
                 </li>
@@ -78,9 +62,3 @@
                 <p>Проверьте, что подключена папка ресурсов оригинала.</p>
             </div>
             {% endif %}
-            <p class="sr-only" id="animation-status" role="status" aria-live="polite"></p>
-        </div>
-    </main>
-    {% include "partials/footer.html" %}
-</div>
-{% endblock %}
