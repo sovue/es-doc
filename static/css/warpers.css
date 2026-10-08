@@ -78,7 +78,7 @@
 .wp-demo-stage { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-light); }
 .wp-demo-lane { height: 26px; position: relative; margin-inline: 14%; }
 .wp-demo-lane--linear { border-top: 1px dashed var(--border); }
-.wp-demo-object { position: absolute; width: 20px; height: 20px; top: 3px; left: 50%; border-radius: 50%; background: var(--accent); transform: translateX(-50%); }
+.wp-demo-object { position: absolute; width: 20px; height: 20px; top: 3px; left: 50%; border-radius: 50%; background: var(--danger); transform: translateX(-50%); }
 .wp-demo-object--linear { background: none; border: 1px dashed var(--text-soft); }
 .wp-demo-stage--xalign .wp-demo-object { left: 0; transform: translateX(calc(var(--travel, 0) * 1px)); }
 .wp-transport { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; }
