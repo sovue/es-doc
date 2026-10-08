@@ -1,38 +1,43 @@
             {% if animations %}
+            <div class="animation-tools" data-animation-tools hidden>
+                <label class="animation-search"><span>Найти анимацию</span><input type="search" data-animation-search placeholder="Название, имя в коде или описание…" autocomplete="off" spellcheck="false"></label>
+                <span class="animation-count" data-animation-count role="status">{{ animations|length }} анимаций</span>
+            </div>
+            <p class="animation-empty" data-animation-empty hidden>Анимаций по этому запросу нет. Измените запрос или очистите поиск.</p>
             <ul class="animation-gallery" role="list">
                 {% for animation in animations %}
                 <li id="animation-{{ loop.index }}" class="animation-card" data-animation-card data-kind="{{ animation.kind }}">
                     <div class="animation-stage animation-stage--{{ animation.kind }}{% if animation.get('fit') %} animation-stage--{{ animation.fit }}{% endif %}"
-                         data-stage role="img" aria-label="Превью: {{ animation.title }}">
+                         data-stage role="img" aria-label="Превью: {{ animation.title }}" aria-describedby="animation-info-{{ loop.index }}">
                         {% if animation.kind == 'sequence' %}
-                        {% if animation.background_src %}<img class="animation-scene" src="{{ animation.background_src }}" alt="" decoding="async">{% endif %}
-                        <img class="animation-frame animation-frame--back" src="{{ animation.frames[0].src }}" alt="" decoding="async">
-                        <img class="animation-frame animation-frame--front is-visible" src="{{ animation.frames[0].src }}" alt="" decoding="async">
+                        {% if animation.background_src %}<img class="animation-scene" src="{{ animation.background_poster }}" alt="" loading="lazy" decoding="async">{% endif %}
+                        <img class="animation-frame animation-frame--back is-visible" src="{{ animation.poster }}" alt="" loading="lazy" decoding="async">
+                        <img class="animation-frame animation-frame--front" alt="" decoding="async">
                         <span class="animation-effect-overlay" aria-hidden="true"></span>
                         {% elif animation.kind == 'lids' %}
-                        <img class="animation-scene" src="{{ animation.background_src }}" alt="" decoding="async">
-                        <img class="animation-lid animation-lid--upper" src="{{ animation.src }}" alt="" decoding="async">
-                        <img class="animation-lid animation-lid--lower" src="{{ animation.second_src }}" alt="" decoding="async">
+                        <img class="animation-scene" src="{{ animation.background_poster }}" alt="" loading="lazy" decoding="async">
+                        <img class="animation-lid animation-lid--upper" src="{{ animation.poster }}" alt="" loading="lazy" decoding="async">
+                        <img class="animation-lid animation-lid--lower" src="{{ animation.second_poster }}" alt="" loading="lazy" decoding="async">
                         {% elif animation.kind == 'snow' %}
                         <canvas class="animation-snow" data-snow-src="{{ animation.src }}" aria-hidden="true"></canvas>
                         {% elif animation.kind == 'shake' %}
-                        <img class="animation-shake-base" src="{{ animation.variants[0].src }}" alt="" decoding="async">
-                        <img class="animation-shake-echo" src="{{ animation.variants[0].src }}" alt="" decoding="async">
-                        <img class="animation-shake-overlay" src="{{ animation.overlay_src }}" alt="" decoding="async">
+                        <img class="animation-shake-base" src="{{ animation.poster }}" alt="" loading="lazy" decoding="async">
+                        <img class="animation-shake-echo" alt="" decoding="async">
+                        <img class="animation-shake-overlay" src="{{ animation.overlay_poster }}" alt="" loading="lazy" decoding="async">
                         {% elif animation.kind == 'flash' or animation.kind == 'blackout' %}
-                        <img class="animation-frame animation-frame--back is-visible" src="{{ animation.src }}" alt="" decoding="async">
-                        <img class="animation-frame animation-frame--front" src="{{ animation.src }}" alt="" decoding="async">
+                        <img class="animation-frame animation-frame--back is-visible" src="{{ animation.poster }}" alt="" loading="lazy" decoding="async">
+                        <img class="animation-frame animation-frame--front" alt="" decoding="async">
                         <span class="animation-effect-overlay" aria-hidden="true"></span>
                         {% endif %}
                     </div>
                     <div class="animation-card-body">
                         <h3>{{ animation.title }}</h3>
-                        <code class="animation-name">{{ animation.name }}</code>
-                        {% if animation.description %}<p>{{ animation.description }}</p>{% endif %}
+                        <code class="animation-name" data-animation-name>{{ animation.display_name }}</code>
+                        <p id="animation-info-{{ loop.index }}">{{ animation.description }}{% if animation.kind == 'lids' and animation.motion == 'open' %} Начальный кадр закрыт веками и выглядит чёрным.{% endif %}</p>
                         {% if animation.variants %}
                         <label class="animation-variant-label">
                             <span>{% if animation.kind == 'snow' %}Плотность{% else %}Сцена{% endif %}</span>
-                            <select data-variant>
+                            <select data-variant aria-label="{{ animation.title }} / {% if animation.kind == 'snow' %}Плотность{% else %}Сцена{% endif %}">
                                 {% for variant in animation.variants %}
                                 <option value="{{ loop.index0 }}" {% if variant.src %}data-src="{{ variant.src }}"{% endif %}
                                         {% if variant.particles %}data-particles="{{ variant.particles }}"{% endif %}>{{ variant.label }}</option>
@@ -40,10 +45,23 @@
                             </select>
                         </label>
                         {% endif %}
+                        <div class="animation-timeline" data-timeline hidden>
+                            <label><span class="sr-only">Позиция анимации «{{ animation.title }}»</span><input type="range" data-position min="0" max="{{ animation.total_duration or 30 }}" step="0.01" value="0"></label>
+                            <output data-time aria-live="off">0 с</output>
+                        </div>
                         <div class="animation-card-actions">
-                            <button class="animation-play" type="button" data-play aria-pressed="false" hidden>Показать</button>
+                            <button class="animation-play" type="button" data-play aria-pressed="false" aria-label="Показать: {{ animation.title }}" title="Показать: {{ animation.title }}" hidden>
+                                <span data-play-icon>{{ lucide_icon('play', 18) }}</span>
+                                <span data-stop-icon hidden>{{ lucide_icon('square', 18) }}</span>
+                            </button>
+                            {{ res.copy_button(animation.display_name, label='Скопировать') }}
                             <a data-source href="{{ animation.source_url }}">Код оригинала</a>
                         </div>
+                        <details class="animation-usage">
+                            <summary>Как использовать</summary>
+                            <pre><code data-usage>{{ animation.usage }}</code></pre>
+                            {{ res.copy_button(animation.usage, label='Скопировать') }}
+                        </details>
                         {% if animation.related %}
                         <details class="animation-related">
                             <summary>Исходные ресурсы</summary>

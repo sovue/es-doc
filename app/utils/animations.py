@@ -78,7 +78,7 @@ ANIMATIONS = [
     _sequence(
         'Индикатор реплики (ctc)', 'ctc_animation', ('media.rpy', 77),
         [_frame(f'images/misc/ctc{i:02d}.png', 0.15) for i in range(1, 9)],
-        description='click-to-continue анимация для обозначения окончания реплики.',
+        description='Индикатор конца реплики: предлагает нажать для продолжения диалога.',
         fit='indicator',
     ),
     _sequence(
@@ -105,6 +105,7 @@ ANIMATIONS = [
         'Монитор', 'anim 3_prologue', ('media.rpy', 187),
         [_frame(f'images/anim/prologue_monitor_{i}.jpg', hold)
          for i, hold in [(1, 6), (2, 0.1), (3, 0.1), (4, 0)]],
+        description='Первые 6 секунд монитор неподвижен, затем изображение меняется.',
         loop=False,
     ),
     _sequence(
@@ -112,7 +113,7 @@ ANIMATIONS = [
         [_frame('images/anim/prolog_15.jpg', 6),
          _frame('images/anim/prolog_3.jpg', 3, 3, transition='fade'),
          _frame('images/anim/prolog_4.jpg', 0, 3, transition='fade')],
-        description='',
+        description='Первый кадр держится 6 секунд. Затем сцены сменяются через затемнение.',
         loop=False,
     ),
     _sequence(
@@ -123,7 +124,7 @@ ANIMATIONS = [
     {
         'title': 'Вспышка на площади', 'name': 'bg ext_square_night_flash',
         'source': ('media.rpy', 210), 'kind': 'flash',
-        'path': '@bg:ext_square_night', 'duration': 1, 'peak_hold': 0.5, 'hold': 3,
+        'path': '@bg:ext_square_night', 'duration': 1, 'peak_hold': 0.5, 'hold': 3, 'cycles': 2,
         'description': 'Белая вспышка повторяется с паузой.',
     },
     _sequence(
@@ -135,20 +136,20 @@ ANIMATIONS = [
     {
         'title': 'Затемнение сцены', 'name': 'black_long', 'source': ('media.rpy', 239),
         'kind': 'blackout', 'path': '@bg:ext_camp_entrance_day',
-        'description': 'Сепия переходит в чёрный экран. Длинный переход в превью ускорен.',
-        'filter': 'sepia(1)', 'duration': 5,
+        'description': 'Появление сепии за 2 секунды, затем затемнение за 50 секунд — как в оригинале.',
+        'intro': 2, 'duration': 50,
     },
     _sequence(
         'Заставка с монитором', 'backdrop_new', ('script.rpy', 119),
-        [_frame(f'images/anim/backdrop/{i}.png', 0.1) for i in (1, 2, 3, 2)],
+        [_frame(f'images/anim/backdrop/{i}.png', hold) for i, hold in ((1, 0.1), (2, 0.1), (3, 0.1), (2, 0))],
         description='Используется как заставка для отображения текущего дня (и рута) между днями.',
         fit='contain',
-    ) | {'background': 'images/anim/backdrop/back.jpg'},
+    ) | {'background': 'images/anim/backdrop/back.jpg', 'delay': 0.1},
     {
         'title': 'Дрожание сцены', 'name': 'zhenya_anim0–6',
         'source': ('scenario/zhenya.rpy', 79), 'kind': 'shake',
         'overlay': 'zhenya/images/blink.png',
-        'description': '',
+        'description': 'Сдвиги сцены по 0,2 секунды под неподвижным слоем век.',
         'variants': [
             {'label': label, 'path': f'@bg:{name}', 'source_name': f'zhenya_anim{index}'}
             for index, (label, name) in enumerate([
@@ -176,6 +177,30 @@ def _image_file(name, resources):
 
 def _public_path(path):
     return '/resource/raw/' + quote(path, safe='/')
+
+
+def _poster_path(path, resources):
+    return '/resource/poster/' + quote(_image_file(path, resources) or path, safe='/')
+
+
+def playback_duration(item):
+    if item['kind'] == 'sequence':
+        return round(item.get('delay', 0) + sum(frame['hold'] + frame['fade'] for frame in item['frames']), 3)
+    if item['kind'] == 'lids':
+        return item['duration'] * 2 + item['hold'] if item['motion'] == 'blink' else item['duration']
+    if item['kind'] == 'flash':
+        return (item['duration'] * 2 + item['peak_hold'] + item['hold']) * item.get('cycles', 1)
+    if item['kind'] == 'blackout':
+        return item.get('intro', 0) + item['duration']
+    return 0.8 if item['kind'] == 'shake' else None
+
+
+def _usage(name):
+    if name == 'ctc_animation':
+        return 'define narrator = Character(None, ctc="ctc_animation", ctc_position="fixed")'
+    if name == 'backdrop_new':
+        return 'scene backdrop_back\nshow backdrop_new'
+    return ('scene ' if name.startswith(('bg ', 'zhenya_anim')) or name in ('stars', 'candle', 'prologue_dream', 'un_ending_bad', 'black_long') else 'show ') + name
 
 
 def _source_url(root, filename, name, fallback, source_lines):
@@ -246,9 +271,28 @@ def available_previews(root: Path):
         source_name = item.get('variants', [{}])[0].get('source_name', item['name'])
         item['source_url'] = _source_url(root, source_path, source_name, line, source_lines)
         item['variants'] = [
-            {**variant, 'source_url': _source_url(root, source_path, variant.get('source_name', item['name']), line, source_lines)}
+            {**variant, 'name': variant.get('source_name', item['name']),
+             'usage': _usage(variant.get('source_name', item['name'])),
+             'source_url': _source_url(root, source_path, variant.get('source_name', item['name']), line, source_lines)}
             for variant in item.get('variants', [])
         ]
+        item['display_name'] = source_name
+        item['usage'] = _usage(source_name)
+        item['total_duration'] = playback_duration(item)
+        item['loop'] = item.get('loop', item['kind'] in ('snow', 'flash', 'shake'))
+        # Posters are small, lazy WebP stills. Original images are decoded only
+        # after playback or manual inspection is requested.
+        for key in ('path', 'second_path', 'overlay', 'background'):
+            if item.get(key):
+                item[{'path': 'poster', 'second_path': 'second_poster', 'overlay': 'overlay_poster', 'background': 'background_poster'}[key]] = _poster_path(item[key], resources)
+        if item.get('frames'):
+            item['poster'] = _poster_path(item['frames'][0]['path'], resources)
+        for variant in item['variants']:
+            if variant.get('path'):
+                variant['poster'] = _poster_path(variant['path'], resources)
+        if item['kind'] == 'blackout':
+            item['src'] = '/resource/animation/black-long'
+            item['poster'] = item['src'] + '?poster=true'
         # Link to declared resources in their category, or to the source file
         # when it has no declaration (e.g. the dialogue indicator frames).
         item['related'] = []

@@ -1,14 +1,17 @@
 import copy
 import tempfile
 import unittest
+from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
 
 from httpx import ASGITransport, AsyncClient
+from PIL import Image
 
 from app.app import app
-from app.utils.animations import ANIMATIONS, available_previews
+from app.utils.animations import ANIMATIONS, available_previews, playback_duration
 from app.utils.config import CONFIG
+from app.utils.lifespan.animation_images import make_image, original_sepia
 from app.utils.lifespan.resources_cache import _item
 
 
@@ -75,6 +78,40 @@ class AnimationAvailabilityTests(unittest.TestCase):
         self.assertEqual(stars['related'][0]['href'], '#r-stars_1')
         self.assertEqual(stars['related'][1]['href'], '/resources/browser/images/anim/stars_3.jpg')
 
+    def test_selected_identifiers_and_examples_are_ready_for_reuse(self):
+        self.file('images/anim/snow.png')
+        snow = next(item for item in available_previews(self.root) if item['name'] == 'snow')
+        self.assertEqual(snow['display_name'], 'snow')
+        self.assertEqual(snow['variants'][1]['name'], 'heavy_snow')
+        self.assertEqual(snow['variants'][1]['usage'], 'show heavy_snow')
+
+    def test_all_catalog_timings_match_the_original_declarations(self):
+        expected = [None, 6, 8, 0.3, 1.5, 1.5, 3.5, 1.2, 2.5,
+                    9.4, 9.4, 6.2, 15, 5.5, 11, 8, 52, 0.4, 0.8]
+        self.assertEqual([playback_duration(item) for item in ANIMATIONS], expected)
+
+
+class AnimationImageTests(unittest.TestCase):
+    def test_sepia_applies_game_palette_thresholds_and_tint(self):
+        image = Image.new('RGB', (4, 1))
+        image.putdata([(84, 84, 84), (85, 85, 85), (170, 170, 170), (171, 171, 171)])
+        self.assertEqual(list(original_sepia(image).get_flattened_data()),
+                         [(0, 0, 0), (128, 120, 97), (128, 120, 97), (255, 240, 194)])
+
+    def test_posters_downscale_and_full_sepia_stays_lossless(self):
+        with tempfile.TemporaryDirectory() as folder, patch.object(CONFIG, 'cache_path', Path(folder) / 'cache'):
+            source = Path(folder) / 'source.png'
+            Image.new('RGBA', (1200, 600), (128, 128, 128, 90)).save(source)
+            poster = make_image(source, poster=True)
+            stamp = poster.stat().st_mtime_ns
+            self.assertEqual(make_image(source, poster=True).stat().st_mtime_ns, stamp)
+            with Image.open(poster) as result:
+                self.assertEqual(result.size, (640, 320))
+                self.assertEqual(result.getpixel((0, 0))[3], 90)
+            with Image.open(make_image(source, sepia=True)) as result:
+                self.assertEqual(result.size, (1200, 600))
+                self.assertEqual(result.getpixel((0, 0)), (128, 120, 97))
+
 
 class AnimationRoutesTests(unittest.IsolatedAsyncioTestCase):
     async def request(self, path):
@@ -119,6 +156,27 @@ class AnimationRoutesTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn('id="animation-previews"', response.text)
         self.assertIn('Файлы анимаций не найдены.', response.text)
         self.assertNotIn('data-animation-card', response.text)
+
+    async def test_image_routes_serve_posters_and_sepia_without_exposing_other_files(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            source = root / 'images/bg/ext_camp_entrance_day.jpg'
+            source.parent.mkdir(parents=True)
+            Image.new('RGB', (1200, 600), (128, 128, 128)).save(source)
+            (root / 'private.txt').write_text('not an image')
+            with patch.object(CONFIG, 'res_path', root), patch.object(CONFIG, 'cache_path', root / 'cache'):
+                poster = await self.request('/resource/poster/images/bg/ext_camp_entrance_day.jpg')
+                sepia = await self.request('/resource/animation/black-long')
+                invalid = await self.request('/resource/poster/private.txt')
+                traversal = await self.request('/resource/poster/%2e%2e/private.png')
+            self.assertEqual(poster.status_code, 200)
+            with Image.open(BytesIO(poster.content)) as result:
+                self.assertEqual(result.size, (640, 320))
+            self.assertEqual(sepia.status_code, 200)
+            with Image.open(BytesIO(sepia.content)) as result:
+                self.assertEqual(result.size, (1200, 600))
+            self.assertEqual(invalid.status_code, 404)
+            self.assertEqual(traversal.status_code, 404)
 
 
 if __name__ == '__main__':

@@ -11,10 +11,11 @@ class Element {
     classes = new Set();
     classList = {add: name => this.classes.add(name), remove: name => this.classes.delete(name)};
     setAttribute(key, value) {this.attributes[key] = value;}
+    removeAttribute(key) {delete this.attributes[key]; if (key === 'hidden') this.hidden = false;}
     getAttribute(key) {return key === 'src' ? this.src : this.attributes[key] ?? null;}
     addEventListener(name, callback) {this.listeners[name] = callback;}
     removeEventListener(name) {delete this.listeners[name];}
-    fire(name) {this.listeners[name]?.();}
+    fire(name) {this.listeners[name]?.({target: this});}
     getBoundingClientRect() {return {width: 320, height: 180};}
 }
 function card(definition) {
@@ -29,8 +30,11 @@ function card(definition) {
     canvas.getContext = () => canvas.context;
     elements.set('[data-stage]', stage);
     elements.set('[data-play]', new Element());
+    const icons = new Map(['[data-play-icon]', '[data-stop-icon]'].map(key => [key, new Element()]));
+    elements.get('[data-play]').querySelector = selector => icons.get(selector);
     elements.set('[data-error]', new Element());
     elements.set('[data-source]', new Element());
+    for (const selector of ['[data-animation-name]', '[data-usage]', '.animation-card-actions .res-copy', '.animation-usage .res-copy', '[data-position]', '[data-time]', '[data-timeline]']) elements.set(selector, new Element());
     elements.set('.animation-definition', {textContent: JSON.stringify(definition)});
     if (definition.variants) {const select = new Element(); select.value = '0'; elements.set('[data-variant]', select);}
     const stageElements = new Map([
@@ -44,6 +48,7 @@ function card(definition) {
     card.querySelector = selector => elements.get(selector);
     card.stage = stage; card.layers = layers; card.canvas = canvas;
     card.button = elements.get('[data-play]'); card.select = elements.get('[data-variant]');
+    card.playIcon = icons.get('[data-play-icon]'); card.stopIcon = icons.get('[data-stop-icon]');
     return card;
 }
 function setup(definitions, manual = false) {
@@ -56,10 +61,13 @@ function setup(definitions, manual = false) {
     }
     const window = new Element(); window.devicePixelRatio = 1;
     const document = new Element(); document.querySelectorAll = () => cards;
+    const controls = new Map(['[data-animation-tools]', '[data-animation-search]', '[data-animation-count]', '[data-animation-empty]'].map(key => [key, new Element()]));
+    controls.get('[data-animation-search]').value = '';
+    document.querySelector = selector => controls.get(selector) || null;
     vm.runInNewContext(source, {window, document, Image, Math, Promise,
         requestAnimationFrame: callback => {rafs.set(++next, callback); return next;},
         cancelAnimationFrame: id => rafs.delete(id)});
-    return {cards, window, document, pending, rafs,
+    return {cards, window, document, pending, rafs, controls,
         advance(time) {const callbacks = [...rafs.values()]; rafs.clear(); callbacks.forEach(callback => callback(time));}};
 }
 async function settle() {for (let i = 0; i < 12; i++) await Promise.resolve();}
@@ -67,11 +75,15 @@ async function play(env, index = 0) {env.cards[index].button.fire('click'); awai
 
 test('old loads cannot restart a cancelled session, even after a new start on the same card', async () => {
     const env = setup([sequence()], true); const card = env.cards[0];
-    card.button.fire('click'); card.button.fire('click'); card.button.fire('click');
+    card.button.fire('click');
+    assert.equal(card.button.getAttribute('aria-label'), 'Отменить загрузку: анимация');
+    assert.equal(card.playIcon.hidden, true); assert.equal(card.stopIcon.hidden, false);
+    card.button.fire('click'); card.button.fire('click');
     env.pending.forEach(image => image.onload()); await settle();
     assert.equal(env.rafs.size, 1);
     env.advance(0); card.button.fire('click'); env.advance(2000);
     assert.equal(env.rafs.size, 0); assert.equal(card.button.attributes['aria-pressed'], 'false');
+    assert.equal(card.playIcon.hidden, false); assert.equal(card.stopIcon.hidden, true);
 });
 test('starting another preview cancels the first and stop freezes its painted frame', async () => {
     const env = setup([sequence(), sequence()]); await play(env);
@@ -91,7 +103,8 @@ test('a loop dissolves from its last frame back to its first', async () => {
 test('one-shot sequences retain a zero-hold terminal frame and replay from the beginning', async () => {
     const env = setup([{kind: 'sequence', loop: false, frames: [frame('/a', 1), frame('/b', 0)]}]);
     await play(env); env.advance(1000); const card = env.cards[0];
-    assert.equal(card.layers[0].src, '/b'); assert.equal(card.button.textContent, 'Повторить');
+    assert.equal(card.layers[0].src, '/b'); assert.equal(card.button.getAttribute('aria-label'), 'Повторить: анимация');
+    assert.equal(card.playIcon.hidden, false); assert.equal(card.stopIcon.hidden, true);
     assert.equal(env.rafs.size, 0); await play(env); assert.equal(card.layers[0].src, '/a');
 });
 test('Fade changes the frame at black and returns to a visible image', async () => {
@@ -107,7 +120,7 @@ test('lids start in the right position, stop safely, and finish their one-shot m
         await play(env); env.advance(motion === 'blink' ? 3500 : 1500);
         assert.equal(env.cards[0].stage.querySelector('.animation-lid--upper').style.transform,
             motion === 'close' ? 'translateY(0%)' : 'translateY(-100%)');
-        assert.equal(env.cards[0].button.textContent, 'Повторить'); assert.equal(env.rafs.size, 0);
+        assert.equal(env.cards[0].button.getAttribute('aria-label'), 'Повторить: анимация'); assert.equal(env.rafs.size, 0);
     }
 });
 test('blackout retains black on completion, and flash has a peak hold and a scene pause', async () => {
@@ -152,4 +165,68 @@ test('page visibility and soft-navigation cleanup cancel playback and pending lo
     loading.window.__esdocAnimationsCleanup(); loading.pending.forEach(image => image.onload()); await settle();
     assert.equal(loading.rafs.size, 0); assert.equal(loading.cards[0].button.attributes['aria-pressed'], 'false');
     assert.equal(Object.keys(loading.window.listeners).length, 0);
+});
+
+test('black_long preserves the original two-second dissolve and fifty-second fade', async () => {
+    const env = setup([{kind: 'blackout', src: '/sepia', intro: 2, duration: 50, total_duration: 52}]);
+    await play(env);
+    const overlay = env.cards[0].stage.querySelector('.animation-effect-overlay');
+    assert.equal(overlay.style.opacity, '1');
+    env.advance(1000); assert.equal(overlay.style.opacity, '0.5');
+    env.advance(2000); assert.equal(overlay.style.opacity, '0');
+    env.advance(27000); assert.equal(overlay.style.opacity, '0.5');
+    assert.equal(env.rafs.size, 1);
+    env.advance(52000); assert.equal(overlay.style.opacity, '1');
+    assert.equal(env.rafs.size, 0);
+});
+
+test('timeline inspection pauses playback and leaves the play icon ready to restart', async () => {
+    const env = setup([sequence(false)]);
+    const card = env.cards[0];
+    await play(env);
+    assert.equal(card.button.getAttribute('aria-label'), 'Остановить: анимация');
+    card.querySelector('[data-position]').value = '1.5';
+    card.querySelector('[data-position]').fire('input'); await settle();
+    assert.equal(card.layers[1].style.opacity, '0.5');
+    assert.equal(env.rafs.size, 0);
+    assert.equal(card.button.hidden, false);
+    assert.equal(card.playIcon.hidden, false); assert.equal(card.stopIcon.hidden, true);
+    await play(env); assert.equal(card._position, 0); assert.equal(env.rafs.size, 1);
+});
+
+test('selecting a variant updates visible name, both copy payloads, example and source', async () => {
+    const env = setup([{kind: 'snow', title: 'Снег', name: 'snow', src: '/snow', particles: 50, variants: [
+        {name: 'snow', particles: 50, usage: 'show snow'},
+        {name: 'heavy_snow', particles: 500, usage: 'show heavy_snow', source_url: '/globals#L191'},
+    ]}]);
+    const card = env.cards[0]; card.select.value = '1'; card.select.fire('change'); await settle();
+    assert.equal(card.querySelector('[data-animation-name]').textContent, 'heavy_snow');
+    assert.equal(card.querySelector('.animation-card-actions .res-copy').dataset.copy, 'heavy_snow');
+    assert.equal(card.querySelector('.animation-usage .res-copy').dataset.copy, 'show heavy_snow');
+    assert.equal(card.querySelector('[data-usage]').textContent, 'show heavy_snow');
+    assert.equal(card.querySelector('[data-source]').href, '/globals#L191');
+});
+
+test('gallery search includes variant identifiers, stops hidden previews and recovers from empty results', async () => {
+    const env = setup([{...sequence(), name: 'stars', title: 'Звёзды'},
+        {kind: 'snow', src: '/snow', name: 'snow', particles: 50, variants: [{name: 'heavy_snow', label: 'Сильный'}]}]);
+    await play(env);
+    const input = env.controls.get('[data-animation-search]');
+    input.value = 'heavy_snow'; input.fire('input');
+    assert.equal(env.cards[0].hidden, true); assert.equal(env.cards[1].hidden, false);
+    assert.equal(env.rafs.size, 0);
+    input.value = 'missing'; input.fire('input');
+    assert.equal(env.controls.get('[data-animation-empty]').hidden, false);
+    input.value = ''; input.fire('input');
+    assert.equal(env.cards.every(card => !card.hidden), true);
+    assert.equal(env.controls.get('[data-animation-empty]').hidden, true);
+});
+
+test('backdrop preserves its initial pause and first frame timing', async () => {
+    const env = setup([{kind: 'sequence', loop: true, delay: 0.1,
+        frames: [frame('/1', 0.1), frame('/2', 0.1), frame('/3', 0.1), frame('/2', 0)]}]);
+    await play(env);
+    assert.equal(env.cards[0].layers[0].style.opacity, '0');
+    env.advance(100); assert.equal(env.cards[0].layers[0].src, '/1');
+    env.advance(200); assert.equal(env.cards[0].layers[0].src, '/2');
 });
