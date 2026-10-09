@@ -99,20 +99,7 @@
                                 <span id="tools-pack-clear-label" hidden>Очистить список</span>
                             </button>
                         </div>
-                        <div id="tools-queue-tools" class="tools-queue-tools" hidden>
-                            <label for="tools-queue-search">Поиск по путям
-                                <input id="tools-queue-search" class="tools-browser-search tools-queue-search" type="search" placeholder="Имя файла или папки…" aria-describedby="tools-queue-search-help">
-                            </label>
-                            <p id="tools-queue-search-help" class="tools-meta">Поиск по исходным и итоговым путям.</p>
                             <p id="tools-pack-preview-note" class="tools-meta" hidden>Пути не пересчитаны. Исправьте ошибку выше, в списке остались последние корректные пути.</p>
-                            <div class="tools-queue-navigation">
-                                <p id="tools-queue-range" class="tools-meta" role="status" aria-live="polite"></p>
-                                <div id="tools-queue-pages" class="tools-queue-pages" hidden>
-                                    <button id="tools-queue-previous" class="tools-button" type="button">Назад</button>
-                                    <button id="tools-queue-next" class="tools-button" type="button">Далее</button>
-                                </div>
-                            </div>
-                        </div>
                         <ul id="tools-file-list" class="tools-file-list" aria-label="Добавленные файлы"></ul>
                     </section>
                     <div class="tools-progress" id="tools-progress" hidden>
@@ -145,6 +132,13 @@
                             </div>
                             <nav id="tools-browser-crumbs" class="tools-browser-crumbs" aria-label="Путь к файлу"></nav>
                             <p id="tools-browser-status" class="tools-meta" role="status" aria-live="polite"></p>
+                            <div id="tools-queue-tools" class="tools-queue-navigation" hidden>
+                                <p id="tools-queue-range" class="tools-meta" role="status" aria-live="polite"></p>
+                                <div id="tools-queue-pages" class="tools-queue-pages" hidden>
+                                    <button id="tools-queue-previous" class="tools-button" type="button">Назад</button>
+                                    <button id="tools-queue-next" class="tools-button" type="button">Далее</button>
+                                </div>
+                            </div>
                             <div class="tools-browser-layout">
                                 <ul id="tools-browser-list" class="tools-browser-list" aria-label="Файлы и папки"></ul>
                                 <div id="tools-browser-preview" class="tools-browser-preview" aria-label="Предпросмотр файла"></div>

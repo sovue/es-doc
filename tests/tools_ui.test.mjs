@@ -25,7 +25,7 @@ function page(search = '', withClipboard = false) {
             const matches = [];
             const visit = element => {
                 for (const child of element.children) {
-                    if (selector === '.tools-remove' && child.className === 'tools-remove') matches.push(child);
+                    if ((selector === '.tools-remove' && child.className === 'tools-remove') || (selector === '.tools-remove-source' && child.className?.includes('tools-remove-source'))) matches.push(child);
                     if (selector === 'button' && child.tagName === 'BUTTON') matches.push(child);
                     visit(child);
                 }
@@ -116,8 +116,7 @@ test('packing accepts resources and sends paths relative to game without catalog
     await Promise.resolve();
     assert.equal(ui.messages.length, 0);
     assert.equal(ui.get('pack-strip').value, 'game/');
-    assert.equal(ui.get('file-list').children[0].children[0].children[0].children[0].textContent,
-        'mods/demo/images/bg.png');
+    assert.equal(ui.get('browser-list').children[0].children[0].children[1].textContent, 'mods/');
     ui.get('download-all').click();
     assert.equal(ui.messages.at(-1).type, 'pack');
     assert.equal(ui.messages.at(-1).name, 'demo.rpa');
@@ -133,6 +132,61 @@ test('packing accepts resources and sends paths relative to game without catalog
     ui.get('pack-prefix').emit('input');
     ui.get('download-all').click();
     assert.equal(ui.messages.at(-1).files[0].path, 'next/mods/demo/images/bg.png');
+});
+
+test('packing browses folders and previews original resources without decompilation', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    ui.get('pack-prefix').value = 'my_mod/images';
+    await ui.add(['bg.png']);
+    assert.equal(ui.get('browser').hidden, false);
+    assert.equal(ui.get('file-list').hidden, true);
+    const first = () => ui.get('browser-list').children[0].children[0];
+    assert.equal(first().children[1].textContent, 'my_mod/');
+    first().click();
+    assert.equal(first().children[1].textContent, 'images/');
+    first().click();
+    assert.equal(first().children[1].textContent, 'bg.png');
+    first().click();
+    assert.equal(ui.get('browser-preview').children[1].tagName, 'IMG');
+    assert.equal(ui.messages.length, 0);
+});
+
+test('packing text previews request syntax highlighting of the original file', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    await ui.add(['script.rpy']);
+    ui.get('browser-list').children[0].children[0].click();
+    assert.equal(ui.messages.at(-1).type, 'pack-preview');
+    assert.equal(ui.messages.at(-1).name, 'script.rpy');
+    ui.send({ type: 'source-file', requestId: ui.messages.at(-1).requestId,
+        name: 'script.rpy', buffer: new TextEncoder().encode('label start:\n    return').buffer,
+        html: '<span class="k">label</span> start:', warnings: [] });
+    assert.equal(ui.get('browser-preview').attributes['aria-busy'], 'false');
+    assert.equal(ui.get('download-all').disabled, false);
+});
+
+test('removing the last packing file returns keyboard focus to adding files', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    await ui.add(['last.txt']);
+    const remove = ui.get('browser-list').querySelectorAll('.tools-remove-source')[0];
+    remove.focus(); remove.click();
+    assert.equal(ui.get('browser').hidden, true);
+    assert.equal(ui.document.activeElement, ui.get('add'));
+});
+
+test('packing previews keep compiled files intact and do not start decompilers', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    await ui.add(['script.rpyc']);
+    ui.get('browser-list').children[0].children[0].click();
+    assert.equal(ui.messages.length, 0);
+    const preview = ui.get('browser-preview');
+    assert.equal(preview.children.at(-1).download, 'script.rpyc');
+    ui.get('download-all').click();
+    assert.equal(ui.messages.at(-1).type, 'pack');
+    assert.equal(ui.messages.at(-1).files[0].path, 'script.rpyc');
 });
 
 test('mode switches retain separate queues and packing settings', async () => {
@@ -160,26 +214,26 @@ test('packing pagination and search reach all files without filtering export', a
     ui.get('pack-name').value = 'demo';
     ui.get('pack-name').emit('input');
     await ui.add(Array.from({ length: 251 }, (_, i) => `item-${String(i).padStart(3, '0')}.bin`));
-    const rows = () => ui.get('file-list').children[0].children;
+    const rows = () => ui.get('browser-list').children;
     assert.equal(rows().length, 100);
     ui.get('queue-next').click();
     ui.get('queue-next').click();
     assert.equal(rows().length, 51);
     assert.equal(ui.get('queue-range').textContent, '201–251 из 251');
-    ui.get('queue-search').value = 'item-250';
-    ui.get('queue-search').emit('input');
+    ui.get('browser-search').value = 'item-250';
+    ui.get('browser-search').emit('input');
     assert.equal(rows().length, 1);
     ui.get('download-all').click();
     assert.equal(ui.messages.at(-1).files.length, 251);
     ui.exportDone(['demo.rpa']);
-    const remove = ui.get('file-list').querySelectorAll('.tools-remove')[0];
+    const remove = ui.get('browser-list').querySelectorAll('.tools-remove-source')[0];
     remove.focus(); remove.click();
     assert.equal(ui.document.activeElement, ui.get('add'));
-    ui.get('queue-search').value = '';
-    ui.get('queue-search').emit('input');
-    const first = ui.get('file-list').querySelectorAll('.tools-remove')[0];
+    ui.get('browser-search').value = '';
+    ui.get('browser-search').emit('input');
+    const first = ui.get('browser-list').querySelectorAll('.tools-remove-source')[0];
     first.focus(); first.click();
-    assert.equal(ui.document.activeElement, ui.get('file-list').querySelectorAll('.tools-remove')[0]);
+    assert.equal(ui.document.activeElement, ui.get('browser-list').querySelectorAll('.tools-remove-source')[0]);
     ui.get('clear').click();
     assert.equal(ui.get('queue').hidden, true);
     assert.equal(ui.document.activeElement, ui.get('add'));
@@ -191,7 +245,9 @@ test('an invalid prefix preserves the verified path preview and explains how to 
     ui.get('pack-prefix').value = 'mods/demo';
     ui.get('pack-prefix').emit('input');
     await ui.add(['bg.png']);
-    const path = () => ui.get('file-list').children[0].children[0].children[0].children[0].textContent;
+    ui.get('browser-search').value = 'bg.png';
+    ui.get('browser-search').emit('input');
+    const path = () => ui.get('browser-list').children[0].children[0].children[1].textContent;
     assert.equal(path(), 'mods/demo/bg.png');
     ui.get('pack-prefix').value = '../bad';
     ui.get('pack-prefix').emit('input');

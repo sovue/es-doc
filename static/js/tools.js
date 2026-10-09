@@ -24,7 +24,7 @@
     let packValid = true, pathPreviewValid = true;
     let validPackPaths = new Map(), queuePage = 0, queueMatches = 0;
     const queuePageSize = 100;
-    const queueSearch = get('queue-search');
+    const queueSearch = browserSearch;
     const queuePrevious = get('queue-previous'), queueNext = get('queue-next');
     const controller = new AbortController();
     const on = (element, event, callback) => element.addEventListener(event, callback, { signal: controller.signal });
@@ -82,7 +82,7 @@
         selectedEntry = null;
         exportReady = false;
         clearOnDownload = false;
-        browseFolder = '';
+        if (mode !== 'pack') browseFolder = '';
         browser.hidden = true;
         browseActions.hidden = true;
         warningsPanel.hidden = true;
@@ -140,20 +140,12 @@
         list.replaceChildren();
         rows.clear();
         const allFiles = selected();
-        const query = queueSearch.value.trim().normalize('NFC').toLowerCase();
-        const matched = mode === 'pack' && query ? allFiles.filter(entry =>
-            [entry.path, validPackPaths.get(entry.path) || ''].some(path => path.normalize('NFC').toLowerCase().includes(query))) : allFiles;
-        queueMatches = matched.length;
-        queuePage = Math.min(queuePage, Math.max(0, Math.ceil(queueMatches / queuePageSize) - 1));
-        const first = mode === 'pack' ? queuePage * queuePageSize : 0;
-        const visible = matched.slice(first, first + (mode === 'pack' ? queuePageSize : 200));
         queue.hidden = !allFiles.length;
-        list.hidden = false;
+        list.hidden = mode === 'pack';
         get('count').textContent = `${countLabel(allFiles.length, 'файл', 'файла', 'файлов')} / ${size(allFiles.reduce((total, entry) => total + entry.file.size, 0))}`;
-        get('queue-tools').hidden = mode !== 'pack' || !allFiles.length;
-        get('pack-preview-note').hidden = pathPreviewValid;
-        get('queue-pages').hidden = queueMatches <= queuePageSize;
-        get('queue-range').textContent = queueMatches ? `${first + 1}–${first + visible.length} из ${queueMatches}` : 'Файлы не найдены. Измените поиск.';
+        get('pack-preview-note').hidden = mode !== 'pack' || pathPreviewValid;
+        if (mode === 'pack') { updateControls(); return; }
+        const visible = allFiles.slice(0, 200);
         const fragment = document.createDocumentFragment();
         // Bound the DOM for folders with thousands of scripts; all queued files
         // are still processed even when their rows are not rendered.
@@ -400,6 +392,7 @@
         app.dataset.mode = mode;
         get('pack-clear-label').hidden = mode !== 'pack';
         get('pack-notice').hidden = mode !== 'pack';
+        get('queue-tools').hidden = mode !== 'pack';
         get('pack-integration').hidden = mode !== 'pack';
         get('mode-pack').checked = mode === 'pack';
         get('mode-unpack').checked = mode !== 'pack';
@@ -413,9 +406,8 @@
         fileInput.accept = mode === 'pack' ? '' : '.rpa,.rpyc,.rpymc,.pyc';
         if (mode === 'pack') validatePack();
     };
-    on(queueSearch, 'input', () => { queuePage = 0; render(); });
-    on(queuePrevious, 'click', () => { queuePage--; render(); });
-    on(queueNext, 'click', () => { queuePage++; render(); });
+    on(queuePrevious, 'click', () => { queuePage--; renderBrowse(); });
+    on(queueNext, 'click', () => { queuePage++; renderBrowse(); });
     for (const field of [packName, packPrefix, packStrip]) on(field, field === packStrip ? 'change' : 'input', () => {
         clearResult();
         validatePack();
@@ -425,6 +417,9 @@
     for (const value of ['pack', 'unpack']) on(get('mode-' + value), 'change', () => {
         if (busy || enumerating || mode === value) return;
         mode = value;
+        browseFolder = '';
+        browserSearch.value = '';
+        queuePage = 0;
         files = modeFiles[mode];
         resetWorker();
         clearResult();
@@ -446,6 +441,12 @@
         for (const button of browserList.querySelectorAll('[data-entry-id]')) {
             if (button.getAttribute('data-entry-id') === entry.id) button.setAttribute('aria-current', 'true');
             else button.removeAttribute('aria-current');
+        }
+        if (mode === 'pack' && (!/\.(rpy|rpym|txt|md|json|yaml|yml|xml|html|css|js|py|csv|ini|log|sh|bat)$/i.test(entry.path)
+            || entry.size > 2 * 1024 * 1024)) {
+            showPreview({ name: entry.path, file: catalogFiles[entry.source].file, buffer: new ArrayBuffer(0), warnings: [] });
+            updateControls();
+            return;
         }
         const cached = previewCache.get(cacheKey);
         if (cached) {
@@ -475,8 +476,13 @@
         updateControls();
         try {
             ensureWorker();
-            if (!catalogSubmitted) submitCatalog();
-            worker.postMessage({ type: 'source-read', id: entry.id, options: previewOptions, requestId: ++browseRequest });
+            if (mode === 'pack') {
+                worker.postMessage({ type: 'pack-preview', name: entry.path, file: catalogFiles[entry.source].file,
+                    config, requestId: ++browseRequest });
+            } else {
+                if (!catalogSubmitted) submitCatalog();
+                worker.postMessage({ type: 'source-read', id: entry.id, options: previewOptions, requestId: ++browseRequest });
+            }
         } catch (error) { fail(error.message); }
     };
     const renderBrowse = () => {
@@ -489,6 +495,7 @@
             button.disabled = folder === browseFolder && !browserSearch.value;
             button.addEventListener('click', () => {
                 browseFolder = folder;
+                queuePage = 0;
                 browserSearch.value = '';
                 renderBrowse();
             });
@@ -505,7 +512,8 @@
         const entries = [];
         for (const entry of browseEntries) {
             if (query) {
-                if (entry.path.toLocaleLowerCase().includes(query)) entries.push(entry);
+                if (entry.path.toLocaleLowerCase().includes(query)
+                    || mode === 'pack' && entry.originalPath.toLocaleLowerCase().includes(query)) entries.push(entry);
             } else if (entry.path.startsWith(browseFolder)) {
                 const rest = entry.path.slice(browseFolder.length);
                 const slash = rest.indexOf('/');
@@ -532,16 +540,25 @@
             item.append(button, meta);
             browserList.appendChild(item);
         };
-        for (const folder of [...folders].sort((a, b) => a.localeCompare(b, 'ru'))) {
-            row(folder + '/', 'папка', () => { browseFolder += folder + '/'; renderBrowse(); }, 'folder');
+        const folderNames = [...folders].sort((a, b) => a.localeCompare(b, 'ru'));
+        if (mode === 'pack') entries.sort((a, b) => a.path.localeCompare(b.path, 'ru'));
+        queueMatches = folderNames.length + entries.length;
+        const pageSize = mode === 'pack' ? queuePageSize : 500;
+        queuePage = Math.min(queuePage, Math.max(0, Math.ceil(queueMatches / pageSize) - 1));
+        const offset = mode === 'pack' ? queuePage * pageSize : 0;
+        const visibleFolders = mode === 'pack' ? folderNames.slice(offset, offset + pageSize) : folderNames;
+        const visibleEntries = entries.slice(mode === 'pack' ? Math.max(0, offset - folderNames.length) : 0,
+            mode === 'pack' ? Math.max(0, offset + pageSize - folderNames.length) : 500);
+        for (const folder of visibleFolders) {
+            row(folder + '/', 'папка', () => { browseFolder += folder + '/'; queuePage = 0; renderBrowse(); }, 'folder');
         }
-        for (const entry of entries.slice(0, 500)) {
+        for (const entry of visibleEntries) {
             const kind = /\.(rpyc|rpymc|pyc|rpy|rpym|py|js|json|css|txt)$/i.test(entry.path) ? 'code'
                 : /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(entry.path) ? 'image'
                 : /\.(ogg|mp3|wav|opus|flac|mp4|webm)$/i.test(entry.path) ? 'media' : 'file';
             row(query ? entry.path : entry.path.slice(browseFolder.length), size(entry.size), () => readBrowse(entry), kind,
                 selectedEntry?.id === entry.id, entry.id);
-            if (catalogFiles[entry.source]?.path === entry.path && !isArchive(catalogFiles[entry.source]) && files.has(entry.path)) {
+            if (mode === 'pack' || catalogFiles[entry.source]?.path === entry.path && !isArchive(catalogFiles[entry.source]) && files.has(entry.path)) {
                 const remove = document.createElement('button');
                 remove.type = 'button';
                 remove.className = 'tools-icon-button tools-remove-source';
@@ -550,10 +567,18 @@
                 remove.innerHTML = '<span class="tools-ui-icon tools-icon-close" aria-hidden="true"></span>';
                 remove.disabled = busy;
                 remove.addEventListener('click', () => {
-                    files.delete(entry.path);
+                    const focused = document.activeElement === remove;
+                    const index = Array.from(browserList.querySelectorAll('.tools-remove-source')).indexOf(remove);
+                    files.delete(mode === 'pack' ? entry.originalPath : entry.path);
+                    if (mode === 'pack') validPackPaths.delete(entry.originalPath);
                     clearResult();
+                    if (mode === 'pack') refreshPackFolders();
                     render();
                     loadCatalog();
+                    if (focused && mode === 'pack') {
+                        const buttons = files.size ? browserList.querySelectorAll('.tools-remove-source') : [];
+                        (buttons[Math.min(index, buttons.length - 1)] || addButton).focus();
+                    }
                 });
                 browserList.lastElementChild.appendChild(remove);
             }
@@ -565,7 +590,12 @@
             browserList.appendChild(empty);
         }
         browserStatus.textContent = countLabel(folders.size + entries.length, 'элемент', 'элемента', 'элементов')
-            + (entries.length > 500 ? ' (показаны первые 500; уточните поиск)' : '');
+            + (mode !== 'pack' && entries.length > 500 ? ' (показаны первые 500; уточните поиск)' : '');
+        if (mode === 'pack') {
+            get('queue-pages').hidden = queueMatches <= pageSize;
+            get('queue-range').textContent = queueMatches ? `${offset + 1}–${Math.min(offset + pageSize, queueMatches)} из ${queueMatches}` : '';
+            updateControls();
+        }
     };
     const renderWarnings = (panel, summary, list, count, messages) => {
         panel.hidden = !count;
@@ -631,7 +661,7 @@
         const mime = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif',
             svg: 'image/svg+xml', ogg: 'audio/ogg', mp3: 'audio/mpeg', wav: 'audio/wav', opus: 'audio/ogg', flac: 'audio/flac',
             mp4: 'video/mp4', webm: 'video/webm', ttf: 'font/ttf', otf: 'font/otf', woff: 'font/woff', woff2: 'font/woff2' }[extension] || 'application/octet-stream';
-        previewUrl = URL.createObjectURL(new Blob([data.buffer], { type: mime }));
+        previewUrl = URL.createObjectURL(data.file || new Blob([data.buffer], { type: mime }));
         browserPreview.replaceChildren();
         const title = document.createElement('h4');
         title.textContent = path;
@@ -681,7 +711,7 @@
                     specimen.style.fontFamily = 'tools-specimen';
                 }
             }).catch(() => { if (previewFont === font) browserStatus.textContent = 'Не удалось открыть шрифт.'; });
-        } else if (/\.(rpy|rpym|txt|md|json|yaml|yml|xml|html|css|js|py|csv|ini|log|sh|bat)$/i.test(path) && data.buffer.byteLength > 2 * 1024 * 1024) {
+        } else if (/\.(rpy|rpym|txt|md|json|yaml|yml|xml|html|css|js|py|csv|ini|log|sh|bat)$/i.test(path) && (data.file?.size || data.buffer.byteLength) > 2 * 1024 * 1024) {
             const note = document.createElement('p');
             note.textContent = 'Файл слишком большой для предпросмотра. Его можно скачать целиком.';
             browserPreview.appendChild(note);
@@ -749,10 +779,12 @@
         previewUrl = null;
         const source = Number(browseArchive.value) || 0;
         const scripts = browseArchive.value === 'scripts';
-        browseEntries = catalogEntries.filter(entry => scripts
+        browseEntries = mode === 'pack' ? catalogEntries : catalogEntries.filter(entry => scripts
             ? catalogFiles[entry.source] && !isArchive(catalogFiles[entry.source]) : entry.source === source);
-        browseFolder = '';
-        browserSearch.value = '';
+        if (mode !== 'pack') {
+            browseFolder = '';
+            browserSearch.value = '';
+        } else if (!browseEntries.some(entry => entry.path.startsWith(browseFolder))) browseFolder = '';
         browserList.replaceChildren();
         browserPreview.replaceChildren();
         const empty = document.createElement('p');
@@ -760,11 +792,11 @@
         empty.textContent = 'Файл не выбран';
         browserPreview.appendChild(empty);
         browser.hidden = false;
-        get('browser-title').textContent = scripts ? 'Сценарии' : catalogFiles[source]?.path || 'Файлы';
+        get('browser-title').textContent = mode === 'pack' ? 'Пути внутри архива' : scripts ? 'Сценарии' : catalogFiles[source]?.path || 'Файлы';
         renderBrowse();
     };
     on(browseArchive, 'change', openBrowse);
-    on(browserSearch, 'input', renderBrowse);
+    on(browserSearch, 'input', () => { queuePage = 0; renderBrowse(); });
     const errorDiagnostic = error => {
         const block = document.createElement('div');
         block.className = 'tools-diagnostic';
@@ -992,6 +1024,11 @@
             validatePack();
             resultPanel.hidden = false;
             downloadAll.hidden = false;
+            catalogFiles = selected();
+            catalogEntries = catalogFiles.map((entry, source) => ({ id: entry.path,
+                originalPath: entry.path, path: validPackPaths.get(entry.path) || entry.path,
+                size: entry.file.size, source }));
+            openBrowse();
             showOutputs();
             updateControls();
             return;

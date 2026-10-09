@@ -2,6 +2,7 @@
    worker. WORKERFS reads Blob slices instead of copying a whole RPA to MEMFS. */
 let runtimePromise;
 let packRuntimePromise;
+let packSyntaxReady = false;
 let inputIndices = [];
 let browseMounted = false;
 let commandQueue = Promise.resolve();
@@ -274,9 +275,53 @@ gc.collect()
     }
 }
 
+async function packPreview(data) {
+    let pyodide;
+    try {
+        const buffer = await data.file.arrayBuffer();
+        packRuntimePromise ||= initializePacker(data.config).catch(error => { packRuntimePromise = null; throw error; });
+        pyodide = await packRuntimePromise;
+        if (!packSyntaxReady) {
+            const [syntax, lexer] = await Promise.all([
+                checkedFetch(data.config.syntax).then(response => response.arrayBuffer()),
+                checkedFetch(data.config.lexer).then(response => response.text()),
+            ]);
+            pyodide.FS.writeFile('/tools/syntax.zip', new Uint8Array(syntax));
+            pyodide.FS.writeFile('/tools/renpy_lexer.py', lexer, { encoding: 'utf8' });
+            await pyodide.runPythonAsync("import zipfile\nwith zipfile.ZipFile('/tools/syntax.zip') as bundled:\n    bundled.extractall('/tools')");
+            packSyntaxReady = true;
+        }
+        pyodide.FS.writeFile('/tools/pack-preview-input', new Uint8Array(buffer));
+        pyodide.globals.set('pack_preview_name', data.name);
+        const html = await pyodide.runPythonAsync(`
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import get_lexer_for_filename, TextLexer
+from pygments.util import ClassNotFound
+from renpy_lexer import RenPyLexer
+with open('/tools/pack-preview-input', 'rb') as preview_source:
+    preview_text = preview_source.read().decode('utf-8', errors='replace')
+try:
+    preview_lexer = RenPyLexer() if pack_preview_name.lower().endswith(('.rpy', '.rpym')) else get_lexer_for_filename(pack_preview_name)
+except ClassNotFound:
+    preview_lexer = TextLexer()
+highlight(preview_text, preview_lexer, HtmlFormatter(nowrap=True))
+`);
+        self.postMessage({ type: 'source-file', name: data.name, buffer, html, warnings: [], requestId: data.requestId }, [buffer]);
+    } catch (error) {
+        self.postMessage({ type: 'source-error', operation: 'pack-preview', error: String(error.message || error), requestId: data.requestId });
+    } finally {
+        if (pyodide) {
+            try { pyodide.FS.unlink('/tools/pack-preview-input'); } catch {}
+            await pyodide.runPythonAsync("for key in ('pack_preview_name', 'preview_text', 'preview_lexer', 'preview_source'):\n    globals().pop(key, None)");
+        }
+    }
+}
+
 self.onmessage = ({ data }) => {
-    if (!['pack', 'run', 'catalog', 'source-read', 'browse-list', 'browse-read'].includes(data.type)) return;
+    if (!['pack', 'pack-preview', 'run', 'catalog', 'source-read', 'browse-list', 'browse-read'].includes(data.type)) return;
     commandQueue = commandQueue.then(() => data.type === 'pack' ? pack(data) : data.type === 'run' ? run(data)
+        : data.type === 'pack-preview' ? packPreview(data)
         : ['catalog', 'source-read'].includes(data.type) ? source(data) : browse(data))
         .catch(error => self.postMessage({ type: 'fatal', error: String(error.message || error) }));
     return commandQueue;

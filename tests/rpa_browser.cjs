@@ -6,13 +6,13 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '..');
-const fixtures = path.join(root, 'temp/rpa-browser/game');
+const fixtures = path.join(root, 'temp/rpa-tree-browser/game');
 const target = process.env.RPA_TEST_URL || 'http://127.0.0.1:8012/tools/unpack?mode=pack';
 const resources = {
-    'mods/my_mod/images/bg.png': Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aWQAAAABJRU5ErkJggg==', 'base64'),
-    'mods/my_mod/audio/тема.ogg': Buffer.from([0, 255, 128, 65]),
-    'mods/my_mod/empty.txt': Buffer.alloc(0),
-    'mods/my_mod/script.rpy': Buffer.from('label my_mod_start:\n    return\n'),
+    'my_mod/images/bg.png': Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aWQAAAABJRU5ErkJggg==', 'base64'),
+    'my_mod/audio/тема.ogg': Buffer.from([0, 255, 128, 65]),
+    'my_mod/empty.txt': Buffer.alloc(0),
+    'my_mod/script.rpy': Buffer.from('label my_mod_start:\n    return\n'),
 };
 for (const [name, data] of Object.entries(resources)) {
     const file = path.join(fixtures, name);
@@ -39,23 +39,29 @@ for (const [name, data] of Object.entries(resources)) {
                 element.getAttribute('aria-describedby').split(/\s+/).filter(id => !document.getElementById(id))));
         assert.deepEqual(missingDescriptions, []);
         assert.equal(await page.locator('#tools-pack-strip').inputValue(), 'game/');
-        assert.match(await page.locator('#tools-file-list').textContent(), /my_mod\/images\/bg.png/);
-        const verifiedPaths = await page.locator('.tools-pack-path').allTextContents();
+        assert(await page.locator('#tools-browser').isVisible());
+        await page.locator('#tools-browser-list button').filter({hasText: 'my_mod/'}).click();
+        await page.locator('#tools-browser-list button').filter({hasText: 'images/'}).click();
+        await page.locator('#tools-browser-list button').filter({hasText: 'bg.png'}).click();
+        assert(await page.locator('#tools-browser-preview img').isVisible());
+        await page.locator('#tools-browser-search').fill('/');
+        const verifiedPaths = await page.locator('#tools-browser-list button[data-entry-id]').allTextContents();
         await page.locator('#tools-pack-prefix').fill('../outside');
         assert(await page.locator('#tools-download-all').isDisabled());
         assert(await page.locator('#tools-pack-error').isVisible());
         assert.match(await page.locator('#tools-pack-prefix-error').textContent(), /относительный путь.*my_mod/);
         assert(await page.locator('#tools-pack-preview-note').isVisible());
-        assert.deepEqual(await page.locator('.tools-pack-path').allTextContents(), verifiedPaths);
+        assert.deepEqual(await page.locator('#tools-browser-list button[data-entry-id]').allTextContents(), verifiedPaths);
         await page.locator('#tools-pack-prefix').fill('');
         await page.locator('#tools-pack-name').fill('my_mod');
         await page.locator('#tools-mode-unpack').check();
         assert(!await page.locator('#tools-queue').isVisible());
         await page.locator('#tools-mode-pack').check();
-        assert.deepEqual(await page.locator('.tools-pack-path').allTextContents(), verifiedPaths);
+        await page.locator('#tools-browser-search').fill('/');
+        assert.deepEqual(await page.locator('#tools-browser-list button[data-entry-id]').allTextContents(), verifiedPaths);
         assert.equal(await page.locator('#tools-pack-name').inputValue(), 'my_mod');
-        await page.locator('#tools-queue-search').fill('bg.png');
-        assert.equal(await page.locator('.tools-pack-path').count(), 1);
+        await page.locator('#tools-browser-search').fill('bg.png');
+        assert.equal(await page.locator('#tools-browser-list button[data-entry-id]').count(), 1);
 
         // Cancel lazy startup and retry from the same File objects.
         await page.locator('#tools-download-all').click();
@@ -70,10 +76,10 @@ for (const [name, data] of Object.entries(resources)) {
         await saved.saveAs(archive);
         assert.match(await page.locator('#tools-result-description').textContent(), /Файлов в RPA: 4/);
         assert.equal(await page.locator('#tools-queue').isVisible(), true);
-        await page.locator('#tools-queue-search').fill('');
-        assert.deepEqual(await page.locator('.tools-pack-path').allTextContents(), verifiedPaths);
+        await page.locator('#tools-browser-search').fill('/');
+        assert.deepEqual(await page.locator('#tools-browser-list button[data-entry-id]').allTextContents(), verifiedPaths);
         await page.locator('#tools-pack-prefix').fill('alternate');
-        assert.equal(await page.locator('.tools-pack-path').first().textContent(), 'alternate/' + verifiedPaths[0]);
+        assert.equal(await page.locator('#tools-browser-list button[data-entry-id]').first().textContent(), 'alternate/' + verifiedPaths[0]);
         assert(await page.locator('#tools-download-all').isEnabled());
         await page.locator('#tools-pack-prefix').fill('');
         const python = path.join(root, '.venv/Scripts/python.exe');
@@ -88,6 +94,11 @@ for (const [name, data] of Object.entries(resources)) {
             '    assert content == (pathlib.Path(sys.argv[2]) / name).read_bytes(), name',
             'assert len(index) == 4',
         ].join('\n'), archive, fixtures]);
+        await page.locator('#tools-browser-search').fill('script.rpy');
+        await page.locator('#tools-browser-list button[data-entry-id]').click();
+        await page.locator('#tools-browser-preview pre .k').first().waitFor({state: 'visible', timeout: 90000});
+        assert.match(await page.locator('#tools-browser-preview code').textContent(), /label my_mod_start/);
+        await page.locator('#tools-browser-search').fill('/');
         assert(requests.every(([method]) => method === 'GET'), JSON.stringify(requests));
         assert(!requests.some(([, url]) => /vendor\.zip|bytecode\.zip/.test(url)), 'Packing must not load decompilers');
 
@@ -96,7 +107,8 @@ for (const [name, data] of Object.entries(resources)) {
         await page.locator('#tools-files').setInputFiles(archive);
         await page.locator('#tools-browser-list button').first().waitFor({ state: 'visible', timeout: 90000 });
         await page.locator('#tools-mode-pack').check();
-        assert.deepEqual(await page.locator('.tools-pack-path').allTextContents(), verifiedPaths);
+        await page.locator('#tools-browser-search').fill('/');
+        assert.deepEqual(await page.locator('#tools-browser-list button[data-entry-id]').allTextContents(), verifiedPaths);
         await page.locator('#tools-mode-unpack').check();
         await page.locator('#tools-browser-list button').first().waitFor({ state: 'visible', timeout: 90000 });
         await page.locator('#tools-browser-search').fill('тема');
@@ -122,22 +134,22 @@ for (const [name, data] of Object.entries(resources)) {
         await page.locator('#tools-files').setInputFiles(Array.from({ length: 251 }, (_, i) => ({
             name: `item-${String(i).padStart(3, '0')}.bin`, mimeType: 'application/octet-stream', buffer: Buffer.from([i % 256]),
         })));
-        assert.equal(await page.locator('.tools-pack-path').count(), 100);
+        assert.equal(await page.locator('#tools-browser-list button[data-entry-id]').count(), 100);
         await page.locator('#tools-queue-next').click();
         await page.locator('#tools-queue-next').click();
-        assert.equal(await page.locator('.tools-pack-path').count(), 51);
+        assert.equal(await page.locator('#tools-browser-list button[data-entry-id]').count(), 51);
         assert.match(await page.locator('#tools-queue-range').textContent(), /201–251 из 251/);
-        await page.locator('#tools-queue-search').fill('item-250');
-        await page.locator('.tools-remove').focus();
+        await page.locator('#tools-browser-search').fill('item-250');
+        await page.locator('#tools-browser-list .tools-remove-source').focus();
         await page.keyboard.press('Enter');
         assert(await page.locator('#tools-add').evaluate(el => el === document.activeElement));
-        await page.locator('#tools-queue-search').fill('');
-        await page.locator('.tools-remove').first().focus();
+        await page.locator('#tools-browser-search').fill('');
+        await page.locator('#tools-browser-list .tools-remove-source').first().focus();
         await page.keyboard.press('Enter');
-        assert(await page.locator('.tools-remove').first().evaluate(el => el === document.activeElement));
+        assert(await page.locator('#tools-browser-list .tools-remove-source').first().evaluate(el => el === document.activeElement));
         await page.locator('#tools-clear').click();
         await page.locator('#tools-files').setInputFiles({ name: 'last.txt', mimeType: 'text/plain', buffer: Buffer.from('last') });
-        await page.locator('.tools-remove').focus();
+        await page.locator('#tools-browser-list .tools-remove-source').focus();
         await page.keyboard.press('Enter');
         assert(await page.locator('#tools-add').evaluate(el => el === document.activeElement));
 
