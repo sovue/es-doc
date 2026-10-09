@@ -457,8 +457,8 @@
     });
     const nativeEyedropper = window.EyeDropper && window.isSecureContext;
     const screenEyedropper = window.isSecureContext && window.navigator.mediaDevices?.getDisplayMedia;
+    get('eyedropper').hidden = false;
     if (nativeEyedropper || screenEyedropper) {
-        get('eyedropper').hidden = false;
         on(get('eyedropper'), 'click', async () => {
             const pickController = new AbortController();
             eyedropperController = pickController;
@@ -499,6 +499,11 @@
                 clearTimeout(eyedropperOverlayTimer);
                 if (!disposed) { get('eyedropper').disabled = false; get('eyedropper-overlay').hidden = true; get('eyedropper-overlay').classList.remove('picker-eyedropper-overlay-capture'); get('eyedropper').focus({preventScroll: true}); }
             }
+        });
+    }
+    if (!nativeEyedropper && !screenEyedropper) {
+        on(get('eyedropper'), 'click', () => {
+            get('status').textContent = 'Пипетка недоступна в вашем браузере.';
         });
     }
     const canvas = get('image-canvas');

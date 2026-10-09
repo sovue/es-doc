@@ -105,6 +105,18 @@ test('changing palette and selecting a swatch resets alpha and invalid inputs', 
     assert.equal(ui.get('swatches').children[0].children[3].getAttribute('aria-pressed'), 'true');
 });
 
+test('unavailable pipette stays visible and explains browser support on click', () => {
+    for (const options of [{isSecureContext: true}, {isSecureContext: false, EyeDropper: class {}}]) {
+        const ui = page(options);
+        const original = ui.get('output-hex').value;
+        assert.equal(ui.get('eyedropper').hidden, false);
+        ui.get('eyedropper').click();
+        assert.equal(ui.get('status').textContent, 'Пипетка недоступна в вашем браузере.');
+        assert.equal(ui.get('output-hex').value, original);
+        assert.equal(ui.get('eyedropper-overlay').hidden, true);
+    }
+});
+
 test('right click or Escape cancels the eyedropper without applying a late result', async () => {
     let resolvePick, signal;
     const ui = page({isSecureContext: true, EyeDropper: class {
