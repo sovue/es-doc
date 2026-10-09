@@ -45,10 +45,10 @@ function page(options = {}) {
     const copied = [];
     const stored = new Map();
     const timers = new Map();
-    const window = {...options, navigator: {clipboard: {writeText: async value => copied.push(value)}},
+    const window = {...options, navigator: {clipboard: {writeText: async value => copied.push(value)}, ...options.navigator},
         localStorage: {getItem: key => stored.get(key), setItem: (key, value) => stored.set(key, value)}};
     let timerId = 0;
-    const context = vm.createContext({ document, window, AbortController, Event, setTimeout: callback => { timers.set(++timerId, callback); return timerId; }, clearTimeout: id => timers.delete(id) });
+    const context = vm.createContext({ document, window, AbortController, DOMException, Event, setTimeout: callback => { timers.set(++timerId, callback); return timerId; }, clearTimeout: id => timers.delete(id) });
     for (const file of ['colors-named.js', 'colors-core.js', 'colors.js']) vm.runInContext(fs.readFileSync(new URL('../static/js/' + file, import.meta.url), 'utf8'), context);
     const input = (id, value) => { const element = get('colors-' + id); element.focus(); element.value = value; element.emit('input'); };
     return { get: id => get('colors-' + id), input, copied, window, stored, document, runTimers: () => { for (const callback of timers.values()) callback(); timers.clear(); } };
@@ -115,6 +115,93 @@ test('unavailable pipette stays visible and explains browser support on click', 
         assert.equal(ui.get('output-hex').value, original);
         assert.equal(ui.get('eyedropper-overlay').hidden, true);
     }
+});
+
+test('pipette warning appears only in Firefox', () => {
+    for (const [userAgent, visible] of [
+        ['Mozilla/5.0 Gecko/20100101 Firefox/143.0', true],
+        ['Mozilla/5.0 FxiOS/143.0', true],
+        ['Mozilla/5.0 Chrome/143.0 Safari/537.36', false],
+        ['', false]
+    ]) {
+        const ui = page({navigator: {userAgent}});
+        assert.equal(ui.get('eyedropper-warning').hidden, !visible);
+        assert.equal(ui.get('eyedropper').title, undefined);
+    }
+});
+
+test('Firefox tooltip supports hover, keyboard focus, Escape and touch', () => {
+    const ui = page({navigator: {userAgent: 'Firefox/143.0'}});
+    const warning = ui.get('eyedropper-warning');
+    const trigger = ui.get('eyedropper-warning-trigger');
+    const tooltip = ui.get('eyedropper-tooltip');
+    warning.emit('pointerenter', {pointerType: 'mouse'});
+    assert.equal(tooltip.hidden, true);
+    ui.runTimers();
+    assert.equal(tooltip.hidden, false);
+    warning.emit('pointerleave');
+    assert.equal(tooltip.hidden, true);
+    trigger.emit('focus');
+    assert.equal(tooltip.hidden, false);
+    ui.document.emit('keydown', {key: 'Escape'});
+    assert.equal(tooltip.hidden, true);
+    trigger.emit('blur');
+    warning.emit('pointerenter', {pointerType: 'mouse'});
+    warning.emit('pointerleave');
+    ui.runTimers();
+    assert.equal(tooltip.hidden, true);
+    trigger.click();
+    assert.equal(tooltip.hidden, false);
+    ui.window.__esdocColorsCleanup();
+    ui.runTimers();
+    assert.equal(tooltip.hidden, true);
+});
+
+test('screen capture selects external window colors from a frozen preview using its own coordinates', async () => {
+    let stopped = 0, drawn = 0, sampled;
+    const ui = page({isSecureContext: true, navigator: {mediaDevices: {getDisplayMedia: async options => {
+        assert.equal(options.preferCurrentTab, undefined);
+        return {getTracks: () => [{stop: () => stopped++}]};
+    }}}});
+    ui.document.createElement = name => {
+        assert.equal(name, 'video');
+        return {videoWidth: 1600, videoHeight: 900, play: async () => {}};
+    };
+    const canvas = ui.get('screen-canvas');
+    canvas.getBoundingClientRect = () => ({left: 100, top: 20, width: 800, height: 450});
+    canvas.getContext = () => ({drawImage: () => drawn++, getImageData: (x, y) => {
+        sampled = [x, y]; return {data: [18, 52, 86, 255]};
+    }});
+    ui.get('eyedropper').click();
+    assert.equal(ui.get('status').textContent, 'Выберите экран или окно для снимка.');
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(canvas.hidden, false);
+    assert.equal(stopped, 1);
+    assert.equal(drawn, 1);
+    ui.get('eyedropper-overlay').emit('pointerdown', {target: canvas, button: 0, clientX: 500, clientY: 245, preventDefault() {}});
+    await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(sampled, [800, 450]);
+    assert.equal(drawn, 1);
+    assert.equal(ui.get('output-hex').value, '#123456');
+    assert.equal(canvas.hidden, true);
+    assert.equal(ui.get('eyedropper-overlay').hidden, true);
+});
+
+test('screen capture cancellation during permission prompt stops a late stream', async () => {
+    let resolveCapture, stopped = 0;
+    const ui = page({isSecureContext: true, navigator: {mediaDevices: {
+        getDisplayMedia: () => new Promise(resolve => { resolveCapture = resolve; })
+    }}});
+    const original = ui.get('output-hex').value;
+    ui.get('eyedropper').click();
+    ui.document.emit('keydown', {key: 'Escape', preventDefault() {}});
+    resolveCapture({getTracks: () => [{stop: () => stopped++}]});
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(stopped, 1);
+    assert.equal(ui.get('screen-canvas').hidden, true);
+    assert.equal(ui.get('eyedropper-overlay').hidden, true);
+    assert.equal(ui.get('eyedropper').disabled, false);
+    assert.equal(ui.get('output-hex').value, original);
 });
 
 test('right click or Escape cancels the eyedropper without applying a late result', async () => {

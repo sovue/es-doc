@@ -21,7 +21,7 @@ class ToolsRouteTests(unittest.IsolatedAsyncioTestCase):
     async def test_tools_page_has_local_processing_and_both_pickers(self):
         response = await self.get('/tools/unpack')
         self.assertEqual(response.status_code, 200)
-        self.assertIn('Архивы RPA и декомпиляция RPYC/PYC — ES Doc', response.text)
+        self.assertIn('Архивация RPA и декомпиляция RPYC/PYC — ES Doc', response.text)
         self.assertIn('id="tools-mode-pack"', response.text)
         self.assertIn('id="tools-pack-strip"', response.text)
         self.assertIn('/static/tools/rpa.py?v=', response.text)

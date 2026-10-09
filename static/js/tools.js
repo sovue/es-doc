@@ -327,12 +327,19 @@
     const options = () => ({ try_harder: get('try-harder').checked, no_init_offset: get('no-init-offset').checked });
     const validatePack = () => {
         let errorMessage = '';
+        let nameError = '', prefixError = '', pathError = '';
         packName.removeAttribute('aria-invalid');
         packPrefix.removeAttribute('aria-invalid');
         try {
-            archiveName(packName.value);
+            const filename = archiveName(packName.value);
+            get('pack-filename').textContent = filename;
+            get('pack-install-archive').textContent = 'game/my_mod/' + filename;
+            get('pack-install-string').textContent = JSON.stringify('my_mod/' + filename.slice(0, -4));
+            get('pack-install-example').hidden = false;
         } catch (error) {
-            errorMessage = error.message;
+            nameError = error.message;
+            get('pack-filename').textContent = 'Укажите имя архива';
+            get('pack-install-example').hidden = true;
             packName.setAttribute('aria-invalid', 'true');
         }
         let prefixValid = false;
@@ -352,12 +359,26 @@
             pathPreviewValid = true;
         } catch (error) {
             pathPreviewValid = false;
-            if (!prefixValid) packPrefix.setAttribute('aria-invalid', 'true');
-            errorMessage ||= error.message;
+            if (!prefixValid) {
+                packPrefix.setAttribute('aria-invalid', 'true');
+                prefixError = error.message;
+            } else pathError = error.message;
         }
+        for (const [id, message] of [['pack-name-error', nameError], ['pack-prefix-error', prefixError]]) {
+            get(id).textContent = message;
+            get(id).hidden = !message;
+        }
+        errorMessage = nameError || prefixError || pathError;
         packValid = !errorMessage;
-        get('pack-error').textContent = errorMessage;
+        get('pack-error').textContent = pathError || (errorMessage ? 'Исправьте отмеченные поля, чтобы создать архив.' : '');
         get('pack-error').hidden = packValid;
+        const example = selected()[0];
+        get('pack-example-title').textContent = example ? 'Как изменится путь файла' : 'Пример';
+        get('pack-example-settings').hidden = Boolean(example);
+        get('pack-example-source').textContent = example ? example.path : 'images/bg.png';
+        get('pack-example-target').textContent = example
+            ? pathPreviewValid ? validPackPaths.get(example.path) : 'Исправьте настройки пути'
+            : 'my_mod/images/bg.png';
         return packValid;
     };
     const refreshPackFolders = () => {
@@ -376,13 +397,17 @@
         validatePack();
     };
     const applyMode = () => {
+        app.dataset.mode = mode;
+        get('pack-clear-label').hidden = mode !== 'pack';
+        get('pack-notice').hidden = mode !== 'pack';
+        get('pack-integration').hidden = mode !== 'pack';
         get('mode-pack').checked = mode === 'pack';
         get('mode-unpack').checked = mode !== 'pack';
         get('pack-settings').hidden = mode !== 'pack';
         get('options').hidden = mode === 'pack';
         get('pack-help').hidden = mode !== 'pack';
         get('unpack-help').hidden = mode === 'pack';
-        get('queue-heading').textContent = mode === 'pack' ? 'Пути внутри архива' : 'Добавленные файлы';
+        get('queue-heading').textContent = mode === 'pack' ? 'Файлы в архиве' : 'Добавленные файлы';
         list.setAttribute('aria-label', mode === 'pack' ? 'Пути внутри архива' : 'Добавленные файлы');
         get('drop-help').textContent = mode === 'pack' ? 'Изображения, музыка, шрифты и другие файлы' : '.rpa, .rpyc, .rpymc, .pyc';
         fileInput.accept = mode === 'pack' ? '' : '.rpa,.rpyc,.rpymc,.pyc';

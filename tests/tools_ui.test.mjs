@@ -197,12 +197,69 @@ test('an invalid prefix preserves the verified path preview and explains how to 
     ui.get('pack-prefix').emit('input');
     assert.equal(path(), 'mods/demo/bg.png');
     assert.equal(ui.get('pack-preview-note').hidden, false);
-    assert.match(ui.get('pack-error').textContent, /относительный путь.*mods\/my_mod/);
+    assert.match(ui.get('pack-prefix-error').textContent, /относительный путь.*my_mod/);
     assert.equal(ui.get('download-all').disabled, true);
     ui.get('pack-prefix').value = 'fixed';
     ui.get('pack-prefix').emit('input');
     assert.equal(path(), 'fixed/bg.png');
     assert.equal(ui.get('pack-preview-note').hidden, true);
+});
+
+test('packing errors belong to their fields and clear independently', () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = '';
+    ui.get('pack-prefix').value = '../bad';
+    ui.get('pack-prefix').emit('input');
+    assert.match(ui.get('pack-name-error').textContent, /имя архива/);
+    assert.match(ui.get('pack-prefix-error').textContent, /относительный путь/);
+    ui.get('pack-name').value = 'demo';
+    ui.get('pack-name').emit('input');
+    assert.equal(ui.get('pack-name-error').hidden, true);
+    assert.equal(ui.get('pack-prefix-error').hidden, false);
+    assert.equal(ui.get('pack-filename').textContent, 'demo.rpa');
+    ui.get('pack-prefix').value = 'mods/demo';
+    ui.get('pack-prefix').emit('input');
+    assert.equal(ui.get('pack-prefix-error').hidden, true);
+});
+
+test('archive connection example tracks the download name and hides invalid code', () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'chapter.rpa';
+    ui.get('pack-name').emit('input');
+    assert.equal(ui.get('pack-install-archive').textContent, 'game/my_mod/chapter.rpa');
+    assert.equal(ui.get('pack-install-string').textContent, '"my_mod/chapter"');
+    ui.get('pack-name').value = '../bad';
+    ui.get('pack-name').emit('input');
+    assert.equal(ui.get('pack-install-example').hidden, true);
+    ui.get('pack-name').value = 'new';
+    ui.get('pack-name').emit('input');
+    assert.equal(ui.get('pack-install-example').hidden, false);
+    assert.equal(ui.get('pack-install-string').textContent, '"my_mod/new"');
+    ui.get('mode-unpack').emit('change');
+    assert.equal(ui.get('pack-integration').hidden, true);
+});
+
+test('packing picker menu and path example follow the selected resources', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    ui.get('add').click();
+    assert.equal(ui.get('add-menu').hidden, false);
+    assert.equal(ui.document.activeElement, ui.get('pick-files'));
+    ui.get('pick-folder').click();
+    assert.equal(ui.get('folder').clicks, 1);
+    ui.get('add').click();
+    ui.get('pick-files').click();
+    assert.equal(ui.get('files').clicks, 1);
+    await ui.add(['bg.png']);
+    ui.get('pack-prefix').value = 'mods/demo/images';
+    ui.get('pack-prefix').emit('input');
+    assert.equal(ui.get('pack-example-source').textContent, 'bg.png');
+    assert.equal(ui.get('pack-example-target').textContent, 'mods/demo/images/bg.png');
+    ui.get('pack-prefix').value = '../bad';
+    ui.get('pack-prefix').emit('input');
+    assert.equal(ui.get('pack-example-target').textContent, 'Исправьте настройки пути');
+    ui.get('clear').click();
+    assert.equal(ui.get('pack-example-source').textContent, 'images/bg.png');
 });
 
 test('invalid pack settings disable export and cancelling preserves inputs for a new worker', async () => {

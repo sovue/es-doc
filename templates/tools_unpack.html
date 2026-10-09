@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% set page_title = 'Архивы RPA и декомпиляция RPYC/PYC — ES Doc' %}
+{% set page_title = 'Архивация RPA и декомпиляция RPYC/PYC — ES Doc' %}
 {% set body_class = 'bg-solid scene-page' %}
 {% set active = 'tools' %}
 {% set with_unpacker_js = true %}
@@ -11,7 +11,7 @@
         <section class="page-hero">
             <div class="page-hero-inner">
                 <a href="/tools" class="page-back"><span aria-hidden="true">{{ lucide_icon('arrow-left') }}</span> Инструменты</a>
-                <h1 class="page-title">Архивы RPA и декомпиляция</h1>
+                <h1 class="page-title">Архивация RPA и декомпиляция</h1>
             </div>
         </section>
         <div class="page-main">
@@ -42,20 +42,43 @@
                     <input type="file" id="tools-files" accept=".rpa,.rpyc,.rpymc,.pyc" multiple hidden>
                     <input type="file" id="tools-folder" webkitdirectory multiple hidden>
                     <div class="tools-pack-settings" id="tools-pack-settings" hidden>
-                        <div class="tools-pack-fields">
+                        <div class="tools-pack-name-field">
                             <label for="tools-pack-name">Имя архива
-                                <input id="tools-pack-name" type="text" value="my_mod.rpa" spellcheck="false" aria-describedby="tools-pack-name-help tools-pack-error">
+                                <input id="tools-pack-name" type="text" value="my_mod" spellcheck="false" aria-describedby="tools-pack-name-help tools-pack-name-error">
                             </label>
-                            <label for="tools-pack-strip">Удалить из начала путей
-                                <select id="tools-pack-strip" aria-describedby="tools-pack-path-help tools-pack-error"><option value="">Ничего не удалять</option></select>
-                            </label>
-                            <label for="tools-pack-prefix">Добавить папку в начале
-                                <input id="tools-pack-prefix" type="text" placeholder="Например, mods/my_mod" spellcheck="false" aria-describedby="tools-pack-path-help tools-pack-error">
-                            </label>
+                            <p id="tools-pack-name-help" class="tools-meta">Файл: <code id="tools-pack-filename">my_mod.rpa</code>. Расширение добавится автоматически. Имя архива не меняет пути файлов внутри.</p>
+                            <p id="tools-pack-name-error" class="tools-status is-error" hidden></p>
                         </div>
-                        <p id="tools-pack-name-help" class="tools-meta">RPA-3.0, совместимый со старым Ren'Py в БЛ. Расширение .rpa добавится автоматически.</p>
-                        <p id="tools-pack-path-help" class="tools-meta">Пути в архиве должны совпадать с путями в коде относительно game. Проверьте их в списке ниже.</p>
-                        <p id="tools-pack-error" class="tools-status is-error" role="status" hidden></p>
+                        <fieldset class="tools-pack-path-settings" aria-describedby="tools-pack-path-help">
+                            <legend>Пути внутри архива</legend>
+                            <p id="tools-pack-path-help">Используйте те же пути, что в коде мода, относительно папки <code>game</code>.</p>
+                            <div class="tools-pack-fields">
+                            <div>
+                            <label for="tools-pack-strip">Удалить из начала путей
+                                <select id="tools-pack-strip" aria-describedby="tools-pack-strip-help"><option value="">Ничего не удалять</option></select>
+                            </label>
+                            <p id="tools-pack-strip-help" class="tools-meta">Общая папка, которая не должна попасть в архив. При выборе папки <code>game</code> удаляется <code>game/</code>.</p>
+                            </div>
+                            <div>
+                            <label for="tools-pack-prefix">Добавить папку в начале
+                                <input id="tools-pack-prefix" type="text" placeholder="Например, my_mod" spellcheck="false" aria-describedby="tools-pack-prefix-help tools-pack-prefix-error">
+                            </label>
+                            <p id="tools-pack-prefix-help" class="tools-meta">Необязательно. Оставьте пустым, если пути уже совпадают с кодом мода.</p>
+                            <p id="tools-pack-prefix-error" class="tools-status is-error" hidden></p>
+                            </div>
+                            </div>
+                            <div class="tools-pack-example">
+                                <p><strong id="tools-pack-example-title">Пример</strong></p>
+                                <p id="tools-pack-example-settings" class="tools-meta">Выбранная папка: "images"</p>
+                                <p id="tools-pack-example-settings" class="tools-meta">Удалить из списка путей: Ничего не удалять</p>
+                                <p id="tools-pack-example-settings" class="tools-meta">Добавить папку в начале: <code>my_mod</code>.</p>
+                                <dl class="tools-pack-path-comparison">
+                                    <div><dt>На устройстве</dt><dd><code id="tools-pack-example-source">images/bg.png</code></dd></div>
+                                    <div><dt>В архиве</dt><dd><code id="tools-pack-example-target">my_mod/images/bg.png</code></dd></div>
+                                </dl>
+                            </div>
+                            <p id="tools-pack-error" class="tools-status is-error" role="status" hidden></p>
+                        </fieldset>
                     </div>
                     <div class="tools-options" id="tools-options">
                         <details class="tools-advanced"><summary><span class="tools-ui-icon tools-icon-settings" aria-hidden="true"></span>Настройки декомпиляции<span class="tools-ui-icon tools-icon-chevron" aria-hidden="true"></span></summary>
@@ -73,14 +96,15 @@
                             <div class="tools-queue-summary"><h3 id="tools-queue-heading">Добавленные файлы</h3><p id="tools-count" class="tools-meta"></p></div>
                             <button type="button" class="tools-clear" id="tools-clear" title="Очистить добавленные файлы" aria-label="Очистить добавленные файлы">
                                 {{ lucide_icon('trash', 24) }}
+                                <span id="tools-pack-clear-label" hidden>Очистить список</span>
                             </button>
                         </div>
                         <div id="tools-queue-tools" class="tools-queue-tools" hidden>
                             <label for="tools-queue-search">Поиск по путям
                                 <input id="tools-queue-search" class="tools-browser-search tools-queue-search" type="search" placeholder="Имя файла или папки…" aria-describedby="tools-queue-search-help">
                             </label>
-                            <p id="tools-queue-search-help" class="tools-meta">Поиск меняет только список. В архив попадут все добавленные файлы.</p>
-                            <p id="tools-pack-preview-note" class="tools-meta" hidden>Пути не пересчитаны. Исправьте ошибку выше; в списке остались последние корректные пути.</p>
+                            <p id="tools-queue-search-help" class="tools-meta">Поиск по исходным и итоговым путям.</p>
+                            <p id="tools-pack-preview-note" class="tools-meta" hidden>Пути не пересчитаны. Исправьте ошибку выше, в списке остались последние корректные пути.</p>
                             <div class="tools-queue-navigation">
                                 <p id="tools-queue-range" class="tools-meta" role="status" aria-live="polite"></p>
                                 <div id="tools-queue-pages" class="tools-queue-pages" hidden>
@@ -127,17 +151,31 @@
                             </div>
                         </section>
                         <div class="tools-export">
+                            <div id="tools-pack-notice" class="tools-pack-notice" hidden>
+                                <p>Файлы сохраняются без изменений. Скрипты <code>.rpy</code> не компилируются.</p>
+                            </div>
                             <button id="tools-download-all" class="tools-button tools-button-primary" type="button" hidden><span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span><span>Скачать всё</span></button>
                             <div id="tools-downloads" class="tools-downloads"></div>
                         </div>
                     </div>
                 </div>
-                <details class="tools-help" id="tools-pack-help" hidden><summary><span class="tools-ui-icon tools-icon-info" aria-hidden="true"></span>Как подключить архив<span class="tools-ui-icon tools-icon-chevron" aria-hidden="true"></span></summary>
+                <section id="tools-pack-integration" class="tools-pack-integration" aria-labelledby="tools-pack-integration-heading" hidden>
+                    <h3 id="tools-pack-integration-heading">Подключение архива</h3>
+                    <p>Загрузчик архива оставьте отдельным <code>.rpy</code>-файлом в папке мода.</p>
+                    <div id="tools-pack-install-example">
+                        <p>Пример для папки мода <code>my_mod</code>: поместите архив в <code id="tools-pack-install-archive">game/my_mod/my_mod.rpa</code>. Создайте рядом файл <code>load_archive.rpy</code> с этим кодом:</p>
+                        <div class="code-block tools-pack-install-code">
+                            <pre tabindex="0" aria-label="Код подключения архива"><code id="tools-pack-install-code"><span class="k">init -9999 python</span><span class="p">:</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">archives</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2" id="tools-pack-install-string">"my_mod/my_mod"</span><span class="p">)</span></code></pre>
+                            <button type="button" class="code-copy" title="Скопировать код" aria-label="Скопировать код подключения архива" hidden>{{ lucide_icon('copy', 14) }}{{ lucide_icon('check', 14) }}</button>
+                        </div>
+                        <p class="tools-meta">Путь в коде указан относительно <code>game</code>, без расширения <code>.rpa</code>. Не забудьте заменить <code>my_mod/</code> в пути и коде.</p>
+                    </div>
+                    <p><a href="/docs/rpyc_rpa#интеграция-rpa-в-бл">Подробнее о подключении RPA в БЛ</a></p>
+                </section>
+                <details class="tools-help" id="tools-pack-help" hidden><summary><span class="tools-ui-icon tools-icon-info" aria-hidden="true"></span>Подробнее<span class="tools-ui-icon tools-icon-chevron" aria-hidden="true"></span></summary>
                     <div class="tools-disclosure-body">
-                        <p>Добавьте ресурсы или папку с ними, проверьте пути и нажмите «Создать и скачать RPA». Все выбранные файлы копируются без изменений. Упаковка не компилирует .rpy в .rpyc.</p>
-                        <p>При выборе папки game её имя удаляется из путей автоматически. Для других папок выберите, какую часть пути удалить или добавить. Например, game/mods/my_mod/images/bg.png должен попасть в архив как mods/my_mod/images/bg.png.</p>
-                        <p>Отдельный конфиг не нужен. Сжимаются только записи о файлах; изображения, музыка и другие ресурсы сохраняют свой размер. RPA не шифрует содержимое.</p>
-                        <p>Загрузчик архива оставьте отдельным .rpy-файлом в папке мода. <a href="/docs/rpyc_rpa#интеграция-rpa-в-бл">Подключение RPA в БЛ с примером кода</a>.</p>
+                        <p>Создаётся архив RPA-3.0. Сжимаются только записи о файлах. Изображения, музыка и другие ресурсы сохраняют свой размер. RPA не шифрует содержимое.</p>
                     </div>
                 </details>
                 <details class="tools-help" id="tools-unpack-help"><summary><span class="tools-ui-icon tools-icon-info" aria-hidden="true"></span>Подробнее<span class="tools-ui-icon tools-icon-chevron" aria-hidden="true"></span></summary>

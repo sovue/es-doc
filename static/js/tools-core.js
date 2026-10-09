@@ -23,7 +23,7 @@
         prefix = prefix.trim().replaceAll('\\', '/').replace(/\/$/, '');
         if (prefix) {
             try { prefix = safePath(prefix) + '/'; }
-            catch { throw new Error('Укажите относительный путь папки без .., начального / и двоеточия. Например: mods/my_mod.'); }
+            catch { throw new Error('Укажите относительный путь папки без .., начального / и двоеточия. Например: my_mod.'); }
         }
         return safePath(prefix + path.slice(strip.length));
     };

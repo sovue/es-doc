@@ -33,13 +33,18 @@ for (const [name, data] of Object.entries(resources)) {
         assert(await page.locator('#tools-mode-pack').isChecked());
         await page.locator('#tools-folder').setInputFiles(fixtures);
         await page.locator('#tools-download-all').waitFor({ state: 'visible' });
+        assert(await page.locator('#tools-add').isVisible());
+        const missingDescriptions = await page.locator('#tools-app [aria-describedby]').evaluateAll(elements =>
+            elements.filter(element => element.getClientRects().length).flatMap(element =>
+                element.getAttribute('aria-describedby').split(/\s+/).filter(id => !document.getElementById(id))));
+        assert.deepEqual(missingDescriptions, []);
         assert.equal(await page.locator('#tools-pack-strip').inputValue(), 'game/');
-        assert.match(await page.locator('#tools-file-list').textContent(), /mods\/my_mod\/images\/bg.png/);
+        assert.match(await page.locator('#tools-file-list').textContent(), /my_mod\/images\/bg.png/);
         const verifiedPaths = await page.locator('.tools-pack-path').allTextContents();
         await page.locator('#tools-pack-prefix').fill('../outside');
         assert(await page.locator('#tools-download-all').isDisabled());
         assert(await page.locator('#tools-pack-error').isVisible());
-        assert.match(await page.locator('#tools-pack-error').textContent(), /относительный путь.*mods\/my_mod/);
+        assert.match(await page.locator('#tools-pack-prefix-error').textContent(), /относительный путь.*my_mod/);
         assert(await page.locator('#tools-pack-preview-note').isVisible());
         assert.deepEqual(await page.locator('.tools-pack-path').allTextContents(), verifiedPaths);
         await page.locator('#tools-pack-prefix').fill('');

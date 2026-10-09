@@ -13,7 +13,7 @@
 <section id="colors-app" hidden aria-label="Подбор цвета">
     <div class="picker-toolbar">
         <div class="picker-source-group"><label class="picker-source" for="colors-hex"><span class="picker-checker picker-current"><span id="colors-current" aria-hidden="true"></span></span><span class="sr-only">HEX, CSS или Python tuple</span><input id="colors-hex" type="text" spellcheck="false" autocomplete="off" value="#2f7524" aria-describedby="colors-error-hex" placeholder="HEX, rgb(), hsl() или (R, G, B)"></label>{{ field_error('hex') }}</div>
-        <div class="picker-tools"><button id="colors-eyedropper" class="picker-button" type="button" hidden>{{ lucide_icon('pipette', 18) }} Пипетка</button><button id="colors-undo" class="picker-icon" type="button" aria-label="Отменить изменение" title="Отменить изменение / Ctrl+Z" disabled>{{ lucide_icon('undo-2', 18) }}</button><button id="colors-redo" class="picker-icon" type="button" aria-label="Повторить изменение" title="Повторить изменение / Ctrl+Shift+Z" disabled>{{ lucide_icon('redo-2', 18) }}</button></div>
+        <div class="picker-tools"><button id="colors-eyedropper" class="picker-button" type="button" hidden>{{ lucide_icon('pipette', 18) }} Пипетка</button><span id="colors-eyedropper-warning" class="picker-eyedropper-warning" hidden><button id="colors-eyedropper-warning-trigger" class="picker-icon" type="button" aria-label="Ограничение пипетки в Firefox" aria-describedby="colors-eyedropper-tooltip">{{ lucide_icon('triangle-alert', 18) }}</button><span id="colors-eyedropper-tooltip" class="picker-eyedropper-tooltip" role="tooltip" hidden><span>В Firefox выберите экран или окно для снимка, затем нажмите на нужный цвет на снимке. Напрямую выбрать цвет за пределами страницы нельзя.</span></span></span><button id="colors-undo" class="picker-icon" type="button" aria-label="Отменить изменение" title="Отменить изменение / Ctrl+Z" disabled>{{ lucide_icon('undo-2', 18) }}</button><button id="colors-redo" class="picker-icon" type="button" aria-label="Повторить изменение" title="Повторить изменение / Ctrl+Shift+Z" disabled>{{ lucide_icon('redo-2', 18) }}</button></div>
     </div>
     <p id="colors-input-help" class="sr-only" role="status" aria-live="polite" hidden></p>
     <div class="picker-jumps" role="group" aria-label="Разделы подбора цвета"><button id="colors-jump-code" type="button">Для кода</button><button id="colors-jump-editor" type="button">Выбор цвета</button><button id="colors-jump-contrast" type="button">Текст и фон</button></div>
@@ -65,6 +65,7 @@
     </div>
 </section></div></main>{% include "partials/footer.html" %}</div>
     <div id="colors-eyedropper-overlay" class="picker-eyedropper-overlay" hidden>
+        <canvas id="colors-screen-canvas" class="picker-screen-canvas" hidden aria-label="Снимок выбранного экрана или окна для выбора цвета"></canvas>
         <div class="picker-eyedropper-help" role="status" aria-live="polite"><h2>{{ lucide_icon('pipette', 20) }} Пипетка</h2><p><kbd>ЛКМ</kbd> Выбрать цвет</p><p><kbd>Esc</kbd> Отменить выбор</p></div>
     </div>
 {% endblock %}

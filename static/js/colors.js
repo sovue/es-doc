@@ -439,25 +439,52 @@
     on(document, 'keydown', event => { if (event.key === 'Escape') cancelEyedropper(event); });
     on(get('eyedropper-overlay'), 'pointerdown', event => {
         if (!screenCaptureVideo || event.button !== 0 || get('eyedropper-overlay').hidden) return;
-        if (event.target.closest?.('.picker-eyedropper-help')) return;
+        const sampleCanvas = get('screen-canvas');
+        if (event.target !== sampleCanvas) return;
         event.preventDefault();
         try {
-            const sampleCanvas = document.createElement('canvas');
-            const scale = Math.min(1, 4096 / screenCaptureVideo.videoWidth, 4096 / screenCaptureVideo.videoHeight, Math.sqrt(12000000 / (screenCaptureVideo.videoWidth * screenCaptureVideo.videoHeight)));
-            sampleCanvas.width = Math.max(1, Math.round(screenCaptureVideo.videoWidth * scale)); sampleCanvas.height = Math.max(1, Math.round(screenCaptureVideo.videoHeight * scale));
+            const rect = sampleCanvas.getBoundingClientRect();
+            if (!rect.width || !rect.height) return;
             const context = sampleCanvas.getContext('2d', {willReadFrequently: true});
-            context.drawImage(screenCaptureVideo, 0, 0, sampleCanvas.width, sampleCanvas.height);
-            const x = c.clamp(Math.floor(event.clientX / window.innerWidth * screenCaptureVideo.videoWidth * scale), 0, sampleCanvas.width - 1);
-            const y = c.clamp(Math.floor(event.clientY / window.innerHeight * screenCaptureVideo.videoHeight * scale), 0, sampleCanvas.height - 1);
+            const x = c.clamp(Math.floor((event.clientX - rect.left) / rect.width * sampleCanvas.width), 0, sampleCanvas.width - 1);
+            const y = c.clamp(Math.floor((event.clientY - rect.top) / rect.height * sampleCanvas.height), 0, sampleCanvas.height - 1);
             const pixel = context.getImageData(x, y, 1, 1).data;
             screenPickResolve?.({r: pixel[0], g: pixel[1], b: pixel[2], a: pixel[3] / 255});
         } catch (_) {
-            get('status').textContent = 'Не удалось прочитать цвет экрана. Выберите вкладку Firefox в окне захвата.';
+            get('status').textContent = 'Не удалось прочитать цвет снимка. Попробуйте снова или откройте изображение.';
         }
     });
     const nativeEyedropper = window.EyeDropper && window.isSecureContext;
     const screenEyedropper = window.isSecureContext && window.navigator.mediaDevices?.getDisplayMedia;
     get('eyedropper').hidden = false;
+    get('eyedropper-warning').hidden = !/(?:Firefox|FxiOS)\//.test(window.navigator.userAgent || '');
+    const warning = get('eyedropper-warning');
+    const warningTrigger = get('eyedropper-warning-trigger');
+    const warningTooltip = get('eyedropper-tooltip');
+    let warningTimer, warningHovered = false, warningFocused = false;
+    const hideWarning = () => { clearTimeout(warningTimer); warningTooltip.hidden = true; };
+    const showWarning = () => {
+        clearTimeout(warningTimer);
+        if (disposed || warning.hidden) return;
+        warningTooltip.hidden = false;
+        warningTooltip.style.setProperty('--tooltip-shift', '0px');
+        const rect = warningTooltip.getBoundingClientRect();
+        if (Number.isFinite(window.innerWidth)) {
+            const shift = Math.max(8 - rect.left, Math.min(0, window.innerWidth - 8 - rect.left - rect.width));
+            warningTooltip.style.setProperty('--tooltip-shift', `${shift}px`);
+        }
+    };
+    on(warning, 'pointerenter', event => {
+        if (event.pointerType === 'touch') return;
+        warningHovered = true;
+        warningTimer = setTimeout(showWarning, 200);
+    });
+    on(warning, 'pointerleave', () => { warningHovered = false; clearTimeout(warningTimer); if (!warningFocused) hideWarning(); });
+    on(warningTrigger, 'focus', () => { warningFocused = true; showWarning(); });
+    on(warningTrigger, 'blur', () => { warningFocused = false; if (!warningHovered) hideWarning(); });
+    on(warningTrigger, 'click', showWarning);
+    on(document, 'keydown', event => { if (event.key === 'Escape' && !warningTooltip.hidden) hideWarning(); });
+    controller.signal.addEventListener('abort', hideWarning, {once: true});
     if (nativeEyedropper || screenEyedropper) {
         on(get('eyedropper'), 'click', async () => {
             const pickController = new AbortController();
@@ -473,16 +500,24 @@
                     eyedropperOverlayTimer = setTimeout(() => { if (!disposed) get('eyedropper-overlay').hidden = false; }, 300);
                     result = c.parseHex((await new window.EyeDropper().open({signal: pickController.signal})).sRGBHex);
                 } else {
-                    get('status').textContent = 'В окне Firefox выберите эту вкладку для захвата экрана.';
-                    screenCaptureStream = await window.navigator.mediaDevices.getDisplayMedia({video: true, audio: false, preferCurrentTab: true});
+                    get('status').textContent = 'Выберите экран или окно для снимка.';
+                    screenCaptureStream = await window.navigator.mediaDevices.getDisplayMedia({video: true, audio: false});
+                    if (pickController.signal.aborted || disposed) return;
                     screenCaptureVideo = document.createElement('video');
                     screenCaptureVideo.muted = true; screenCaptureVideo.playsInline = true; screenCaptureVideo.srcObject = screenCaptureStream;
                     await screenCaptureVideo.play();
                     if (!screenCaptureVideo.videoWidth || !screenCaptureVideo.videoHeight) throw new Error('Captured tab is not ready');
                     if (pickController.signal.aborted || disposed) return;
+                    const sampleCanvas = get('screen-canvas');
+                    const scale = Math.min(1, 4096 / screenCaptureVideo.videoWidth, 4096 / screenCaptureVideo.videoHeight, Math.sqrt(12000000 / (screenCaptureVideo.videoWidth * screenCaptureVideo.videoHeight)));
+                    sampleCanvas.width = Math.max(1, Math.round(screenCaptureVideo.videoWidth * scale));
+                    sampleCanvas.height = Math.max(1, Math.round(screenCaptureVideo.videoHeight * scale));
+                    sampleCanvas.getContext('2d', {willReadFrequently: true}).drawImage(screenCaptureVideo, 0, 0, sampleCanvas.width, sampleCanvas.height);
+                    screenCaptureStream.getTracks().forEach(track => track.stop());
+                    sampleCanvas.hidden = false;
                     get('eyedropper-overlay').classList.add('picker-eyedropper-overlay-capture');
                     get('eyedropper-overlay').hidden = false;
-                    get('status').textContent = 'Нажмите на нужный цвет. Esc отменяет выбор.';
+                    get('status').textContent = 'Выберите цвет на снимке. Esc — отмена.';
                     result = await new Promise((resolve, reject) => {
                         screenPickResolve = resolve;
                         pickController.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), {once: true});
@@ -490,13 +525,14 @@
                 }
                 if (!disposed && !pickController.signal.aborted) choose(result);
             }
-            catch (error) { if (!disposed) get('status').textContent = error.name === 'AbortError' ? 'Выбор пипеткой отменён.' : error.name === 'NotAllowedError' ? 'Захват вкладки отменён. Разрешите его или выберите цвет из изображения.' : 'Не удалось открыть пипетку. Используйте поле или изображение.'; }
+            catch (error) { if (!disposed) get('status').textContent = error.name === 'AbortError' ? 'Выбор пипеткой отменён.' : error.name === 'NotAllowedError' ? 'Захват экрана или окна отменён. Разрешите его или выберите цвет из изображения.' : 'Не удалось открыть пипетку. Используйте поле или изображение.'; }
             finally {
                 controller.signal.removeEventListener('abort', abortPick);
                 if (eyedropperController === pickController) eyedropperController = null;
                 screenPickResolve = null; screenCaptureVideo = null;
                 screenCaptureStream?.getTracks().forEach(track => track.stop()); screenCaptureStream = null;
                 clearTimeout(eyedropperOverlayTimer);
+                get('screen-canvas').hidden = true;
                 if (!disposed) { get('eyedropper').disabled = false; get('eyedropper-overlay').hidden = true; get('eyedropper-overlay').classList.remove('picker-eyedropper-overlay-capture'); get('eyedropper').focus({preventScroll: true}); }
             }
         });
