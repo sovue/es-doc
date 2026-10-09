@@ -1,7 +1,7 @@
-"""The Ren'Py warper set, as the «Варперы» section of «Ресурсов» renders it.
+"""The Ren'Py warper set, for the «Варперы» tool.
 
-Unlike every other resource category, this one isn't scanned out of the
-game folder: warpers are part of the engine (renpy/common/000atl.rpy), so
+Warper definitions aren't scanned out of the game folder: they are part
+of the engine (renpy/common/000atl.rpy), so
 the list lives here in code. Community-made warpers are a separate, data-
 driven list — see utils/lifespan/warpers_cache.py.
 
@@ -16,7 +16,7 @@ from .md import MD
 COLUMNS = [
     ('easeout_', 'разгон', 'медленный старт, быстрый финиш'),
     ('easein_', 'торможение', 'быстрый старт, мягкий финиш'),
-    ('ease_', 'с обеих сторон', 'медленно по краям, быстро в середине'),
+    ('ease_', 'разгон и торможение', 'медленно по краям, быстро в середине'),
 ]
 
 PREFIXES = ('easeout', 'easein', 'ease')
@@ -24,11 +24,11 @@ PREFIXES = ('easeout', 'easein', 'ease')
 # Not easings — these three describe *when* the value changes, so each one
 # carries its own line instead of leaning on a family note.
 SPECIAL = [
-    ('pause', 'Держит начальное значение всю длительность и переключается на конечное в последний момент.',
+    ('pause', 'Сохраняет начальное значение до конца интервала, затем устанавливает конечное.',
      '0.0 if t < 1.0 else 1.0'),
-    ('instant', 'Ставит конечное значение сразу, оставшаяся длительность работает как пауза после него.',
+    ('instant', 'Сразу устанавливает конечное значение и ждёт до конца указанного времени.',
      '1.0'),
-    ('linear', 'Равномерно, без сглаживания. Хорош для механики: лифт, полоса загрузки, счётчик.',
+    ('linear', 'Меняет значение с постоянной скоростью.',
      't'),
 ]
 
@@ -43,37 +43,37 @@ SPECIAL = [
 # above is typeset for reading, this one pastes into the generator, into
 # warpers.yaml and into a mod.
 FAMILIES = [
-    ('Sine', '', '1 − cos(t · π/2)',
-     'Мягкое сглаживание на косинусе. Единственная тройка без суффикса и разумный выбор по умолчанию.',
+    ('Стандартные', '', '1 − cos(t * π/2)',
+     'Стандартные варперы Ren\'Py с синусоидальным изменением скорости. Имена этих варперов не имеют суффикса _sine.',
      'easeout', '1 - cos({t} * pi / 2)'),
     ('Quad', '_quad', 't²',
-     'Самая сдержанная из степенных: заметно живее линейного, но без драмы.',
+     'Постоянное ускорение при разгоне и постоянное замедление при торможении.',
      'easeout', '{t} ** 2'),
     ('Cubic', '_cubic', 't³',
-     'Рабочая лошадка: разгон уже читается, рывка ещё нет.',
+     'При разгоне ускорение постепенно растёт. Начало движения медленнее, чем у Quad.',
      'easeout', '{t} ** 3'),
     ('Quart', '_quart', 't⁴',
-     'Больше половины пути проезжается в последней трети времени.',
+     'Разгон по четвёртой степени. К середине интервала easeout_quart достигает значения 1/16.',
      'easeout', '{t} ** 4'),
     ('Quint', '_quint', 't⁵',
-     'Та же кривая, но жёстче. На длинной анимации читается уже как рывок.',
+     'Разгон по пятой степени. К середине интервала easeout_quint достигает значения 1/32.',
      'easeout', '{t} ** 5'),
-    ('Expo', '_expo', '2^(10 · (t − 1))',
-     'Самый крутой из плавных: начало движения почти не видно.',
+    ('Expo', '_expo', '2^(10 * (t − 1))',
+     'Экспоненциальный разгон или торможение. Основное изменение значения происходит у одного края интервала.',
      'easeout', '2 ** (10 * ({t} - 1))'),
     ('Circ', '_circ', '1 − √(1 − t²)',
-     'Дуга окружности: спокойное начало и обрыв в конце, резче, чем ожидаешь по названию.',
+     'Кривая на основе окружности. У easeout_circ скорость резко возрастает в конце интервала.',
      'easeout', '1 - sqrt(1 - {t} * {t})'),
-    ('Back', '_back', 't² · (2.7015 · t − 1.7015)',
-     'Замах: значение сначала уходит в обратную сторону и только потом идёт к цели.',
+    ('Back', '_back', 't² * (2.7015 * t − 1.7015)',
+     'Выход за диапазон 0–1: ниже 0 при разгоне, выше 1 при торможении или оба эффекта в варианте ease.',
      'easeout', '{t} * {t} * (2.7015 * {t} - 1.7015)'),
     # Elastic and bounce are the two families the engine writes as easein_ and
     # derives easeout_ from — see the note in warpers.js.
     ('Elastic', '_elastic', None,
-     'Пружина: цель проскакивается, и значение затухающе колеблется вокруг неё.',
+     'Затухающие колебания у начала, конца или обоих краёв интервала. Значение выходит за диапазон 0–1.',
      'easein', '1 + 2 ** (-10 * {t}) * sin(({t} - 0.075) * (2 * pi) / 0.3)'),
     ('Bounce', '_bounce', None,
-     'Отскоки, как у мяча об пол. Хорошо ложится на падение и приземление.',
+     'Несколько отскоков у начала, конца или обоих краёв интервала. Значение остаётся в диапазоне 0–1.',
      'easein',
      '7.5625 * {t} ** 2 if {t} < 1 / 2.75'
      ' else 1 + 7.5625 * (({t} - 1.5 / 2.75) ** 2 - (0.5 / 2.75) ** 2) if {t} < 2 / 2.75'
@@ -90,13 +90,19 @@ show sl smile pioneer:
     easeout_cubic 1.5 xalign 1.0
 """,
     'warp': """
-transform proezd(w="easein_quad"):
+transform proezd(w=_warper.easein_quad):
     xpos 0
     warp w 2.0 xpos 520
 """,
     'transition': """
 $ medlenno = Dissolve(1.0, time_warp=_warper.easein_quad)
 """,
+    'catalog': '''
+warpers:
+  - name: soft_back
+    desc: Отклонение ниже 0 перед разгоном
+    expr: t * t * (2.4 * t - 1.4)
+''',
     'custom': """
 python early hide:
 
@@ -139,6 +145,40 @@ def _variants(template, base):
     return {'easeout': easeout, 'easein': easein, 'ease': ease}
 
 
+def _description(suffix, prefix):
+    if suffix in ('_back', '_elastic', '_bounce'):
+        return {
+            '_back': {
+                'easeout': 'В начале значение становится меньше 0, затем растёт до 1. При перемещении объект сначала отклоняется назад.',
+                'easein': 'Перед завершением анимации значение превышает 1, затем возвращается к 1. При перемещении объект проходит конечную точку и возвращается к ней.',
+                'ease': 'В начале значение становится меньше 0, в конце превышает 1. При перемещении объект отклоняется назад, проходит конечную точку и возвращается к ней.',
+            },
+            '_elastic': {
+                'easeout': 'Колебания около начального значения, затем движение к конечному. Значение может становиться меньше 0.',
+                'easein': 'Колебания около конечного значения с уменьшением амплитуды. Значение несколько раз превышает 1 и возвращается к нему.',
+                'ease': 'Колебания в начале и конце интервала. Значение выходит ниже 0 и выше 1.',
+            },
+            '_bounce': {
+                'easeout': 'Отскоки в начале, затем движение к конечному значению. Значение остаётся в диапазоне 0–1.',
+                'easein': 'В конце анимации — несколько отскоков от конечного значения. Значение остаётся в диапазоне 0–1.',
+                'ease': 'Отскоки в начале и конце анимации. Значение остаётся в диапазоне 0–1.',
+            },
+        }[suffix][prefix]
+
+    kind = {
+        '': 'Стандартная синусоидальная кривая', '_quad': 'Квадратичная кривая',
+        '_cubic': 'Кубическая кривая', '_quart': 'Кривая четвёртой степени',
+        '_quint': 'Кривая пятой степени', '_expo': 'Экспоненциальная кривая',
+        '_circ': 'Кривая на основе окружности',
+    }[suffix]
+    direction = {
+        'easeout': 'значение сначала меняется медленно, затем быстрее',
+        'easein': 'значение сначала меняется быстро, затем медленнее',
+        'ease': 'в начале изменение ускоряется, в конце замедляется',
+    }[prefix]
+    return f'{kind}: {direction}.'
+
+
 def families():
     result = []
 
@@ -152,7 +192,8 @@ def families():
             'source': variants[base],
             'note': note,
             'cells': [
-                {'name': prefix + suffix, 'source': variants[prefix]}
+                {'name': prefix + suffix, 'source': variants[prefix],
+                 'description': _description(suffix, prefix)}
                 for prefix in PREFIXES
             ],
         })
@@ -161,4 +202,4 @@ def families():
 
 
 def samples():
-    return {key: MD.render(f'```renpy\n{src.strip()}\n```') for key, src in SAMPLES.items()}
+    return {key: MD.render(f'```{"yaml" if key == "catalog" else "renpy"}\n{src.strip()}\n```') for key, src in SAMPLES.items()}

@@ -10,7 +10,7 @@
 
         <section class="page-hero">
             <div class="page-hero-inner">
-                <a href="/" class="page-back"><span aria-hidden="true">←</span> На главную</a>
+                <a href="/" class="page-back"><span aria-hidden="true">{{ lucide_icon('arrow-left') }}</span> На главную</a>
                 <h1 class="page-title">Поддержать проект</h1>
                 <p class="page-lead">
                     ES Doc собирают несколько человек в свободное время, а сервер и хранилище
@@ -32,7 +32,7 @@
                         <a href="{{ p.url }}" class="section-row">
                             <span class="section-name">{{ p.name }}</span>
                             {% if p.note %}<span class="section-desc">{{ p.note }}</span>{% endif %}
-                            <span class="section-arrow" aria-hidden="true">→</span>
+                            <span class="section-arrow" aria-hidden="true">{{ lucide_icon('arrow-right') }}</span>
                         </a>
                     </li>
                     {% endfor %}
@@ -52,14 +52,14 @@
                     <li>
                         <a href="/redirect/issues" class="section-row">
                             <span class="section-name">Сообщить об ошибке</span>
-                            <span class="section-arrow" aria-hidden="true">→</span>
+                            <span class="section-arrow" aria-hidden="true">{{ lucide_icon('arrow-right') }}</span>
                         </a>
                     </li>
 
                     <li>
                         <a href="/redirect/github" class="section-row">
                             <span class="section-name">Прислать правку</span>
-                            <span class="section-arrow" aria-hidden="true">→</span>
+                            <span class="section-arrow" aria-hidden="true">{{ lucide_icon('arrow-right') }}</span>
                         </a>
                     </li>
 

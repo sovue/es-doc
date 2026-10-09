@@ -1,5 +1,5 @@
 /* =====================================================================
-   Warper previews (/warpers).
+   Warper previews (/tools/warpers).
 
    The table below is Ren'Py's warper set, ported 1:1 from
    renpy/common/000atl.rpy. The engine keeps the formula in `easeout_*`
@@ -133,12 +133,24 @@ const fromPoints = points => t => {
 const FORMULA_FUNCS = {
     sin: Math.sin, cos: Math.cos, tan: Math.tan,
     asin: Math.asin, acos: Math.acos, atan: Math.atan,
-    sqrt: Math.sqrt, exp: Math.exp, log: Math.log,
-    floor: Math.floor, ceil: Math.ceil, round: Math.round,
+    sqrt: Math.sqrt, exp: Math.exp,
+    log: (value, base) => {
+        if (value <= 0 || (base !== undefined && (base <= 0 || base === 1))) return NaN;
+        return base === undefined ? Math.log(value) : Math.log(value) / Math.log(base);
+    },
+    floor: Math.floor, ceil: Math.ceil,
+    round: value => {
+        const floor = Math.floor(value);
+        return value - floor === 0.5 ? (floor % 2 === 0 ? floor : floor + 1) : Math.round(value);
+    },
     abs: Math.abs, min: Math.min, max: Math.max, pow: Math.pow,
 };
 
 const FORMULA_CONSTS = { pi: Math.PI, e: Math.E };
+
+// Python signatures: never let Math.* silently discard an extra argument.
+// Only round(x) is supported; decimal rounding has version-specific semantics.
+const FORMULA_ARITY = { log: [1, 2], min: [2, Infinity], max: [2, Infinity], pow: [2, 2] };
 
 const COMPARISONS = {
     '<': (a, b) => a < b,
@@ -152,7 +164,7 @@ const COMPARISONS = {
 const truthy = value => value !== 0 && value !== false;
 
 const tokenize = source => {
-    const pattern = /\s*(\*\*|\/\/|<=|>=|==|!=|[-+*/%^(),<>]|\d+\.?\d*(?:[eE][-+]?\d+)?|\.\d+|[A-Za-z_][A-Za-z0-9_]*)/y;
+    const pattern = /\s*(\*\*|\/\/|<=|>=|==|!=|[-+*/%^(),<>]|\d+\.?\d*(?:[eE][-+]?\d+)?|\.\d+(?:[eE][-+]?\d+)?|[A-Za-z_][A-Za-z0-9_]*)/y;
     const tokens = [];
 
     let at = 0;
@@ -161,7 +173,7 @@ const tokenize = source => {
         pattern.lastIndex = at;
         const match = pattern.exec(source);
 
-        if (!match) throw new Error(`не понимаю символ «${source[at]}»`);
+        if (!match) throw new Error(`Недопустимый символ «${source[at]}»`);
 
         at = pattern.lastIndex;
         tokens.push(match[1]);
@@ -171,22 +183,23 @@ const tokenize = source => {
 };
 
 const parseFormula = source => {
+    if (source.length > 2048) throw new Error('Формула слишком длинная (максимум 2048 символов)');
     const tokens = tokenize(source.trim());
 
-    if (!tokens.length) throw new Error('формула пустая');
+    if (!tokens.length) throw new Error('Введите формулу');
 
     let at = 0;
 
     const peek = () => tokens[at];
     const eat = token => (tokens[at] === token ? (at++, true) : false);
     const expect = token => {
-        if (!eat(token)) throw new Error(`ожидается «${token}»`);
+        if (!eat(token)) throw new Error(`Ожидается «${token}»`);
     };
 
     const atom = () => {
         const token = peek();
 
-        if (token === undefined) throw new Error('формула обрывается');
+        if (token === undefined) throw new Error('Незавершённое выражение');
 
         if (eat('(')) {
             const inner = expression();
@@ -197,7 +210,7 @@ const parseFormula = source => {
         if (/^[\d.]/.test(token)) {
             at++;
             const number = parseFloat(token);
-            if (!isFinite(number)) throw new Error(`не число: «${token}»`);
+            if (!isFinite(number)) throw new Error(`Некорректное число «${token}»`);
             return () => number;
         }
 
@@ -205,14 +218,14 @@ const parseFormula = source => {
             at++;
 
             if (token === 't') return t => t;
-            if (token in FORMULA_CONSTS) {
+            if (Object.hasOwn(FORMULA_CONSTS, token)) {
                 const constant = FORMULA_CONSTS[token];
                 return () => constant;
             }
 
             if (eat('(')) {
-                const fn = FORMULA_FUNCS[token];
-                if (!fn) throw new Error(`неизвестная функция: ${token}`);
+                const fn = Object.hasOwn(FORMULA_FUNCS, token) && FORMULA_FUNCS[token];
+                if (!fn) throw new Error(`Неизвестная функция ${token}. Допустимые функции перечислены в разделе «Как написать формулу»`);
 
                 const args = [];
                 if (!eat(')')) {
@@ -220,13 +233,20 @@ const parseFormula = source => {
                     expect(')');
                 }
 
+                const [minimum, maximum] = FORMULA_ARITY[token] || [1, 1];
+                if (args.length < minimum || args.length > maximum) {
+                    const expected = maximum === Infinity ? `не менее ${minimum}`
+                        : minimum === maximum ? String(minimum) : `${minimum}–${maximum}`;
+                    throw new Error(`Функция ${token}: указано ${args.length} аргументов, требуется ${expected}`);
+                }
+
                 return t => fn(...args.map(arg => arg(t)));
             }
 
-            throw new Error(`неизвестное имя: ${token}`);
+            throw new Error(`Неизвестное имя ${token}. Используйте t, pi или e`);
         }
 
-        throw new Error(`не ожидал «${token}»`);
+        throw new Error(`Недопустимый элемент «${token}»`);
     };
 
     // Right-associative, and binds tighter than unary minus on its left:
@@ -287,7 +307,7 @@ const parseFormula = source => {
         const ops = [];
         const operands = [first];
 
-        while (peek() in COMPARISONS) {
+        while (Object.hasOwn(COMPARISONS, peek())) {
             ops.push(COMPARISONS[tokens[at++]]);
             operands.push(sum());
         }
@@ -337,7 +357,7 @@ const parseFormula = source => {
 
         if (eat('if')) {
             const condition = disjunction();
-            if (!eat('else')) throw new Error('после «if» нужен «else»');
+            if (!eat('else')) throw new Error('После «if» нужен «else»');
             const otherwise = expression();
             return t => (truthy(condition(t)) ? value(t) : otherwise(t));
         }
@@ -346,23 +366,57 @@ const parseFormula = source => {
     }
 
     const compiled = expression();
+    const numeric = t => {
+        const value = compiled(t);
+        return typeof value === 'boolean' ? Number(value) : value;
+    };
 
-    if (at < tokens.length) throw new Error(`лишнее в конце: «${tokens[at]}»`);
+    if (at < tokens.length) throw new Error(`Лишний элемент в конце формулы: «${tokens[at]}»`);
 
     // A formula that parses can still be undefined somewhere on 0…1 —
     // log(t) at zero, sqrt of a negative. Better to say where than to hand
     // the plotter a NaN and draw a hole.
-    for (let i = 0; i <= 20; i++) {
-        const t = i / 20;
-        const value = compiled(t);
+    for (let i = 0; i <= 120; i++) {
+        const t = i / 120;
+        const value = numeric(t);
 
         if (typeof value !== 'number' || !isFinite(value)) {
-            throw new Error(`при t = ${t.toFixed(2)} значение не определено`);
+            throw new Error(`При t = ${t.toFixed(2)} значение не определено`);
         }
     }
 
-    return compiled;
+    return numeric;
 };
+
+// A shared elapsed-time clock keeps all three effects and both curves in sync.
+class WarperPlayback {
+    constructor() {
+        this.elapsed = 0;
+        this.progress = 0;
+        this.running = false;
+        this.started = 0;
+    }
+    resume(now) { this.started = now - this.elapsed; this.running = true; }
+    pause() { this.running = false; }
+    rebase(now, duration) {
+        this.elapsed = this.progress * duration;
+        this.started = now - this.elapsed;
+    }
+    seek(t, duration) {
+        this.pause();
+        this.progress = Math.min(1, Math.max(0, t));
+        this.elapsed = this.progress * duration;
+    }
+    tick(now, duration, repeat) {
+        if (!this.running) return this.progress;
+        this.elapsed = Math.max(0, now - this.started);
+        this.progress = repeat
+            ? Math.min((this.elapsed % (duration + 450)) / duration, 1)
+            : Math.min(this.elapsed / duration, 1);
+        if (!repeat && this.progress === 1) this.pause();
+        return this.progress;
+    }
+}
 
 /* ── Preview canvas ──────────────────────────────────────── */
 
@@ -587,10 +641,20 @@ class WarperCanvas {
         ctx.stroke();
         ctx.setLineDash([]);
 
+        if (this.linearReference) {
+            ctx.setLineDash([4, 5]);
+            ctx.strokeStyle = palette.curve;
+            ctx.beginPath();
+            ctx.moveTo(px(0), py(0));
+            ctx.lineTo(px(1), py(1));
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
         const steps = this.points.length - 1;
 
-        ctx.strokeStyle = palette.curve;
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = this.linearReference ? palette.mark : palette.curve;
+        ctx.lineWidth = this.linearReference ? 2 : 1.5;
         ctx.beginPath();
 
         for (let i = 0; i <= steps; i++) {
@@ -724,9 +788,7 @@ previews.forEach(preview => {
     cell.addEventListener('focusin', () => preview.play());
     cell.addEventListener('focusout', () => preview.stop());
 
-    // Touch never sends pointerleave, so a tap on the graph replays it and
-    // the animation keeps looping until something else takes the pointer.
-    preview.canvas.addEventListener('click', () => preview.replay());
+    // Selection belongs to the native link around the graph.
 });
 
 /* Read every box first, then write every backing store: interleaving the two
@@ -788,11 +850,14 @@ const colorScheme = window.matchMedia('(prefers-color-scheme: dark)');
 colorScheme.addEventListener('change', refresh);
 registerCleanup(() => colorScheme.removeEventListener('change', refresh));
 
-/* ── Copying: the easing name and its formula ─────────────── */
+/* ── Explicit name copying ───────────────────────────────── */
 
-/* The graph and visible name copy the registered easing name for ATL; the
-   family formula chip copies the expression for the generator or a custom
-   warper. Without a clipboard the page stays a plain reference. */
+/* Selection and copying are separate native controls. */
+const nameButtons = document.querySelectorAll('.wp-cell .res-copy[data-copy]');
+nameButtons.forEach(button => {
+    button.hidden = false;
+    button.disabled = !(navigator.clipboard && window.copyControl);
+});
 if (navigator.clipboard && window.copyControl) {
     const status = document.getElementById('code-copy-status');
 
@@ -823,307 +888,358 @@ if (navigator.clipboard && window.copyControl) {
         }
     };
 
-    // The name ships as plain text and becomes a real button, since the label
-    // *is* the control here.
-    document.querySelectorAll('.wp-name[data-copy]').forEach(label => {
-        const value = label.dataset.copy;
-        const button = document.createElement('button');
-
-        button.type = 'button';
-        button.className = 'wp-name wp-name--copy';
-        button.textContent = label.textContent;
-        button.dataset.copy = value;
-        button.setAttribute('aria-label', `Скопировать имя: ${value}`);
-
-        copies(button, value, `Скопировать имя: ${value}`);
-        label.replaceWith(button);
+    nameButtons.forEach(button => {
+        copies(button, button.dataset.copy, `Скопировать имя ${button.dataset.copy}`);
     });
 
-    document.querySelectorAll('.wp-plot[data-copy-name]').forEach(plot => {
-        const value = plot.dataset.copyName;
-        if (value) copies(plot, value, `Скопировать название ease: ${value}`);
-    });
-
-    // Formula chips hand over the machine-readable expression, not the
-    // typeset `t²` they show.
-    document.querySelectorAll('[data-formula]').forEach(element => {
-        const value = element.dataset.formula;
-        if (value) copies(element, value, `Скопировать формулу: ${value}`);
-    });
 }
 
-/* ── Sandbox: a real background driven by the chosen warper ── */
-
-/* The graphs say what a curve does; this says what it feels like. Same
-   warper table, applied to an actual game background instead of a plot —
-   and the ATL that would do it in a mod is written out underneath, so the
-   answer to "how do I get this" is on screen already. */
+/* ── Formula tester and three synchronized ATL examples ───── */
 (function () {
     const lab = document.querySelector('.wp-lab');
     if (!lab) return;
 
-    const image = lab.querySelector('.wp-lab-img');
-    const background = lab.querySelector('#wp-lab-bg');
-    const warperPick = lab.querySelector('#wp-lab-warper');
-    const property = lab.querySelector('#wp-lab-prop');
+    const pick = lab.querySelector('#wp-lab-warper');
     const seconds = lab.querySelector('#wp-lab-time');
-    const playButton = lab.querySelector('.wp-lab-play');
-    const snippet = lab.querySelector('#wp-lab-snippet');
-
-    const formulaBox = lab.querySelector('.wp-lab-formula');
+    const playButtons = [...lab.querySelectorAll('.wp-lab-play')];
+    const setPlayLabel = label => playButtons.forEach(button => { button.textContent = label; });
+    const resetButton = lab.querySelector('.wp-lab-reset');
+    const repeat = lab.querySelector('#wp-lab-repeat');
+    const timeNote = lab.querySelector('#wp-lab-time-note');
     const formulaInput = lab.querySelector('#wp-lab-expr');
     const nameInput = lab.querySelector('#wp-lab-name');
     const note = lab.querySelector('#wp-lab-note');
+    const nameNote = lab.querySelector('#wp-lab-name-note');
+    const values = lab.querySelector('#wp-lab-values');
+    const description = lab.querySelector('#wp-lab-description');
+    const scrub = lab.querySelector('#wp-lab-scrub');
+    const progress = lab.querySelector('#wp-lab-progress');
+    const snippet = lab.querySelector('#wp-lab-snippet');
+    const codeOutput = lab.querySelector('#wp-lab-code-output');
+    const codeEmpty = lab.querySelector('#wp-lab-code-empty');
+    const codeFile = lab.querySelector('#wp-lab-code-file');
+    const demos = Object.fromEntries([...lab.querySelectorAll('[data-demo]')].map(node => [node.dataset.demo, node]));
+    const linear = Object.fromEntries([...lab.querySelectorAll('[data-linear]')].map(node => [node.dataset.linear, node]));
     const curveCanvas = lab.querySelector('.wp-lab-curve');
-
-    const HINT = 't идёт от 0.0 до 1.0. Можно + − * / ** ( ), sin, cos, sqrt, abs, min, max, pi, ' +
-        'сравнения и «a if условие else b».';
-
-    // The last formula that both parsed and stayed finite across 0…1. A
-    // half-typed one must not blank the curve you were just looking at.
-    let custom = { fn: null, source: '' };
-
     const curve = new WarperCanvas(curveCanvas, t => t);
+    curve.linearReference = true;
     track(curve);
 
-    const isCustom = () => !!warperPick.selectedOptions[0]?.dataset.custom;
-
-    // The stage overscans the image so a warper that overshoots (back,
-    // elastic, bounce) never drags an edge into frame. PAN is how far each
-    // way the pan travels, in % of the stage.
-    const COVER = 1.4;
-    const PAN = 12;
-
-    // Start and end values, as ATL would write them for each property.
-    const RANGE = {
-        xalign: ['0.0', '1.0'],
-        zoom: ['1.0', '1.4'],
-        alpha: ['0.0', '1.0'],
-    };
-
-    const warper = () => {
-        const option = warperPick.selectedOptions[0];
-
-        if (!option) return Warpers.linear;
-        if (option.dataset.custom) return custom.fn || (t => t);
-
-        return option.dataset.points
-            ? fromPoints(option.dataset.points.split(',').map(Number))
-            : Warpers[option.value] || Warpers.linear;
-    };
-
-    // A name that Ren'Py would accept as a def; anything else falls back so
-    // the generated block stays paste-able even mid-typing.
-    const warperName = () => {
-        const value = nameInput.value.trim();
-        return /^[A-Za-z_][A-Za-z0-9_]*$/.test(value) ? value : 'my_warper';
-    };
-
-    const duration = () => {
-        const value = parseFloat(seconds.value);
-        return Number.isFinite(value) ? Math.max(value, 0.2) : 1.5;
-    };
-
-    const apply = value => {
-        if (property.value === 'alpha') {
-            image.style.opacity = Math.min(Math.max(value, 0), 1);
-            image.style.transform = 'scale(1.02)';
-            return;
-        }
-
-        image.style.opacity = '';
-
-        // Both keep a base scale above 1: an undershooting curve would
-        // otherwise pull the image off its own edge for a frame.
-        image.style.transform = property.value === 'zoom'
-            ? `scale(${(1.05 + 0.4 * value).toFixed(4)})`
-            : `translateX(${(PAN - 2 * PAN * value).toFixed(3)}%) scale(${COVER})`;
-    };
-
+    const property = lab.querySelector('#wp-lab-prop');
+    const image = lab.querySelector('.wp-lab-img');
+    const sceneRange = lab.querySelector('#wp-lab-scene-range');
+    const HINT = 't — доля времени от 0 до 1.';
+    const keywords = new Set('False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield'.split(' '));
+    let fn = t => t;
+    let valid = true;
     let frame = null;
-
-    registerCleanup(() => {
-        cancelAnimationFrame(frame);
-        frame = null;
-    });
-
-    const run = () => {
-        cancelAnimationFrame(frame);
-
-        const curve = warper();
-        const ms = duration() * 1000;
-        const start = performance.now();
-
-        apply(curve(0));
-
-        const step = now => {
-            const t = Math.min((now - start) / ms, 1);
-            apply(curve(t));
-            if (t < 1) frame = requestAnimationFrame(step);
-            else frame = null;
-        };
-
-        frame = requestAnimationFrame(step);
+    const clock = new WarperPlayback();
+    let travel = 0;
+    const measureTravel = () => {
+        travel = Math.max(0, demos.xalign.parentElement.getBoundingClientRect().width - 20);
+        if (valid) apply(Number(scrub.value));
     };
 
-    // Token classes match the Ren'Py lexer's, so the generated line is
-    // coloured exactly like the hand-written samples further down the page.
+    const isCustom = () => !!pick.selectedOptions[0]?.dataset.custom;
+    const warperName = () => isCustom() ? nameInput.value.trim() : pick.value;
+    const duration = () => {
+        const value = Number(seconds.value);
+        return seconds.value.trim() && Number.isFinite(value) && value >= 0.2 ? value : NaN;
+    };
+    const stop = () => {
+        if (frame !== null) cancelAnimationFrame(frame);
+        frame = null;
+        clock.pause();
+        setPlayLabel(clock.progress >= 1 ? 'Ещё раз' : clock.progress > 0 ? 'Продолжить' : 'Проиграть');
+    };
+    registerCleanup(stop);
+
+    const apply = t => {
+        const value = fn(t);
+        if (!Number.isFinite(value)) {
+            stop();
+            valid = false;
+            formulaInput.setAttribute('aria-invalid', 'true');
+            note.classList.add('is-error');
+            note.textContent = `При t = ${t.toFixed(4)} значение не определено. Исправьте формулу.`;
+            write();
+            return false;
+        }
+        for (const [objects, v] of [[demos, value], [linear, t]]) {
+            objects.xalign.style.setProperty('--travel', String(v * travel));
+            objects.zoom.style.transform = `translateX(-50%) scale(${0.5 + 0.5 * v})`;
+            objects.alpha.style.opacity = Math.min(Math.max(v, 0), 1);
+        }
+        scrub.value = t;
+        progress.textContent = `t = ${t.toFixed(2)} / f(t) = ${value.toFixed(3)}`;
+        curve.active = true;
+        curve.progress = t;
+        curve.draw();
+        if (image) {
+            image.style.opacity = property.value === 'alpha' ? Math.min(Math.max(value, 0), 1) : '';
+            image.style.transform = property.value === 'zoom'
+                ? `scale(${1.05 + 0.4 * value})`
+                : property.value === 'xalign' ? `translateX(${12 - 24 * value}%) scale(1.4)` : 'scale(1.02)';
+        }
+        return true;
+    };
+
+    // Generated output uses the same token classes as the site's Ren'Py lexer.
     const token = (cls, text) => {
         const span = document.createElement('span');
         span.className = cls;
         span.textContent = text;
         return span;
     };
-
-    /* Colour the formula with the classes the lexer would use: numbers pink,
-       functions as builtins, operators muted. Scanned rather than rebuilt
-       from tokenize(), so the spacing the author typed survives into the
-       generated block instead of being normalised out. */
-    const FORMULA_SCAN = /(\s+)|(\*\*|\/\/|<=|>=|==|!=|[-+*/%^(),<>])|(\d+\.?\d*(?:[eE][-+]?\d+)?|\.\d+)|([A-Za-z_][A-Za-z0-9_]*)/g;
-
+    const indent = (times = 1) => token('w', '    '.repeat(times));
     const formulaTokens = source => {
-        const parts = [];
-
-        FORMULA_SCAN.lastIndex = 0;
-
-        for (let match; (match = FORMULA_SCAN.exec(source)); ) {
-            if (match[1]) parts.push(match[1]);
-            // `^` is accepted in the field because it's what people reach for,
-            // but it must never reach the generated block: in Python that's
-            // xor, and the mod would break on the first frame.
-            else if (match[2]) parts.push(token('o', match[2] === '^' ? '**' : match[2]));
-            else if (match[3]) parts.push(token('m', match[3]));
-            else parts.push(token(match[4] in FORMULA_FUNCS ? 'nb' : 'n', match[4]));
-        }
-
-        return parts;
+        const chunks = source.match(/\s+|\*\*|\/\/|<=|>=|==|!=|[-+*/%^(),<>]|\d+\.?\d*(?:[eE][-+]?\d+)?|\.\d+(?:[eE][-+]?\d+)?|[A-Za-z_][A-Za-z0-9_]*/g) || [];
+        return chunks.map(part => /^\s+$/.test(part) ? part : token(
+            /^\d|^\.\d/.test(part) ? 'm' : Object.hasOwn(FORMULA_FUNCS, part) ? 'nb' : keywords.has(part) ? 'k' : 'n',
+            part === '^' ? '**' : part,
+        ));
     };
-
     const write = () => {
-        const name = background.selectedOptions[0]?.dataset.name || '';
-        const [from, to] = RANGE[property.value];
-
-        // Indents go out as the lexer's own whitespace spans, so CSS paints
-        // the same dots over them as in the hand-written samples below — and
-        // what the reader copies is four real spaces per level.
-        const indent = (times = 1) => token('w', '    '.repeat(times));
-
+        const name = warperName();
+        const nameValid = !isCustom() || (/^[A-Za-z_][A-Za-z0-9_]*$/.test(name) && !keywords.has(name)
+            && !Object.hasOwn(Warpers, name) && !Object.hasOwn(FORMULA_FUNCS, name) && !Object.hasOwn(FORMULA_CONSTS, name));
+        nameInput.disabled = !isCustom();
+        nameInput.closest('label').hidden = !isCustom();
+        nameInput.setAttribute('aria-invalid', String(!nameValid));
+        nameNote.textContent = nameValid ? '' : (Object.hasOwn(Warpers, name) || Object.hasOwn(FORMULA_FUNCS, name) || Object.hasOwn(FORMULA_CONSTS, name) || keywords.has(name))
+            ? 'Это имя уже занято варпером, функцией или словом Python. Выберите другое.'
+            : 'Имя: латинские буквы, цифры и _. Начните с буквы или _.';
+        nameNote.classList.toggle('is-error', !nameValid);
+        const timeValid = Number.isFinite(duration());
+        seconds.setAttribute('aria-invalid', String(!timeValid));
+        timeNote.hidden = timeValid;
+        timeNote.textContent = timeValid ? '' : 'Введите длительность от 0,2 секунды.';
+        playButtons.forEach(button => { button.disabled = !valid || !timeValid; });
+        scrub.disabled = !valid;
+        codeOutput.hidden = !valid || !nameValid || (!isCustom() && !timeValid);
+        codeEmpty.hidden = !codeOutput.hidden;
+        codeEmpty.textContent = !valid || !nameValid
+            ? 'Исправьте формулу или имя, чтобы получить код варпера.'
+            : 'Исправьте длительность, чтобы получить код ATL.';
+        codeFile.textContent = isCustom()
+            ? 'Сохраните объявление в game/00_warpers.rpy, до файлов с использованием этого варпера.'
+            : '';
         snippet.textContent = '';
-
-        // In custom mode the block that registers the warper comes first —
-        // without it the show statement below wouldn't run at all.
-        if (isCustom() && custom.fn) {
+        if (!valid || !nameValid) return;
+        if (isCustom()) {
             snippet.append(
-                token('k', 'python'), ' ', token('k', 'early'), ' ', token('k', 'hide'), ':\n\n', indent(),
-                token('nd', '@renpy.atl_warper'), '\n', indent(),
-                token('k', 'def'), ' ', token('nf', warperName()), '(', token('n', 't'), '):\n', indent(2),
-                token('k', 'return'), ' ', ...formulaTokens(custom.source), '\n\n',
+                token('k', 'python early hide'), ':\n', indent(),
+                token('k', 'from'), ' ', token('n', 'math'), ' ', token('k', 'import'), ' ',
+                token('n', 'pi, e, sin, cos, tan, asin, acos, atan, sqrt, exp, log, floor, ceil'), '\n\n',
+                indent(), token('nd', '@renpy.atl_warper'), '\n', indent(), token('k', 'def'), ' ',
+                token('nf', name), '(t):\n', indent(2), token('k', 'return'), ' ',
+                ...formulaTokens(formulaInput.value.trim()), '\n\n',
             );
         }
-
-        snippet.append(
-            token('k', 'show'), ' ', token('n', 'bg'), ' ', token('n', name), ':\n', indent(),
-            token('n', property.value), ' ', token('m', from), '\n', indent(),
-            token('kt', isCustom() ? warperName() : warperPick.value), ' ',
-            token('m', String(duration())), ' ',
-            token('n', property.value), ' ', token('m', to),
-        );
+        if (!timeValid) return;
+        const prop = property.value;
+        const [from, to] = {xalign: ['0.0', '1.0'], zoom: ['0.5', '1.0'], alpha: ['0.0', '1.0']}[prop];
+        snippet.append(token('k', 'transform'), ' ', token('nf', 'warper_preview'), ':\n',
+            indent(), token('n', prop), ' ', token('m', from), '\n', indent(),
+            token('kt', name), ' ', token('m', String(duration())), ' ', token('n', prop), ' ', token('m', to), '\n');
     };
 
-    const update = animate => {
-        write();
-        if (animate) run();
-        else apply(warper()(1));
-    };
-
-    /* Re-read the formula field: redraw the curve, keep the last good one on
-       a syntax error, and say what's wrong instead of going quiet. */
-    const readFormula = () => {
-        const source = formulaInput.value;
-
+    const validate = () => {
+        stop();
+        clock.seek(Number(scrub.value), Number.isFinite(duration()) ? duration() * 1000 : 1500);
         try {
-            const compiled = parseFormula(source);
-
-            custom = { fn: compiled, source: source.trim() };
-            curve.setWarper(compiled);
-
+            const compiled = parseFormula(formulaInput.value);
+            fn = compiled;
+            valid = true;
+            curve.setWarper(fn);
             formulaInput.removeAttribute('aria-invalid');
             note.classList.remove('is-error');
-            // Say it out loud rather than let someone paste `^` into
-            // warpers.yaml, where Python reads it as xor and refuses it.
-            note.textContent = HINT + (/\^/.test(source) ? ' Знак ^ в коде станет **.' : '');
+            note.textContent = HINT + (formulaInput.value.includes('^') ? ' Знак ^ в коде станет **.' : '');
+            const samples = Array.from({ length: 121 }, (_, i) => fn(i / 120));
+            values.textContent = `f(0) = ${fn(0).toFixed(3)} / f(1) = ${fn(1).toFixed(3)} / диапазон ${Math.min(...samples).toFixed(3)}…${Math.max(...samples).toFixed(3)}`;
+            if (Math.abs(fn(0)) > 0.001 || Math.abs(fn(1) - 1) > 0.001) {
+                values.textContent += ' / Кривая начинается не в 0 или заканчивается не в 1: возможен скачок.';
+            }
+            apply(Number(scrub.value));
         } catch (error) {
+            valid = false;
             formulaInput.setAttribute('aria-invalid', 'true');
             note.classList.add('is-error');
-            note.textContent = error.message;
+            note.textContent = `${error.message}. На графике показана предыдущая корректная формула.`;
+            values.textContent = '';
         }
-
         write();
+        return valid;
     };
-
-    const showFormula = () => {
-        const on = isCustom();
-
-        formulaBox.hidden = !on;
-        if (on && !custom.fn) readFormula();
-        // The box was display:none until now, so its canvas had no box to
-        // measure; do it once it actually has one.
-        if (on) curve.measure();
+    const run = () => {
+        if (!valid || playButtons[0].disabled) return;
+        if (clock.running) { stop(); return; }
+        if (clock.progress >= 1) clock.seek(0, duration() * 1000);
+        clock.resume(performance.now());
+        setPlayLabel('Пауза');
+        const step = now => {
+            const t = clock.tick(now, duration() * 1000, repeat.checked);
+            if (!apply(t)) return;
+            frame = clock.running ? requestAnimationFrame(step) : null;
+            if (!clock.running) setPlayLabel('Ещё раз');
+        };
+        apply(clock.progress);
+        frame = requestAnimationFrame(step);
     };
-
-    background.addEventListener('change', () => {
-        image.src = background.value;
-        image.alt = background.selectedOptions[0]?.dataset.name || '';
-        update(!reduceMotion.matches);
+    const select = (animate = true) => {
+        const option = pick.selectedOptions[0];
+        description.textContent = option.dataset.description || '';
+        description.hidden = !description.textContent;
+        if (option.dataset.expr) formulaInput.value = option.dataset.expr;
+        else formulaInput.value = customFormula;
+        if (option.dataset.custom && option.value) nameInput.value = option.value;
+        else nameInput.value = 'my_warper';
+        scrub.value = 0;
+        validate();
+        property.addEventListener('change', () => {
+        if (sceneRange) sceneRange.textContent = {xalign: 'Сдвиг фона: от 12% до −12% ширины. Масштаб: 1,4.', zoom: 'Масштаб фона: от 1,05 до 1,45.', alpha: 'Прозрачность фона: от 0 до 1.'}[property.value];
+        if (valid) apply(Number(scrub.value));
+        write();
     });
-
-    for (const control of [warperPick, property]) {
-        // Auto-replay is the point of the control: you change the curve and
-        // see it. Under reduced motion it settles into the end state instead,
-        // and the Play button stays as the explicit way to ask for motion.
-        control.addEventListener('change', () => {
-            showFormula();
-            update(!reduceMotion.matches);
+    document.querySelectorAll('[data-test-warper]').forEach(link => {
+            if (pick.value && link.dataset.testWarper === pick.value) link.setAttribute('aria-current', 'true');
+            else link.removeAttribute('aria-current');
         });
-    }
-
-    seconds.addEventListener('input', write);
-
-    // Live: the curve follows the keystrokes. The stage doesn't — a frame
-    // restarting on every character is unreadable — so Enter (or Play) is
-    // what asks for the animation.
-    formulaInput.addEventListener('input', readFormula);
+        curveCanvas.setAttribute('aria-label', `График ${warperName() || 'своей формулы'} и линейная кривая для сравнения`);
+        if (animate && !reduceMotion.matches) run();
+    };
+    let customFormula = 't * t * (2.4 * t - 1.4)';
+    pick.addEventListener('change', () => select());
+    formulaInput.addEventListener('input', () => {
+        pick.value = '';
+        description.textContent = '';
+        description.hidden = true;
+        customFormula = formulaInput.value;
+        property.addEventListener('change', () => {
+        if (sceneRange) sceneRange.textContent = {xalign: 'Сдвиг фона: от 12% до −12% ширины. Масштаб: 1,4.', zoom: 'Масштаб фона: от 1,05 до 1,45.', alpha: 'Прозрачность фона: от 0 до 1.'}[property.value];
+        if (valid) apply(Number(scrub.value));
+        write();
+    });
+    document.querySelectorAll('[data-test-warper]').forEach(link => link.removeAttribute('aria-current'));
+        curveCanvas.setAttribute('aria-label', 'График своей формулы и линейная кривая для сравнения');
+        validate();
+    });
     nameInput.addEventListener('input', write);
-
-    for (const field of [formulaInput, nameInput]) {
-        field.addEventListener('keydown', event => {
+    seconds.addEventListener('input', () => {
+        stop();
+        clock.seek(Number(scrub.value), Number.isFinite(duration()) ? duration() * 1000 : 1500);
+        write();
+    });
+    playButtons.forEach(button => button.addEventListener('click', run));
+    repeat.addEventListener('change', () => {
+        if (Number.isFinite(duration())) clock.rebase(performance.now(), duration() * 1000);
+    });
+    resetButton.addEventListener('click', () => {
+        stop();
+        clock.seek(0, Number.isFinite(duration()) ? duration() * 1000 : 1500);
+        if (valid) apply(0);
+        setPlayLabel('Проиграть');
+    });
+    for (const input of [formulaInput, nameInput]) {
+        input.addEventListener('keydown', event => {
             if (event.key !== 'Enter') return;
             event.preventDefault();
-            readFormula();
             run();
         });
     }
-
-    playButton.addEventListener('click', () => {
-        write();
-        run();
+    scrub.addEventListener('input', () => {
+        stop();
+        clock.seek(Number(scrub.value), Number.isFinite(duration()) ? duration() * 1000 : 1500);
+        if (valid) apply(Number(scrub.value));
     });
+    const describeScene = () => {
+        if (sceneRange) sceneRange.textContent = {
+            xalign: 'Сдвиг фона: от 12% до −12% ширины. Масштаб: 1,4.',
+            zoom: 'Масштаб фона: от 1,05 до 1,45.',
+            alpha: 'Прозрачность фона: от 0 до 1.',
+        }[property.value];
+    };
+    property.addEventListener('change', () => {
+        describeScene();
+        if (valid) apply(Number(scrub.value));
+        write();
+    });
+    describeScene();
+    document.querySelectorAll('[data-test-warper]').forEach(link => {
+        link.addEventListener('click', event => {
+            if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+            event.preventDefault();
+            pick.value = link.dataset.testWarper;
+            select(false);
+            history.replaceState(history.state, '', '#wp-lab-label');
+            lab.querySelector('#wp-lab-label').focus({ preventScroll: true });
+            lab.scrollIntoView({ behavior: 'instant', block: 'start' });
+            if (!reduceMotion.matches) run();
+        });
+    });
+    // Fragment navigation emits popstate in some browser hosts. Keep local
+    // section jumps local so the site's page router never recreates the tester.
+    const jumpTo = target => {
+        history.replaceState(history.state, '', `#${target.id}`);
+        target.setAttribute('tabindex', '-1');
+        target.focus({ preventScroll: true });
+        target.scrollIntoView({ behavior: 'instant', block: 'start' });
+    };
+    document.querySelectorAll('.wp-jumps a, .wp-main a[href^="#"]:not([data-test-warper])').forEach(link => {
+        link.addEventListener('click', event => {
+            if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+            const target = document.getElementById(link.hash.slice(1));
+            if (!target) return;
+            event.preventDefault();
+            jumpTo(target);
+        });
+    });
+    lab.querySelectorAll('[data-expression]').forEach(button => {
+        button.addEventListener('click', () => {
+            formulaInput.value = button.dataset.expression;
+            formulaInput.dispatchEvent(new Event('input'));
+        });
+    });
+    const travelObserver = window.ResizeObserver ? new ResizeObserver(measureTravel) : null;
+    if (travelObserver) {
+        travelObserver.observe(demos.xalign.parentElement);
+        registerCleanup(() => travelObserver.disconnect());
+    } else {
+        window.addEventListener('resize', measureTravel);
+        registerCleanup(() => window.removeEventListener('resize', measureTravel));
+    }
+    const onMotionChange = () => {
+        stop();
+        clock.seek(1, Number.isFinite(duration()) ? duration() * 1000 : 1500);
+        if (valid) apply(1);
+    };
+    reduceMotion.addEventListener('change', onMotionChange);
+    registerCleanup(() => reduceMotion.removeEventListener('change', onMotionChange));
+    const onVisibility = () => { if (document.hidden) stop(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    registerCleanup(() => document.removeEventListener('visibilitychange', onVisibility));
 
-    image.src = background.value;
-    image.alt = background.selectedOptions[0]?.dataset.name || '';
-    note.textContent = HINT;
+    const onNavigation = () => {
+        if (!lab.isConnected) window.__esdocWarperCleanup();
+    };
+    window.addEventListener('esdoc:navigation', onNavigation);
+    registerCleanup(() => window.removeEventListener('esdoc:navigation', onNavigation));
 
     lab.hidden = false;
-
-    // Sizes are only readable once the section is out of [hidden].
-    showFormula();
-    update(false);
-
-    // Hovering the generator's curve runs the marker along it, exactly like
-    // the reference previews below.
-    curveCanvas.addEventListener('pointerenter', () => curve.play());
-    curveCanvas.addEventListener('pointerleave', () => curve.stop());
-    curveCanvas.addEventListener('click', () => curve.replay());
+    curve.measure();
+    select(false);
+    measureTravel();
+    const hashTarget = location.hash === '#wp-naming-label' ? '#wp-families-label' : location.hash;
+    if (hashTarget) {
+        let hashId = hashTarget.slice(1);
+        try { hashId = decodeURIComponent(hashId); } catch { /* Keep malformed fragments inert. */ }
+        const target = document.getElementById(hashId);
+        if (target && target.closest('.wp-main')) {
+            if (hashTarget !== location.hash) history.replaceState(history.state, '', hashTarget);
+            const initialJump = requestAnimationFrame(() => target.scrollIntoView({ behavior: 'instant', block: 'start' }));
+            registerCleanup(() => cancelAnimationFrame(initialJump));
+        }
+    }
 })();
 
 })();

@@ -1,10 +1,12 @@
 from pathlib import Path
+from .icons import lucide_icon
 from fastapi import HTTPException
 from fastapi.templating import Jinja2Templates
 
 ROOT = Path(__file__).parents[2]
 
 templates = Jinja2Templates(ROOT / 'templates')
+templates.env.globals['lucide_icon'] = lucide_icon
 
 def resolve(path):
     path = Path(path)

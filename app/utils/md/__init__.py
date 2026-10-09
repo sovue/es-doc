@@ -11,6 +11,7 @@ from pygments.token import Comment, Whitespace
 
 from ..renpy_lexer import RenPyLexer
 from ..svg import SVG
+from ..icons import lucide_icon
 from .audio import audio, render_audio
 from .banner import banner, render_banner_close, render_banner_open
 from .details import (
@@ -32,7 +33,6 @@ from .refs import (
     render_refs_open,
 )
 from .slugs import heading_shift, heading_slugs, render_heading_open
-from .table import table_block
 from .template import template
 
 dummy_rule = lambda s: lambda self, tokens, idx, options, env: s
@@ -209,14 +209,8 @@ def highlight_code(code, lang, attrs):
 # copy buttons (res_macros.html).
 CODE_COPY_BUTTON = (
     '<button type="button" class="code-copy" aria-label="Скопировать код" hidden>'
-    '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">'
-    '<rect x="4.5" y="4.5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/>'
-    '<path d="M9.5 3V2.5A1.5 1.5 0 0 0 8 1H2.5A1.5 1.5 0 0 0 1 2.5V8a1.5 1.5 0 0 0 1.5 1.5H3" stroke="currentColor" stroke-width="1.3"/>'
-    '</svg>'
-    '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">'
-    '<path d="M2 7.5L5.5 11L12 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>'
-    '</svg>'
-    '</button>'
+    + str(lucide_icon('copy', 14)) + str(lucide_icon('check', 14))
+    + '</button>'
 )
 
 def render_fence(self, tokens, idx, options, env):
@@ -339,14 +333,19 @@ def render_link_open(self, tokens, idx, options, env):
 
     return self.renderToken(tokens, idx, options, env)
 
-MD = MarkdownIt('commonmark', {'highlight': highlight_code})
+def render_table_open(self, tokens, idx, options, env):
+    tokens[idx].attrJoin('class', 'table')
+    return self.renderToken(tokens, idx, options, env)
+
+
+# Use the built-in GFM pipe-table rule; the rest of the syntax stays CommonMark.
+MD = MarkdownIt('commonmark', {'highlight': highlight_code}).enable('table')
 MD.add_render_rule('fence', render_fence)
 MD.add_render_rule('code_inline', render_code_inline)
 MD.add_render_rule('image', render_image)
 MD.add_render_rule('link_open', render_link_open)
 MD.add_render_rule('audio', render_audio)
 
-MD.block.ruler.before('fence', 'table', table_block)
 MD.block.ruler.before('fence', 'audio', audio)
 MD.block.ruler.before('fence', 'info', template('info'))
 MD.block.ruler.before('fence', 'warning', template('warning'))
@@ -366,8 +365,7 @@ MD.block.ruler.before('fence', 'banner', banner())
 
 MD.add_render_rule('heading_open', render_heading_open)
 
-MD.add_render_rule('table_open', dummy_rule('<table class="table">') )
-MD.add_render_rule('table_close', dummy_rule('</table>'))
+MD.add_render_rule('table_open', render_table_open)
 
 MD.add_render_rule('info_open', dummy_rule(f'<div class="info">{SVG["info"]}<div class="info-content">'))
 MD.add_render_rule('info_close', dummy_rule('</div></div>'))

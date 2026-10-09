@@ -1,15 +1,17 @@
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import FileResponse, PlainTextResponse
 import re
 from urllib.parse import quote
 
-from . import main_router
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import FileResponse, PlainTextResponse
+
 from ..utils.config import CONFIG
 from ..utils.docs import flatten_tree, search
-from ..utils.modified import format_ru
-from ..utils.file import templates, read_text
-from ..utils.md import render
+from ..utils.file import read_text, templates
 from ..utils.http import cache_headers, is_precompressed
+from ..utils.materials import material_file
+from ..utils.md import render
+from ..utils.modified import format_ru
+from . import main_router
 
 router = APIRouter(prefix='/docs')
 
@@ -51,6 +53,18 @@ async def image(file, request: Request):
     # header builder, rather than the same literal written twice. Screenshots
     # are PNG/WebP already, so they skip gzip too.
     return FileResponse(str(path), headers=cache_headers(precompressed=is_precompressed(path)))
+
+
+@router.get('/download/{file:path}')
+async def download_attachment(file: str):
+    # Articles publish their attachments directly, independently of the
+    # curated materials catalog. Keep this namespace inside materials/articles.
+    root = (CONFIG.docs_path.parent / 'materials' / 'articles').resolve()
+    path = material_file('articles/' + file)
+    if not path or not path.is_relative_to(root):
+        raise HTTPException(404, 'Вложение не найдено.')
+    return FileResponse(path, filename=path.name, content_disposition_type='attachment',
+                        headers={'X-Content-Type-Options': 'nosniff'})
 
 
 @router.get('/{doc}')

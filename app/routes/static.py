@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse, Response
 from . import main_router
 from ..utils.assets import load as load_asset
 from ..utils.file import ROOT
+from ..utils.icons import ICON_NAMES
 
 router = main_router
 
@@ -48,6 +49,13 @@ async def css(name, request: Request):
 @router.get('/static/js/{name}')
 async def js(name, request: Request):
     return _text_asset(request, f'static/js/{name}', 'application/javascript; charset=utf-8')
+
+
+@router.get('/static/icons/{name}.svg')
+async def icon(name: str, request: Request):
+    if name not in ICON_NAMES:
+        raise HTTPException(404, 'Иконка не существует.')
+    return _text_asset(request, f'static/icons/{name}.svg', 'image/svg+xml')
 
 @router.get('/static/fonts/{name}')
 async def font(name):

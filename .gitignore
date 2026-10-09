@@ -31,3 +31,7 @@ config.yaml
 .deploy.lock
 content/*
 !content/main
+
+.impeccable/critique/
+.agents/
+.codex/

@@ -35,7 +35,9 @@ window.copyControl = (element, getValue, { message, status, reset = 1600 } = {})
         if (status) status.textContent = typeof message === 'function' ? message() : message;
         clearTimeout(timer);
         timer = setTimeout(() => element.classList.remove('copied'), reset);
-    }).catch(() => {});
+    }).catch(() => {
+        if (status) status.textContent = 'Не удалось скопировать. Выделите текст и скопируйте его вручную.';
+    });
 };
 
 /* ── Placeholder values (`<Название лейбла>`) ──
@@ -103,8 +105,8 @@ document.querySelectorAll('span.cs').forEach(el => {
         const value = chip.textContent;
         if (!value.trim()) return;
 
-        const copy = window.copyControl(chip, () => value, {
-            message: 'Скопировано: ' + value, status,
+        const copy = window.copyControl(chip, () => chip.textContent, {
+            message: () => 'Скопировано: ' + chip.textContent, status,
         });
 
         chip.classList.add('code-copyable');

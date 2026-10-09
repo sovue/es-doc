@@ -58,13 +58,8 @@
                             data-play-src="{{ track.src }}" data-play-name="{{ track_name }}"
                             data-play-label="Включить тему сайта"
                             aria-label="Включить тему сайта" aria-pressed="false" hidden>
-                        <svg class="hero-track-icon-play" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                            <path d="M5 3.4v9.2a.6.6 0 0 0 .92.5l7-4.6a.6.6 0 0 0 0-1l-7-4.6A.6.6 0 0 0 5 3.4Z" fill="currentColor"/>
-                        </svg>
-                        <svg class="hero-track-icon-pause" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                            <rect x="4" y="3" width="3.2" height="10" rx="1" fill="currentColor"/>
-                            <rect x="8.8" y="3" width="3.2" height="10" rx="1" fill="currentColor"/>
-                        </svg>
+                        {{ lucide_icon('play', 16, 'hero-track-icon-play') }}
+                        {{ lucide_icon('pause', 16, 'hero-track-icon-pause') }}
                     </button>
 
                     <audio class="hero-track-audio" data-player-fallback
@@ -104,9 +99,7 @@
                             {% if notice.description %}<p id="notice-description-{{ loop.index }}" class="notice-description">{{ notice.description }}</p>{% endif %}
                             <span class="notice-open" aria-hidden="true">
                                 Открыть
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                    <path d="M3 10h14m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
+                                {{ lucide_icon('arrow-right', 20) }}
                             </span>
                         </a>
                     </li>

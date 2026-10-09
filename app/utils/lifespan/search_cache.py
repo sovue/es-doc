@@ -16,6 +16,10 @@ SECTIONS = (
     ('Браузер файлов', '/resources/browser'),
     ('Специалисты', '/specialists'),
     ('Материалы', '/materials'),
+    ('Инструменты', '/tools'),
+    ('Распаковщик RPA/RPYC/PYC RenPy / Python / UnRpyc / UnRPA / uncompyle6', '/tools/unpack'),
+    ('Палитра цветов / Цвет / HEX / RGB / Палитры', '/tools/colors'),
+    ('Варперы / Сглаживание ATL / Тестер формул', '/tools/warpers'),
     ('Площадки для публикации', '/news-resources'),
     ('Авторы', '/authors'),
     ('Поддержка', '/support'),
@@ -28,8 +32,8 @@ def _section_items():
         for label, url in SECTIONS
     ]
     for collection in ('original', 'community'):
-        for category, title in (CATEGORY_TITLES | {'warpers': 'Варперы'}).items():
-            if category not in CONFIG.resources.get(collection, {}) and category != 'warpers':
+        for category, title in CATEGORY_TITLES.items():
+            if category not in CONFIG.resources.get(collection, {}):
                 continue
             items.append({
                 'label': title, 'url': f'/resources/{collection}/{category}',
@@ -75,8 +79,8 @@ def rebuild_search():
     warpers = [{
         'label': item['name'], 'desc': item.get('desc') or '',
         'keywords': item.get('author') or '',
-        'context': 'Ресурсы сообщества / Варперы', 'kind': 'res',
-        'url': '/resources/community/warpers#' + quote(item['name'], safe=''),
+        'context': 'Инструменты / Варперы', 'kind': 'section',
+        'url': '/tools/warpers#' + quote(item['name'], safe=''),
     } for item in CONFIG.warpers]
     CONFIG.search_items = (
         _section_items() + build_items(CONFIG.search_index)

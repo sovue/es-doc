@@ -123,6 +123,22 @@ html[data-doc-width="wide"] body.scene-page::after {
     display: none;
 }
 
+/* The preference only opens the 96rem page cap when the viewport is wider.
+   Below that, keep the standard scene and hide a control with no effect. */
+@media (max-width: 96rem) {
+    html[data-doc-width="wide"] .page {
+        max-width: var(--site-max);
+    }
+
+    html[data-doc-width="wide"] body.scene-page {
+        background: transparent;
+    }
+
+    .site-width-toggle {
+        display: none;
+    }
+}
+
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) body.scene-page {
         --scene-backdrop: url('/resource/hero/ext_beach_night');

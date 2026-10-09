@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse
 
 from ..utils.config import CONFIG
 from ..utils.http import cache_headers, is_precompressed
+from ..utils.lifespan.animation_images import make_image
 from ..utils.lifespan.artist_img_cache import (
     cache_file as artist_img_file,
 )
@@ -174,6 +175,24 @@ def _confined_file(base, resource):
         raise HTTPException(404, f'Файл "{resource}" не существует.')
 
     return path
+
+
+@router.get('/poster/{resource:path}')
+async def animation_poster(resource: str):
+    source = _confined_file(CONFIG.res_path, resource)
+    if source.suffix.lower() not in ('.png', '.jpg', '.jpeg', '.webp'):
+        raise HTTPException(404, 'Превью изображения не найдено.')
+    async with compose_lock:
+        target = await asyncio.to_thread(make_image, source, poster=True)
+    return FileResponse(str(target), media_type='image/webp', headers=cache_headers(precompressed=True))
+
+
+@router.get('/animation/black-long')
+async def black_long_image(poster: bool = False):
+    source = _confined_file(CONFIG.res_path, 'images/bg/ext_camp_entrance_day.jpg')
+    async with compose_lock:
+        target = await asyncio.to_thread(make_image, source, poster=poster, sepia=True)
+    return FileResponse(str(target), media_type='image/webp', headers=cache_headers(precompressed=True))
 
 @router.get('/raw/{resource:path}')
 async def raw_page(resource, request: Request):

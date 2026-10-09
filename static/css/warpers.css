@@ -1,533 +1,135 @@
-/* =====================================================================
-   Warper reference (/warpers) — the naming legend and the preview matrix.
-
-   The page is a lookup table: ten families × three prefixes, plus three
-   special cases. The previews repeat because the data repeats, so they
-   carry no card chrome of their own — a 1px frame around the plot, the
-   name under it, nothing else. Column and row labels do the explaining.
-   ===================================================================== */
-
-/* Wider than the site's prose column: the matrix is four columns of plots.
-   Tighter on top for the same reason .page-main--res is — tabs and the
-   category strip already sit above it. */
-.wp-main {
-    width: 100%;
-    margin-inline: auto;
-    padding: 28px var(--page-gutter) 48px;
-    max-width: var(--directory-max);
-}
-
-.wp-section + .wp-section {
-    margin-top: 64px;
-}
-
-/* Running text stays inside a comfortable measure even though the matrix
-   below it spans the full 1100px column. */
-.wp-prose {
-    max-width: 68ch;
-}
-
-.wp-prose p {
-    margin: 1em 0;
-    line-height: var(--lh-prose);
-    color: var(--text);
-}
-
-.wp-prose p:first-of-type {
-    margin-top: 0;
-}
-
-.wp-prose .code-block {
-    margin: 22px 0;
-}
-
-.wp-section-note {
-    margin: -4px 0 28px;
-    font-size: var(--fs-ui);
-    line-height: var(--lh-prose);
-    color: var(--text-soft);
-}
-
-/* How to drive the previews — a quiet aside under the usage samples, not a
-   callout box: it explains the page's controls, not the subject. */
-.wp-hint {
-    font-size: var(--fs-ui);
-    color: var(--text-soft);
-}
-
-/* Attribution under a community warper. The name above it stays the copy
-   button; this line is the only place the contributor is credited. */
-.wp-cell-by {
-    font-size: var(--fs-label);
-    color: var(--text-soft);
-}
-
-.wp-cell-by a {
-    color: var(--accent);
-    text-decoration: none;
-    transition: color 0.15s var(--ease-out);
-}
-
-.wp-cell-by a:hover {
-    color: var(--accent-hover);
-    text-decoration: underline;
-}
-
-.wp-cell-by a:focus-visible {
-    outline: var(--focus-ring);
-    outline-offset: 2px;
-    border-radius: var(--radius-xs);
-}
-
-/* ── Sandbox ─────────────────────────────────────────────── */
-
-/* The stage is a window onto a game background, so it takes the game's own
-   16:9 and clips: the image inside is overscanned and moves under it. */
-.wp-lab-stage {
-    overflow: hidden;
-    aspect-ratio: 16 / 9;
-    max-width: 760px;
-    background: var(--bg-light);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-}
-
-.wp-lab-img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    /* Every frame is written by warpers.js; no CSS transition may smooth
-       over it, or the curve on screen stops being the curve you picked. */
-    transition: none;
-}
-
-.wp-lab-controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 12px 16px;
-    max-width: 760px;
-    margin-top: 16px;
-}
-
-.wp-lab-field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 0;
-    flex: 1 1 180px;
-}
-
-.wp-lab-field--time {
-    flex: 0 1 110px;
-}
-
-/* components.css gives .filter-input `flex: 1 1 200px` for the horizontal
-   filter bars it was built for. Here the label sits above the control, so
-   the field is a column — and that 200px basis becomes a 200px *height*,
-   overriding the input's own. Hand the height back. */
-.wp-lab-field .filter-input {
-    flex: none;
-}
-
-.wp-lab-label {
-    font-family: var(--font-mono);
-    font-size: var(--fs-label);
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-soft);
-}
-
-/* The page's one call to action, so it carries the accent at rest — the
-   previews only spend the leaf under the cursor, leaving the spotlight free. */
-.wp-lab-play {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    height: 36px;
-    padding: 0 16px;
-    font-family: var(--font-sans);
-    font-size: var(--fs-ui);
-    font-weight: 600;
-    color: var(--accent);
-    background: none;
-    border: 1px solid var(--accent);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: color 0.15s var(--ease-out), background-color 0.15s var(--ease-out);
-}
-
-.wp-lab-play:hover {
-    color: var(--bg);
-    background: var(--accent);
-}
-
-.wp-lab-play:focus-visible {
-    outline: var(--focus-ring);
-    outline-offset: 2px;
-}
-
-/* ── Generator ───────────────────────────────────────────── */
-
-.wp-lab-formula {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    max-width: 760px;
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
-}
-
-.wp-lab-formula-fields {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 12px 16px;
-    flex: 1 1 auto;
-    min-width: 0;
-}
-
-.wp-lab-formula-fields .wp-lab-field {
-    flex: 1 1 220px;
-}
-
-.wp-lab-field--name {
-    flex: 0 1 160px;
-}
-
-/* Formulas are code: they read in the mono face, like every other literal
-   on the site. */
-#wp-lab-expr,
-#wp-lab-name {
-    font-family: var(--font-mono);
-}
-
-#wp-lab-expr[aria-invalid],
-#wp-lab-name[aria-invalid] {
-    border-color: var(--warning);
-}
-
-/* One line that's the hint most of the time and the parser's complaint when
-   there is one — same slot either way, so nothing jumps as you type. */
-.wp-lab-note {
-    flex-basis: 100%;
-    margin: 0;
-    font-size: var(--fs-label);
-    line-height: var(--lh-ui);
-    color: var(--text-soft);
-}
-
-.wp-lab-note.is-error {
-    color: var(--warning);
-}
-
-.wp-lab-curve {
-    display: block;
-    flex: 0 0 auto;
-    width: 148px;
-    aspect-ratio: 1 / 1;
-    background: var(--bg-light);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    transition: border-color 0.15s var(--ease-out);
-}
-
-.wp-lab-curve:hover {
-    border-color: var(--accent);
-}
-
-.wp-lab-code {
-    max-width: 760px;
-    margin-top: 16px;
-}
-
-/* The generated line is short and fixed-height; no scrollbar should flicker
-   in and out as the warper name changes length. */
-.wp-lab-code pre {
-    overflow-x: auto;
-}
-
-/* ── Naming legend ───────────────────────────────────────── */
-
-.wp-legend {
-    margin: 0;
-    border-top: 1px solid var(--border);
-}
-
-.wp-legend-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 4px 14px;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
-}
-
-.wp-legend dt {
-    flex-shrink: 0;
-}
-
-.wp-legend dd {
-    margin: 0;
-    color: var(--text-soft);
-    line-height: var(--lh-prose);
-}
-
-.wp-legend b {
-    color: var(--text);
-    font-weight: 600;
-}
-
-/* ── Matrix ──────────────────────────────────────────────── */
-
-.wp-matrix {
-    display: grid;
-    grid-template-columns: 210px repeat(3, minmax(0, 1fr));
-    gap: 44px 28px;
-    align-items: start;
-}
-
-.wp-specials {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 32px 28px;
-}
-
-/* Column heading sits on the baseline of the first row of plots. */
-.wp-col {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    align-self: end;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
-}
-
-.wp-col-name {
-    font-size: var(--fs-label);
-}
-
-.wp-col-desc {
-    font-size: var(--fs-label);
-    line-height: var(--lh-ui);
-    color: var(--text-soft);
-}
-
-.wp-row-label {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    column-gap: 12px;
-}
-
-.wp-family {
-    margin: 0;
-    font-family: var(--font-serif);
-    font-size: var(--fs-lead);
-    font-weight: 700;
-    line-height: var(--lh-heading);
-    color: var(--text);
-}
-
-.wp-formula {
-    font-size: var(--fs-label);
-}
-
-/* warpers.js promotes the chip to a copy control; the ring is inset so
-   nothing shifts when it appears. What it hands over is the code form
-   (`t ** 2`), not the typeset one it displays. */
-.wp-formula[role="button"] {
-    cursor: pointer;
-    transition: box-shadow 0.15s var(--ease-out), color 0.15s var(--ease-out);
-}
-
-.wp-formula[role="button"]:hover {
-    box-shadow: inset 0 0 0 1px var(--code-inline);
-}
-
-.wp-formula[role="button"]:focus-visible {
-    outline: var(--focus-ring);
-    outline-offset: 2px;
-}
-
-.wp-formula.copied {
-    color: var(--code-success);
-    box-shadow: inset 0 0 0 1px var(--code-success);
-}
-
-.wp-family-note {
-    flex-basis: 100%;
-    max-width: 62ch;
-    margin: 10px 0 0;
-    font-size: var(--fs-ui);
-    line-height: var(--lh-ui);
-    color: var(--text-soft);
-}
-
-/* ── Preview cell ────────────────────────────────────────── */
-
-.wp-cell {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-    min-width: 0;
-}
-
-/* Square on purpose: time along the bottom and value up the right side get
-   the same length, so the curve isn't stretched into looking gentler or
-   sharper than it is. */
-.wp-plot {
-    display: block;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    background: var(--bg-light);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    transition: border-color 0.15s var(--ease-out);
-}
-
-/* The frame warms with the curve you're pointing at — the marker inside is
-   drawn in the same accent, and only ever on one preview at a time. */
-.wp-cell:hover .wp-plot,
-.wp-cell:focus-within .wp-plot,
-.wp-cell:target .wp-plot {
-    border-color: var(--accent);
-}
-
-/* The plot copies its registered easing name when warpers.js promotes it;
-   without JS it stays a plain picture. */
-.wp-plot[role="button"] {
-    cursor: pointer;
-}
-
-.wp-plot:focus-visible {
-    outline: var(--focus-ring);
-    outline-offset: 2px;
-}
-
-/* After the hover rule above, and one step more specific, so the confirmation
-   still reads while the cursor is on the plot that was just copied. */
-.wp-cell:hover .wp-plot.copied,
-.wp-cell .wp-plot.copied {
-    border-color: var(--pine);
-}
-
-/* The name is what people come here to take away, so it reads at body size
-   rather than as a caption under the plot. */
-.wp-name {
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-family: var(--font-mono);
-    font-size: var(--fs-body);
-    color: var(--text);
-}
-
-/* warpers.js upgrades the plain label into this button when there's a
-   clipboard to copy into; without JS the name stays plain text. */
-.wp-name--copy {
-    padding: 4px 8px;
-    margin-left: -8px;
-    background: none;
-    border: 1px solid transparent;
-    border-radius: var(--radius-xs);
-    cursor: pointer;
-    transition: color 0.15s var(--ease-out), border-color 0.15s var(--ease-out);
-}
-
-.wp-name--copy:hover {
-    color: var(--accent);
-    border-color: var(--border);
-}
-
-.wp-name--copy:focus-visible {
-    outline: var(--focus-ring);
-    outline-offset: 2px;
-}
-
-.wp-name--copy.copied {
-    color: var(--pine);
-    border-color: var(--pine);
-}
-
-.wp-name--copy.copied::after {
-    content: " ✓";
-}
-
-.wp-cell-desc {
-    font-size: var(--fs-ui);
-    line-height: var(--lh-ui);
-    color: var(--text-soft);
-}
-
-/* ── Responsive ──────────────────────────────────────────── */
-
-/* Below the full matrix width the label column would squeeze the plots, so
-   the family label becomes a heading over its own row of three. The prefix
-   headings go with it — the legend above already carries what they mean. */
-@media (max-width: 62.5em) {
-    .wp-matrix {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 20px 24px;
-    }
-
-    .wp-corner,
-    .wp-col {
-        display: none;
-    }
-
-    .wp-row-label {
-        grid-column: 1 / -1;
-        margin-top: 22px;
-    }
-}
-
-@media (max-width: 43.75em) {
-    .wp-matrix,
-    .wp-specials {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 40em) {
-    .wp-main {
-        padding: 24px 20px 40px;
-    }
-
-    /* Match the 44px touch height components.css gives the filter controls
-       this button stands next to. */
-    .wp-lab-play {
-        height: 44px;
-    }
-
-    /* The curve drops under its own fields rather than squeezing them. */
-    .wp-lab-formula {
-        flex-wrap: wrap;
-    }
-}
-
-@media (max-width: 28.75em) {
-    .wp-matrix,
-    .wp-specials {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .wp-cell {
-        max-width: 320px;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .wp-plot,
-    .wp-name--copy,
-    .wp-cell-by a,
-    .wp-lab-play {
-        transition: none;
-    }
-}
+/* Curve catalogue and ATL workbench share the site's paper, ink and leaf. */
+.wp-main { width: 100%; min-width: 0; max-width: var(--directory-max); margin-inline: auto; padding: 16px var(--page-gutter) 48px; }
+.wp-section + .wp-section { margin-top: 48px; }
+.wp-prose { max-width: 68ch; }
+.wp-prose p { line-height: var(--lh-prose); }
+.wp-section-note, .wp-hint, .wp-catalog-hint { color: var(--text-soft); font-size: var(--fs-ui); line-height: var(--lh-prose); }
+.wp-section-note { margin: 0 0 20px; }
+.wp-catalog-hint { margin: 0 0 24px; }
+.wp-catalog-hint svg { vertical-align: middle; }
+.wp-jumps { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.wp-jumps a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: var(--fs-ui); color: var(--text); text-decoration: none; }
+.wp-jumps a:hover { background: var(--bg-light); border-color: var(--accent); }
+.wp-jumps a:last-child { font-weight: 600; color: var(--accent); border-color: var(--accent); }
+.wp-jumps a:focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
+.wp-family[id] { scroll-margin-top: 132px; }
+.wp-section h2[id], .wp-cell[id] { scroll-margin-top: 88px; }
+.wp-specials { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; max-width: 660px; }
+.wp-matrix-head, .wp-family-row { display: grid; grid-template-columns: minmax(160px, .9fr) repeat(3, minmax(0, 1fr)); gap: 24px; }
+.wp-matrix-head { padding-block: 12px; position: sticky; top: 64px; background: var(--bg); border-bottom: 1px solid var(--border); z-index: 2; font-size: var(--fs-ui); }
+.wp-matrix-head > div { display: flex; flex-direction: column; gap: 4px; }
+.wp-matrix-head span { color: var(--text-soft); }
+.wp-family-row { padding-block: 22px; border-bottom: 1px solid var(--border); }
+.wp-family { margin: 0 0 6px; font-size: var(--fs-lead); }
+.wp-formula { color: var(--text-soft); font-size: var(--fs-ui); }
+.wp-family-note { font-size: var(--fs-ui); color: var(--text-soft); line-height: var(--lh-ui); margin: 10px 0 0; }
+.wp-cell { --wp-plot-height: 138px; position: relative; min-width: 0; }
+.wp-select { display: block; text-decoration: none; color: var(--text); }
+.wp-plot { display: block; width: 100%; height: var(--wp-plot-height); background: var(--bg-light); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.wp-select:hover .wp-plot, .wp-select[aria-current="true"] .wp-plot { border-color: var(--accent); }
+.wp-cell-meta { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.wp-cell-desc, .wp-cell-by { font-size: var(--fs-label); color: var(--text-soft); line-height: var(--lh-ui); }
+.wp-cell .res-copy { width: 100%; min-height: 44px; height: auto; justify-content: space-between; margin-block: 8px; padding: 8px; background: var(--code-bg); }
+.wp-cell .res-copy::before { order: 1; }
+.wp-cell .res-copy span { white-space: normal; overflow-wrap: anywhere; text-align: left; }
+.wp-cell .res-copy.copied { color: var(--code-success); border-color: var(--code-success); }
+.wp-cell .res-copy:disabled { cursor: default; }
+.wp-cell .res-copy:disabled::before { display: none; }
+.wp-lab { padding-top: 16px; border-top: 1px solid var(--border); }
+.wp-lab > .wp-section-note { max-width: none; margin-bottom: 12px; }
+.wp-lab-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, .54fr); grid-template-areas: 'editor scene' 'editor export'; gap: 28px; align-items: start; }
+.wp-lab-editor { grid-area: editor; min-width: 0; }
+.wp-export { grid-area: export; min-width: 0; padding: 16px; background: var(--bg-light); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.wp-lab .wp-export h3 { margin: 0 0 8px; }
+.wp-export .wp-hint { margin: 8px 0; }
+.wp-export .wp-lab-code pre { max-height: 60vh; overflow: auto; padding: 48px 14px 14px; font-size: var(--fs-label); }
+.wp-export .code-copy { width: 36px; height: 36px; }
+.wp-scene-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 12px; }
+.wp-scene-controls .wp-hint { flex: 1 1 240px; margin: 0; }
+.wp-lab .wp-scene { grid-area: scene; min-width: 0; margin-top: 0; }
+.wp-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+.wp-lab h2 { font-family: var(--font-serif); font-size: var(--fs-title); margin: 0 0 8px; }
+.wp-lab h3 { font-size: var(--fs-body); margin-block: 24px 8px; }
+.wp-lab-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 6px; }
+.wp-lab-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; flex: 1 1 160px; }
+.wp-lab-field--time { flex: 0 0 140px; }
+.wp-lab-field .filter-input { flex: none; min-height: 44px; width: 100%; }
+.wp-lab-field .filter-select { min-height: 44px; width: 100%; max-width: none; }
+.wp-lab-label { font-size: var(--fs-ui); font-weight: 600; }
+.wp-expression { margin-bottom: 6px; }
+#wp-lab-expr, #wp-lab-name { font-family: var(--font-mono); }
+[id^="wp-lab-"][aria-invalid="true"] { border-color: var(--warning); }
+.wp-lab-note { color: var(--text-soft); font-size: var(--fs-label); line-height: var(--lh-ui); margin: 6px 0; }
+.wp-lab-note:empty { display: none; }
+.wp-lab-note.is-error { color: var(--warning); }
+.wp-comparison-key { display: flex; flex-wrap: wrap; gap: 20px; font-size: var(--fs-label); color: var(--text-soft); margin: 16px 0 10px; }
+.wp-comparison-key span { display: inline-flex; align-items: center; gap: 7px; }
+.wp-key-selected::before { content: ''; width: 10px; height: 10px; background: var(--accent); border-radius: 50%; }
+.wp-key-linear::before { content: ''; width: 10px; height: 10px; background: var(--danger); border-radius: 50%; }
+.wp-workbench { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+.wp-graph { min-width: 0; }
+.wp-selection-note { margin: 10px 0; font-size: var(--fs-ui); line-height: var(--lh-ui); color: var(--text); }
+.wp-lab-curve { display: block; width: 100%; height: 224px; background: var(--bg-light); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+#wp-lab-values, #wp-lab-progress { font-family: var(--font-mono); font-size: var(--fs-label); }
+.wp-demos { display: grid; gap: 8px; }
+.wp-demo { margin: 0; }
+.wp-demo figcaption { display: flex; justify-content: space-between; gap: 8px; font-size: var(--fs-ui); margin-bottom: 5px; }
+.wp-demo figcaption code { font-size: var(--fs-label); color: var(--text-soft); }
+.wp-demo-stage { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-light); }
+.wp-demo-lane { height: 26px; position: relative; margin-inline: 14%; }
+.wp-demo-lane--linear { border-top: 2px dashed var(--danger); }
+.wp-demo-object { position: absolute; width: 20px; height: 20px; top: 3px; left: 50%; border-radius: 50%; background: var(--accent); transform: translateX(-50%); }
+.wp-demo-object--linear { background: var(--danger); }
+.wp-demo-stage--xalign .wp-demo-object { left: 0; transform: translateX(calc(var(--travel, 0) * 1px)); }
+.wp-transport { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; }
+.wp-transport button, .wp-lab-play, .wp-formula-examples button { min-height: 44px; padding: 8px 16px; background: none; color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-sm); font: inherit; font-size: var(--fs-ui); cursor: pointer; }
+.wp-transport .wp-lab-play, .wp-scene-controls .wp-lab-play { color: var(--accent); border-color: var(--accent); min-width: 120px; font-weight: 600; }
+.wp-transport button:hover, .wp-lab-play:hover, .wp-formula-examples button:hover { background: var(--bg-light); }
+.wp-transport button:disabled, .wp-lab-play:disabled { opacity: .5; cursor: not-allowed; }
+.wp-repeat { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: var(--fs-ui); }
+.wp-repeat input { accent-color: var(--accent); width: 18px; height: 18px; }
+#wp-lab-progress { display: block; text-align: right; margin-top: 4px; }
+.wp-scrub { display: flex; align-items: center; gap: 16px; font-size: var(--fs-label); color: var(--text-soft); }
+.wp-scrub input { flex: 1; min-width: 0; min-height: 44px; accent-color: var(--accent); }
+.wp-scene { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 24px; }
+.wp-formula-examples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.wp-lab-field--name { max-width: 440px; margin-top: 12px; }
+.wp-lab-code { margin-top: 16px; }
+.wp-lab-code pre { margin: 0; padding: 18px; font-size: var(--fs-ui); overflow-x: auto; }
+.wp-lab-stage { margin-top: 16px; max-width: 760px; overflow: hidden; aspect-ratio: 16 / 9; border: 1px solid var(--border); }
+.wp-lab-img { display: block; width: 100%; height: 100%; object-fit: cover; transition: none; }
+.wp-main a:focus-visible, .wp-main button:focus-visible, .wp-main summary:focus-visible, .wp-main input:focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
+.wp-main [hidden] { display: none !important; }
+@media (max-width: 1100px) {
+    .wp-lab-layout { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'editor' 'scene' 'export'; }
+    .wp-export { position: static; }
+}
+@media (max-width: 800px) {
+    .wp-inputs { display: block; }
+    .wp-matrix-head { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; top: 52px; }
+    .wp-matrix-head > span { display: none; }
+    .wp-family-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .wp-row-label { grid-column: 1 / -1; }
+    .wp-family-note { margin-top: 6px; }
+    .wp-family { display: inline; margin-right: 12px; }
+    .wp-workbench { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .wp-lab-curve { height: 240px; }
+    .wp-transport { position: sticky; top: 52px; z-index: 3; gap: 8px; padding: 8px 0; background: var(--bg); border-block: 1px solid var(--border); }
+    .wp-transport button { padding-inline: 12px; }
+    .wp-transport .wp-lab-play { min-width: 0; }
+    .wp-export .code-copy { width: 44px; height: 44px; }
+    .wp-export .wp-lab-code pre { padding-top: 58px; }
+}
+@media (max-width: 480px) {
+    .wp-specials, .wp-family-row { gap: 8px; }
+    .wp-cell { --wp-plot-height: 102px; }
+    .wp-cell-meta { align-items: start; flex-direction: column; }
+    .wp-cell .res-copy { flex-direction: column; align-items: start; gap: 6px; }
+    .wp-lab-controls > .wp-lab-field:first-child { flex-basis: 100%; }
+    .wp-lab-field--time { flex-basis: 140px; }
+    .wp-scrub { gap: 8px; }
+    .wp-scrub > span { max-width: 90px; }
+}
+
+.wp-demo-stage--zoom .wp-demo-lane, .wp-demo-stage--alpha .wp-demo-lane { margin-inline: 0; }
+.wp-demo-stage--zoom .wp-demo-object, .wp-demo-stage--alpha .wp-demo-object { width: 100%; height: 100%; top: 0; border-radius: 0; }

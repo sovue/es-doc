@@ -13,7 +13,7 @@
 
         <section class="page-hero page-hero--tight">
             <div class="page-hero-inner">
-                <a href="/resources/" class="page-back"><span aria-hidden="true">←</span> Ресурсы</a>
+                <a href="/resources/" class="page-back"><span aria-hidden="true">{{ lucide_icon('arrow-left') }}</span> Ресурсы</a>
                 <h1 class="page-title fb-view-title">{{ name }}</h1>
                 <p class="page-lead">{{ sub }}</p>
             </div>
@@ -51,6 +51,14 @@
 
             {% if view.mode == 'code' %}
             <pre class="fb-code">{{ view.gutter|safe }}<span class="code-scroll" tabindex="0"><code>{{ view.code|safe }}</code></span></pre>
+
+            {% if show_animation_link %}
+            <a class="fb-animation-link" href="/resources/original/anim#animation-previews">
+                <span class="fb-animation-link-title">Эффекты и анимации оригинала</span>
+                <span>Включая снег, мерцание свечи и моргание</span>
+                <span class="fb-animation-link-arrow" aria-hidden="true">{{ lucide_icon('arrow-right', 18) }}</span>
+            </a>
+            {% endif %}
 
             {% elif view.mode == 'image' %}
             <img class="fb-media" src="{{ raw }}" alt="{{ name }}" decoding="async">

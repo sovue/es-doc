@@ -73,7 +73,7 @@
                     esc(GROUPS[kind] || 'Результаты') + '</li>';
             }
             var ctx = m.context
-                ? '<span class="nav-search-ctx">' + esc(m.context) + ' › </span>'
+                ? '<span class="nav-search-ctx">' + esc(m.context) + ' ' + window.ESDocIcons.svg('chevron-right', 14) + '</span>'
                 : '';
             // When the hit came from a resource's description, show that
             // description after the name so the match is visible.
