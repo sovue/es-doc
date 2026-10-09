@@ -11,7 +11,7 @@
     let color = c.parseHex('#2f7524'), hsv = c.rgbToHsv(color), other = c.parseHex('#fff');
     let role = 'text', surface = 'field', pointer = null, disposed = false, imageRequest = 0, imagePoint = {x: 0, y: 0};
     const undos = [], redos = [], copyTimers = new Map();
-    let eyedropperOverlayTimer, eyedropperController;
+    let eyedropperOverlayTimer, eyedropperController, screenCaptureStream, screenCaptureVideo, screenPickResolve;
     const same = (first, second) => JSON.stringify(first) === JSON.stringify(second);
     const readList = key => {
         try {
@@ -437,7 +437,27 @@
     on(document, 'pointerdown', event => { if (event.button === 2) cancelEyedropper(event); });
     on(document, 'contextmenu', cancelEyedropper);
     on(document, 'keydown', event => { if (event.key === 'Escape') cancelEyedropper(event); });
-    if (window.EyeDropper && window.isSecureContext) {
+    on(get('eyedropper-overlay'), 'pointerdown', event => {
+        if (!screenCaptureVideo || event.button !== 0 || get('eyedropper-overlay').hidden) return;
+        if (event.target.closest?.('.picker-eyedropper-help')) return;
+        event.preventDefault();
+        try {
+            const sampleCanvas = document.createElement('canvas');
+            const scale = Math.min(1, 4096 / screenCaptureVideo.videoWidth, 4096 / screenCaptureVideo.videoHeight, Math.sqrt(12000000 / (screenCaptureVideo.videoWidth * screenCaptureVideo.videoHeight)));
+            sampleCanvas.width = Math.max(1, Math.round(screenCaptureVideo.videoWidth * scale)); sampleCanvas.height = Math.max(1, Math.round(screenCaptureVideo.videoHeight * scale));
+            const context = sampleCanvas.getContext('2d', {willReadFrequently: true});
+            context.drawImage(screenCaptureVideo, 0, 0, sampleCanvas.width, sampleCanvas.height);
+            const x = c.clamp(Math.floor(event.clientX / window.innerWidth * screenCaptureVideo.videoWidth * scale), 0, sampleCanvas.width - 1);
+            const y = c.clamp(Math.floor(event.clientY / window.innerHeight * screenCaptureVideo.videoHeight * scale), 0, sampleCanvas.height - 1);
+            const pixel = context.getImageData(x, y, 1, 1).data;
+            screenPickResolve?.({r: pixel[0], g: pixel[1], b: pixel[2], a: pixel[3] / 255});
+        } catch (_) {
+            get('status').textContent = 'Не удалось прочитать цвет экрана. Выберите вкладку Firefox в окне захвата.';
+        }
+    });
+    const nativeEyedropper = window.EyeDropper && window.isSecureContext;
+    const screenEyedropper = window.isSecureContext && window.navigator.mediaDevices?.getDisplayMedia;
+    if (nativeEyedropper || screenEyedropper) {
         get('eyedropper').hidden = false;
         on(get('eyedropper'), 'click', async () => {
             const pickController = new AbortController();
@@ -445,12 +465,40 @@
             const abortPick = () => pickController.abort();
             controller.signal.addEventListener('abort', abortPick, {once: true});
             get('eyedropper').disabled = true;
-            // Chromium snapshots the screen on open. Delay the dimmer until after
-            // that capture so the magnifier samples the original page colors.
-            eyedropperOverlayTimer = setTimeout(() => { if (!disposed) get('eyedropper-overlay').hidden = false; }, 300);
-            try { const result = await new window.EyeDropper().open({signal: pickController.signal}); if (!disposed && !pickController.signal.aborted) choose(c.parseHex(result.sRGBHex)); }
-            catch (error) { if (!disposed) get('status').textContent = error.name === 'AbortError' ? 'Выбор пипеткой отменён.' : 'Не удалось открыть пипетку. Используйте поле или изображение.'; }
-            finally { controller.signal.removeEventListener('abort', abortPick); if (eyedropperController === pickController) eyedropperController = null; clearTimeout(eyedropperOverlayTimer); if (!disposed) { get('eyedropper').disabled = false; get('eyedropper-overlay').hidden = true; get('eyedropper').focus({preventScroll: true}); } }
+            try {
+                let result;
+                if (nativeEyedropper) {
+                    // Chromium snapshots the screen on open. Delay the dimmer until after
+                    // that capture so the magnifier samples the original page colors.
+                    eyedropperOverlayTimer = setTimeout(() => { if (!disposed) get('eyedropper-overlay').hidden = false; }, 300);
+                    result = c.parseHex((await new window.EyeDropper().open({signal: pickController.signal})).sRGBHex);
+                } else {
+                    get('status').textContent = 'В окне Firefox выберите эту вкладку для захвата экрана.';
+                    screenCaptureStream = await window.navigator.mediaDevices.getDisplayMedia({video: true, audio: false, preferCurrentTab: true});
+                    screenCaptureVideo = document.createElement('video');
+                    screenCaptureVideo.muted = true; screenCaptureVideo.playsInline = true; screenCaptureVideo.srcObject = screenCaptureStream;
+                    await screenCaptureVideo.play();
+                    if (!screenCaptureVideo.videoWidth || !screenCaptureVideo.videoHeight) throw new Error('Captured tab is not ready');
+                    if (pickController.signal.aborted || disposed) return;
+                    get('eyedropper-overlay').classList.add('picker-eyedropper-overlay-capture');
+                    get('eyedropper-overlay').hidden = false;
+                    get('status').textContent = 'Нажмите на нужный цвет. Esc отменяет выбор.';
+                    result = await new Promise((resolve, reject) => {
+                        screenPickResolve = resolve;
+                        pickController.signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), {once: true});
+                    });
+                }
+                if (!disposed && !pickController.signal.aborted) choose(result);
+            }
+            catch (error) { if (!disposed) get('status').textContent = error.name === 'AbortError' ? 'Выбор пипеткой отменён.' : error.name === 'NotAllowedError' ? 'Захват вкладки отменён. Разрешите его или выберите цвет из изображения.' : 'Не удалось открыть пипетку. Используйте поле или изображение.'; }
+            finally {
+                controller.signal.removeEventListener('abort', abortPick);
+                if (eyedropperController === pickController) eyedropperController = null;
+                screenPickResolve = null; screenCaptureVideo = null;
+                screenCaptureStream?.getTracks().forEach(track => track.stop()); screenCaptureStream = null;
+                clearTimeout(eyedropperOverlayTimer);
+                if (!disposed) { get('eyedropper').disabled = false; get('eyedropper-overlay').hidden = true; get('eyedropper-overlay').classList.remove('picker-eyedropper-overlay-capture'); get('eyedropper').focus({preventScroll: true}); }
+            }
         });
     }
     const canvas = get('image-canvas');
@@ -521,7 +569,8 @@
     window.__esdocColorsCleanup = () => {
         disposed = true; imageRequest++; controller.abort();
         clearTimeout(eyedropperOverlayTimer);
-        shortcuts.close(); get('eyedropper-overlay').hidden = true;
+        screenCaptureStream?.getTracks().forEach(track => track.stop()); screenCaptureStream = null; screenCaptureVideo = null; screenPickResolve = null;
+        shortcuts.close(); get('eyedropper-overlay').hidden = true; get('eyedropper-overlay').classList.remove('picker-eyedropper-overlay-capture');
         for (const timer of copyTimers.values()) clearTimeout(timer);
         canvas.width = canvas.height = 0;
         window.__esdocColorsCleanup = null;

@@ -21,7 +21,10 @@ class ToolsRouteTests(unittest.IsolatedAsyncioTestCase):
     async def test_tools_page_has_local_processing_and_both_pickers(self):
         response = await self.get('/tools/unpack')
         self.assertEqual(response.status_code, 200)
-        self.assertIn('Распаковщик RPA/RPYC/PYC — ES Doc', response.text)
+        self.assertIn('Архивы RPA и декомпиляция RPYC/PYC — ES Doc', response.text)
+        self.assertIn('id="tools-mode-pack"', response.text)
+        self.assertIn('id="tools-pack-strip"', response.text)
+        self.assertIn('/static/tools/rpa.py?v=', response.text)
         self.assertIn('webkitdirectory', response.text)
         self.assertIn('multiple', response.text)
         self.assertIn('tools-worker.js', response.text)
@@ -68,7 +71,7 @@ class ToolsRouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn('color: var(--attention)', stylesheet.text)
         self.assertIn('.tools-status.is-error { color: var(--danger); }', stylesheet.text)
         self.assertIn('--tools-error-icon:', stylesheet.text)
-        for path in ('engine.py', 'recovery.py', 'pyc_decompiler.py', 'bytecode.zip', 'vendor.zip', 'syntax.zip', 'renpy_lexer.py', 'pyodide/0.29.3/pyodide.mjs', 'pyodide/0.29.3/pyodide.asm.wasm'):
+        for path in ('engine.py', 'rpa.py', 'recovery.py', 'pyc_decompiler.py', 'bytecode.zip', 'vendor.zip', 'syntax.zip', 'renpy_lexer.py', 'pyodide/0.29.3/pyodide.mjs', 'pyodide/0.29.3/pyodide.asm.wasm'):
             response = await self.get('/static/tools/' + path)
             self.assertEqual(response.status_code, 200, path)
             self.assertIn('nosniff', response.headers['x-content-type-options'])

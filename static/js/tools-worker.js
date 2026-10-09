@@ -1,6 +1,7 @@
 /* All runtime and Python code is served by ES Doc; user Files stay in this
    worker. WORKERFS reads Blob slices instead of copying a whole RPA to MEMFS. */
 let runtimePromise;
+let packRuntimePromise;
 let inputIndices = [];
 let browseMounted = false;
 let commandQueue = Promise.resolve();
@@ -13,13 +14,19 @@ const checkedFetch = async url => {
     return response;
 };
 
-async function initialize(config) {
+async function loadRuntime(config) {
     self.postMessage({ type: 'loading', text: 'Загрузка инструментов для локальной обработки…' });
     const { loadPyodide } = await import(new URL(config.runtime + 'pyodide.mjs', self.location.origin).href);
     const pyodide = await loadPyodide({
         indexURL: new URL(config.runtime, self.location.origin).href,
         stdout: () => {}, stderr: () => {},
     });
+    if (!pyodide.FS.filesystems.WORKERFS) throw new Error('Браузер не поддерживает чтение файлов инструментом. Попробуйте актуальный Firefox, Chrome или Edge.');
+    return pyodide;
+}
+
+async function initialize(config) {
+    const pyodide = await loadRuntime(config);
     const [vendor, engine, recovery, syntax, lexer, bytecode, pyc] = await Promise.all([
         checkedFetch(config.vendor).then(response => response.arrayBuffer()),
         checkedFetch(config.engine).then(response => response.text()),
@@ -50,6 +57,47 @@ import engine
 `);
     if (!pyodide.FS.filesystems.WORKERFS) throw new Error('Браузер не поддерживает чтение файлов инструментом. Попробуйте актуальный Firefox, Chrome или Edge.');
     return pyodide;
+}
+
+async function initializePacker(config) {
+    const pyodide = await loadRuntime(config);
+    const packer = await checkedFetch(config.packer).then(response => response.text());
+    pyodide.FS.mkdirTree('/tools');
+    pyodide.FS.writeFile('/tools/rpa.py', packer, { encoding: 'utf8' });
+    await pyodide.runPythonAsync("import sys\nsys.path.insert(0, '/tools')\nimport rpa");
+    return pyodide;
+}
+
+async function pack(data) {
+    let pyodide, mounted = false;
+    try {
+        packRuntimePromise ||= initializePacker(data.config).catch(error => { packRuntimePromise = null; throw error; });
+        pyodide = await packRuntimePromise;
+        pyodide.FS.mkdirTree('/pack');
+        pyodide.FS.mount(pyodide.FS.filesystems.WORKERFS, {
+            blobs: data.files.map((entry, index) => ({ name: `input-${index}`, data: entry.file })),
+        }, '/pack');
+        mounted = true;
+        inputIndices = [];
+        self.postMessage({ type: 'ready' });
+        pyodide.globals.set('pack_json', JSON.stringify(data.files.map((entry, index) => ({
+            path: entry.path, source: `/pack/input-${index}`,
+        }))));
+        self.postMessage({ type: 'output-start' });
+        const result = JSON.parse(await pyodide.runPythonAsync(`
+import json
+from js import esdocNotify, esdocEmit
+pack_result = rpa.pack(json.loads(pack_json), esdocEmit, esdocNotify)
+json.dumps(pack_result)
+`));
+        self.postMessage({ type: 'output', name: data.name, mime: 'application/octet-stream', result });
+        self.postMessage({ type: 'done', result });
+    } catch (error) {
+        self.postMessage({ type: 'fatal', error: String(error.message || error) });
+    } finally {
+        if (mounted) pyodide.FS.unmount('/pack');
+        if (pyodide) await pyodide.runPythonAsync("globals().pop('pack_json', None)\nglobals().pop('pack_result', None)\nimport gc\ngc.collect()");
+    }
 }
 
 self.esdocNotify = event => {
@@ -227,8 +275,8 @@ gc.collect()
 }
 
 self.onmessage = ({ data }) => {
-    if (!['run', 'catalog', 'source-read', 'browse-list', 'browse-read'].includes(data.type)) return;
-    commandQueue = commandQueue.then(() => data.type === 'run' ? run(data)
+    if (!['pack', 'run', 'catalog', 'source-read', 'browse-list', 'browse-read'].includes(data.type)) return;
+    commandQueue = commandQueue.then(() => data.type === 'pack' ? pack(data) : data.type === 'run' ? run(data)
         : ['catalog', 'source-read'].includes(data.type) ? source(data) : browse(data))
         .catch(error => self.postMessage({ type: 'fatal', error: String(error.message || error) }));
     return commandQueue;

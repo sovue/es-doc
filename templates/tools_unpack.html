@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% set page_title = 'Распаковщик RPA/RPYC/PYC — ES Doc' %}
+{% set page_title = 'Архивы RPA и декомпиляция RPYC/PYC — ES Doc' %}
 {% set body_class = 'bg-solid scene-page' %}
 {% set active = 'tools' %}
 {% set with_unpacker_js = true %}
@@ -11,7 +11,7 @@
         <section class="page-hero">
             <div class="page-hero-inner">
                 <a href="/tools" class="page-back"><span aria-hidden="true">{{ lucide_icon('arrow-left') }}</span> Инструменты</a>
-                <h1 class="page-title">Распаковщик RPA/RPYC/PYC</h1>
+                <h1 class="page-title">Архивы RPA и декомпиляция</h1>
             </div>
         </section>
         <div class="page-main">
@@ -23,6 +23,11 @@
                 </div>
                 <noscript><p>Для обработки файлов включите JavaScript. </p></noscript>
                 <div id="tools-controls" hidden>
+                    <fieldset class="tools-mode" aria-label="Операция с файлами">
+                        <legend class="sr-only">Операция с файлами</legend>
+                        <label><input type="radio" name="tools-operation" id="tools-mode-unpack" value="unpack" checked> Распаковка и декомпиляция</label>
+                        <label><input type="radio" name="tools-operation" id="tools-mode-pack" value="pack"> Упаковка в RPA</label>
+                    </fieldset>
                     <div class="tools-drop" id="tools-drop" tabindex="0" role="group" aria-label="Добавить файлы или папку"
                          aria-describedby="tools-drop-help">
                         {{ lucide_icon('folder-up', 32, 'tools-drop-icon') }}
@@ -36,6 +41,22 @@
                     </div>
                     <input type="file" id="tools-files" accept=".rpa,.rpyc,.rpymc,.pyc" multiple hidden>
                     <input type="file" id="tools-folder" webkitdirectory multiple hidden>
+                    <div class="tools-pack-settings" id="tools-pack-settings" hidden>
+                        <div class="tools-pack-fields">
+                            <label for="tools-pack-name">Имя архива
+                                <input id="tools-pack-name" type="text" value="my_mod.rpa" spellcheck="false" aria-describedby="tools-pack-name-help tools-pack-error">
+                            </label>
+                            <label for="tools-pack-strip">Удалить из начала путей
+                                <select id="tools-pack-strip" aria-describedby="tools-pack-path-help tools-pack-error"><option value="">Ничего не удалять</option></select>
+                            </label>
+                            <label for="tools-pack-prefix">Добавить папку в начале
+                                <input id="tools-pack-prefix" type="text" placeholder="Например, mods/my_mod" spellcheck="false" aria-describedby="tools-pack-path-help tools-pack-error">
+                            </label>
+                        </div>
+                        <p id="tools-pack-name-help" class="tools-meta">RPA-3.0, совместимый со старым Ren'Py в БЛ. Расширение .rpa добавится автоматически.</p>
+                        <p id="tools-pack-path-help" class="tools-meta">Пути в архиве должны совпадать с путями в коде относительно game. Проверьте их в списке ниже.</p>
+                        <p id="tools-pack-error" class="tools-status is-error" role="status" hidden></p>
+                    </div>
                     <div class="tools-options" id="tools-options">
                         <details class="tools-advanced"><summary><span class="tools-ui-icon tools-icon-settings" aria-hidden="true"></span>Настройки декомпиляции<span class="tools-ui-icon tools-icon-chevron" aria-hidden="true"></span></summary>
                             <div class="tools-disclosure-body">
@@ -53,6 +74,20 @@
                             <button type="button" class="tools-clear" id="tools-clear" title="Очистить добавленные файлы" aria-label="Очистить добавленные файлы">
                                 {{ lucide_icon('trash', 24) }}
                             </button>
+                        </div>
+                        <div id="tools-queue-tools" class="tools-queue-tools" hidden>
+                            <label for="tools-queue-search">Поиск по путям
+                                <input id="tools-queue-search" class="tools-browser-search tools-queue-search" type="search" placeholder="Имя файла или папки…" aria-describedby="tools-queue-search-help">
+                            </label>
+                            <p id="tools-queue-search-help" class="tools-meta">Поиск меняет только список. В архив попадут все добавленные файлы.</p>
+                            <p id="tools-pack-preview-note" class="tools-meta" hidden>Пути не пересчитаны. Исправьте ошибку выше; в списке остались последние корректные пути.</p>
+                            <div class="tools-queue-navigation">
+                                <p id="tools-queue-range" class="tools-meta" role="status" aria-live="polite"></p>
+                                <div id="tools-queue-pages" class="tools-queue-pages" hidden>
+                                    <button id="tools-queue-previous" class="tools-button" type="button">Назад</button>
+                                    <button id="tools-queue-next" class="tools-button" type="button">Далее</button>
+                                </div>
+                            </div>
                         </div>
                         <ul id="tools-file-list" class="tools-file-list" aria-label="Добавленные файлы"></ul>
                     </section>
@@ -97,7 +132,15 @@
                         </div>
                     </div>
                 </div>
-                <details class="tools-help"><summary><span class="tools-ui-icon tools-icon-info" aria-hidden="true"></span>Подробнее<span class="tools-ui-icon tools-icon-chevron" aria-hidden="true"></span></summary>
+                <details class="tools-help" id="tools-pack-help" hidden><summary><span class="tools-ui-icon tools-icon-info" aria-hidden="true"></span>Как подключить архив<span class="tools-ui-icon tools-icon-chevron" aria-hidden="true"></span></summary>
+                    <div class="tools-disclosure-body">
+                        <p>Добавьте ресурсы или папку с ними, проверьте пути и нажмите «Создать и скачать RPA». Все выбранные файлы копируются без изменений. Упаковка не компилирует .rpy в .rpyc.</p>
+                        <p>При выборе папки game её имя удаляется из путей автоматически. Для других папок выберите, какую часть пути удалить или добавить. Например, game/mods/my_mod/images/bg.png должен попасть в архив как mods/my_mod/images/bg.png.</p>
+                        <p>Отдельный конфиг не нужен. Сжимаются только записи о файлах; изображения, музыка и другие ресурсы сохраняют свой размер. RPA не шифрует содержимое.</p>
+                        <p>Загрузчик архива оставьте отдельным .rpy-файлом в папке мода. <a href="/docs/rpyc_rpa#интеграция-rpa-в-бл">Подключение RPA в БЛ с примером кода</a>.</p>
+                    </div>
+                </details>
+                <details class="tools-help" id="tools-unpack-help"><summary><span class="tools-ui-icon tools-icon-info" aria-hidden="true"></span>Подробнее<span class="tools-ui-icon tools-icon-chevron" aria-hidden="true"></span></summary>
                     <div class="tools-disclosure-body">
                     <p>Предпросмотр обрабатывает только выбранный файл. Декомпилированные скрипты сохраняются в unrpyc.zip, для каждого .rpa создаётся отдельный ZIP с папками и файлами архива. Сценарии .rpyc/.rpymc внутри него восстанавливаются в .rpy/.rpym, поддерживаемые .pyc в .py. Если исходник уже есть, он сохраняется без замены.</p>
                     <p>UnRpyc восстанавливает .rpyc и .rpymc. Файлы Ren'Py 6/7 тоже обрабатываются, но совместимость зависит от версии игры. Комментарии и исходное форматирование в скомпилированных файлах не сохраняются.</p>

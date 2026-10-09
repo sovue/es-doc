@@ -7,6 +7,23 @@ const context = vm.createContext({});
 vm.runInContext(fs.readFileSync(new URL('../static/js/tools-core.js', import.meta.url), 'utf8'), context);
 const core = context.ESDocTools;
 
+test('packing maps selected game paths and preserves mod namespaces', () => {
+    const paths = ['game/mods/demo/images/bg.png', 'game/mods/demo/audio/тема.ogg'];
+    assert.deepEqual([...core.commonFolders(paths)], ['game/', 'game/mods/', 'game/mods/demo/']);
+    assert.equal(core.packPath(paths[0], 'game/'), 'mods/demo/images/bg.png');
+    assert.equal(core.packPath('images/bg.png', '', 'mods/demo/'), 'mods/demo/images/bg.png');
+    assert.equal(core.packPath('demo/images/bg.png'), 'demo/images/bg.png');
+    assert.throws(() => core.packPath('a.png', 'game/'));
+    assert.throws(() => core.packPath('a.png', '', '../outside'));
+    assert.deepEqual([...core.commonFolders(['one/a', 'two/b'])], []);
+});
+
+test('RPA download names cannot turn into paths or reserved Windows devices', () => {
+    assert.equal(core.archiveName(' my_mod '), 'my_mod.rpa');
+    assert.equal(core.archiveName('Ресурсы.RPA'), 'Ресурсы.rpa');
+    for (const name of ['', '../a', '/a', 'a:b', 'CON', 'nul.rpa']) assert.throws(() => core.archiveName(name));
+});
+
 test('PYC is accepted and unsupported versions have specific advice', () => {
     assert.equal(core.accepts('module.PYC', 'combined'), true)
     assert.equal(core.accepts('module.pyc', 'unrpyc'), true)

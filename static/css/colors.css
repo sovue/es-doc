@@ -72,6 +72,7 @@
 .picker-shortcuts p { color: var(--text-soft); margin: 12px 0; }
 .picker-shortcuts .picker-section-head { margin-bottom: 20px; }
 .picker-eyedropper-overlay { position: fixed; inset: 0; z-index: 10000; background: rgb(0 0 0 / .6); cursor: crosshair; }
+.picker-eyedropper-overlay-capture { background: transparent; }
 .picker-eyedropper-help { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); width: min(360px, calc(100% - 32px)); box-sizing: border-box; padding: 20px 24px; border-radius: var(--radius-block); background: var(--bg); color: var(--text); box-shadow: 0 8px 32px #0004; }
 .picker-eyedropper-help h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; font-size: var(--fs-body); }
 .picker-eyedropper-help p { display: flex; align-items: center; gap: 16px; margin: 8px 0; font-size: var(--fs-ui); }

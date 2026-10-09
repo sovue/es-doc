@@ -9,6 +9,35 @@
     };
     const accepts = (path, mode) => (mode !== 'unrpa' && /\.(?:rpym?c|pyc)$/i.test(path))
         || (mode !== 'unrpyc' && /\.rpa$/i.test(path));
+    const archiveName = value => {
+        const name = value.trim().replace(/\.rpa$/i, '') + '.rpa';
+        if (!name || name === '.rpa' || name.length > 255 || /[\\/:*?"<>|\x00-\x1f]/.test(name)
+            || name.startsWith('.') || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])\./i.test(name)) {
+            throw new Error('Укажите имя архива без пути и символов \\ / : * ? " < > |.');
+        }
+        return name;
+    };
+    const packPath = (path, strip = '', prefix = '') => {
+        path = safePath(path);
+        if (strip && !path.startsWith(strip)) throw new Error('Удаляемая папка должна быть общей для всех файлов.');
+        prefix = prefix.trim().replaceAll('\\', '/').replace(/\/$/, '');
+        if (prefix) {
+            try { prefix = safePath(prefix) + '/'; }
+            catch { throw new Error('Укажите относительный путь папки без .., начального / и двоеточия. Например: mods/my_mod.'); }
+        }
+        return safePath(prefix + path.slice(strip.length));
+    };
+    const commonFolders = paths => {
+        if (!paths.length) return [];
+        const parts = safePath(paths[0]).split('/');
+        const folders = [];
+        for (let i = 1; i < parts.length; i++) {
+            const prefix = parts.slice(0, i).join('/') + '/';
+            if (!paths.every(path => path.startsWith(prefix))) break;
+            folders.push(prefix);
+        }
+        return folders;
+    };
     const walkEntry = async (entry, parent, add) => {
         const path = safePath(parent + entry.name);
         if (entry.isFile) {
@@ -110,5 +139,6 @@
         const category = pluralRules.select(count);
         return `${count.toLocaleString('ru-RU')} ${{ one, few, many }[category] || many}`;
     };
-    root.ESDocTools = { safePath, accepts, walkEntry, size, explainWarning, explainError, countLabel };
+    root.ESDocTools = { safePath, accepts, walkEntry, size, explainWarning, explainError, countLabel,
+        archiveName, packPath, commonFolders };
 })(globalThis);

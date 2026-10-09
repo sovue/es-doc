@@ -1,6 +1,16 @@
 .tools-page .page-main { max-width: 66rem; }
 .tools-heading h2, .tools-links h2, #site-tools-heading { font-family: var(--font-serif); font-size: var(--fs-subtitle); font-weight: 700; margin: 0 0 8px; }
 .tools-heading p { color: var(--text-soft); margin: 0 0 24px; }
+.tools-mode { display: flex; flex-wrap: wrap; gap: 8px 24px; border: 0; padding: 0; margin: 0 0 20px; font-size: var(--fs-ui); }
+.tools-mode label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; }
+.tools-mode label:has(:checked) { font-weight: 600; }
+.tools-pack-settings { margin-block: 20px 24px; }
+.tools-pack-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 12px; }
+.tools-pack-fields label { display: grid; gap: 8px; font-size: var(--fs-ui); font-weight: 600; min-width: 0; }
+.tools-pack-fields :is(input, select) { width: 100%; min-width: 0; min-height: 44px; padding: 8px 10px; border: 1px solid var(--text-soft); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font: inherit; font-weight: 400; caret-color: var(--accent); }
+.tools-pack-fields input::placeholder { color: var(--text-soft); opacity: 1; }
+.tools-pack-fields [aria-invalid="true"] { border-color: var(--danger); }
+@media (max-width: 700px) { .tools-pack-fields { grid-template-columns: minmax(0, 1fr); } }
 .tools-drop { border: 1px dashed var(--border); padding: 30px 20px 22px; text-align: center; background: var(--bg-light); border-radius: var(--radius-sm); }
 .tools-drop.is-dragging { border-color: var(--accent); border-style: solid; background: var(--accent-muted); }
 .tools-drop-icon { color: var(--text-soft); margin-bottom: 10px; }
@@ -11,7 +21,7 @@
 .tools-button-primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
 .tools-button-primary:hover { background: var(--accent-hover); color: var(--bg); }
 .tools-button:disabled { background: var(--bg-light); color: var(--text-soft); border-color: var(--border); cursor: default; }
-.tools-page :is(button, a, input, summary, .tools-drop):focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
+.tools-page :is(button, a, input, select, summary, .tools-drop):focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
 .tools-add-menu { position: fixed; z-index: 110; min-width: 210px; padding: 6px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); }
 .tools-add-menu button { display: block; width: 100%; min-height: 44px; padding: 10px 14px; background: none; border: 0; text-align: start; color: var(--text); font: inherit; font-size: var(--fs-ui); cursor: pointer; }
 .tools-add-menu button:hover { background: var(--bg-light); }
@@ -31,6 +41,11 @@
 .tools-queue-heading { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
 .tools-queue-summary { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 16px; min-width: 0; }
 .tools-queue-summary .tools-meta { margin: 0; }
+.tools-queue-tools { margin-top: 16px; }
+.tools-queue-tools > label { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; font-size: var(--fs-ui); font-weight: 600; }
+.tools-browser-search.tools-queue-search { border-color: var(--text-soft); }
+.tools-queue-navigation, .tools-queue-pages { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.tools-queue-navigation { justify-content: space-between; margin-top: 12px; }
 .tools-clear { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-soft); cursor: pointer; }
 .tools-clear:hover:enabled { color: var(--danger); background: var(--bg-light); }
 .tools-clear:disabled { opacity: 0.5; cursor: default; }
@@ -41,6 +56,7 @@
 .tools-file-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; min-height: 52px; padding: 6px 4px; }
 .tools-file-list li + li { border-top: 1px solid var(--border); }
 .tools-file-name { overflow-wrap: anywhere; font-size: var(--fs-ui); }
+.tools-pack-path { display: block; padding-block: 6px; color: var(--text); }
 .tools-file-size { font-size: var(--fs-ui); color: var(--text-soft); font-variant-numeric: tabular-nums; }
 .tools-file-state { display: block; color: var(--text-soft); font-size: var(--fs-ui); }
 .tools-file-state.is-error { color: var(--danger); }

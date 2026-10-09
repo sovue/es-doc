@@ -15,7 +15,7 @@ FILES = {
     'engine.py': 'text/plain', 'recovery.py': 'text/plain', 'vendor.zip': 'application/zip',
     'pyc_decompiler.py': 'text/plain', 'bytecode.zip': 'application/zip',
     'syntax.zip': 'application/zip', 'renpy_lexer.py': 'text/plain',
-    'manifest.json': 'application/json', 'NOTICE.txt': 'text/plain',
+    'manifest.json': 'application/json', 'NOTICE.txt': 'text/plain', 'rpa.py': 'text/plain',
     **{f'pyodide/{RUNTIME_VERSION}/{name}': media for name, media in {
         'pyodide.mjs': 'application/javascript', 'pyodide.asm.js': 'application/javascript',
         'pyodide.asm.wasm': 'application/wasm', 'python_stdlib.zip': 'application/zip',
@@ -55,6 +55,7 @@ async def unpack_page(request: Request):
     return templates.TemplateResponse(request, 'tools_unpack.html', {
         'tools_config': {
             'worker': asset_url('/static/js/tools-worker.js'),
+            'packer': f'/static/tools/rpa.py?v={digest("rpa.py")}',
             'engine': f'/static/tools/engine.py?v={digest("engine.py")}',
             'recovery': f'/static/tools/recovery.py?v={digest("recovery.py")}',
             'pyc': f'/static/tools/pyc_decompiler.py?v={digest("pyc_decompiler.py")}',
