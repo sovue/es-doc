@@ -549,8 +549,40 @@
         const visibleFolders = mode === 'pack' ? folderNames.slice(offset, offset + pageSize) : folderNames;
         const visibleEntries = entries.slice(mode === 'pack' ? Math.max(0, offset - folderNames.length) : 0,
             mode === 'pack' ? Math.max(0, offset + pageSize - folderNames.length) : 500);
+        const addRemove = (originalPaths, label, title) => {
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'tools-icon-button tools-remove-source';
+            remove.title = title;
+            remove.setAttribute('aria-label', label);
+            remove.innerHTML = '<span class="tools-ui-icon tools-icon-close" aria-hidden="true"></span>';
+            remove.disabled = busy;
+            remove.addEventListener('click', () => {
+                if (busy || enumerating) return;
+                const focused = document.activeElement === remove;
+                const index = Array.from(browserList.querySelectorAll('.tools-remove-source')).indexOf(remove);
+                for (const originalPath of originalPaths) {
+                    files.delete(originalPath);
+                    if (mode === 'pack') validPackPaths.delete(originalPath);
+                }
+                clearResult();
+                if (mode === 'pack') refreshPackFolders();
+                render();
+                loadCatalog();
+                if (focused && mode === 'pack') {
+                    const buttons = files.size ? browserList.querySelectorAll('.tools-remove-source') : [];
+                    (buttons[Math.min(index, buttons.length - 1)] || addButton).focus();
+                }
+            });
+            browserList.lastElementChild.appendChild(remove);
+        };
         for (const folder of visibleFolders) {
             row(folder + '/', 'папка', () => { browseFolder += folder + '/'; queuePage = 0; renderBrowse(); }, 'folder');
+            if (mode === 'pack') {
+                const folderPath = browseFolder + folder + '/';
+                const originalPaths = browseEntries.filter(entry => entry.path.startsWith(folderPath)).map(entry => entry.originalPath);
+                addRemove(originalPaths, 'Убрать папку ' + folderPath + ' и все вложенные файлы', 'Убрать папку и все вложенные файлы');
+            }
         }
         for (const entry of visibleEntries) {
             const kind = /\.(rpyc|rpymc|pyc|rpy|rpym|py|js|json|css|txt)$/i.test(entry.path) ? 'code'
@@ -559,28 +591,7 @@
             row(query ? entry.path : entry.path.slice(browseFolder.length), size(entry.size), () => readBrowse(entry), kind,
                 selectedEntry?.id === entry.id, entry.id);
             if (mode === 'pack' || catalogFiles[entry.source]?.path === entry.path && !isArchive(catalogFiles[entry.source]) && files.has(entry.path)) {
-                const remove = document.createElement('button');
-                remove.type = 'button';
-                remove.className = 'tools-icon-button tools-remove-source';
-                remove.title = 'Убрать файл';
-                remove.setAttribute('aria-label', 'Убрать ' + entry.path);
-                remove.innerHTML = '<span class="tools-ui-icon tools-icon-close" aria-hidden="true"></span>';
-                remove.disabled = busy;
-                remove.addEventListener('click', () => {
-                    const focused = document.activeElement === remove;
-                    const index = Array.from(browserList.querySelectorAll('.tools-remove-source')).indexOf(remove);
-                    files.delete(mode === 'pack' ? entry.originalPath : entry.path);
-                    if (mode === 'pack') validPackPaths.delete(entry.originalPath);
-                    clearResult();
-                    if (mode === 'pack') refreshPackFolders();
-                    render();
-                    loadCatalog();
-                    if (focused && mode === 'pack') {
-                        const buttons = files.size ? browserList.querySelectorAll('.tools-remove-source') : [];
-                        (buttons[Math.min(index, buttons.length - 1)] || addButton).focus();
-                    }
-                });
-                browserList.lastElementChild.appendChild(remove);
+                addRemove([mode === 'pack' ? entry.originalPath : entry.path], 'Убрать ' + entry.path, 'Убрать файл');
             }
         }
         if (!folders.size && !entries.length) {

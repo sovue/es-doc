@@ -128,9 +128,27 @@ for (const [name, data] of Object.entries(resources)) {
         ].join('\n'), zipPath, fixtures]);
         assert.deepEqual(errors, []);
 
-        // Reach a file beyond the former 200-row limit, then remove it by keyboard.
+        // Remove a folder by keyboard, including its descendants, then the remaining root.
         await page.locator('#tools-mode-pack').check();
         await page.locator('#tools-clear').click();
+        await page.locator('#tools-folder').setInputFiles(fixtures);
+        await page.locator('#tools-browser-search').fill('');
+        await page.locator('#tools-browser-list button').filter({hasText: 'my_mod/'}).click();
+        const removeImages = page.getByRole('button', { name: 'Убрать папку my_mod/images/ и все вложенные файлы', exact: true });
+        await removeImages.focus();
+        await page.keyboard.press('Enter');
+        assert.match(await page.locator('#tools-count').textContent(), /3 файла/);
+        assert.equal(await page.locator('#tools-browser-list button').filter({hasText: 'images/'}).count(), 0);
+        assert.equal(await page.locator('#tools-browser-list button').filter({hasText: 'audio/'}).count(), 1);
+        assert(await page.locator('#tools-browser-list .tools-remove-source').nth(1).evaluate(el => el === document.activeElement));
+        await page.locator('#tools-browser-crumbs button').filter({hasText: 'Все файлы'}).click();
+        await page.getByRole('button', { name: 'Убрать папку my_mod/ и все вложенные файлы', exact: true }).focus();
+        await page.keyboard.press('Enter');
+        assert(!await page.locator('#tools-browser').isVisible());
+        assert(await page.locator('#tools-add').evaluate(el => el === document.activeElement));
+        assert(await page.locator('#tools-download-all').isDisabled());
+
+        // Reach a file beyond the former 200-row limit, then remove it by keyboard.
         await page.locator('#tools-files').setInputFiles(Array.from({ length: 251 }, (_, i) => ({
             name: `item-${String(i).padStart(3, '0')}.bin`, mimeType: 'application/octet-stream', buffer: Buffer.from([i % 256]),
         })));

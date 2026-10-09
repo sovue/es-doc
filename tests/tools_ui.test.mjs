@@ -176,6 +176,44 @@ test('removing the last packing file returns keyboard focus to adding files', as
     assert.equal(ui.document.activeElement, ui.get('add'));
 });
 
+test('removing a packing folder drops all descendants using their original paths', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    ui.get('pack-prefix').value = 'bundle';
+    ui.get('folder').files = ['images/bg.png', 'images/nested/icon.png', 'images2/keep.png'].map(path =>
+        ({ name: path.split('/').at(-1), webkitRelativePath: 'game/my_mod/' + path, size: 1 }));
+    ui.get('folder').emit('change');
+    await Promise.resolve();
+    ui.get('browser-list').children[0].children[0].click();
+    ui.get('browser-list').children[0].children[0].click();
+    const folder = ui.get('browser-list').children[0];
+    assert.equal(folder.children[0].children[1].textContent, 'images/');
+    const remove = folder.children[2];
+    assert.ok(remove, 'folder has a remove button');
+    assert.match(remove.attributes['aria-label'], /вложенные файлы/);
+    remove.focus(); remove.click();
+    assert.match(ui.get('count').textContent, /1 файл/);
+    assert.equal(ui.get('browser-list').children[0].children[0].children[1].textContent, 'images2/');
+    assert.equal(ui.document.activeElement, ui.get('browser-list').children[0].children[2]);
+    ui.get('download-all').click();
+    assert.equal(ui.messages.at(-1).files.length, 1);
+    assert.equal(ui.messages.at(-1).files[0].path, 'bundle/my_mod/images2/keep.png');
+});
+
+test('removing the root packing folder clears the queue and returns focus to adding', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    ui.get('pack-prefix').value = 'my_mod';
+    await ui.add(['bg.png', 'theme.ogg']);
+    const remove = ui.get('browser-list').children[0].children[2];
+    assert.ok(remove, 'root folder has a remove button');
+    remove.focus(); remove.click();
+    assert.equal(ui.get('queue').hidden, true);
+    assert.equal(ui.get('browser').hidden, true);
+    assert.equal(ui.document.activeElement, ui.get('add'));
+    assert.equal(ui.get('download-all').disabled, true);
+});
+
 test('packing previews keep compiled files intact and do not start decompilers', async () => {
     const ui = page('?mode=pack');
     ui.get('pack-name').value = 'demo';
