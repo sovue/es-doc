@@ -47,8 +47,24 @@ class ToolsRouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('href="/tools/unpack"', response.text)
         self.assertIn('href="/tools/colors"', response.text)
+        self.assertIn('href="/tools/characters"', response.text)
         self.assertNotIn('tools-worker.js', response.text)
         self.assertNotIn('/static/js/tools.js', response.text)
+
+    async def test_character_workbench_is_discoverable_and_loads_only_its_runtime(self):
+        response = await self.get('/tools/characters')
+        self.assertEqual(response.status_code, 200)
+        for marker in ('Создатель персонажей — ES Doc', 'character-settings', 'character-preview-who',
+                       'character-preview-what', 'character-code', 'character-all-settings',
+                       'characters-catalog.js', 'characters-core.js', 'characters.js'):
+            self.assertIn(marker, response.text)
+        self.assertNotIn('tools-worker.js', response.text)
+        self.assertNotIn('colors.js', response.text)
+        for file in ('characters-catalog.js', 'characters-core.js', 'characters.js'):
+            asset = await self.get('/static/js/' + file)
+            self.assertEqual(asset.status_code, 200)
+        self.assertIn('/tools/characters</loc>', (await self.get('/sitemap.xml')).text)
+        self.assertIn('/tools/characters', [item['url'] for item in _section_items()])
 
     async def test_color_page_has_its_own_controls_and_scripts(self):
         response = await self.get('/tools/colors')

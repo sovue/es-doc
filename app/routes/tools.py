@@ -50,6 +50,11 @@ async def colors_page(request: Request):
     return templates.TemplateResponse(request, 'tools_colors.html', {})
 
 
+@main_router.get('/tools/characters')
+async def characters_page(request: Request):
+    return templates.TemplateResponse(request, 'tools_characters.html', {})
+
+
 @main_router.get('/tools/unpack')
 async def unpack_page(request: Request):
     return templates.TemplateResponse(request, 'tools_unpack.html', {

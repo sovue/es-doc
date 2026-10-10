@@ -111,6 +111,7 @@
         window.__esdocWarperCleanup?.();
         window.__esdocToolsCleanup?.();
         window.__esdocColorsCleanup?.();
+        window.__esdocCharactersCleanup?.();
         window.__esdocAnimationsCleanup?.();
         content.innerHTML = nextContent.innerHTML;
         document.title = nextDocument.title;
