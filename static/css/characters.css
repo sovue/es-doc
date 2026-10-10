@@ -48,13 +48,24 @@
 .character-help { font-size: var(--fs-ui); line-height: 1.6; color: var(--text-soft); margin: 12px 0; }
 .character-error { color: var(--danger); font-size: var(--fs-ui); line-height: 1.5; margin: 0; overflow-wrap: anywhere; }
 .character-section-head { justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; }
-.character-stage { --character-preview-scale: 1; aspect-ratio: 16 / 9; position: relative; overflow: hidden; background-color: #253846; background-position: center; background-size: cover; border-radius: var(--radius-sm); container-type: inline-size; }
-.character-stage.is-zoomed { --character-preview-scale: 2; aspect-ratio: 16 / 7; }
-.character-stage.is-zoomed .character-dialogue-window { min-height: 68%; }
-.character-dialogue-window { position: absolute; left: 0; right: 0; bottom: 0; min-height: 31%; padding: 5% 8% 5%; box-sizing: border-box; background: #18232ee8; color: #f5ecd7; font-family: var(--font-sans); }
-.character-namebox { margin-bottom: 1.5%; width: fit-content; max-width: 100%; }
-#character-preview-who { font-size: calc(1.667cqw * var(--character-preview-scale)); color: #e2c778; font-weight: 600; line-height: 1.35; white-space: pre-wrap; overflow-wrap: anywhere; }
-#character-preview-what { font-size: calc(1.667cqw * var(--character-preview-scale)); line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+@font-face { font-family: "ES Dialogue"; src: local("Calibri"); font-weight: 400; }
+@font-face { font-family: "ES Dialogue"; src: local("Calibri Bold"); font-weight: 700; }
+@font-face { font-family: "ES Dialogue"; src: local("Calibri Italic"); font-style: italic; }
+@font-face { font-family: "ES Dialogue"; src: local("Calibri Bold Italic"); font-style: italic; font-weight: 700; }
+.character-preview-viewport { overflow-x: auto; overscroll-behavior-x: contain; border-radius: var(--radius-sm); }
+.character-stage { position: relative; width: 100%; aspect-ratio: 1572 / 151; container-type: inline-size; background: #253846 url('/resource/raw/images/bg/ext_camp_entrance_day.jpg') 50% 98.600646% / 122.137405% auto no-repeat; }
+.character-preview-viewport.is-zoomed .character-stage { width: max(100%, 960px); }
+.character-dialogue-window { position: absolute; inset: 0; background: url('/resource/raw/images/gui/dialogue_box/day/dialogue_box.png') center / 100% 100% no-repeat; color: #ffdd7d; font-family: "ES Dialogue", Calibri, sans-serif; }
+.character-namebox { position: absolute; left: 1.272265%; top: 9.933775%; width: 83%; }
+#character-preview-who, #character-preview-what { font-size: 1.78117cqw; font-weight: 400; line-height: 1.071429; text-shadow: .127226cqw .127226cqw #000; white-space: pre-wrap; overflow-wrap: anywhere; }
+#character-preview-who { color: #e1dd7d; white-space: pre; overflow: hidden; }
+#character-preview-what { position: absolute; left: 1.272265%; top: 31.78808%; width: 98.02799%; bottom: 2.649007%; overflow: auto; scrollbar-width: thin; }
+.character-dialogue-controls { position: absolute; inset: 0; pointer-events: none; }
+.character-dialogue-controls img { position: absolute; top: 11.258278%; width: 1.717557%; height: auto; }
+.character-dialogue-controls img:nth-child(1) { left: 84.860051%; }
+.character-dialogue-controls img:nth-child(2) { left: 88.613232%; }
+.character-dialogue-controls img:nth-child(3) { left: 92.302799%; }
+.character-dialogue-controls img:nth-child(4) { left: 95.928753%; }
 .character-sample { margin-top: 18px; }
 .character-sample textarea { resize: vertical; min-height: 76px; }
 .character-preview-options { margin-top: 12px; font-size: var(--fs-ui); }
@@ -94,7 +105,6 @@
     .character-field-value { flex-wrap: nowrap; }
     .character-parameter .character-field-head { flex-wrap: wrap; }
     .character-enable { min-height: 44px; }
-    .character-stage.is-zoomed { --character-preview-scale: 3; aspect-ratio: 16 / 9; }
     .characters-page :is(input:not([type="checkbox"]), textarea, select) { font-size: 1rem; }
     .character-jumps { position: fixed; top: auto; bottom: 0; left: 0; right: 0; margin: 0; padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); border-bottom: 0; }
     .character-jumps button { flex: 1; padding: 8px 4px; }

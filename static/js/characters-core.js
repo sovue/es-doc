@@ -1,85 +1,25 @@
 /* Typed Character export. User Python is stored as text, never executed. */
 (function () {
     'use strict';
-    const catalog = window.ESDocCharacterCatalog;
-    const definitions = [
-        ['kind','Основа персонажа','expression','identity','adv / nvl / свой персонаж'],
-        ['dynamic','Динамическое имя','boolean','identity','Имя вычисляется перед каждой репликой.'],
-        ['image','Тег изображения','text','identity','Связывает персонажа с изображением и side image.'],
-        ['voice_tag','Тег голоса','text','identity','Для отдельных настроек голоса персонажа.'],
-        ['who_prefix','Префикс имени','text','who','Текст перед именем.'],
-        ['who_suffix','Суффикс имени','text','who','Текст после имени.'],
-        ['what_prefix','Префикс реплики','text','what','Текст перед репликой.'],
-        ['what_suffix','Суффикс реплики','text','what','Текст после реплики.'],
-        ['who_style','Стиль имени','text','who','Имя стиля из проекта.'],
-        ['what_style','Стиль реплики','text','what','Имя стиля из проекта.'],
-        ['window_style','Стиль окна','text','window','Имя стиля из проекта.'],
-        ['namebox_style','Стиль плашки имени','text','namebox','Для стандартного GUI Ren\'Py.'],
-        ['condition','Условие показа','text','behavior','Python-выражение в строке, например has_met_eileen.'],
-        ['interact','Ожидание ввода','boolean','behavior','Останавливает игру на реплике.'],
-        ['advance','Разрешить переход дальше','boolean','behavior','Разрешает клик, пропуск и автопереход.'],
-        ['callback','Обработчик событий','expression','behavior','Функция или список функций, без кавычек.'],
-        ['mode','Режим','text','behavior','Режим взаимодействия, например say.'],
-        ['retain','Сохранять экран','boolean','behavior','Обычно используется с речевыми облачками.'],
-        ['ctc','Индикатор продолжения','expression','ctc','Displayable, например Text("…").'],
-        ['ctc_pause','Индикатор при паузе','expression','ctc','Для тегов {p} и {w}.'],
-        ['ctc_timedpause','Индикатор временной паузы','expression','ctc','Для {p=} и {w=}; Null() отключает индикатор.'],
-        ['ctc_position','Положение индикатора','text','ctc','nestled / nestled-close / fixed / screen-variable'],
-        ['screen','Экран диалога','text','screen','Например say или bubble.'],
-        ['show_layer','Слой экрана','text','screen','Слой для экрана диалога.'],
-        ['show_function','Функция показа','expression','engine','Пользовательская функция показа.'],
-        ['predict_function','Функция предсказания','expression','engine','Пользовательская функция предзагрузки.'],
-        ['slow','Постепенный вывод','boolean','engine','Разрешает медленный вывод текста.'],
-        ['slow_abortable','Прерывать печать кликом','boolean','engine','Устаревший алиас what_slow_abortable.'],
-        ['afm','Автопереход','boolean','engine','Учитывать автоматический переход.'],
-        ['all_at_once','Вся реплика сразу','boolean','engine','Выводит все сегменты реплики одновременно.'],
-        ['with_none','Переход with None','boolean','engine','Поведение перехода после реплики.'],
-        ['type','Тип реплики','text','engine','Тип для истории и внутренних обработчиков.'],
-        ['warp','Пропуск при warp','boolean','engine','Поведение при быстром переходе по сценарию.'],
-        ['statement_name','Имя оператора','text','engine','Внутреннее имя оператора.'],
+    const args = [
+        {key:'kind', label:'Основа персонажа', mode:'expression', group:'identity'},
+        {key:'dynamic', label:'Динамическое имя', mode:'boolean', group:'identity'},
     ];
-    const args = definitions.map(([key,label,mode,group,help]) => ({key,label,mode,group,help,type: mode}));
-    const labels = {
-        color:'Цвет', size:'Размер', font:'Шрифт', bold:'Полужирный', italic:'Курсив', underline:'Подчёркивание', strikethrough:'Перечёркивание',
-        kerning:'Межбуквенный интервал', outlines:'Обводки и тени', justify:'По ширине', textalign:'Выравнивание текста',
-        line_spacing:'Межстрочный интервал', line_leading:'Отступ перед строкой', line_overlap_split:'Перекрытие строк',
-        slow_cps:'Скорость печати', slow_cps_multiplier:'Множитель скорости', background:'Фон', padding:'Внутренние отступы',
-        xpos:'Позиция X', ypos:'Позиция Y', xalign:'Выравнивание X', yalign:'Выравнивание Y', xsize:'Ширина', ysize:'Высота',
-    };
-    const styleHelp = {
-        color:'HEX: #RRGGBB или #RRGGBBAA с прозрачностью. Выбор цвета задаёт непрозрачный цвет.',
-        size:'Пиксели в сцене игры. Здесь размер пересчитан из 1920 × 1080.',
-        font:'Путь к шрифту в game, например fonts/my-font.ttf. Файл для проверки можно выбрать под сценой.',
-        outlines:'Список обводок: [(толщина, "цвет", смещение X, смещение Y)]. Например [(2, "#000", 0, 1)]. Размеры в пикселях сцены.',
-        slow_cps:'Символов в секунду. 0 выводит текст сразу. Проверьте результат кнопкой «Проиграть реплику».',
-        slow_cps_multiplier:'Множитель скорости печати: 1 оставляет её без изменения.',
-        padding:'Отступы в пикселях: (по горизонтали, по вертикали) или (слева, сверху, справа, снизу).',
-        textalign:'0 — слева, 0.5 — по центру, 1 — справа.',
-        xpos:'Положение по X: целое число — пиксели, дробное — доля ширины сцены.',
-        ypos:'Положение по Y: целое число — пиксели, дробное — доля высоты сцены.',
-        xalign:'Выравнивание по X: 0 — слева, 0.5 — по центру, 1 — справа.',
-        yalign:'Выравнивание по Y: 0 — сверху, 0.5 — по центру, 1 — снизу.',
-        kerning:'Межбуквенный интервал в пикселях сцены.',
-        line_spacing:'Дополнительный интервал между строками в пикселях сцены.',
-        background:'Цвет или ресурс фона, например "#18232e" или "gui/textbox.png".',
-    };
-    const typeHelp = {
-        text:'Текстовое значение. Кавычки в коде будут добавлены автоматически.',
-        number:'Числовое значение. Для переменной или выражения раскройте «Параметр / Python».',
-        boolean:'Оставьте «По умолчанию», чтобы сохранить поведение игры.',
-        expression:'Выражение Python: переменная, функция, список или кортеж. Оно попадёт в код без кавычек.',
-    };
-    const styleFields = [];
-    for (const prefix of ['who','what','window','namebox']) {
-        for (const prop of catalog.styles) {
-            const applicable = ['position', ...(prefix === 'who' || prefix === 'what' ? ['text'] : ['window','margin'])];
-            if (!applicable.includes(prop.group)) continue;
-            const help = styleHelp[prop.name] || typeHelp[prop.mode];
-            styleFields.push({key: prefix + '_' + prop.name, label: labels[prop.name] || prop.name, mode: prop.mode, type: prop.type, group: prefix, styleGroup: prop.group, help, doc: catalog.source + '#style-property-' + prop.name});
-        }
+    const labels = {color:'Цвет', prefix:'Префикс', suffix:'Постфикс', font:'Шрифт', bold:'Полужирный', italic:'Курсив', strikethrough:'Перечёркивание', underline:'Подчёркивание'};
+    const fields = [...args];
+    for (const group of ['who','what']) for (const [prop,label] of Object.entries(labels)) {
+        fields.push({key:group + '_' + prop, label, group, mode:['bold','italic','strikethrough','underline'].includes(prop) ? 'boolean' : 'text'});
     }
-    const fields = [...args, ...styleFields];
-    const byKey = new Map(fields.map(item => [item.key, item]));
+    const byKey = new Map(fields.map(item => [item.key,item]));
+    function simpleState(state) {
+        const values = Object.create(null);
+        for (const [key,entry] of Object.entries(state.values || {})) {
+            const field = byKey.get(key);
+            if (field && entry.mode === field.mode && (field.mode !== 'boolean' || ['True','False'].includes(entry.value))) values[key] = {...entry};
+        }
+        if (!values.dynamic) values.dynamic = {mode:'boolean',value:'False'};
+        return {...state, name:state.nameMode === 'none' ? '' : state.name, nameMode:'text', values};
+    }
     const keywords = new Set('False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield match case'.split(' '));
     const identifier = value => typeof value === 'string' && /^[\p{ID_Start}_][\p{ID_Continue}_]*$/u.test(value) && !keywords.has(value);
     const quote = value => JSON.stringify(String(value)).replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
@@ -130,7 +70,7 @@
         if (!identifier(state.variable)) errors.push({key:'variable', message:'Введите имя переменной Python: буквы, цифры и _, без пробелов; не ключевое слово.'});
         try {
             if (state.nameMode === 'none') parts.push('None');
-            else if (state.nameMode === 'text') parts.push(quote(state.name));
+            else if (state.nameMode === 'text') parts.push(state.name === '' ? 'None' : quote(state.name));
             else if (state.nameMode === 'expression') parts.push(expression(state.name));
             else if (state.nameMode !== 'inherit') throw new Error('Выберите способ задания имени.');
         } catch (error) { errors.push({key:'name',message:error.message}); }
@@ -202,5 +142,5 @@
         }
         return {variable:s.variable,name:s.name,nameMode:s.nameMode,sample:s.sample,values};
     }
-    window.ESDocCharacters = {fields, args, field:key => byKey.get(key), identifier, quote, expression, serialize, literal, compile, project, importProject};
+    window.ESDocCharacters = {simpleState, fields, args, field:key => byKey.get(key), identifier, quote, expression, serialize, literal, compile, project, importProject};
 })();

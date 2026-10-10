@@ -54,8 +54,8 @@ class ToolsRouteTests(unittest.IsolatedAsyncioTestCase):
     async def test_character_workbench_is_discoverable_and_loads_only_its_runtime(self):
         response = await self.get('/tools/characters')
         self.assertEqual(response.status_code, 200)
-        for marker in ('Создатель персонажей — ES Doc', 'character-settings', 'character-preview-who',
-                       'character-preview-what', 'character-code', 'character-all-settings',
+        for marker in ('Создатель простых персонажей — ES Doc', 'character-settings', 'character-preview-who',
+                       'character-preview-what', 'character-code', 'character-kind',
                        'characters-catalog.js', 'characters-core.js', 'characters.js'):
             self.assertIn(marker, response.text)
         self.assertNotIn('tools-worker.js', response.text)

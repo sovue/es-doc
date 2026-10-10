@@ -19,7 +19,7 @@ SECTIONS = (
     ('Инструменты', '/tools'),
     ('Архивация RPA и декомпиляция RPYC/PYC / Упаковщик и распаковщик RPA / RenPy / Python / UnRpyc / UnRPA / uncompyle6', '/tools/unpack'),
     ('Палитра цветов / Цвет / HEX / RGB / Палитры', '/tools/colors'),
-    ('Создатель персонажей / Character / RenPy / Имя / Диалог / Повествование / Стиль текста', '/tools/characters'),
+    ('Создатель простых персонажей / Character / RenPy / Имя / Диалог / Повествование / Стиль текста', '/tools/characters'),
     ('Варперы / Сглаживание ATL / Тестер формул', '/tools/warpers'),
     ('Площадки для публикации', '/news-resources'),
     ('Авторы', '/authors'),

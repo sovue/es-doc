@@ -11,6 +11,25 @@ for (const file of ['characters-catalog.js', 'characters-core.js']) {
 const core = () => { assert.ok(window.ESDocCharacters); return window.ESDocCharacters; };
 const state = () => ({variable: 'e', name: 'Семён', nameMode: 'text', sample: 'Привет!', values: {}});
 
+test('simple creator exports empty names as narration and restricts restored properties', () => {
+    const s = state(); s.name = '';
+    assert.match(core().compile(s).code, /Character\(None\)/);
+    s.values = {who_color:{mode:'text',value:'#abc'}, what_size:{mode:'number',value:'42'}};
+    const restored = core().simpleState(s);
+    assert.equal(restored.values.who_color.value, '#abc');
+    assert.equal(restored.values.what_size, undefined);
+    assert.equal(restored.nameMode, 'text');
+    assert.equal(restored.values.dynamic.value, 'False', 'Normal names must not inherit DynamicCharacter evaluation');
+});
+
+test('simple properties cover both name and dialogue without engine settings', () => {
+    const keys = core().fields.map(field => field.key);
+    for (const prefix of ['who','what']) for (const property of ['color','prefix','suffix','font','bold','italic','strikethrough','underline']) {
+        assert(keys.includes(prefix + '_' + property));
+    }
+    assert.equal(keys.length, 18);
+});
+
 test('unset properties inherit; explicit False, zero and None survive export', () => {
     const s = state();
     s.values = {what_bold: {mode: 'boolean', value: 'False'}, what_kerning: {mode: 'number', value: '0'}, callback: {mode: 'expression', value: 'None'}};
@@ -56,14 +75,6 @@ test('invalid identifiers and keyword injections block the entire export', () =>
     assert.equal(core().compile(s).code, '');
     s.values = {name: {mode:'text',value:'Duplicate'}};
     assert.equal(core().compile(s).code, '');
-});
-
-test('catalog covers offline properties and current text and position properties', () => {
-    const c = core();
-    for (const key of ['who_outlines','what_slow_cps_multiplier','who_line_spacing','what_font','what_language','what_ruby_style','who_xanchor','what_xalign','window_background','namebox_padding','ctc_timedpause','predict_function','retain','advance','show_layer']) {
-        assert.ok(c.field(key), key);
-    }
-    assert.ok(window.ESDocCharacterCatalog.styles.length >= 129);
 });
 
 test('project import rejects corrupt or executable structure and preserves exact configured values', () => {
