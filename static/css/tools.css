@@ -38,6 +38,25 @@
 .tools-drop-icon { color: var(--text-soft); margin-bottom: 10px; }
 .tools-drop-title { margin: 0 0 6px; font-size: var(--fs-body); font-weight: 600; }
 .tools-drop p:not(.tools-drop-title) { color: var(--text-soft); font-size: var(--fs-ui); }
+.tools-drop.is-compact { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 12px 16px; text-align: start; }
+.tools-drop.is-compact .tools-drop-icon { display: none; }
+.tools-drop.is-compact .tools-drop-title { margin: 0; color: var(--text-soft); font-size: var(--fs-ui); font-weight: 400; }
+.tools-drop.is-compact .tools-button { flex: none; }
+.tools-export-dialog { width: min(42rem, calc(100% - 32px)); max-height: calc(100dvh - 32px); box-sizing: border-box; padding: 24px; border: 0; border-radius: var(--radius-block); background: var(--bg-elevated); color: var(--text); box-shadow: var(--shadow-modal); overflow-y: auto; scrollbar-color: var(--border) var(--bg-elevated); }
+.tools-export-dialog::backdrop { background: var(--scrim); }
+html:has(.tools-export-dialog[open]) { overflow: hidden; }
+.tools-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.tools-dialog-heading h2 { margin: 0; font-family: var(--font-serif); font-size: var(--fs-subtitle); }
+.tools-dialog-close { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-soft); cursor: pointer; }
+.tools-dialog-close:hover { color: var(--text); background: var(--bg-light); }
+.tools-export-dialog .tools-status { margin: 0 0 16px; }
+.tools-export-dialog .tools-status:empty { display: none; }
+.tools-export-dialog .tools-result-meta { margin-block: 16px; font-size: var(--fs-ui); }
+.tools-dialog-downloads { display: flex; align-items: flex-start; flex-direction: column; gap: 12px; margin-top: 20px; }
+.tools-dialog-downloads:not(:has(> :not([hidden]))) { display: none; }
+.tools-dialog-downloads .tools-meta { margin: 0; overflow-wrap: anywhere; }
+.tools-export-dialog .tools-warnings[open] > ul { position: static; width: auto; max-width: 100%; margin-top: 12px; }
+.tools-export-dialog .tools-pack-integration { padding-top: 24px; border-top: 1px solid var(--border); }
 .tools-button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 44px; padding: 10px 18px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); font: inherit; font-size: var(--fs-ui); font-weight: 600; cursor: pointer; text-decoration: none; }
 .tools-button:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
 .tools-button-primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
@@ -199,6 +218,9 @@
 .tools-page [hidden] { display: none !important; }
 @media (max-width: 640px) {
     .tools-drop { padding: 24px 14px 20px; }
+    .tools-drop.is-compact { flex-direction: column; align-items: stretch; padding: 12px 14px; text-align: center; }
+    .tools-export-dialog { padding: 20px; }
+    .tools-dialog-downloads > .tools-button, .tools-dialog-downloads .tools-downloads, .tools-dialog-downloads .tools-downloads > a { width: 100%; }
     .tools-link-list a { grid-template-columns: 1fr auto; gap: 4px 12px; }
     .tools-link-list a span:nth-child(2) { grid-column: 1; }
     .tools-link-list a span:last-child { grid-column: 2; grid-row: 1 / 3; }

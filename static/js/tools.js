@@ -13,6 +13,9 @@
     const queue = get('queue'), list = get('file-list'), progress = get('progress');
     const progressBar = get('progress-bar'), current = get('current');
     const resultPanel = get('result'), downloads = get('downloads'), downloadAll = get('download-all');
+    const exportDialog = get('export-dialog'), exportStart = get('export-start');
+    const exportStatus = get('export-status'), exportErrors = get('export-errors');
+    const downloadButton = '<span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span><span>Скачать</span>';
     const warningsPanel = get('warnings'), warningList = get('warning-list');
     const browseActions = get('browse-actions'), browseArchive = get('archive');
     const browser = get('browser'), browserList = get('browser-list');
@@ -39,6 +42,7 @@
     let browseEntries = [], browseFolder = '', browseRequest = 0, previewUrl = null;
     let catalogEntries = [], catalogFiles = [], catalogRequest = 0, selectedEntry = null;
     let task = '', exportReady = false, catalogSubmitted = false, previewFont = null, clearOnDownload = false;
+    let packDownloadStarted = false, exportFinished = false;
     let operation = 0;
     let previewPending = null, pendingPreviewKey = '';
     const previewCache = new Map();
@@ -59,13 +63,28 @@
         previewCacheBytes += bytes;
     };
 
-    const say = (message, error = false) => {
-        status.textContent = message;
-        status.classList.toggle('is-error', error);
-        errorsPanel.hidden = true;
-        errorsPanel.replaceChildren();
+    const say = (message, error = false, inExport = task === 'export') => {
+        const target = inExport ? exportStatus : status;
+        const diagnostics = inExport ? exportErrors : errorsPanel;
+        target.textContent = message;
+        target.classList.toggle('is-error', error);
+        diagnostics.hidden = true;
+        diagnostics.replaceChildren();
+    };
+    const notifyDownload = () => {
+        exportStatus.textContent = 'Скачивание запущено.';
+        exportStatus.classList.remove('is-error');
     };
     const clearResult = () => {
+        exportFinished = false;
+        if (exportDialog.open) exportDialog.close();
+        task = '';
+        exportStatus.textContent = '';
+        exportErrors.hidden = true;
+        exportErrors.replaceChildren();
+        get('export-summary').hidden = true;
+        packDownloadStarted = false;
+        get('pack-integration').hidden = true;
         previewCache.clear();
         previewCacheBytes = 0;
         pendingPreviewKey = '';
@@ -91,6 +110,8 @@
         outputs.length = 0;
         chunks = [];
         downloads.replaceChildren();
+        downloads.hidden = true;
+        get('export-info').hidden = true;
         downloadAll.hidden = true;
         resultPanel.hidden = true;
         get('result-description').textContent = '';
@@ -118,6 +139,19 @@
     const isArchive = entry => /\.rpa$/i.test(entry.path);
     const updateControls = () => {
         const locked = busy || enumerating || !supported;
+        const hasFiles = files.size > 0;
+        exportStart.hidden = !hasFiles && !exportFinished;
+        exportStart.disabled = locked || (!exportFinished && mode === 'pack' && !packValid);
+        exportStart.innerHTML = exportFinished ? '<span>Открыть результат</span>' : downloadButton;
+        get('export-close').setAttribute('aria-label', busy && task === 'export' ? 'Отменить обработку и закрыть окно' : 'Закрыть окно');
+        get('pack-settings').hidden = mode !== 'pack' || !hasFiles;
+        get('options').hidden = mode === 'pack' || !hasFiles;
+        get('pack-integration').hidden = mode !== 'pack' || !packDownloadStarted;
+        drop.classList.toggle('is-compact', hasFiles);
+        get('drop-title').textContent = hasFiles ? 'Перетащите сюда ещё файлы или папку' : 'Перетащите файлы или папку сюда';
+        get('drop-help').hidden = hasFiles;
+        drop.setAttribute('aria-describedby', hasFiles ? 'tools-drop-title' : 'tools-drop-help');
+        get('add-label').textContent = hasFiles ? 'Добавить ещё' : 'Добавить файлы или папку';
         start.disabled = locked || !selected().length || (mode === 'pack' && !packValid);
         start.hidden = mode === 'pack' || !retryAvailable || locked || !selected().length;
         addButton.disabled = locked;
@@ -129,7 +163,8 @@
         queuePrevious.disabled = locked || queuePage === 0;
         queueNext.disabled = locked || (queuePage + 1) * queuePageSize >= queueMatches;
         cancel.hidden = !busy && !enumerating;
-        const cancelHost = busy && task === 'preview' && previewPending ? previewPending : operationActions;
+        const cancelHost = busy && task === 'export' ? get('export-actions')
+            : busy && task === 'preview' && previewPending ? previewPending : operationActions;
         if (cancel.parentNode !== cancelHost) cancelHost.appendChild(cancel);
         downloadAll.disabled = locked || (!selected().length && !outputs.length) || (mode === 'pack' && !packValid);
         browseArchive.disabled = locked;
@@ -311,9 +346,12 @@
     const showOutputs = () => {
         resultPanel.hidden = false;
         start.classList.remove('tools-button-primary');
-        downloadAll.hidden = false;
-        downloadAll.innerHTML = '<span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span><span>'
-            + (exportReady ? 'Скачать ещё раз' : mode === 'pack' ? 'Создать и скачать RPA' : 'Скачать всё в ZIP') + '</span>';
+        const singleResult = exportReady && outputs.length === 1;
+        downloadAll.hidden = exportReady && outputs.length > 1;
+        downloadAll.innerHTML = exportFinished && !exportReady ? '<span>Повторить обработку</span>' : downloadButton;
+        downloads.hidden = !outputs.length || singleResult;
+        get('export-info').hidden = !singleResult;
+        if (singleResult) get('export-info').textContent = `${outputs[0].name} / ${size(outputs[0].blob.size)}`;
         if (outputs.length === 1 && mode !== 'pack') outputs[0].link.classList.add('tools-button-primary');
     };
     const options = () => ({ try_harder: get('try-harder').checked, no_init_offset: get('no-init-offset').checked });
@@ -393,11 +431,8 @@
         get('pack-clear-label').hidden = mode !== 'pack';
         get('pack-notice').hidden = mode !== 'pack';
         get('queue-tools').hidden = mode !== 'pack';
-        get('pack-integration').hidden = mode !== 'pack';
         get('mode-pack').checked = mode === 'pack';
         get('mode-unpack').checked = mode !== 'pack';
-        get('pack-settings').hidden = mode !== 'pack';
-        get('options').hidden = mode === 'pack';
         get('pack-help').hidden = mode !== 'pack';
         get('unpack-help').hidden = mode === 'pack';
         get('queue-heading').textContent = mode === 'pack' ? 'Файлы в архиве' : 'Добавленные файлы';
@@ -803,7 +838,7 @@
         empty.textContent = 'Файл не выбран';
         browserPreview.appendChild(empty);
         browser.hidden = false;
-        get('browser-title').textContent = mode === 'pack' ? 'Пути внутри архива' : scripts ? 'Сценарии' : catalogFiles[source]?.path || 'Файлы';
+        get('browser-title').textContent = mode === 'pack' ? 'Пути внутри архива' : scripts ? 'Скрипты' : catalogFiles[source]?.path || 'Файлы';
         renderBrowse();
     };
     on(browseArchive, 'change', openBrowse);
@@ -835,16 +870,17 @@
         block.append(title, explanation, details);
         return block;
     };
-    const showErrors = messages => {
+    const showErrors = (messages, inExport = task === 'export') => {
         const errors = messages.slice(0, 100).map(message => explainError(message));
+        const diagnostics = inExport ? exportErrors : errorsPanel;
         say(messages.length === 1 ? errors[0].title + (errors[0].path ? `: ${errors[0].path}` : '') + '.'
-            : `Не удалось обработать файлов: ${messages.length.toLocaleString('ru-RU')}. Причины указаны ниже.`, true);
-        errorsPanel.hidden = false;
-        for (const error of errors) errorsPanel.appendChild(errorDiagnostic(error));
+            : `Не удалось обработать файлов: ${messages.length.toLocaleString('ru-RU')}. Причины указаны ниже.`, true, inExport);
+        diagnostics.hidden = false;
+        for (const error of errors) diagnostics.appendChild(errorDiagnostic(error));
         if (messages.length > 100) {
             const remainder = document.createElement('p');
             remainder.textContent = `Показаны причины первых 100 ошибок из ${messages.length.toLocaleString('ru-RU')}. Обрабатывайте файлы меньшими наборами, чтобы увидеть остальные.`;
-            errorsPanel.appendChild(remainder);
+            diagnostics.appendChild(remainder);
         }
     };
     const endPreview = message => {
@@ -872,20 +908,26 @@
     };
     const fail = message => {
         const interrupted = task;
+        if (interrupted === 'export') {
+            exportFinished = true;
+            get('export-title').textContent = 'Не удалось обработать файлы';
+        }
         task = '';
         catalogRequest++;
         browseRequest++;
         chunks = [];
         resetWorker();
-        retryAvailable = true;
+        retryAvailable = interrupted !== 'export';
         finish();
-        if (outputs.length) {
+        if (outputs.length && interrupted === 'export') {
             showOutputs();
+            get('export-summary').hidden = false;
             get('result-description').textContent = `Готовых архивов: ${outputs.length}.`;
         }
         if (interrupted === 'preview' || interrupted === 'catalog') endPreview('Просмотр прерван. Повторите действие или выберите другой файл.');
         browserStatus.textContent = '';
-        showErrors([message]);
+        showErrors([message], interrupted === 'export');
+        if (interrupted === 'export') showOutputs();
     };
     on(cancel, 'click', () => {
         const interrupted = task;
@@ -896,7 +938,18 @@
         catalogRequest++;
         browseRequest++;
         chunks = [];
-        retryAvailable = true;
+        retryAvailable = interrupted !== 'export';
+        if (interrupted === 'export') {
+            exportFinished = outputs.length > 0;
+            exportReady = false;
+            get('export-title').textContent = 'Обработка отменена';
+            if (exportFinished) {
+                get('export-summary').hidden = false;
+                get('result-description').textContent = `Готовых архивов: ${outputs.length}.`;
+                showOutputs();
+            }
+            if (exportDialog.open) exportDialog.close();
+        }
         finish();
         render();
         if (interrupted === 'preview' || interrupted === 'catalog') endPreview('Просмотр отменён. Выберите файл, чтобы открыть его ещё раз.');
@@ -971,11 +1024,22 @@
                 link.className = 'tools-button';
                 link.href = url;
                 link.download = data.name;
-                link.textContent = `${data.name} / ${size(blob.size)}`;
+                link.innerHTML = '<span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span>';
+                const label = document.createElement('span');
+                label.textContent = 'Скачать ' + data.name;
+                link.appendChild(label);
+                link.title = `${data.name} / ${size(blob.size)}`;
                 // Downloads do not expose a completion event to the page.
                 // Clear source selections when the user starts a download;
                 // keep result URLs available for retries and remaining ZIPs.
                 on(link, 'click', () => {
+                    if (mode === 'pack' && exportReady) {
+                        packDownloadStarted = true;
+                        get('pack-install-archive').textContent = 'game/my_mod/' + data.name;
+                        get('pack-install-string').textContent = JSON.stringify('my_mod/' + data.name.slice(0, -4));
+                        updateControls();
+                    }
+                    notifyDownload();
                     if (!clearOnDownload) return;
                     for (const entry of activeFiles) files.delete(entry.path);
                     activeFiles = [];
@@ -990,10 +1054,14 @@
         } else if (data.type === 'fatal') fail(data.error);
         else if (data.type === 'done') {
             const result = data.result;
+            exportFinished = true;
+            get('export-summary').hidden = false;
+            get('export-title').textContent = result.failed || !outputs.length
+                ? outputs.length ? 'Готово с ошибками' : 'Не удалось обработать файлы' : 'Готово';
             chunks = [];
             retryAvailable = false;
             clearOnDownload = result.failed === 0 && mode !== 'pack';
-            exportReady = result.failed === 0;
+            exportReady = result.failed === 0 && outputs.length > 0;
             finish();
             if (mode === 'pack') render();
             resultPanel.hidden = false;
@@ -1005,18 +1073,43 @@
                 renderWarnings(warningsPanel, get('warnings-summary'), warningList,
                     result.warnings, result.warning_details || []);
                 if (result.failed) showErrors(result.errors.length ? result.errors : ['Нет готовых файлов.']);
-                else say('Готово.');
+                else say('');
                 for (const output of outputs) output.link.click();
             } else {
                 get('result-description').textContent = 'Файлы не удалось обработать.';
                 showErrors(result.errors.length ? result.errors : ['Нет готовых файлов.']);
+                showOutputs();
             }
+            task = '';
         }
     };
     on(downloadAll, 'click', () => {
         if (exportReady) for (const output of outputs) output.link.click();
         else processFiles();
     });
+    const openExportDialog = () => {
+        closeMenu();
+        if (!exportDialog.open) exportDialog.showModal();
+        get('export-close').focus();
+    };
+    const closeExportDialog = () => {
+        if (busy && task === 'export') cancel.click();
+        if (exportDialog.open) exportDialog.close();
+    };
+    on(exportStart, 'click', () => {
+        if (busy || enumerating) return;
+        if (exportFinished) openExportDialog();
+        else processFiles();
+    });
+    on(get('export-close'), 'click', closeExportDialog);
+    on(exportDialog, 'cancel', event => { event.preventDefault(); closeExportDialog(); });
+    on(exportDialog, 'click', event => {
+        if (event.target !== exportDialog) return;
+        const bounds = exportDialog.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right
+            || event.clientY < bounds.top || event.clientY > bounds.bottom) closeExportDialog();
+    });
+    on(exportDialog, 'close', () => { if (!disposed) (exportStart.hidden ? addButton : exportStart).focus(); });
     const ensureWorker = () => {
         if (worker) return;
         worker = new Worker(config.worker, { type: 'module', name: 'esdoc-renpy-tools' });
@@ -1055,7 +1148,7 @@
         if (scripts.length) {
             const option = document.createElement('option');
             option.value = 'scripts';
-            option.textContent = 'Сценарии';
+            option.textContent = 'Скрипты';
             browseArchive.appendChild(option);
         }
         for (const { source, entry } of archives) {
@@ -1069,7 +1162,7 @@
         get('archive-label').hidden = browseActions.hidden;
         resultPanel.hidden = false;
         downloadAll.hidden = false;
-        downloadAll.innerHTML = '<span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span><span>Скачать всё в ZIP</span>';
+        downloadAll.innerHTML = downloadButton;
         openBrowse();
         if (!archives.length) {
             updateControls();
@@ -1091,9 +1184,18 @@
         for (const output of outputs) URL.revokeObjectURL(output.url);
         outputs.length = 0;
         downloads.replaceChildren();
+        downloads.hidden = true;
+        get('export-info').hidden = true;
         warningsPanel.hidden = true;
+        downloadAll.hidden = true;
         chunks = [];
         exportReady = false;
+        exportFinished = false;
+        get('export-summary').hidden = true;
+        get('export-title').textContent = mode === 'pack' ? 'Упаковка в RPA' : 'Обработка файлов';
+        status.textContent = '';
+        errorsPanel.hidden = true;
+        packDownloadStarted = false;
         clearOnDownload = false;
         retryAvailable = false;
         busy = true;
@@ -1104,6 +1206,7 @@
         progressBar.removeAttribute('value');
         current.textContent = '';
         say('Подготовка к обработке…');
+        openExportDialog();
         try {
             ensureWorker();
             if (mode === 'pack') worker.postMessage({ type: 'pack', config, name: archiveName(packName.value),
@@ -1116,10 +1219,14 @@
         for (const output of outputs) URL.revokeObjectURL(output.url);
         outputs.length = 0;
         downloads.replaceChildren();
+        downloads.hidden = true;
+        get('export-info').hidden = true;
         exportReady = false;
+        exportFinished = false;
+        if (exportDialog.open) exportDialog.close();
         downloadAll.hidden = !selected().length;
         updateControls();
-        if (selected().length) downloadAll.innerHTML = '<span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span><span>Скачать всё в ZIP</span>';
+        if (selected().length) downloadAll.innerHTML = downloadButton;
         if (option === get('try-harder')) {
             catalogSubmitted = false;
             if (selected().some(isArchive)) {

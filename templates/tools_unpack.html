@@ -31,9 +31,9 @@
                     <div class="tools-drop" id="tools-drop" tabindex="0" role="group" aria-label="Добавить файлы или папку"
                          aria-describedby="tools-drop-help">
                         {{ lucide_icon('folder-up', 32, 'tools-drop-icon') }}
-                        <p class="tools-drop-title">Перетащите файлы или папку сюда</p>
+                        <p id="tools-drop-title" class="tools-drop-title">Перетащите файлы или папку сюда</p>
                         <p id="tools-drop-help">.rpa, .rpyc, .rpymc, .pyc</p>
-                        <button class="tools-button" type="button" id="tools-add" aria-expanded="false" aria-controls="tools-add-menu">Добавить файлы или папку <span aria-hidden="true">{{ lucide_icon('chevron-down', 14) }}</span></button>
+                        <button class="tools-button" type="button" id="tools-add" aria-expanded="false" aria-controls="tools-add-menu"><span id="tools-add-label">Добавить файлы или папку</span> <span aria-hidden="true">{{ lucide_icon('chevron-down', 14) }}</span></button>
                     </div>
                     <div class="tools-add-menu" id="tools-add-menu" hidden aria-label="Способ добавления">
                         <button type="button" id="tools-pick-files">Выбрать файлы…</button>
@@ -69,9 +69,7 @@
                             </div>
                             <div class="tools-pack-example">
                                 <p><strong id="tools-pack-example-title">Пример</strong></p>
-                                <p id="tools-pack-example-settings" class="tools-meta">Выбранная папка: "images"</p>
-                                <p id="tools-pack-example-settings" class="tools-meta">Удалить из списка путей: Ничего не удалять</p>
-                                <p id="tools-pack-example-settings" class="tools-meta">Добавить папку в начале: <code>my_mod</code>.</p>
+                                <p id="tools-pack-example-settings" class="tools-meta">Пример для файла <code>images/bg.png</code> с добавлением папки <code>my_mod</code>.</p>
                                 <dl class="tools-pack-path-comparison">
                                     <div><dt>На устройстве</dt><dd><code id="tools-pack-example-source">images/bg.png</code></dd></div>
                                     <div><dt>В архиве</dt><dd><code id="tools-pack-example-target">my_mod/images/bg.png</code></dd></div>
@@ -80,7 +78,7 @@
                             <p id="tools-pack-error" class="tools-status is-error" role="status" hidden></p>
                         </fieldset>
                     </div>
-                    <div class="tools-options" id="tools-options">
+                    <div class="tools-options" id="tools-options" hidden>
                         <details class="tools-advanced"><summary><span class="tools-ui-icon tools-icon-settings" aria-hidden="true"></span>Настройки декомпиляции<span class="tools-ui-icon tools-icon-chevron" aria-hidden="true"></span></summary>
                             <div class="tools-disclosure-body">
                             <p>Применяются и к ресурсам внутри .rpa: при распаковке они тоже декомпилируются.</p>
@@ -102,10 +100,6 @@
                             <p id="tools-pack-preview-note" class="tools-meta" hidden>Пути не пересчитаны. Исправьте ошибку выше, в списке остались последние корректные пути.</p>
                         <ul id="tools-file-list" class="tools-file-list" aria-label="Добавленные файлы"></ul>
                     </section>
-                    <div class="tools-progress" id="tools-progress" hidden>
-                        <progress id="tools-progress-bar" aria-label="Прогресс обработки"></progress>
-                        <p id="tools-current" class="tools-meta"></p>
-                    </div>
                     <p id="tools-status" class="tools-status" role="status" aria-live="polite"></p>
                     <div id="tools-operation-actions" class="tools-actions">
                         <button type="button" class="tools-button" id="tools-start" hidden disabled>Повторить чтение списка</button>
@@ -113,13 +107,6 @@
                     </div>
                     <div id="tools-errors" class="tools-errors" hidden aria-label="Причины ошибок"></div>
                     <div id="tools-result" class="tools-result" hidden>
-                        <div class="tools-warning-host tools-result-meta">
-                            <p id="tools-result-description"></p>
-                            <details id="tools-warnings" class="tools-warnings" hidden>
-                                <summary id="tools-warnings-summary"></summary>
-                                <ul id="tools-warning-list" tabindex="0" aria-label="Причины предупреждений"></ul>
-                            </details>
-                        </div>
                         <div id="tools-browse-actions" class="tools-browse-actions" hidden>
                             <label id="tools-archive-label" hidden>Источник
                                 <select id="tools-archive" aria-label="Источник для просмотра"></select>
@@ -148,11 +135,34 @@
                             <div id="tools-pack-notice" class="tools-pack-notice" hidden>
                                 <p>Файлы сохраняются без изменений. Скрипты <code>.rpy</code> не компилируются.</p>
                             </div>
-                            <button id="tools-download-all" class="tools-button tools-button-primary" type="button" hidden><span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span><span>Скачать всё</span></button>
-                            <div id="tools-downloads" class="tools-downloads"></div>
+                            <button id="tools-export-start" class="tools-button tools-button-primary" type="button" aria-haspopup="dialog" aria-controls="tools-export-dialog" hidden><span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span><span>Скачать</span></button>
                         </div>
                     </div>
                 </div>
+                <dialog id="tools-export-dialog" class="tools-export-dialog" aria-labelledby="tools-export-title" aria-describedby="tools-result-description">
+                    <div class="tools-dialog-heading">
+                        <h2 id="tools-export-title">Обработка файлов</h2>
+                        <button id="tools-export-close" class="tools-dialog-close" type="button" aria-label="Закрыть окно" autofocus>{{ lucide_icon('x', 20) }}</button>
+                    </div>
+                    <div class="tools-progress" id="tools-progress" hidden>
+                        <progress id="tools-progress-bar" aria-label="Прогресс обработки"></progress>
+                        <p id="tools-current" class="tools-meta"></p>
+                    </div>
+                    <p id="tools-export-status" class="tools-status" role="status" aria-live="polite"></p>
+                    <div id="tools-export-summary" class="tools-warning-host tools-result-meta" hidden>
+                        <p id="tools-result-description"></p>
+                        <details id="tools-warnings" class="tools-warnings" hidden>
+                            <summary id="tools-warnings-summary"></summary>
+                            <ul id="tools-warning-list" tabindex="0" aria-label="Причины предупреждений"></ul>
+                        </details>
+                    </div>
+                    <div id="tools-export-errors" class="tools-errors" hidden aria-label="Причины ошибок обработки"></div>
+                    <div class="tools-dialog-downloads">
+                        <p id="tools-export-info" class="tools-meta" hidden></p>
+                        <button id="tools-download-all" class="tools-button tools-button-primary" type="button" hidden><span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span><span>Скачать</span></button>
+                        <div id="tools-downloads" class="tools-downloads" hidden></div>
+                    </div>
+                    <div id="tools-export-actions" class="tools-actions"></div>
                 <section id="tools-pack-integration" class="tools-pack-integration" aria-labelledby="tools-pack-integration-heading" hidden>
                     <h3 id="tools-pack-integration-heading">Подключение архива</h3>
                     <p>Загрузчик архива оставьте отдельным <code>.rpy</code>-файлом в папке мода.</p>
@@ -167,6 +177,7 @@
                     </div>
                     <p><a href="/docs/rpyc_rpa#интеграция-rpa-в-бл">Подробнее о подключении RPA в БЛ</a></p>
                 </section>
+                </dialog>
                 <details class="tools-help" id="tools-pack-help" hidden><summary><span class="tools-ui-icon tools-icon-info" aria-hidden="true"></span>Подробнее<span class="tools-ui-icon tools-icon-chevron" aria-hidden="true"></span></summary>
                     <div class="tools-disclosure-body">
                         <p>Создаётся архив RPA-3.0. Сжимаются только записи о файлах. Изображения, музыка и другие ресурсы сохраняют свой размер. RPA не шифрует содержимое.</p>
@@ -174,7 +185,7 @@
                 </details>
                 <details class="tools-help" id="tools-unpack-help"><summary><span class="tools-ui-icon tools-icon-info" aria-hidden="true"></span>Подробнее<span class="tools-ui-icon tools-icon-chevron" aria-hidden="true"></span></summary>
                     <div class="tools-disclosure-body">
-                    <p>Предпросмотр обрабатывает только выбранный файл. Декомпилированные скрипты сохраняются в unrpyc.zip, для каждого .rpa создаётся отдельный ZIP с папками и файлами архива. Сценарии .rpyc/.rpymc внутри него восстанавливаются в .rpy/.rpym, поддерживаемые .pyc в .py. Если исходник уже есть, он сохраняется без замены.</p>
+                    <p>Предпросмотр обрабатывает только выбранный файл. Декомпилированные скрипты сохраняются в unrpyc.zip, для каждого .rpa создаётся отдельный ZIP с папками и файлами архива. Скрипты .rpyc/.rpymc внутри него восстанавливаются в .rpy/.rpym, поддерживаемые .pyc в .py. Если исходник уже есть, он сохраняется без замены.</p>
                     <p>UnRpyc восстанавливает .rpyc и .rpymc. Файлы Ren'Py 6/7 тоже обрабатываются, но совместимость зависит от версии игры. Комментарии и исходное форматирование в скомпилированных файлах не сохраняются.</p>
                     <p>Расширенная декомпиляция добавляет извлечённые блоки в конец скрипта для изучения и адаптации с сохранением исходных контейнеров. Если Python-блок содержит только байткод, вместо него остаются комментарий и pass с предупреждением.</p>
                     <p>uncompyle6 восстанавливает .pyc с байткодом Python 2.0–3.8. Версии 3.9 и новее не поддерживаются. Для файлов из __pycache__ исходник получает обычное имя .py. Комментарии и исходное форматирование не восстанавливаются.</p>

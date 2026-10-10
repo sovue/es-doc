@@ -6,7 +6,7 @@ import { test } from 'node:test';
 function page(search = '', withClipboard = false) {
     class Element {
         listeners = new Map(); children = []; hidden = false; disabled = false;
-        value = ''; files = []; clicks = 0; style = {}; attributes = {};
+        value = ''; files = []; clicks = 0; style = {}; attributes = {}; open = false;
         classList = { add() {}, remove() {}, toggle() {} };
         addEventListener(type, callback) {
             const handlers = this.listeners.get(type) || [];
@@ -17,6 +17,8 @@ function page(search = '', withClipboard = false) {
         }
         click() { this.clicks++; this.emit('click'); }
         focus() { document.activeElement = this; }
+        showModal() { this.open = true; }
+        close() { this.open = false; this.emit('close'); }
         contains(target) { return target === this || this.children.includes(target); }
         getBoundingClientRect() { return { left: 0, bottom: 40, width: 210, height: 100 }; }
         setAttribute(key, value) { this.attributes[key] = value; }
@@ -103,6 +105,125 @@ function page(search = '', withClipboard = false) {
         messages, workers, revoked, blobs, window, send, catalog, add, exportDone, result, copied };
 }
 const script = { id: '0:script.rpyc', path: 'script.rpyc', source: 0, size: 1 };
+
+test('export dialog groups processing and completion, and reopening does not export or download again', async () => {
+    const ui = page();
+    await ui.add(['script.rpyc'], [script]);
+    ui.get('export-start').click();
+    assert.equal(ui.get('export-dialog').open, true);
+    assert.equal(ui.get('export-title').textContent, 'Обработка файлов');
+    assert.equal(ui.get('export-start').disabled, true);
+    assert.match(ui.get('export-status').textContent, /Подготовка/);
+    ui.exportDone();
+    assert.equal(ui.get('export-title').textContent, 'Готово');
+    assert.equal(ui.get('result-description').textContent, 'Обработано: 1.');
+    assert.equal(ui.get('export-start').disabled, false);
+    const requests = ui.messages.length;
+    ui.get('export-close').click();
+    assert.equal(ui.get('export-dialog').open, false);
+    assert.equal(ui.document.activeElement, ui.get('export-start'));
+    ui.get('export-start').click();
+    assert.equal(ui.get('export-dialog').open, true);
+    assert.equal(ui.messages.length, requests);
+    assert.equal(ui.get('downloads').children[0].clicks, 1);
+    ui.get('download-all').click();
+    assert.equal(ui.get('downloads').children[0].clicks, 2);
+});
+
+test('dismissing an export cancels processing and preserves files for a fresh attempt', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    await ui.add(['bg.png']);
+    ui.get('export-start').click();
+    const worker = ui.workers.at(-1);
+    ui.get('export-dialog').emit('cancel', { preventDefault() {} });
+    assert.equal(ui.get('export-dialog').open, false);
+    assert.equal(worker.terminated, true);
+    assert.equal(ui.get('queue').hidden, false);
+    assert.equal(ui.get('export-start').disabled, false);
+    ui.get('export-start').click();
+    assert.equal(ui.get('export-dialog').open, true);
+    assert.equal(ui.workers.length, 2);
+    ui.send({ type: 'fatal', error: 'Out of memory' });
+    assert.equal(ui.get('export-title').textContent, 'Не удалось обработать файлы');
+    assert.equal(ui.get('export-errors').hidden, false);
+    assert.match(ui.get('export-status').textContent, /памяти/);
+    ui.get('export-close').click();
+    ui.get('export-start').click();
+    assert.equal(ui.workers.length, 2);
+    ui.get('download-all').click();
+    assert.equal(ui.workers.length, 3);
+});
+
+test('a later preview failure preserves the saved export summary and diagnostics', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    await ui.add(['script.rpy']);
+    ui.get('export-start').click();
+    ui.exportDone(['demo.rpa']);
+    const summary = ui.get('result-description').textContent;
+    ui.get('export-close').click();
+    ui.get('browser-list').children[0].children[0].click();
+    ui.send({ type: 'fatal', error: 'Out of memory' });
+    assert.equal(ui.get('result-description').textContent, summary);
+    assert.equal(ui.get('export-errors').hidden, true);
+    assert.equal(ui.get('errors').hidden, false);
+    ui.get('export-start').click();
+    assert.equal(ui.get('export-title').textContent, 'Готово');
+    assert.equal(ui.get('export-dialog').open, true);
+});
+
+test('settings follow accepted files and the active mode, including removal of the last file', async () => {
+    const ui = page();
+    assert.equal(ui.get('options').hidden, true);
+    assert.equal(ui.get('pack-settings').hidden, true);
+    await ui.add(['unsupported.png']);
+    assert.equal(ui.get('options').hidden, true);
+    await ui.add(['script.rpyc'], [script]);
+    assert.equal(ui.get('options').hidden, false);
+    assert.equal(ui.get('add-label').textContent, 'Добавить ещё');
+    ui.get('mode-pack').emit('change');
+    assert.equal(ui.get('options').hidden, true);
+    assert.equal(ui.get('pack-settings').hidden, true);
+    ui.get('pack-name').value = 'demo';
+    await ui.add(['bg.png']);
+    assert.equal(ui.get('pack-settings').hidden, false);
+    ui.get('browser-list').querySelectorAll('.tools-remove-source')[0].click();
+    assert.equal(ui.get('pack-settings').hidden, true);
+    assert.equal(ui.get('add-label').textContent, 'Добавить файлы или папку');
+    ui.get('mode-unpack').emit('change');
+    assert.equal(ui.get('options').hidden, false);
+    ui.get('clear').click();
+    assert.equal(ui.get('options').hidden, true);
+});
+
+test('RPA connection appears only when a successful export starts downloading', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'chapter';
+    assert.equal(ui.get('pack-integration').hidden, true);
+    await ui.add(['bg.png']);
+    assert.equal(ui.get('pack-integration').hidden, true);
+    ui.get('download-all').click();
+    assert.equal(ui.get('pack-integration').hidden, true);
+    ui.exportDone(['chapter.rpa']);
+    assert.equal(ui.get('pack-integration').hidden, false);
+    assert.equal(ui.get('pack-install-archive').textContent, 'game/my_mod/chapter.rpa');
+    assert.match(ui.get('export-status').textContent, /Скачивание запущено/);
+    ui.get('download-all').click();
+    assert.equal(ui.get('pack-integration').hidden, false);
+    ui.get('pack-prefix').value = 'new';
+    ui.get('pack-prefix').emit('input');
+    assert.equal(ui.get('pack-integration').hidden, true);
+    assert.equal(ui.get('export-status').textContent, '');
+    ui.get('download-all').click();
+    ui.send({ type: 'fatal', error: 'Failed to create archive' });
+    assert.equal(ui.get('pack-integration').hidden, true);
+    ui.get('download-all').click();
+    ui.exportDone(['chapter.rpa']);
+    assert.equal(ui.get('pack-integration').hidden, false);
+    await ui.add(['music.ogg']);
+    assert.equal(ui.get('pack-integration').hidden, true);
+});
 
 test('packing accepts resources and sends paths relative to game without cataloging them', async () => {
     const ui = page('?mode=pack');
@@ -545,6 +666,11 @@ test('download-all processes all sources, downloads automatically, and retains r
     assert.equal(ui.get('downloads').children[0].download, 'unrpyc.zip');
     assert.equal(ui.get('downloads').children[0].clicks, 1);
     assert.equal(ui.get('queue').hidden, true);
+    assert.equal(ui.get('downloads').hidden, true);
+    assert.equal(ui.get('download-all').hidden, false);
+    assert.match(ui.get('download-all').innerHTML, /tools-icon-download/);
+    assert.match(ui.get('download-all').innerHTML, /<span>Скачать<\/span>/);
+    assert.match(ui.get('export-info').textContent, /unrpyc.zip/);
     ui.get('download-all').click(); assert.equal(ui.get('downloads').children[0].clicks, 2);
     ui.window.__esdocToolsCleanup(); assert.equal(ui.revoked.length, 1);
 });
@@ -558,7 +684,12 @@ test('archives show contents before extraction and each exports as a separate ZI
     assert.equal(ui.get('browser-title').textContent, 'b.rpa'); assert.equal(ui.messages.length, 1);
     ui.get('download-all').click(); assert.equal(ui.messages.at(-1).mode, 'combined');
     ui.exportDone(['a.zip', 'b.zip'], { ...ui.result, succeeded: 2, written: 2 });
-    assert.deepEqual(ui.get('downloads').children.map(link => link.clicks), [1, 1]);
+    assert.equal(ui.get('download-all').hidden, true);
+    assert.equal(ui.get('downloads').hidden, false);
+    assert.match(ui.get('downloads').children[0].innerHTML, /tools-icon-download/);
+    assert.equal(ui.get('downloads').children[0].children[0].textContent, 'Скачать a.zip');
+    ui.get('downloads').children[1].click();
+    assert.deepEqual(ui.get('downloads').children.map(link => link.clicks), [1, 2]);
 });
 
 test('clearing a mixed queue removes every source', async () => {
@@ -631,9 +762,9 @@ test('partial export failure retains completed ZIP links', async () => {
     ui.send({ type: 'output', name: 'unrpyc.zip', result: ui.result });
     ui.send({ type: 'fatal', error: 'Out of memory' });
     assert.equal(ui.get('downloads').children.length, 1); assert.equal(ui.revoked.length, 0);
-    assert.match(ui.get('status').textContent, /памяти/);
-    assert.doesNotMatch(ui.get('status').textContent, /Out of memory/);
-    assert.equal(ui.get('errors').hidden, false);
+    assert.match(ui.get('export-status').textContent, /памяти/);
+    assert.doesNotMatch(ui.get('export-status').textContent, /Out of memory/);
+    assert.equal(ui.get('export-errors').hidden, false);
 });
 
 test('cancelling a pending preview replaces loading and ignores late replies before retry', async () => {

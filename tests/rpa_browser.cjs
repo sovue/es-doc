@@ -29,10 +29,13 @@ for (const [name, data] of Object.entries(resources)) {
         page.on('pageerror', error => errors.push(error.message));
         context.on('request', request => requests.push([request.method(), request.url()]));
         await page.goto(target);
-        await page.locator('#tools-pack-settings').waitFor({ state: 'visible' });
+        await page.locator('#tools-controls').waitFor({ state: 'visible' });
+        assert(!await page.locator('#tools-pack-settings').isVisible());
+        assert(!await page.locator('#tools-pack-integration').isVisible());
         assert(await page.locator('#tools-mode-pack').isChecked());
         await page.locator('#tools-folder').setInputFiles(fixtures);
-        await page.locator('#tools-download-all').waitFor({ state: 'visible' });
+        await page.locator('#tools-export-start').waitFor({ state: 'visible' });
+        assert(await page.locator('#tools-pack-settings').isVisible());
         assert(await page.locator('#tools-add').isVisible());
         const missingDescriptions = await page.locator('#tools-app [aria-describedby]').evaluateAll(elements =>
             elements.filter(element => element.getClientRects().length).flatMap(element =>
@@ -47,7 +50,7 @@ for (const [name, data] of Object.entries(resources)) {
         await page.locator('#tools-browser-search').fill('/');
         const verifiedPaths = await page.locator('#tools-browser-list button[data-entry-id]').allTextContents();
         await page.locator('#tools-pack-prefix').fill('../outside');
-        assert(await page.locator('#tools-download-all').isDisabled());
+        assert(await page.locator('#tools-export-start').isDisabled());
         assert(await page.locator('#tools-pack-error').isVisible());
         assert.match(await page.locator('#tools-pack-prefix-error').textContent(), /относительный путь.*my_mod/);
         assert(await page.locator('#tools-pack-preview-note').isVisible());
@@ -64,23 +67,55 @@ for (const [name, data] of Object.entries(resources)) {
         assert.equal(await page.locator('#tools-browser-list button[data-entry-id]').count(), 1);
 
         // Cancel lazy startup and retry from the same File objects.
-        await page.locator('#tools-download-all').click();
-        await page.locator('#tools-cancel').click();
+        await page.locator('#tools-export-start').click();
+        assert(await page.locator('#tools-export-dialog').isVisible());
+        assert(await page.locator('#tools-export-actions #tools-cancel').isVisible());
+        await page.keyboard.press('Escape');
+        assert(!await page.locator('#tools-export-dialog').isVisible());
         assert.match(await page.locator('#tools-status').textContent(), /отменена/);
         assert(await page.locator('#tools-queue').isVisible());
         const download = page.waitForEvent('download', { timeout: 90000 });
-        await page.locator('#tools-download-all').click();
+        await page.locator('#tools-export-start').click();
         const saved = await download;
         assert.equal(saved.suggestedFilename(), 'my_mod.rpa');
         const archive = path.join(root, 'temp/rpa-browser/my_mod.rpa');
         await saved.saveAs(archive);
         assert.match(await page.locator('#tools-result-description').textContent(), /Файлов в RPA: 4/);
+        assert(await page.locator('#tools-pack-integration').isVisible());
+        assert.match(await page.locator('#tools-pack-install-archive').textContent(), /my_mod\.rpa$/);
+        assert(await page.locator('#tools-export-dialog').isVisible());
+        assert.match(await page.locator('#tools-export-status').textContent(), /Скачивание запущено/);
+        assert.equal(await page.locator('.tools-dialog-downloads :is(button, a):visible').count(), 1);
+        assert.equal(await page.locator('#tools-download-all').innerText(), 'Скачать');
+        assert(await page.locator('#tools-download-all .tools-icon-download').isVisible());
+        assert(await page.locator('#tools-export-info').isVisible());
+        const repeated = page.waitForEvent('download');
+        await page.locator('#tools-download-all').click();
+        assert.equal((await repeated).suggestedFilename(), 'my_mod.rpa');
+        const downloadReview = path.join(root, 'temp/tools-workflow-review');
+        fs.mkdirSync(downloadReview, { recursive: true });
+        for (const [name, width, theme] of [['download-desktop', 1440, 'light'], ['download-mobile', 390, 'light'],
+            ['download-desktop-dark', 1440, 'dark'], ['download-mobile-dark', 390, 'dark']]) {
+            await page.setViewportSize({ width, height: 1000 });
+            await page.evaluate(theme => document.documentElement.dataset.theme = theme, theme);
+            assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+            await page.screenshot({ path: path.join(downloadReview, name + '.png') });
+        }
+        await page.setViewportSize({ width: 1440, height: 1000 });
+        await page.evaluate(() => document.documentElement.dataset.theme = 'light');
+        await page.keyboard.press('Escape');
+        assert(!await page.locator('#tools-export-dialog').isVisible());
+        assert(await page.locator('#tools-export-start').evaluate(el => el === document.activeElement));
+        await page.locator('#tools-export-start').click();
+        assert(await page.locator('#tools-export-dialog').isVisible());
+        await page.locator('#tools-export-close').click();
         assert.equal(await page.locator('#tools-queue').isVisible(), true);
         await page.locator('#tools-browser-search').fill('/');
         assert.deepEqual(await page.locator('#tools-browser-list button[data-entry-id]').allTextContents(), verifiedPaths);
         await page.locator('#tools-pack-prefix').fill('alternate');
+        assert(!await page.locator('#tools-pack-integration').isVisible());
         assert.equal(await page.locator('#tools-browser-list button[data-entry-id]').first().textContent(), 'alternate/' + verifiedPaths[0]);
-        assert(await page.locator('#tools-download-all').isEnabled());
+        assert(await page.locator('#tools-export-start').isEnabled());
         await page.locator('#tools-pack-prefix').fill('');
         const python = path.join(root, '.venv/Scripts/python.exe');
         execFileSync(python, ['-c', [
@@ -104,8 +139,11 @@ for (const [name, data] of Object.entries(resources)) {
 
         // Open our output in the existing unpacker, including Unicode names.
         await page.locator('#tools-mode-unpack').check();
+        assert(!await page.locator('#tools-options').isVisible());
         await page.locator('#tools-files').setInputFiles(archive);
         await page.locator('#tools-browser-list button').first().waitFor({ state: 'visible', timeout: 90000 });
+        assert(await page.locator('#tools-options').isVisible());
+        assert.equal(await page.locator('#tools-add-label').textContent(), 'Добавить ещё');
         await page.locator('#tools-mode-pack').check();
         await page.locator('#tools-browser-search').fill('/');
         assert.deepEqual(await page.locator('#tools-browser-list button[data-entry-id]').allTextContents(), verifiedPaths);
@@ -114,11 +152,24 @@ for (const [name, data] of Object.entries(resources)) {
         await page.locator('#tools-browser-search').fill('тема');
         assert.match(await page.locator('#tools-browser-list').textContent(), /тема.ogg/);
         const extracted = page.waitForEvent('download', { timeout: 90000 });
-        await page.locator('#tools-download-all').click();
+        await page.locator('#tools-export-start').click();
         const zip = await extracted;
         assert.equal(zip.suggestedFilename(), 'my_mod.zip');
         const zipPath = path.join(root, 'temp/rpa-browser/my_mod.zip');
         await zip.saveAs(zipPath);
+        assert(await page.locator('#tools-export-dialog').isVisible());
+        assert.equal(await page.locator('#tools-export-title').textContent(), 'Готово');
+        for (const [name, width, theme] of [['unpack-dialog-desktop', 1440, 'light'], ['unpack-dialog-mobile', 390, 'light'],
+            ['unpack-dialog-desktop-dark', 1440, 'dark'], ['unpack-dialog-mobile-dark', 390, 'dark']]) {
+            await page.setViewportSize({ width, height: 1000 });
+            await page.evaluate(theme => document.documentElement.dataset.theme = theme, theme);
+            await page.screenshot({ path: path.join(downloadReview, name + '.png') });
+        }
+        await page.setViewportSize({ width: 1440, height: 1000 });
+        await page.evaluate(() => document.documentElement.dataset.theme = 'light');
+        await page.locator('#tools-export-close').click();
+        assert(!await page.locator('#tools-options').isVisible());
+        assert.equal(await page.locator('#tools-add-label').textContent(), 'Добавить файлы или папку');
         execFileSync(python, ['-c', [
             'import pathlib, zipfile, sys',
             'with zipfile.ZipFile(sys.argv[1]) as archive:',
@@ -127,6 +178,25 @@ for (const [name, data] of Object.entries(resources)) {
             '    assert len(archive.namelist()) == 4',
         ].join('\n'), zipPath, fixtures]);
         assert.deepEqual(errors, []);
+
+        // Multiple outputs and failed exports stay in the same dialog.
+        await page.locator('#tools-files').setInputFiles(['first.rpa', 'second.rpa'].map(name => ({
+            name, mimeType: 'application/octet-stream', buffer: fs.readFileSync(archive),
+        })));
+        await page.locator('#tools-export-start').click();
+        await page.waitForFunction(() => document.querySelector('#tools-export-title').textContent === 'Готово'
+            && document.querySelectorAll('#tools-downloads a').length === 2);
+        assert(!await page.locator('#tools-download-all').isVisible());
+        assert.deepEqual(await page.locator('#tools-downloads a').evaluateAll(links => links.map(link => link.download)), ['first.zip', 'second.zip']);
+        assert.equal(await page.locator('#tools-downloads a:visible').count(), 2);
+        await page.locator('#tools-export-close').click();
+        await page.locator('#tools-files').setInputFiles({ name: 'bad.rpyc', mimeType: 'application/octet-stream', buffer: Buffer.from('invalid') });
+        await page.locator('#tools-export-start').click();
+        await page.waitForFunction(() => document.querySelector('#tools-export-title').textContent === 'Не удалось обработать файлы');
+        assert(await page.locator('#tools-export-errors').isVisible());
+        assert.equal(await page.locator('#tools-download-all').innerText(), 'Повторить обработку');
+        assert(await page.locator('#tools-download-all').isEnabled());
+        await page.locator('#tools-export-close').click();
 
         // Remove a folder by keyboard, including its descendants, then the remaining root.
         await page.locator('#tools-mode-pack').check();
@@ -145,8 +215,10 @@ for (const [name, data] of Object.entries(resources)) {
         await page.getByRole('button', { name: 'Убрать папку my_mod/ и все вложенные файлы', exact: true }).focus();
         await page.keyboard.press('Enter');
         assert(!await page.locator('#tools-browser').isVisible());
+        assert(!await page.locator('#tools-pack-settings').isVisible());
+        assert.equal(await page.locator('#tools-add-label').textContent(), 'Добавить файлы или папку');
         assert(await page.locator('#tools-add').evaluate(el => el === document.activeElement));
-        assert(await page.locator('#tools-download-all').isDisabled());
+        assert(!await page.locator('#tools-export-start').isVisible());
 
         // Reach a file beyond the former 200-row limit, then remove it by keyboard.
         await page.locator('#tools-files').setInputFiles(Array.from({ length: 251 }, (_, i) => ({
@@ -172,7 +244,7 @@ for (const [name, data] of Object.entries(resources)) {
         assert(await page.locator('#tools-add').evaluate(el => el === document.activeElement));
 
         // One visual inspection round, desktop and mobile / light and dark.
-        const review = path.join(root, '.impeccable/review');
+        const review = path.join(root, 'temp/tools-workflow-review');
         fs.mkdirSync(review, { recursive: true });
         for (const [name, width, theme] of [['desktop', 1440, 'light'], ['mobile', 390, 'light'],
             ['desktop-dark', 1440, 'dark'], ['mobile-dark', 390, 'dark']]) {
@@ -180,7 +252,7 @@ for (const [name, data] of Object.entries(resources)) {
             await page.goto(target);
             await page.evaluate(theme => document.documentElement.dataset.theme = theme, theme);
             await page.locator('#tools-folder').setInputFiles(fixtures);
-            await page.locator('#tools-download-all').waitFor({ state: 'visible' });
+            await page.locator('#tools-export-start').waitFor({ state: 'visible' });
             await page.evaluate(() => document.fonts.ready);
             assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), name + ' overflow');
             const contrasts = await page.locator('#tools-pack-settings input, #tools-pack-settings select, #tools-queue-search').evaluateAll(fields => {
