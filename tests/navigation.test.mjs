@@ -45,7 +45,10 @@ function navigation({ holdStyles = false, holdScripts = false } = {}) {
         fetch, DOMParser: true, scrollTo() {}, dispatchEvent() {},
         addEventListener: (name, fn) => { events[name] = fn; },
     };
-    const history = { pushState(state, title, url) { pushes.push(url); current = new URL(url); } };
+    const history = {
+        pushState(state, title, url) { pushes.push(url); current = new URL(url); },
+        replaceState(state, title, url) { current = new URL(url); },
+    };
     class DOMParser {
         parseFromString(text) {
             const page = JSON.parse(text);
@@ -64,6 +67,7 @@ function navigation({ holdStyles = false, holdScripts = false } = {}) {
     });
     return {
         content, document, location, requests, links, scripts, pushes, redirects, window,
+        replace(url) { current = new URL(url, current); },
         pop(path) { current = new URL(path, current); events.popstate(); },
         click(path) {
             let prevented = false;
@@ -157,6 +161,22 @@ test('pending page scripts finish before the next page replaces their DOM', asyn
     await tick();
     assert.equal(nav.content.innerHTML, 'latest');
     assert.ok(!nav.scripts.some(script => script.src === '/obsolete.js'));
+});
+
+test('a finishing script cannot leave its query parameters on the selected history entry', async () => {
+    const nav = navigation({ holdScripts: true });
+    nav.pop('/resources/original/bg');
+    nav.respond(0, { name: 'resources', scripts: ['/resources.js'] });
+    await tick();
+    nav.pop('/docs/latest');
+    nav.respond(1, { name: 'latest' });
+    await tick();
+    // Resource filters use replaceState while their script initializes.
+    nav.replace('/docs/latest?time=night');
+    nav.scripts[0].loaded();
+    await tick();
+    assert.equal(nav.content.innerHTML, 'latest');
+    assert.equal(nav.location.href, 'https://example.test/docs/latest');
 });
 
 test('ordinary clicked navigation still pushes history and updates the page', async () => {

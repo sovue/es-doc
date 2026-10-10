@@ -115,6 +115,7 @@
 
         updateNavigation(url);
         if (pushHistory) history.pushState({}, '', url.href);
+        else if (location.href !== url.href) history.replaceState(history.state, '', url.href);
         if (!url.hash) window.scrollTo(0, 0);
 
         await loadPageScripts(nextDocument, id);
