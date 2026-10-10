@@ -22,8 +22,7 @@ byte as it did before, and a nested block now works where it used to break.
 Banners are a deliberate exception on the *inside* — they keep their own
 bounded scan (banner.py), because a banner is one or two sentences of page
 status and should never grow into a container. They are still counted here,
-because from the outside a banner opens and closes with the same markers as
-everything else.
+with the same bounded rule here, so a standalone banner consumes no closer.
 """
 
 import re
@@ -103,8 +102,13 @@ def find_closer(state, startLine: int, endLine: int) -> int | None:
             if depth == 0:
                 return line
             depth -= 1
-        elif opener_name(text):
-            depth += 1
+        elif name := opener_name(text):
+            if name in _NAMES:
+                depth += 1
+            else:
+                from .banner import banner_end
+                _, next_line = banner_end(state, line, endLine)
+                line = next_line - 1
 
         line += 1
 
