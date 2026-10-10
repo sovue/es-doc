@@ -63,7 +63,7 @@ function navigation({ holdStyles = false, holdScripts = false } = {}) {
         CustomEvent: class {}, localStorage: { getItem: () => null },
     });
     return {
-        content, document, location, requests, links, scripts, pushes, redirects,
+        content, document, location, requests, links, scripts, pushes, redirects, window,
         pop(path) { current = new URL(path, current); events.popstate(); },
         click(path) {
             let prevented = false;
@@ -187,4 +187,15 @@ test('an active navigation failure still falls back to the browser', async () =>
     nav.requests[0].reject(new Error('offline'));
     await tick();
     assert.deepEqual(nav.redirects, ['https://example.test/docs/unavailable']);
+});
+
+test('article handlers are cleaned up before replacing the page content', async () => {
+    const nav = navigation();
+    let oldContent;
+    nav.window.__esdocDocsCleanup = () => { oldContent = nav.content.innerHTML; };
+    nav.pop('/docs/new');
+    nav.respond(0, { name: 'new' });
+    await tick();
+    assert.equal(oldContent, 'initial');
+    assert.equal(nav.content.innerHTML, 'new');
 });

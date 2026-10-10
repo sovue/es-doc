@@ -93,6 +93,7 @@
         await updateStyles(nextDocument, signal);
         if (id !== navigationId) return;
 
+        window.__esdocDocsCleanup?.();
         window.__esdocWarperCleanup?.();
         window.__esdocToolsCleanup?.();
         window.__esdocColorsCleanup?.();
