@@ -1,3 +1,4 @@
+import asyncio
 import html
 import os
 from pathlib import Path
@@ -218,7 +219,7 @@ async def browser(request: Request, path=''):
     if target.is_file():
         size = target.stat().st_size
         kind = FILE_KINDS.get(target.suffix.lower(), 'other')
-        view = _file_view(target)
+        view = await asyncio.to_thread(_file_view, target)
         sub = [KIND_LABELS[kind], _human_size(size)]
         if view['mode'] == 'code':
             sub.append(view['lines'])

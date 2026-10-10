@@ -18,6 +18,7 @@ import unrpyc
 from unrpa import UnRPA
 
 CHUNK = 256 * 1024
+MAX_PREVIEW_BYTES = 64 * 1024 * 1024
 
 
 def safe_path(value):
@@ -304,15 +305,22 @@ class Catalog:
             warnings.append(f'Исходный файл {target} уже есть в архиве, сохранён без замены.')
             path = target
             compiled = False
+        size = entry['size'] if segments is None else sum(length for _, length, _ in segments)
+        if size > MAX_PREVIEW_BYTES:
+            raise ValueError('Файл больше 64 МБ. Скачайте архив для просмотра.')
         with open(self.files[entry['source']]['source'], 'rb') as source:
             if segments is None:
-                data = source.read()
+                data = source.read(MAX_PREVIEW_BYTES + 1)
             else:
                 data = b''.join(iter(Segments(source, segments).read, b''))
+        if len(data) > MAX_PREVIEW_BYTES:
+            raise ValueError('Файл больше 64 МБ. Скачайте архив для просмотра.')
         if compiled:
             data, logs = pyc_decompiler.decompile(data) if path.lower().endswith('.pyc') else decompile(data, options)
             warnings.extend(str(log) for log in logs)
             path = target
+        if len(data) > MAX_PREVIEW_BYTES:
+            raise ValueError('Файл больше 64 МБ. Скачайте архив для просмотра.')
         result = (path, data, warnings)
         # Cache the current preview only, not every expanded archive asset.
         self.cached = (cache_key, result)

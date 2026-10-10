@@ -133,6 +133,42 @@ class EngineTests(unittest.TestCase):
             self.assertEqual((path, data), ('script.rpy', b'label start:\n    pass\n'))
             self.assertEqual(len(warnings), 1)
 
+    def test_preview_rejects_oversized_entries_before_reading_them(self):
+        with TemporaryDirectory(dir=ROOT / 'temp') as directory:
+            source = Path(directory) / 'archive'
+            source.write_bytes(archive({'big.bin': [(b'0123456789', b'prefix')],
+                                        'small.txt': [(b'ok', b'')]}))
+            catalog = self.engine.Catalog([{'path': 'data.rpa', 'source': str(source)}])
+            self.assertEqual(len(catalog.listing()), 2)
+            with patch.object(self.engine, 'MAX_PREVIEW_BYTES', 8, create=True):
+                with patch('builtins.open', side_effect=AssertionError('Oversized entry was opened')):
+                    with self.assertRaisesRegex(ValueError, 'Скачайте архив'):
+                        catalog.read('0:big.bin', {})
+                self.assertIsNone(catalog.cached)
+                self.assertEqual(catalog.read('0:small.txt', {})[1], b'ok')
+
+    def test_preview_limit_uses_existing_source_size_instead_of_compiled_size(self):
+        with TemporaryDirectory(dir=ROOT / 'temp') as directory:
+            source = Path(directory) / 'archive'
+            source.write_bytes(archive({'large.rpyc': [(b'x', b'')],
+                                        'large.rpy': [(b'0123456789', b'')],
+                                        'small.rpyc': [(b'0123456789', b'')],
+                                        'small.rpy': [(b'ok', b'')]}))
+            catalog = self.engine.Catalog([{'path': 'data.rpa', 'source': str(source)}])
+            with patch.object(self.engine, 'MAX_PREVIEW_BYTES', 8, create=True):
+                with self.assertRaisesRegex(ValueError, 'Скачайте архив'):
+                    catalog.read('0:large.rpyc', {})
+                self.assertEqual(catalog.read('0:small.rpyc', {})[:2], ('small.rpy', b'ok'))
+
+    def test_preview_limit_also_applies_to_loose_compiled_files(self):
+        with TemporaryDirectory(dir=ROOT / 'temp') as directory:
+            source = Path(directory) / 'script'
+            source.write_bytes(b'0123456789')
+            catalog = self.engine.Catalog([{'path': 'script.rpyc', 'source': str(source)}])
+            with patch.object(self.engine, 'MAX_PREVIEW_BYTES', 8, create=True):
+                with self.assertRaisesRegex(ValueError, 'Скачайте архив'):
+                    catalog.read('0:script.rpyc', {})
+
     def test_catalog_reports_bad_archives_without_hiding_good_sources(self):
         with TemporaryDirectory(dir=ROOT / 'temp') as directory:
             source = Path(directory) / 'good'

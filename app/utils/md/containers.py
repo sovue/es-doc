@@ -22,8 +22,7 @@ byte as it did before, and a nested block now works where it used to break.
 Banners are a deliberate exception on the *inside* — they keep their own
 bounded scan (banner.py), because a banner is one or two sentences of page
 status and should never grow into a container. They are still counted here,
-because from the outside a banner opens and closes with the same markers as
-everything else.
+with the same bounded rule here, so a standalone banner consumes no closer.
 """
 
 import re
@@ -37,6 +36,7 @@ _NAMES: set[str] = set()
 # without the lead text that follows on the same line. Only the name matters
 # here — what a block does with its lead is the parser's own business.
 _OPEN_RE = re.compile(r'^:::[ \t]*([A-Za-z][\w-]*)')
+_FENCE_RE = re.compile(r'^(`{3,}|~{3,})(.*)$')
 
 CLOSER = ':::'
 
@@ -84,18 +84,31 @@ def find_closer(state, startLine: int, endLine: int) -> int | None:
     """
     depth = 0
     line = startLine + 1
+    fence = None
 
     while line < endLine:
         # bMarks + tShift skips the indent, so a closer indented inside a list
         # item still reads as a closer — which the corpus relies on.
         text = state.src[state.bMarks[line] + state.tShift[line]:state.eMarks[line]].strip()
 
-        if text == CLOSER:
+        marker = _FENCE_RE.match(text)
+        if fence:
+            if (marker and marker[1][0] == fence[0]
+                    and len(marker[1]) >= len(fence) and not marker[2].strip()):
+                fence = None
+        elif marker and (marker[1][0] != '`' or '`' not in marker[2]):
+            fence = marker[1]
+        elif text == CLOSER:
             if depth == 0:
                 return line
             depth -= 1
-        elif opener_name(text):
-            depth += 1
+        elif name := opener_name(text):
+            if name in _NAMES:
+                depth += 1
+            else:
+                from .banner import banner_end
+                _, next_line = banner_end(state, line, endLine)
+                line = next_line - 1
 
         line += 1
 

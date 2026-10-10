@@ -89,11 +89,11 @@ async def _ensure_tinted(kind, name):
     if not source:
         raise HTTPException(404, f'Исходный файл для "{kind} {name}" не существует.')
 
-    if not is_tinted(kind, name, source):
+    if not is_tinted(kind, name, source, item['tint']):
         async with compose_lock:
             # Re-check: the request holding the lock before us may have
             # composed this very image.
-            if not is_tinted(kind, name, source):
+            if not is_tinted(kind, name, source, item['tint']):
                 try:
                     await asyncio.to_thread(compose_tint, kind, name, source, item['tint'])
                 except Exception:

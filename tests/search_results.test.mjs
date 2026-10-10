@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const script = readFileSync(new URL('../static/js/search.js', import.meta.url), 'utf8');
 
-async function searchBox(rows) {
+async function searchBox(rows, fetchRows = async () => rows) {
     const handlers = {};
     const attrs = {};
     const input = {
@@ -28,17 +28,70 @@ async function searchBox(rows) {
     vm.runInNewContext(script, {
         document: {
             getElementById: id => ({ 'site-search': form, 'site-search-input': input, 'site-search-results': list })[id],
-            querySelector: () => null, addEventListener: () => {},
-            body: { classList: { add: () => {} } },
+            querySelector: () => null,
+            addEventListener: (event, handler) => { handlers['document-' + event] = handler; },
+            body: { classList: { add: () => {}, remove: () => {}, contains: () => false } },
         },
-        window, fetch: async () => ({ ok: true, json: async () => rows }),
+        window, fetch: async () => ({ ok: true, json: fetchRows }),
         setTimeout: fn => { update = fn; }, clearTimeout: () => {},
     });
     handlers.input();
     update();
     await new Promise(resolve => setImmediate(resolve));
-    return { handlers, input, list, status, window, attrs };
+    return { handlers, input, list, status, window, attrs, flush: () => update() };
 }
+
+for (const dismiss of ['clear', 'Escape', 'outside click']) {
+    for (const fails of [false, true]) {
+        test(`pending search ${fails ? 'failure' : 'results'} stays dismissed after ${dismiss}`, async () => {
+            let resolve, reject;
+            const pending = new Promise((yes, no) => { resolve = yes; reject = no; });
+            const box = await searchBox([], () => pending);
+            if (dismiss === 'clear') {
+                box.input.value = '';
+                box.handlers.input();
+                box.flush();
+            } else if (dismiss === 'Escape') {
+                box.handlers.keydown({ key: 'Escape', preventDefault: () => {} });
+            } else {
+                box.handlers['document-click']({ target: {} });
+            }
+            if (fails) reject(new Error('offline'));
+            else resolve([{ label: 'Луна', url: '/stale' }]);
+            await new Promise(done => setImmediate(done));
+            assert.equal(box.list.hidden, true);
+            assert.equal(box.attrs['aria-expanded'], 'false');
+            assert.equal(box.status.textContent || '', '');
+        });
+    }
+}
+
+test('typing another query invalidates results before its debounce fires', async () => {
+    let resolve;
+    const pending = new Promise(done => { resolve = done; });
+    const box = await searchBox([], () => pending);
+    box.input.value = 'Ночь';
+    box.handlers.input();
+    resolve([{ label: 'Луна', url: '/stale' }]);
+    await new Promise(done => setImmediate(done));
+    assert.equal(box.list.hidden, true);
+    assert.ok(!box.list.innerHTML.includes('Луна'));
+});
+
+test('an older response cannot replace results from the latest query', async () => {
+    let resolveOld;
+    const old = new Promise(done => { resolveOld = done; });
+    let calls = 0;
+    const box = await searchBox([], () => ++calls === 1 ? old : [{ label: 'Ночь', url: '/latest' }]);
+    box.input.value = 'Ночь';
+    box.handlers.input();
+    box.flush();
+    await new Promise(done => setImmediate(done));
+    resolveOld([{ label: 'Луна', url: '/stale' }]);
+    await new Promise(done => setImmediate(done));
+    box.handlers.keydown({ key: 'Enter', preventDefault: () => {} });
+    assert.equal(box.window.location.href, '/latest');
+});
 
 test('mixed global results have distinct groups and retain ranking within each group', async () => {
     const box = await searchBox([
