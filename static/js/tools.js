@@ -1114,7 +1114,10 @@
         if (worker) return;
         worker = new Worker(config.worker, { type: 'module', name: 'esdoc-renpy-tools' });
         worker.onmessage = handleMessage;
-        worker.onerror = () => fail('Не удалось запустить инструменты. Обновите страницу или попробуйте другой браузер.');
+        worker.onerror = event => {
+            const location = event.filename ? `\n${event.filename}:${event.lineno || 0}:${event.colno || 0}` : '';
+            fail('Не удалось запустить инструменты.' + (event.message ? `\n${event.message}${location}` : ' Обновите страницу или попробуйте другой браузер.'));
+        };
         worker.onmessageerror = () => fail('Браузер не смог передать файлы инструменту. Попробуйте добавить меньше файлов.');
     };
     const submitCatalog = () => {

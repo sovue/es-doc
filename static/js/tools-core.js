@@ -117,6 +117,9 @@
         } else if (/Failed to fetch|NetworkError|Load failed|dynamically imported module|Не удалось загрузить инструменты/i.test(normalized)) {
             title = 'Не удалось загрузить инструменты';
             explanation = 'Проверьте соединение с сайтом и повторите действие. Файлы остаются на вашем устройстве.';
+        } else if (/WebAssembly|CompileError|wasm.*(?:unsupported|not supported)|Браузер не поддерживает/i.test(normalized)) {
+            title = 'Браузер не смог запустить обработку';
+            explanation = 'Для локальной обработки нужен доступный WebAssembly. Обновите браузер или попробуйте актуальный Firefox, Chrome или Edge. Python устанавливать не нужно.';
         } else if (/UnknownArchive|unsupported archive|archive.*(?:unknown|unsupported)|неподдерживаем.+архив/i.test(normalized)) {
             title = 'Не удалось распознать формат архива';
             explanation = 'Выберите оригинальный .rpa из папки игры. Изменённые или зашифрованные архивы могут не поддерживаться.';
