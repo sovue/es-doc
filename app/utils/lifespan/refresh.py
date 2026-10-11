@@ -105,6 +105,7 @@ def _watchers():
         assets / 'nsfw.yaml',
     )
     community_files = _under(assets / 'community')
+    game_files = _under(res)
     materials_yaml = _one_of(assets / 'materials.yaml')
     materials_files = _under(assets / 'materials')
 
@@ -119,7 +120,7 @@ def _watchers():
             res / 'scenario' / 'zhenya.rpy',
         ), _refresh_sprites),
 
-        ('resources', lambda path: resource_sources(path) or community_files(path), _refresh_resources),
+        ('resources', lambda path: resource_sources(path) or community_files(path) or game_files(path), _refresh_resources),
         ('browser', _under(res), _refresh_browser),
 
         ('specialists.yaml', _one_of(assets / 'specialists.yaml'), _refresh_specialists),

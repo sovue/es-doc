@@ -39,11 +39,18 @@ def sprite_file(name):
     return sprites_path() / f'{name}.webp'
 
 def is_composed(name):
-    # The disk cache survives restarts; a cached sprite is only stale if
-    # a declaration source changed after it was composed.
+    # Both the declaration and every layer contribute to the composed bytes.
     path = sprite_file(name)
-    newest = max(p.stat().st_mtime for p in _sprite_sources() if p.exists())
-    return path.is_file() and path.stat().st_mtime >= newest
+    layers = CONFIG.sprite_layers.get(name)
+    if not path.is_file() or not layers:
+        return False
+    sources = [p for p in _sprite_sources() if p.exists()]
+    sources.extend(CONFIG.res_path / layer for layer in layers)
+    try:
+        newest = max(source.stat().st_mtime_ns for source in sources)
+        return path.stat().st_mtime_ns >= newest
+    except OSError:
+        return False
 
 def compose_sprite(name):
 

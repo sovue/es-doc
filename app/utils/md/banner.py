@@ -35,6 +35,20 @@ def render_banner_open(self, tokens, idx, options, env):
 def render_banner_close(self, tokens, idx, options, env):
     return '</div></div></aside>'
 
+def banner_end(state: StateBlock, startLine: int, endLine: int):
+    """Optional bounded note body and the line where parsing resumes."""
+    nextLine = startLine + 1
+    while nextLine < endLine:
+        pos = state.bMarks[nextLine] + state.tShift[nextLine]
+        line = state.src[pos:state.eMarks[nextLine]].strip()
+        if line == ':::':
+            return nextLine, nextLine + 1
+        if not line or line.startswith(':::'):
+            break
+        nextLine += 1
+    return startLine + 1, startLine + 1
+
+
 def banner():
     # `:::stub`, or `:::stub <короткая приписка>` on the same line. A multi-line
     # note may follow, closed by `:::` — but only while the lines run on without
@@ -62,26 +76,7 @@ def banner():
 
         # Find the optional note body. bodyEnd stays at startLine + 1 for the
         # bare single-line form; nextLine is where parsing resumes afterwards.
-        bodyEnd = nextLine = startLine + 1
-
-        while nextLine < endLine:
-            pos = state.bMarks[nextLine] + state.tShift[nextLine]
-            line = state.src[pos:state.eMarks[nextLine]].strip()
-
-            if line == ':::':
-                bodyEnd = nextLine
-                nextLine += 1
-                break
-
-            # Blank line, or the start of some other block — the banner was
-            # written in its bare form and this belongs to the document.
-            if not line or line.startswith(':::'):
-                bodyEnd = nextLine = startLine + 1
-                break
-
-            nextLine += 1
-        else:
-            bodyEnd = nextLine = startLine + 1
+        bodyEnd, nextLine = banner_end(state, startLine, endLine)
 
         token = state.push('banner_open', 'aside', 1)
         token.meta = {'kind': name}

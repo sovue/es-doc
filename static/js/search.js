@@ -37,6 +37,8 @@
 
     function open() { list.hidden = false; input.setAttribute('aria-expanded', 'true'); }
     function close() {
+        ++seq;
+        clearTimeout(timer);
         list.hidden = true;
         input.setAttribute('aria-expanded', 'false');
         input.removeAttribute('aria-activedescendant');
@@ -153,7 +155,11 @@
     // ── Events ───────────────────────────────────────────────
     var timer;
     input.addEventListener('input', function () {
-        clearTimeout(timer);
+        close();
+        matches = [];
+        list.innerHTML = '';
+        announce('');
+        if (!input.value.trim()) return;
         timer = setTimeout(update, 120);
     });
 
@@ -192,6 +198,7 @@
         input.focus();
     }
     function closeSheet(returnFocus) {
+        close();
         var wasOpen = document.body.classList.contains('search-open');
         document.body.classList.remove('search-open');
         if (toggle) toggle.setAttribute('aria-expanded', 'false');

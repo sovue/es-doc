@@ -6,7 +6,7 @@ import { test } from 'node:test';
 function page(search = '', withClipboard = false) {
     class Element {
         listeners = new Map(); children = []; hidden = false; disabled = false;
-        value = ''; files = []; clicks = 0; style = {}; attributes = {};
+        value = ''; files = []; clicks = 0; style = {}; attributes = {}; open = false;
         classList = { add() {}, remove() {}, toggle() {} };
         addEventListener(type, callback) {
             const handlers = this.listeners.get(type) || [];
@@ -17,11 +17,24 @@ function page(search = '', withClipboard = false) {
         }
         click() { this.clicks++; this.emit('click'); }
         focus() { document.activeElement = this; }
+        showModal() { this.open = true; }
+        close() { this.open = false; this.emit('close'); }
         contains(target) { return target === this || this.children.includes(target); }
         getBoundingClientRect() { return { left: 0, bottom: 40, width: 210, height: 100 }; }
         setAttribute(key, value) { this.attributes[key] = value; }
         removeAttribute(key) { delete this.attributes[key]; }
-        querySelectorAll() { return []; }
+        querySelectorAll(selector) {
+            const matches = [];
+            const visit = element => {
+                for (const child of element.children) {
+                    if ((selector === '.tools-remove' && child.className === 'tools-remove') || (selector === '.tools-remove-source' && child.className?.includes('tools-remove-source'))) matches.push(child);
+                    if (selector === 'button' && child.tagName === 'BUTTON') matches.push(child);
+                    visit(child);
+                }
+            };
+            visit(this);
+            return matches;
+        }
         replaceChildren(...children) {
             for (const child of this.children) child.parentNode = null;
             this.children = []; this.append(...children);
@@ -92,6 +105,397 @@ function page(search = '', withClipboard = false) {
         messages, workers, revoked, blobs, window, send, catalog, add, exportDone, result, copied };
 }
 const script = { id: '0:script.rpyc', path: 'script.rpyc', source: 0, size: 1 };
+
+test('export dialog groups processing and completion, and reopening does not export or download again', async () => {
+    const ui = page();
+    await ui.add(['script.rpyc'], [script]);
+    ui.get('export-start').click();
+    assert.equal(ui.get('export-dialog').open, true);
+    assert.equal(ui.get('export-title').textContent, 'Обработка файлов');
+    assert.equal(ui.get('export-start').disabled, true);
+    assert.match(ui.get('export-status').textContent, /Подготовка/);
+    ui.exportDone();
+    assert.equal(ui.get('export-title').textContent, 'Готово');
+    assert.equal(ui.get('result-description').textContent, 'Обработано: 1.');
+    assert.equal(ui.get('export-start').disabled, false);
+    const requests = ui.messages.length;
+    ui.get('export-close').click();
+    assert.equal(ui.get('export-dialog').open, false);
+    assert.equal(ui.document.activeElement, ui.get('export-start'));
+    ui.get('export-start').click();
+    assert.equal(ui.get('export-dialog').open, true);
+    assert.equal(ui.messages.length, requests);
+    assert.equal(ui.get('downloads').children[0].clicks, 1);
+    ui.get('download-all').click();
+    assert.equal(ui.get('downloads').children[0].clicks, 2);
+});
+
+test('dismissing an export cancels processing and preserves files for a fresh attempt', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    await ui.add(['bg.png']);
+    ui.get('export-start').click();
+    const worker = ui.workers.at(-1);
+    ui.get('export-dialog').emit('cancel', { preventDefault() {} });
+    assert.equal(ui.get('export-dialog').open, false);
+    assert.equal(worker.terminated, true);
+    assert.equal(ui.get('queue').hidden, false);
+    assert.equal(ui.get('export-start').disabled, false);
+    ui.get('export-start').click();
+    assert.equal(ui.get('export-dialog').open, true);
+    assert.equal(ui.workers.length, 2);
+    ui.send({ type: 'fatal', error: 'Out of memory' });
+    assert.equal(ui.get('export-title').textContent, 'Не удалось обработать файлы');
+    assert.equal(ui.get('export-errors').hidden, false);
+    assert.match(ui.get('export-status').textContent, /памяти/);
+    ui.get('export-close').click();
+    ui.get('export-start').click();
+    assert.equal(ui.workers.length, 2);
+    ui.get('download-all').click();
+    assert.equal(ui.workers.length, 3);
+});
+
+test('a later preview failure preserves the saved export summary and diagnostics', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    await ui.add(['script.rpy']);
+    ui.get('export-start').click();
+    ui.exportDone(['demo.rpa']);
+    const summary = ui.get('result-description').textContent;
+    ui.get('export-close').click();
+    ui.get('browser-list').children[0].children[0].click();
+    ui.send({ type: 'fatal', error: 'Out of memory' });
+    assert.equal(ui.get('result-description').textContent, summary);
+    assert.equal(ui.get('export-errors').hidden, true);
+    assert.equal(ui.get('errors').hidden, false);
+    ui.get('export-start').click();
+    assert.equal(ui.get('export-title').textContent, 'Готово');
+    assert.equal(ui.get('export-dialog').open, true);
+});
+
+test('settings follow accepted files and the active mode, including removal of the last file', async () => {
+    const ui = page();
+    assert.equal(ui.get('options').hidden, true);
+    assert.equal(ui.get('pack-settings').hidden, true);
+    await ui.add(['unsupported.png']);
+    assert.equal(ui.get('options').hidden, true);
+    await ui.add(['script.rpyc'], [script]);
+    assert.equal(ui.get('options').hidden, false);
+    assert.equal(ui.get('add-label').textContent, 'Добавить ещё');
+    ui.get('mode-pack').emit('change');
+    assert.equal(ui.get('options').hidden, true);
+    assert.equal(ui.get('pack-settings').hidden, true);
+    ui.get('pack-name').value = 'demo';
+    await ui.add(['bg.png']);
+    assert.equal(ui.get('pack-settings').hidden, false);
+    ui.get('browser-list').querySelectorAll('.tools-remove-source')[0].click();
+    assert.equal(ui.get('pack-settings').hidden, true);
+    assert.equal(ui.get('add-label').textContent, 'Добавить файлы или папку');
+    ui.get('mode-unpack').emit('change');
+    assert.equal(ui.get('options').hidden, false);
+    ui.get('clear').click();
+    assert.equal(ui.get('options').hidden, true);
+});
+
+test('RPA connection appears only when a successful export starts downloading', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'chapter';
+    assert.equal(ui.get('pack-integration').hidden, true);
+    await ui.add(['bg.png']);
+    assert.equal(ui.get('pack-integration').hidden, true);
+    ui.get('download-all').click();
+    assert.equal(ui.get('pack-integration').hidden, true);
+    ui.exportDone(['chapter.rpa']);
+    assert.equal(ui.get('pack-integration').hidden, false);
+    assert.equal(ui.get('pack-install-archive').textContent, 'game/my_mod/chapter.rpa');
+    assert.match(ui.get('export-status').textContent, /Скачивание запущено/);
+    ui.get('download-all').click();
+    assert.equal(ui.get('pack-integration').hidden, false);
+    ui.get('pack-prefix').value = 'new';
+    ui.get('pack-prefix').emit('input');
+    assert.equal(ui.get('pack-integration').hidden, true);
+    assert.equal(ui.get('export-status').textContent, '');
+    ui.get('download-all').click();
+    ui.send({ type: 'fatal', error: 'Failed to create archive' });
+    assert.equal(ui.get('pack-integration').hidden, true);
+    ui.get('download-all').click();
+    ui.exportDone(['chapter.rpa']);
+    assert.equal(ui.get('pack-integration').hidden, false);
+    await ui.add(['music.ogg']);
+    assert.equal(ui.get('pack-integration').hidden, true);
+});
+
+test('packing accepts resources and sends paths relative to game without cataloging them', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    ui.get('pack-name').emit('input');
+    ui.get('folder').files = [
+        { name: 'bg.png', webkitRelativePath: 'game/mods/demo/images/bg.png', size: 3 },
+        { name: 'theme.ogg', webkitRelativePath: 'game/mods/demo/audio/theme.ogg', size: 4 },
+    ];
+    ui.get('folder').emit('change');
+    await Promise.resolve();
+    assert.equal(ui.messages.length, 0);
+    assert.equal(ui.get('pack-strip').value, 'game/');
+    assert.equal(ui.get('browser-list').children[0].children[0].children[1].textContent, 'mods/');
+    ui.get('download-all').click();
+    assert.equal(ui.messages.at(-1).type, 'pack');
+    assert.equal(ui.messages.at(-1).name, 'demo.rpa');
+    assert.equal(ui.messages.at(-1).files[0].path, 'mods/demo/images/bg.png');
+    ui.send({ type: 'output-start' });
+    ui.send({ type: 'chunk', buffer: new Uint8Array([1, 2]).buffer });
+    ui.send({ type: 'output', name: 'demo.rpa', mime: 'application/octet-stream', result: ui.result });
+    ui.send({ type: 'done', result: ui.result });
+    assert.equal(ui.get('downloads').children[0].download, 'demo.rpa');
+    assert.equal(ui.blobs.at(-1).type, 'application/octet-stream');
+    assert.equal(ui.get('queue').hidden, false);
+    ui.get('pack-prefix').value = 'next';
+    ui.get('pack-prefix').emit('input');
+    ui.get('download-all').click();
+    assert.equal(ui.messages.at(-1).files[0].path, 'next/mods/demo/images/bg.png');
+});
+
+test('packing browses folders and previews original resources without decompilation', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    ui.get('pack-prefix').value = 'my_mod/images';
+    await ui.add(['bg.png']);
+    assert.equal(ui.get('browser').hidden, false);
+    assert.equal(ui.get('file-list').hidden, true);
+    const first = () => ui.get('browser-list').children[0].children[0];
+    assert.equal(first().children[1].textContent, 'my_mod/');
+    first().click();
+    assert.equal(first().children[1].textContent, 'images/');
+    first().click();
+    assert.equal(first().children[1].textContent, 'bg.png');
+    first().click();
+    assert.equal(ui.get('browser-preview').children[1].tagName, 'IMG');
+    assert.equal(ui.messages.length, 0);
+});
+
+test('packing text previews request syntax highlighting of the original file', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    await ui.add(['script.rpy']);
+    ui.get('browser-list').children[0].children[0].click();
+    assert.equal(ui.messages.at(-1).type, 'pack-preview');
+    assert.equal(ui.messages.at(-1).name, 'script.rpy');
+    ui.send({ type: 'source-file', requestId: ui.messages.at(-1).requestId,
+        name: 'script.rpy', buffer: new TextEncoder().encode('label start:\n    return').buffer,
+        html: '<span class="k">label</span> start:', warnings: [] });
+    assert.equal(ui.get('browser-preview').attributes['aria-busy'], 'false');
+    assert.equal(ui.get('download-all').disabled, false);
+});
+
+test('removing the last packing file returns keyboard focus to adding files', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    await ui.add(['last.txt']);
+    const remove = ui.get('browser-list').querySelectorAll('.tools-remove-source')[0];
+    remove.focus(); remove.click();
+    assert.equal(ui.get('browser').hidden, true);
+    assert.equal(ui.document.activeElement, ui.get('add'));
+});
+
+test('removing a packing folder drops all descendants using their original paths', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    ui.get('pack-prefix').value = 'bundle';
+    ui.get('folder').files = ['images/bg.png', 'images/nested/icon.png', 'images2/keep.png'].map(path =>
+        ({ name: path.split('/').at(-1), webkitRelativePath: 'game/my_mod/' + path, size: 1 }));
+    ui.get('folder').emit('change');
+    await Promise.resolve();
+    ui.get('browser-list').children[0].children[0].click();
+    ui.get('browser-list').children[0].children[0].click();
+    const folder = ui.get('browser-list').children[0];
+    assert.equal(folder.children[0].children[1].textContent, 'images/');
+    const remove = folder.children[2];
+    assert.ok(remove, 'folder has a remove button');
+    assert.match(remove.attributes['aria-label'], /вложенные файлы/);
+    remove.focus(); remove.click();
+    assert.match(ui.get('count').textContent, /1 файл/);
+    assert.equal(ui.get('browser-list').children[0].children[0].children[1].textContent, 'images2/');
+    assert.equal(ui.document.activeElement, ui.get('browser-list').children[0].children[2]);
+    ui.get('download-all').click();
+    assert.equal(ui.messages.at(-1).files.length, 1);
+    assert.equal(ui.messages.at(-1).files[0].path, 'bundle/my_mod/images2/keep.png');
+});
+
+test('removing the root packing folder clears the queue and returns focus to adding', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    ui.get('pack-prefix').value = 'my_mod';
+    await ui.add(['bg.png', 'theme.ogg']);
+    const remove = ui.get('browser-list').children[0].children[2];
+    assert.ok(remove, 'root folder has a remove button');
+    remove.focus(); remove.click();
+    assert.equal(ui.get('queue').hidden, true);
+    assert.equal(ui.get('browser').hidden, true);
+    assert.equal(ui.document.activeElement, ui.get('add'));
+    assert.equal(ui.get('download-all').disabled, true);
+});
+
+test('packing previews keep compiled files intact and do not start decompilers', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    await ui.add(['script.rpyc']);
+    ui.get('browser-list').children[0].children[0].click();
+    assert.equal(ui.messages.length, 0);
+    const preview = ui.get('browser-preview');
+    assert.equal(preview.children.at(-1).download, 'script.rpyc');
+    ui.get('download-all').click();
+    assert.equal(ui.messages.at(-1).type, 'pack');
+    assert.equal(ui.messages.at(-1).files[0].path, 'script.rpyc');
+});
+
+test('mode switches retain separate queues and packing settings', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    ui.get('pack-prefix').value = 'mods/demo';
+    ui.get('pack-prefix').emit('input');
+    await ui.add(['bg.png']);
+    ui.get('mode-unpack').emit('change');
+    assert.equal(ui.get('queue').hidden, true);
+    await ui.add(['script.rpyc'], [script]);
+    ui.get('mode-pack').emit('change');
+    assert.equal(ui.get('queue').hidden, false);
+    assert.equal(ui.get('pack-prefix').value, 'mods/demo');
+    ui.get('download-all').click();
+    assert.equal(ui.messages.at(-1).files[0].path, 'mods/demo/bg.png');
+    ui.exportDone(['demo.rpa']);
+    ui.get('mode-unpack').emit('change');
+    ui.get('download-all').click();
+    assert.equal(ui.messages.at(-1).files[0].path, 'script.rpyc');
+});
+
+test('packing pagination and search reach all files without filtering export', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    ui.get('pack-name').emit('input');
+    await ui.add(Array.from({ length: 251 }, (_, i) => `item-${String(i).padStart(3, '0')}.bin`));
+    const rows = () => ui.get('browser-list').children;
+    assert.equal(rows().length, 100);
+    ui.get('queue-next').click();
+    ui.get('queue-next').click();
+    assert.equal(rows().length, 51);
+    assert.equal(ui.get('queue-range').textContent, '201–251 из 251');
+    ui.get('browser-search').value = 'item-250';
+    ui.get('browser-search').emit('input');
+    assert.equal(rows().length, 1);
+    ui.get('download-all').click();
+    assert.equal(ui.messages.at(-1).files.length, 251);
+    ui.exportDone(['demo.rpa']);
+    const remove = ui.get('browser-list').querySelectorAll('.tools-remove-source')[0];
+    remove.focus(); remove.click();
+    assert.equal(ui.document.activeElement, ui.get('add'));
+    ui.get('browser-search').value = '';
+    ui.get('browser-search').emit('input');
+    const first = ui.get('browser-list').querySelectorAll('.tools-remove-source')[0];
+    first.focus(); first.click();
+    assert.equal(ui.document.activeElement, ui.get('browser-list').querySelectorAll('.tools-remove-source')[0]);
+    ui.get('clear').click();
+    assert.equal(ui.get('queue').hidden, true);
+    assert.equal(ui.document.activeElement, ui.get('add'));
+});
+
+test('an invalid prefix preserves the verified path preview and explains how to correct it', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    ui.get('pack-prefix').value = 'mods/demo';
+    ui.get('pack-prefix').emit('input');
+    await ui.add(['bg.png']);
+    ui.get('browser-search').value = 'bg.png';
+    ui.get('browser-search').emit('input');
+    const path = () => ui.get('browser-list').children[0].children[0].children[1].textContent;
+    assert.equal(path(), 'mods/demo/bg.png');
+    ui.get('pack-prefix').value = '../bad';
+    ui.get('pack-prefix').emit('input');
+    assert.equal(path(), 'mods/demo/bg.png');
+    assert.equal(ui.get('pack-preview-note').hidden, false);
+    assert.match(ui.get('pack-prefix-error').textContent, /относительный путь.*my_mod/);
+    assert.equal(ui.get('download-all').disabled, true);
+    ui.get('pack-prefix').value = 'fixed';
+    ui.get('pack-prefix').emit('input');
+    assert.equal(path(), 'fixed/bg.png');
+    assert.equal(ui.get('pack-preview-note').hidden, true);
+});
+
+test('packing errors belong to their fields and clear independently', () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = '';
+    ui.get('pack-prefix').value = '../bad';
+    ui.get('pack-prefix').emit('input');
+    assert.match(ui.get('pack-name-error').textContent, /имя архива/);
+    assert.match(ui.get('pack-prefix-error').textContent, /относительный путь/);
+    ui.get('pack-name').value = 'demo';
+    ui.get('pack-name').emit('input');
+    assert.equal(ui.get('pack-name-error').hidden, true);
+    assert.equal(ui.get('pack-prefix-error').hidden, false);
+    assert.equal(ui.get('pack-filename').textContent, 'demo.rpa');
+    ui.get('pack-prefix').value = 'mods/demo';
+    ui.get('pack-prefix').emit('input');
+    assert.equal(ui.get('pack-prefix-error').hidden, true);
+});
+
+test('archive connection example tracks the download name and hides invalid code', () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'chapter.rpa';
+    ui.get('pack-name').emit('input');
+    assert.equal(ui.get('pack-install-archive').textContent, 'game/my_mod/chapter.rpa');
+    assert.equal(ui.get('pack-install-string').textContent, '"my_mod/chapter"');
+    ui.get('pack-name').value = '../bad';
+    ui.get('pack-name').emit('input');
+    assert.equal(ui.get('pack-install-example').hidden, true);
+    ui.get('pack-name').value = 'new';
+    ui.get('pack-name').emit('input');
+    assert.equal(ui.get('pack-install-example').hidden, false);
+    assert.equal(ui.get('pack-install-string').textContent, '"my_mod/new"');
+    ui.get('mode-unpack').emit('change');
+    assert.equal(ui.get('pack-integration').hidden, true);
+});
+
+test('packing picker menu and path example follow the selected resources', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    ui.get('add').click();
+    assert.equal(ui.get('add-menu').hidden, false);
+    assert.equal(ui.document.activeElement, ui.get('pick-files'));
+    ui.get('pick-folder').click();
+    assert.equal(ui.get('folder').clicks, 1);
+    ui.get('add').click();
+    ui.get('pick-files').click();
+    assert.equal(ui.get('files').clicks, 1);
+    await ui.add(['bg.png']);
+    ui.get('pack-prefix').value = 'mods/demo/images';
+    ui.get('pack-prefix').emit('input');
+    assert.equal(ui.get('pack-example-source').textContent, 'bg.png');
+    assert.equal(ui.get('pack-example-target').textContent, 'mods/demo/images/bg.png');
+    ui.get('pack-prefix').value = '../bad';
+    ui.get('pack-prefix').emit('input');
+    assert.equal(ui.get('pack-example-target').textContent, 'Исправьте настройки пути');
+    ui.get('clear').click();
+    assert.equal(ui.get('pack-example-source').textContent, 'images/bg.png');
+});
+
+test('invalid pack settings disable export and cancelling preserves inputs for a new worker', async () => {
+    const ui = page('?mode=pack');
+    ui.get('pack-name').value = 'demo';
+    ui.get('pack-name').emit('input');
+    await ui.add(['image.png']);
+    ui.get('pack-prefix').value = '../outside';
+    ui.get('pack-prefix').emit('input');
+    assert.equal(ui.get('pack-error').hidden, false);
+    assert.equal(ui.get('download-all').disabled, true);
+    ui.get('pack-prefix').value = 'mods/demo';
+    ui.get('pack-prefix').emit('input');
+    ui.get('download-all').click();
+    ui.get('cancel').click();
+    assert.equal(ui.workers[0].terminated, true);
+    assert.equal(ui.get('queue').hidden, false);
+    ui.get('download-all').click();
+    assert.equal(ui.workers.length, 2);
+    assert.equal(ui.messages.at(-1).files[0].path, 'mods/demo/image.png');
+});
 
 test('PYC accepts uploads and shows Python source preview', async () => {
     const ui = page()
@@ -262,6 +666,11 @@ test('download-all processes all sources, downloads automatically, and retains r
     assert.equal(ui.get('downloads').children[0].download, 'unrpyc.zip');
     assert.equal(ui.get('downloads').children[0].clicks, 1);
     assert.equal(ui.get('queue').hidden, true);
+    assert.equal(ui.get('downloads').hidden, true);
+    assert.equal(ui.get('download-all').hidden, false);
+    assert.match(ui.get('download-all').innerHTML, /tools-icon-download/);
+    assert.match(ui.get('download-all').innerHTML, /<span>Скачать<\/span>/);
+    assert.match(ui.get('export-info').textContent, /unrpyc.zip/);
     ui.get('download-all').click(); assert.equal(ui.get('downloads').children[0].clicks, 2);
     ui.window.__esdocToolsCleanup(); assert.equal(ui.revoked.length, 1);
 });
@@ -275,7 +684,12 @@ test('archives show contents before extraction and each exports as a separate ZI
     assert.equal(ui.get('browser-title').textContent, 'b.rpa'); assert.equal(ui.messages.length, 1);
     ui.get('download-all').click(); assert.equal(ui.messages.at(-1).mode, 'combined');
     ui.exportDone(['a.zip', 'b.zip'], { ...ui.result, succeeded: 2, written: 2 });
-    assert.deepEqual(ui.get('downloads').children.map(link => link.clicks), [1, 1]);
+    assert.equal(ui.get('download-all').hidden, true);
+    assert.equal(ui.get('downloads').hidden, false);
+    assert.match(ui.get('downloads').children[0].innerHTML, /tools-icon-download/);
+    assert.equal(ui.get('downloads').children[0].children[0].textContent, 'Скачать a.zip');
+    ui.get('downloads').children[1].click();
+    assert.deepEqual(ui.get('downloads').children.map(link => link.clicks), [1, 2]);
 });
 
 test('clearing a mixed queue removes every source', async () => {
@@ -348,9 +762,9 @@ test('partial export failure retains completed ZIP links', async () => {
     ui.send({ type: 'output', name: 'unrpyc.zip', result: ui.result });
     ui.send({ type: 'fatal', error: 'Out of memory' });
     assert.equal(ui.get('downloads').children.length, 1); assert.equal(ui.revoked.length, 0);
-    assert.match(ui.get('status').textContent, /памяти/);
-    assert.doesNotMatch(ui.get('status').textContent, /Out of memory/);
-    assert.equal(ui.get('errors').hidden, false);
+    assert.match(ui.get('export-status').textContent, /памяти/);
+    assert.doesNotMatch(ui.get('export-status').textContent, /Out of memory/);
+    assert.equal(ui.get('export-errors').hidden, false);
 });
 
 test('cancelling a pending preview replaces loading and ignores late replies before retry', async () => {

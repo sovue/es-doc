@@ -21,7 +21,10 @@ class ToolsRouteTests(unittest.IsolatedAsyncioTestCase):
     async def test_tools_page_has_local_processing_and_both_pickers(self):
         response = await self.get('/tools/unpack')
         self.assertEqual(response.status_code, 200)
-        self.assertIn('Распаковщик RPA/RPYC/PYC — ES Doc', response.text)
+        self.assertIn('Архивация RPA и декомпиляция RPYC/PYC — ES Doc', response.text)
+        self.assertIn('id="tools-mode-pack"', response.text)
+        self.assertIn('id="tools-pack-strip"', response.text)
+        self.assertIn('/static/tools/rpa.py?v=', response.text)
         self.assertIn('webkitdirectory', response.text)
         self.assertIn('multiple', response.text)
         self.assertIn('tools-worker.js', response.text)
@@ -44,8 +47,24 @@ class ToolsRouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('href="/tools/unpack"', response.text)
         self.assertIn('href="/tools/colors"', response.text)
+        self.assertIn('href="/tools/characters"', response.text)
         self.assertNotIn('tools-worker.js', response.text)
         self.assertNotIn('/static/js/tools.js', response.text)
+
+    async def test_character_workbench_is_discoverable_and_loads_only_its_runtime(self):
+        response = await self.get('/tools/characters')
+        self.assertEqual(response.status_code, 200)
+        for marker in ('Создатель простых персонажей — ES Doc', 'character-settings', 'character-preview-who',
+                       'character-preview-what', 'character-code', 'character-kind',
+                       'characters-catalog.js', 'characters-core.js', 'characters.js'):
+            self.assertIn(marker, response.text)
+        self.assertNotIn('tools-worker.js', response.text)
+        self.assertNotIn('colors.js', response.text)
+        for file in ('characters-catalog.js', 'characters-core.js', 'characters.js'):
+            asset = await self.get('/static/js/' + file)
+            self.assertEqual(asset.status_code, 200)
+        self.assertIn('/tools/characters</loc>', (await self.get('/sitemap.xml')).text)
+        self.assertIn('/tools/characters', [item['url'] for item in _section_items()])
 
     async def test_color_page_has_its_own_controls_and_scripts(self):
         response = await self.get('/tools/colors')
@@ -68,7 +87,7 @@ class ToolsRouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn('color: var(--attention)', stylesheet.text)
         self.assertIn('.tools-status.is-error { color: var(--danger); }', stylesheet.text)
         self.assertIn('--tools-error-icon:', stylesheet.text)
-        for path in ('engine.py', 'recovery.py', 'pyc_decompiler.py', 'bytecode.zip', 'vendor.zip', 'syntax.zip', 'renpy_lexer.py', 'pyodide/0.29.3/pyodide.mjs', 'pyodide/0.29.3/pyodide.asm.wasm'):
+        for path in ('engine.py', 'rpa.py', 'recovery.py', 'pyc_decompiler.py', 'bytecode.zip', 'vendor.zip', 'syntax.zip', 'renpy_lexer.py', 'pyodide/0.29.3/pyodide.mjs', 'pyodide/0.29.3/pyodide.asm.wasm'):
             response = await self.get('/static/tools/' + path)
             self.assertEqual(response.status_code, 200, path)
             self.assertIn('nosniff', response.headers['x-content-type-options'])

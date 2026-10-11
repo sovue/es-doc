@@ -9,6 +9,26 @@ from app.utils.config import CONFIG
 
 
 class SearchDiscoveryTests(unittest.IsolatedAsyncioTestCase):
+    async def test_normalizes_trailing_slash_and_surrounding_whitespace(self):
+        with patch.object(CONFIG, 'site_url', ' https://docs.example/ '):
+            async with AsyncClient(transport=ASGITransport(app=app), base_url='http://localhost') as client:
+                robots = await client.get('/robots.txt')
+                sitemap = await client.get('/sitemap.xml')
+        self.assertIn('Sitemap: https://docs.example/sitemap.xml\n', robots.text)
+        self.assertIn('https://docs.example/docs/', sitemap.text)
+        self.assertNotIn('https://docs.example//', sitemap.text)
+
+    async def test_missing_or_invalid_origin_does_not_publish_broken_urls(self):
+        for origin in (None, '', 'not-a-url', 'https://docs.example/path', 'https://docs.example?query=1'):
+            with self.subTest(origin=origin), patch.object(CONFIG, 'site_url', origin):
+                async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url='http://untrusted-host') as client:
+                    robots = await client.get('/robots.txt')
+                    sitemap = await client.get('/sitemap.xml')
+                self.assertEqual(robots.status_code, 200)
+                self.assertNotIn('Sitemap:', robots.text)
+                self.assertEqual(sitemap.status_code, 404)
+                self.assertNotIn('untrusted-host', robots.text)
+
     async def test_robots_points_to_sitemap_on_configured_origin(self):
         with patch.object(CONFIG, 'site_url', 'https://docs.example'):
             async with AsyncClient(transport=ASGITransport(app=app), base_url='http://localhost') as client:

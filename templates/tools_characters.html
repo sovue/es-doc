@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% set page_title = "Создатель простых персонажей — ES Doc" %}
+{% set body_class = 'bg-solid scene-page' %}
+{% set active = 'tools' %}
+{% set with_characters_js = true %}
+{% set extra_css = ['/static/css/characters.css'] %}
+{% block content %}
+<div class="page characters-page"><main id="main-content">
+    <section class="page-hero"><div class="page-hero-inner"><a href="/tools" class="page-back">{{ lucide_icon('arrow-left') }} Инструменты</a><h1 class="page-title">Создатель простых персонажей</h1></div></section>
+    <div class="page-main">
+        <noscript><p>Для настройки персонажа и предпросмотра включите JavaScript.</p></noscript>
+        <section id="characters-app" hidden aria-label="Настройка персонажа Ren'Py">
+            <div class="character-toolbar"><p>Настройте имя и реплику, затем скопируйте определение в свой <code>.rpy</code>.</p><div class="character-actions"><button id="character-undo" class="character-icon" type="button" aria-label="Отменить изменение" title="Отменить изменение" disabled>{{ lucide_icon('undo-2', 18) }}</button><button id="character-redo" class="character-icon" type="button" aria-label="Повторить изменение" title="Повторить изменение" disabled>{{ lucide_icon('redo-2', 18) }}</button><button id="character-reset" class="character-button" type="button">{{ lucide_icon('rotate-ccw', 18) }} Сбросить</button></div></div>
+            <nav class="character-jumps" aria-label="Разделы конструктора"><button type="button" data-character-jump="settings">Настройки</button><button type="button" data-character-jump="preview">Предпросмотр</button><button type="button" data-character-jump="code">Код</button></nav>
+            <div class="character-workbench">
+                <form id="character-settings" class="character-settings" novalidate aria-labelledby="character-settings-heading">
+                    <h2 id="character-settings-heading" tabindex="-1">Персонаж</h2>
+                    <div class="character-identity">
+                        <div class="character-field"><label for="character-variable">Переменная</label><input id="character-variable" type="text" value="e" spellcheck="false" autocomplete="off" maxlength="200" aria-describedby="character-variable-error"><p id="character-variable-error" class="character-error" hidden></p></div>
+                        <div class="character-field" id="character-name-control"><label for="character-name">Имя / name</label><input id="character-name" type="text" value="Семён" maxlength="20000" autocomplete="off" aria-describedby="character-name-error"><p id="character-name-error" class="character-error" hidden></p></div>
+                    </div>
+                    <p class="character-help">Переменная используется в сценарии, например <code>e "Привет!"</code>. Пустое имя передаётся как None; пустые настройки оформления оставляют стиль игры.</p>
+                    <div class="character-field"><label for="character-kind">Основа / kind</label><select id="character-kind"><option value="">По умолчанию</option></select></div>
+                    <div class="character-field" id="character-custom-kind-control" hidden><label for="character-custom-kind">Переменная своей основы</label><input id="character-custom-kind" type="text" spellcheck="false" aria-describedby="character-kind-error"><p id="character-kind-error" class="character-error" hidden></p><p class="character-help">Кастомная основа сохраняет введённые свойства оформления. Её наследуемый стиль проверяйте в игре.</p></div>
+                    <label class="character-enable"><input id="character-dynamic" type="checkbox"> Динамическое имя / dynamic</label>
+                    <p id="character-dynamic-warning" class="character-help" hidden>При dynamic=True значение name — имя переменной, которая должна существовать в игре и содержать строку. Например, для name="player_name" нужна переменная player_name. Хаотичные символы здесь только обозначают динамическое имя; в игре оно не получает эффект §k.</p>
+                    <details class="character-disclosure" open><summary>Стиль имени <span>who_</span></summary><div id="character-who-fields" class="character-fields"></div></details>
+                    <details class="character-disclosure" open><summary>Стиль повествования <span>what_</span></summary><div id="character-what-fields" class="character-fields"></div></details>
+                </form>
+                <div class="character-result">
+                    <section aria-labelledby="character-preview-heading">
+                        <div class="character-section-head"><h2 id="character-preview-heading" tabindex="-1">Предпросмотр</h2><button id="character-zoom" type="button" class="character-button" aria-pressed="false" aria-controls="character-preview-viewport">Увеличить</button></div>
+                        <div id="character-preview-viewport" class="character-preview-viewport" tabindex="0" role="region" aria-label="Предпросмотр игрового диалога"><div id="character-stage" class="character-stage"><div id="character-dialogue-window" class="character-dialogue-window"><div id="character-namebox" class="character-namebox"><div id="character-preview-who"></div></div><div id="character-preview-what"></div><div class="character-dialogue-controls" aria-hidden="true"><img src="/resource/raw/images/gui/dialogue_box/day/hide_idle.png" alt=""><img src="/resource/raw/images/gui/dialogue_box/day/save_idle.png" alt=""><img src="/resource/raw/images/gui/dialogue_box/day/menu_idle.png" alt=""><img src="/resource/raw/images/gui/dialogue_box/day/load_idle.png" alt=""></div></div></div></div>
+                        <div class="character-field character-sample"><label for="character-sample">Текст для проверки</label><textarea id="character-sample" rows="2" maxlength="20000">Я говорю так! Добро пожаловать в «Совёнок».</textarea></div>
+                    </section>
+                    <section class="character-code-section" aria-labelledby="character-code-heading">
+                        <div class="character-section-head"><h2 id="character-code-heading" tabindex="-1">Готовый код</h2><div class="character-actions"><button id="character-copy" class="character-button character-primary" type="button">{{ lucide_icon('copy', 18) }} Скопировать</button><button id="character-download" class="character-icon" type="button" aria-label="Скачать определение .rpy" title="Скачать .rpy">{{ lucide_icon('download', 18) }}</button></div></div>
+                        <label class="sr-only" for="character-code">Определение персонажа для Ren'Py</label><textarea id="character-code" class="character-code" readonly spellcheck="false" rows="4"></textarea>
+                        <p id="character-validation" class="character-error" role="status" hidden></p><button id="character-fix-error" class="character-button" type="button" hidden>Перейти к ошибке</button><p id="character-status" class="character-status" role="status" aria-live="polite"></p>
+                        <details class="character-preview-options"><summary>Как использовать в игре</summary><p class="character-help">Поместите определение выше <code>label start:</code> в файле .rpy. Внутри нужного label добавьте реплику:</p><pre class="character-usage"><code id="character-usage"></code></pre><p class="character-help">Замените текст в кавычках своей репликой. Скачанный .rpy содержит только определение персонажа.</p></details>
+                        <div class="character-project-actions"><button id="character-save-project" class="character-button" type="button">Сохранить настройки</button><button id="character-load-project" class="character-button" type="button">Открыть настройки</button><input id="character-project-file" type="file" accept=".json,application/json" hidden></div>
+                        <p id="character-storage-note" class="character-help" role="status">Настройки готовы. Черновик сохраняется после изменения.</p>
+                        <p class="character-help">JSON сохраняет настройки для этого конструктора. Черновик остаётся в этом браузере.</p>
+                        <p class="character-docs"><a href="/docs/characters">Персонажи в «Бесконечном Лете»</a><a href="https://www.renpy.org/doc/html/dialogue.html#Character">Справка Character</a><a href="https://www.renpy.org/doc/html/style_properties.html#text-style-properties">Свойства стиля</a></p>
+                    </section>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>{% include "partials/footer.html" %}</div>
+{% endblock %}

@@ -2,7 +2,8 @@
     window.__esdocToolsCleanup?.();
     const app = document.getElementById('tools-app');
     if (!app) return;
-    const { accepts, safePath, walkEntry, size, explainWarning, explainError, countLabel } = window.ESDocTools;
+    const { accepts, safePath, walkEntry, size, explainWarning, explainError, countLabel,
+        archiveName, packPath, commonFolders } = window.ESDocTools;
     const config = JSON.parse(app.dataset.config);
     const get = id => document.getElementById('tools-' + id);
     const controls = get('controls'), drop = get('drop'), menu = get('add-menu');
@@ -12,15 +13,26 @@
     const queue = get('queue'), list = get('file-list'), progress = get('progress');
     const progressBar = get('progress-bar'), current = get('current');
     const resultPanel = get('result'), downloads = get('downloads'), downloadAll = get('download-all');
+    const exportDialog = get('export-dialog'), exportStart = get('export-start');
+    const exportStatus = get('export-status'), exportErrors = get('export-errors');
+    const downloadButton = '<span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span><span>Скачать</span>';
     const warningsPanel = get('warnings'), warningList = get('warning-list');
     const browseActions = get('browse-actions'), browseArchive = get('archive');
     const browser = get('browser'), browserList = get('browser-list');
     const browserPreview = get('browser-preview'), browserStatus = get('browser-status');
     const browserSearch = get('browser-search'), browserCrumbs = get('browser-crumbs');
     const errorsPanel = get('errors');
+    const packName = get('pack-name'), packStrip = get('pack-strip'), packPrefix = get('pack-prefix');
+    let mode = new URLSearchParams(window.location.search).get('mode') === 'pack' ? 'pack' : 'unpack';
+    let packValid = true, pathPreviewValid = true;
+    let validPackPaths = new Map(), queuePage = 0, queueMatches = 0;
+    const queuePageSize = 100;
+    const queueSearch = browserSearch;
+    const queuePrevious = get('queue-previous'), queueNext = get('queue-next');
     const controller = new AbortController();
     const on = (element, event, callback) => element.addEventListener(event, callback, { signal: controller.signal });
-    const files = new Map();
+    const modeFiles = { pack: new Map(), unpack: new Map() };
+    let files = modeFiles[mode];
     const rows = new Map();
     const supported = Boolean(window.Worker && window.WebAssembly);
     let busy = false, enumerating = false, disposed = false, retryAvailable = false;
@@ -30,6 +42,7 @@
     let browseEntries = [], browseFolder = '', browseRequest = 0, previewUrl = null;
     let catalogEntries = [], catalogFiles = [], catalogRequest = 0, selectedEntry = null;
     let task = '', exportReady = false, catalogSubmitted = false, previewFont = null, clearOnDownload = false;
+    let packDownloadStarted = false, exportFinished = false;
     let operation = 0;
     let previewPending = null, pendingPreviewKey = '';
     const previewCache = new Map();
@@ -50,13 +63,28 @@
         previewCacheBytes += bytes;
     };
 
-    const say = (message, error = false) => {
-        status.textContent = message;
-        status.classList.toggle('is-error', error);
-        errorsPanel.hidden = true;
-        errorsPanel.replaceChildren();
+    const say = (message, error = false, inExport = task === 'export') => {
+        const target = inExport ? exportStatus : status;
+        const diagnostics = inExport ? exportErrors : errorsPanel;
+        target.textContent = message;
+        target.classList.toggle('is-error', error);
+        diagnostics.hidden = true;
+        diagnostics.replaceChildren();
+    };
+    const notifyDownload = () => {
+        exportStatus.textContent = 'Скачивание запущено.';
+        exportStatus.classList.remove('is-error');
     };
     const clearResult = () => {
+        exportFinished = false;
+        if (exportDialog.open) exportDialog.close();
+        task = '';
+        exportStatus.textContent = '';
+        exportErrors.hidden = true;
+        exportErrors.replaceChildren();
+        get('export-summary').hidden = true;
+        packDownloadStarted = false;
+        get('pack-integration').hidden = true;
         previewCache.clear();
         previewCacheBytes = 0;
         pendingPreviewKey = '';
@@ -73,7 +101,7 @@
         selectedEntry = null;
         exportReady = false;
         clearOnDownload = false;
-        browseFolder = '';
+        if (mode !== 'pack') browseFolder = '';
         browser.hidden = true;
         browseActions.hidden = true;
         warningsPanel.hidden = true;
@@ -82,6 +110,8 @@
         outputs.length = 0;
         chunks = [];
         downloads.replaceChildren();
+        downloads.hidden = true;
+        get('export-info').hidden = true;
         downloadAll.hidden = true;
         resultPanel.hidden = true;
         get('result-description').textContent = '';
@@ -109,16 +139,34 @@
     const isArchive = entry => /\.rpa$/i.test(entry.path);
     const updateControls = () => {
         const locked = busy || enumerating || !supported;
-        start.disabled = locked || !selected().length;
-        start.hidden = !retryAvailable || locked || !selected().length;
+        const hasFiles = files.size > 0;
+        exportStart.hidden = !hasFiles && !exportFinished;
+        exportStart.disabled = locked || (!exportFinished && mode === 'pack' && !packValid);
+        exportStart.innerHTML = exportFinished ? '<span>Открыть результат</span>' : downloadButton;
+        get('export-close').setAttribute('aria-label', busy && task === 'export' ? 'Отменить обработку и закрыть окно' : 'Закрыть окно');
+        get('pack-settings').hidden = mode !== 'pack' || !hasFiles;
+        get('options').hidden = mode === 'pack' || !hasFiles;
+        get('pack-integration').hidden = mode !== 'pack' || !packDownloadStarted;
+        drop.classList.toggle('is-compact', hasFiles);
+        get('drop-title').textContent = hasFiles ? 'Перетащите сюда ещё файлы или папку' : 'Перетащите файлы или папку сюда';
+        get('drop-help').hidden = hasFiles;
+        drop.setAttribute('aria-describedby', hasFiles ? 'tools-drop-title' : 'tools-drop-help');
+        get('add-label').textContent = hasFiles ? 'Добавить ещё' : 'Добавить файлы или папку';
+        start.disabled = locked || !selected().length || (mode === 'pack' && !packValid);
+        start.hidden = mode === 'pack' || !retryAvailable || locked || !selected().length;
         addButton.disabled = locked;
         get('clear').disabled = locked || !selected().length;
         for (const field of app.querySelectorAll('.tools-options input')) field.disabled = locked;
+        for (const field of [packName, packStrip, packPrefix, get('mode-pack'), get('mode-unpack')]) field.disabled = locked;
         for (const button of list.querySelectorAll('button')) button.disabled = locked;
+        queueSearch.disabled = locked;
+        queuePrevious.disabled = locked || queuePage === 0;
+        queueNext.disabled = locked || (queuePage + 1) * queuePageSize >= queueMatches;
         cancel.hidden = !busy && !enumerating;
-        const cancelHost = busy && task === 'preview' && previewPending ? previewPending : operationActions;
+        const cancelHost = busy && task === 'export' ? get('export-actions')
+            : busy && task === 'preview' && previewPending ? previewPending : operationActions;
         if (cancel.parentNode !== cancelHost) cancelHost.appendChild(cancel);
-        downloadAll.disabled = locked || (!selected().length && !outputs.length);
+        downloadAll.disabled = locked || (!selected().length && !outputs.length) || (mode === 'pack' && !packValid);
         browseArchive.disabled = locked;
         browser.setAttribute('aria-busy', String(busy));
         for (const button of browserList.querySelectorAll('button')) button.disabled = locked;
@@ -126,22 +174,29 @@
     const render = () => {
         list.replaceChildren();
         rows.clear();
-        const visible = selected();
-        queue.hidden = !visible.length;
-        list.hidden = false;
-        get('count').textContent = `${countLabel(visible.length, 'файл', 'файла', 'файлов')} / ${size(visible.reduce((total, entry) => total + entry.file.size, 0))}`;
+        const allFiles = selected();
+        queue.hidden = !allFiles.length;
+        list.hidden = mode === 'pack';
+        get('count').textContent = `${countLabel(allFiles.length, 'файл', 'файла', 'файлов')} / ${size(allFiles.reduce((total, entry) => total + entry.file.size, 0))}`;
+        get('pack-preview-note').hidden = mode !== 'pack' || pathPreviewValid;
+        if (mode === 'pack') { updateControls(); return; }
+        const visible = allFiles.slice(0, 200);
         const fragment = document.createDocumentFragment();
         // Bound the DOM for folders with thousands of scripts; all queued files
         // are still processed even when their rows are not rendered.
-        for (const entry of visible.slice(0, 200)) {
+        for (const entry of visible) {
             const row = document.createElement('li');
             const name = document.createElement('div');
             name.className = 'tools-file-name';
-            const open = document.createElement('button');
+            const open = document.createElement(mode === 'pack' ? 'span' : 'button');
             open.type = 'button';
             open.className = 'tools-text-button';
-            open.textContent = entry.path;
+            if (mode === 'pack') {
+                open.textContent = validPackPaths.get(entry.path) || 'Путь не рассчитан';
+                open.className = 'tools-pack-path';
+            } else open.textContent = entry.path;
             open.addEventListener('click', () => {
+                if (mode === 'pack') return;
                 browseArchive.value = isArchive(entry) ? String(catalogFiles.findIndex(item => item.path === entry.path)) : 'scripts';
                 openBrowse();
                 if (!isArchive(entry)) {
@@ -152,7 +207,8 @@
             name.appendChild(open);
             const state = document.createElement('span');
             state.className = 'tools-file-state';
-            state.textContent = 'Добавлен';
+            state.textContent = mode === 'pack' && !validPackPaths.has(entry.path) ? 'Исходный файл: ' + entry.path
+                : mode === 'pack' && open.textContent !== entry.path ? 'Из ' + entry.path : 'Добавлен';
             name.appendChild(state);
             const bytes = document.createElement('span');
             bytes.className = 'tools-file-size';
@@ -162,14 +218,28 @@
             remove.className = 'tools-remove';
             remove.setAttribute('aria-label', 'Убрать ' + entry.path);
             remove.innerHTML = window.ESDocIcons.svg('x', 16);
-            remove.addEventListener('click', () => { files.delete(entry.path); clearResult(); retryAvailable = false; render(); loadCatalog(); });
+            remove.addEventListener('click', () => {
+                const focused = document.activeElement === remove;
+                const index = visible.indexOf(entry);
+                files.delete(entry.path);
+                validPackPaths.delete(entry.path);
+                clearResult();
+                retryAvailable = false;
+                if (mode === 'pack') refreshPackFolders();
+                render();
+                loadCatalog();
+                if (focused) {
+                    const buttons = list.querySelectorAll('.tools-remove');
+                    (buttons[Math.min(index, buttons.length - 1)] || addButton).focus();
+                }
+            });
             row.append(name, bytes, remove);
-            rows.set(entry.path, state);
+            rows.set(open.textContent, state);
             fragment.appendChild(row);
         }
-        if (visible.length > 200) {
+        if (mode !== 'pack' && allFiles.length > 200) {
             const remainder = document.createElement('li');
-            remainder.textContent = `И ещё ${countLabel(visible.length - 200, 'файл', 'файла', 'файлов')}. Будут обработаны все.`;
+            remainder.textContent = `И ещё ${countLabel(allFiles.length - 200, 'файл', 'файла', 'файлов')}. Будут обработаны все.`;
             fragment.appendChild(remainder);
         }
         list.appendChild(fragment);
@@ -189,7 +259,7 @@
             await collect(entry => {
                 if (disposed || id !== operation) throw new Error('Добавление отменено.');
                 entry.path = safePath(entry.path);
-                if (!accepts(entry.path, 'combined')) { skipped++; return; }
+                if (mode !== 'pack' && !accepts(entry.path, 'combined')) { skipped++; return; }
                 if (files.has(entry.path)) { duplicates++; return; }
                 files.set(entry.path, entry);
                 added++;
@@ -197,12 +267,13 @@
             if (id === operation) say(`Добавлено файлов: ${added}.`
                 + (skipped ? ` Другие форматы пропущены: ${skipped}.` : '')
                 + (duplicates ? ` Повторные пути пропущены: ${duplicates}.` : '')
-                + (!files.size ? ' Выберите .rpyc, .rpymc, .pyc или .rpa.' : ''));
+                + (!files.size ? (mode === 'pack' ? ' Выберите ресурсы для архива.' : ' Выберите .rpyc, .rpymc, .pyc или .rpa.') : ''));
         } catch (error) {
             if (id === operation) showErrors([error.message]);
         } finally {
             if (!disposed && id === operation) {
                 enumerating = false;
+                if (mode === 'pack') refreshPackFolders();
                 render();
                 if (added) loadCatalog();
             }
@@ -246,8 +317,15 @@
         resetWorker();
         retryAvailable = false;
         progress.hidden = true;
+        if (mode === 'pack') {
+            validPackPaths.clear();
+            queueSearch.value = '';
+            queuePage = 0;
+            refreshPackFolders();
+        }
         say('Добавленные файлы удалены.');
         render();
+        addButton.focus();
     });
 
     const resetWorker = () => {
@@ -268,12 +346,126 @@
     const showOutputs = () => {
         resultPanel.hidden = false;
         start.classList.remove('tools-button-primary');
-        downloadAll.hidden = false;
-        downloadAll.innerHTML = '<span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span><span>'
-            + (exportReady ? 'Скачать ещё раз' : 'Скачать всё в ZIP') + '</span>';
-        if (outputs.length === 1) outputs[0].link.classList.add('tools-button-primary');
+        const singleResult = exportReady && outputs.length === 1;
+        downloadAll.hidden = exportReady && outputs.length > 1;
+        downloadAll.innerHTML = exportFinished && !exportReady ? '<span>Повторить обработку</span>' : downloadButton;
+        downloads.hidden = !outputs.length || singleResult;
+        get('export-info').hidden = !singleResult;
+        if (singleResult) get('export-info').textContent = `${outputs[0].name} / ${size(outputs[0].blob.size)}`;
+        if (outputs.length === 1 && mode !== 'pack') outputs[0].link.classList.add('tools-button-primary');
     };
     const options = () => ({ try_harder: get('try-harder').checked, no_init_offset: get('no-init-offset').checked });
+    const validatePack = () => {
+        let errorMessage = '';
+        let nameError = '', prefixError = '', pathError = '';
+        packName.removeAttribute('aria-invalid');
+        packPrefix.removeAttribute('aria-invalid');
+        try {
+            const filename = archiveName(packName.value);
+            get('pack-filename').textContent = filename;
+            get('pack-install-archive').textContent = 'game/my_mod/' + filename;
+            get('pack-install-string').textContent = JSON.stringify('my_mod/' + filename.slice(0, -4));
+            get('pack-install-example').hidden = false;
+        } catch (error) {
+            nameError = error.message;
+            get('pack-filename').textContent = 'Укажите имя архива';
+            get('pack-install-example').hidden = true;
+            packName.setAttribute('aria-invalid', 'true');
+        }
+        let prefixValid = false;
+        try {
+            packPath('resource', '', packPrefix.value);
+            prefixValid = true;
+            const paths = new Set();
+            const mapped = new Map();
+            for (const entry of selected()) {
+                const path = packPath(entry.path, packStrip.value, packPrefix.value);
+                const canonical = path.normalize('NFC').toLowerCase();
+                if (paths.has(canonical)) throw new Error(`Повторный путь в архиве: ${path}. Уберите один из файлов.`);
+                paths.add(canonical);
+                mapped.set(entry.path, path);
+            }
+            validPackPaths = mapped;
+            pathPreviewValid = true;
+        } catch (error) {
+            pathPreviewValid = false;
+            if (!prefixValid) {
+                packPrefix.setAttribute('aria-invalid', 'true');
+                prefixError = error.message;
+            } else pathError = error.message;
+        }
+        for (const [id, message] of [['pack-name-error', nameError], ['pack-prefix-error', prefixError]]) {
+            get(id).textContent = message;
+            get(id).hidden = !message;
+        }
+        errorMessage = nameError || prefixError || pathError;
+        packValid = !errorMessage;
+        get('pack-error').textContent = pathError || (errorMessage ? 'Исправьте отмеченные поля, чтобы создать архив.' : '');
+        get('pack-error').hidden = packValid;
+        const example = selected()[0];
+        get('pack-example-title').textContent = example ? 'Как изменится путь файла' : 'Пример';
+        get('pack-example-settings').hidden = Boolean(example);
+        get('pack-example-source').textContent = example ? example.path : 'images/bg.png';
+        get('pack-example-target').textContent = example
+            ? pathPreviewValid ? validPackPaths.get(example.path) : 'Исправьте настройки пути'
+            : 'my_mod/images/bg.png';
+        return packValid;
+    };
+    const refreshPackFolders = () => {
+        const previous = packStrip.value;
+        const initial = packStrip.children.length <= 1;
+        const folders = commonFolders(selected().map(entry => entry.path));
+        packStrip.replaceChildren();
+        for (const prefix of ['', ...folders]) {
+            const option = document.createElement('option');
+            option.value = prefix;
+            option.textContent = prefix || 'Ничего не удалять';
+            packStrip.appendChild(option);
+        }
+        packStrip.value = initial && folders.includes('game/') ? 'game/'
+            : folders.includes(previous) ? previous : '';
+        validatePack();
+    };
+    const applyMode = () => {
+        app.dataset.mode = mode;
+        get('pack-clear-label').hidden = mode !== 'pack';
+        get('pack-notice').hidden = mode !== 'pack';
+        get('queue-tools').hidden = mode !== 'pack';
+        get('mode-pack').checked = mode === 'pack';
+        get('mode-unpack').checked = mode !== 'pack';
+        get('pack-help').hidden = mode !== 'pack';
+        get('unpack-help').hidden = mode === 'pack';
+        get('queue-heading').textContent = mode === 'pack' ? 'Файлы в архиве' : 'Добавленные файлы';
+        list.setAttribute('aria-label', mode === 'pack' ? 'Пути внутри архива' : 'Добавленные файлы');
+        get('drop-help').textContent = mode === 'pack' ? 'Изображения, музыка, шрифты и другие файлы' : '.rpa, .rpyc, .rpymc, .pyc';
+        fileInput.accept = mode === 'pack' ? '' : '.rpa,.rpyc,.rpymc,.pyc';
+        if (mode === 'pack') validatePack();
+    };
+    on(queuePrevious, 'click', () => { queuePage--; renderBrowse(); });
+    on(queueNext, 'click', () => { queuePage++; renderBrowse(); });
+    for (const field of [packName, packPrefix, packStrip]) on(field, field === packStrip ? 'change' : 'input', () => {
+        clearResult();
+        validatePack();
+        render();
+        if (selected().length) loadCatalog();
+    });
+    for (const value of ['pack', 'unpack']) on(get('mode-' + value), 'change', () => {
+        if (busy || enumerating || mode === value) return;
+        mode = value;
+        browseFolder = '';
+        browserSearch.value = '';
+        queuePage = 0;
+        files = modeFiles[mode];
+        resetWorker();
+        clearResult();
+        activeFiles = [];
+        retryAvailable = false;
+        fileInput.value = folderInput.value = '';
+        applyMode();
+        render();
+        if (files.size) loadCatalog();
+        else say(mode === 'pack' ? 'Добавьте файлы для нового RPA-архива.' : 'Добавьте архивы или скомпилированные скрипты.');
+    });
     const readBrowse = entry => {
         if (busy) return;
         retryAvailable = false;
@@ -284,6 +476,12 @@
         for (const button of browserList.querySelectorAll('[data-entry-id]')) {
             if (button.getAttribute('data-entry-id') === entry.id) button.setAttribute('aria-current', 'true');
             else button.removeAttribute('aria-current');
+        }
+        if (mode === 'pack' && (!/\.(rpy|rpym|txt|md|json|yaml|yml|xml|html|css|js|py|csv|ini|log|sh|bat)$/i.test(entry.path)
+            || entry.size > 2 * 1024 * 1024)) {
+            showPreview({ name: entry.path, file: catalogFiles[entry.source].file, buffer: new ArrayBuffer(0), warnings: [] });
+            updateControls();
+            return;
         }
         const cached = previewCache.get(cacheKey);
         if (cached) {
@@ -313,8 +511,13 @@
         updateControls();
         try {
             ensureWorker();
-            if (!catalogSubmitted) submitCatalog();
-            worker.postMessage({ type: 'source-read', id: entry.id, options: previewOptions, requestId: ++browseRequest });
+            if (mode === 'pack') {
+                worker.postMessage({ type: 'pack-preview', name: entry.path, file: catalogFiles[entry.source].file,
+                    config, requestId: ++browseRequest });
+            } else {
+                if (!catalogSubmitted) submitCatalog();
+                worker.postMessage({ type: 'source-read', id: entry.id, options: previewOptions, requestId: ++browseRequest });
+            }
         } catch (error) { fail(error.message); }
     };
     const renderBrowse = () => {
@@ -327,6 +530,7 @@
             button.disabled = folder === browseFolder && !browserSearch.value;
             button.addEventListener('click', () => {
                 browseFolder = folder;
+                queuePage = 0;
                 browserSearch.value = '';
                 renderBrowse();
             });
@@ -343,7 +547,8 @@
         const entries = [];
         for (const entry of browseEntries) {
             if (query) {
-                if (entry.path.toLocaleLowerCase().includes(query)) entries.push(entry);
+                if (entry.path.toLocaleLowerCase().includes(query)
+                    || mode === 'pack' && entry.originalPath.toLocaleLowerCase().includes(query)) entries.push(entry);
             } else if (entry.path.startsWith(browseFolder)) {
                 const rest = entry.path.slice(browseFolder.length);
                 const slash = rest.indexOf('/');
@@ -370,30 +575,58 @@
             item.append(button, meta);
             browserList.appendChild(item);
         };
-        for (const folder of [...folders].sort((a, b) => a.localeCompare(b, 'ru'))) {
-            row(folder + '/', 'папка', () => { browseFolder += folder + '/'; renderBrowse(); }, 'folder');
+        const folderNames = [...folders].sort((a, b) => a.localeCompare(b, 'ru'));
+        if (mode === 'pack') entries.sort((a, b) => a.path.localeCompare(b.path, 'ru'));
+        queueMatches = folderNames.length + entries.length;
+        const pageSize = mode === 'pack' ? queuePageSize : 500;
+        queuePage = Math.min(queuePage, Math.max(0, Math.ceil(queueMatches / pageSize) - 1));
+        const offset = mode === 'pack' ? queuePage * pageSize : 0;
+        const visibleFolders = mode === 'pack' ? folderNames.slice(offset, offset + pageSize) : folderNames;
+        const visibleEntries = entries.slice(mode === 'pack' ? Math.max(0, offset - folderNames.length) : 0,
+            mode === 'pack' ? Math.max(0, offset + pageSize - folderNames.length) : 500);
+        const addRemove = (originalPaths, label, title) => {
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'tools-icon-button tools-remove-source';
+            remove.title = title;
+            remove.setAttribute('aria-label', label);
+            remove.innerHTML = '<span class="tools-ui-icon tools-icon-close" aria-hidden="true"></span>';
+            remove.disabled = busy;
+            remove.addEventListener('click', () => {
+                if (busy || enumerating) return;
+                const focused = document.activeElement === remove;
+                const index = Array.from(browserList.querySelectorAll('.tools-remove-source')).indexOf(remove);
+                for (const originalPath of originalPaths) {
+                    files.delete(originalPath);
+                    if (mode === 'pack') validPackPaths.delete(originalPath);
+                }
+                clearResult();
+                if (mode === 'pack') refreshPackFolders();
+                render();
+                loadCatalog();
+                if (focused && mode === 'pack') {
+                    const buttons = files.size ? browserList.querySelectorAll('.tools-remove-source') : [];
+                    (buttons[Math.min(index, buttons.length - 1)] || addButton).focus();
+                }
+            });
+            browserList.lastElementChild.appendChild(remove);
+        };
+        for (const folder of visibleFolders) {
+            row(folder + '/', 'папка', () => { browseFolder += folder + '/'; queuePage = 0; renderBrowse(); }, 'folder');
+            if (mode === 'pack') {
+                const folderPath = browseFolder + folder + '/';
+                const originalPaths = browseEntries.filter(entry => entry.path.startsWith(folderPath)).map(entry => entry.originalPath);
+                addRemove(originalPaths, 'Убрать папку ' + folderPath + ' и все вложенные файлы', 'Убрать папку и все вложенные файлы');
+            }
         }
-        for (const entry of entries.slice(0, 500)) {
+        for (const entry of visibleEntries) {
             const kind = /\.(rpyc|rpymc|pyc|rpy|rpym|py|js|json|css|txt)$/i.test(entry.path) ? 'code'
                 : /\.(png|jpg|jpeg|gif|webp|svg)$/i.test(entry.path) ? 'image'
                 : /\.(ogg|mp3|wav|opus|flac|mp4|webm)$/i.test(entry.path) ? 'media' : 'file';
             row(query ? entry.path : entry.path.slice(browseFolder.length), size(entry.size), () => readBrowse(entry), kind,
                 selectedEntry?.id === entry.id, entry.id);
-            if (catalogFiles[entry.source]?.path === entry.path && !isArchive(catalogFiles[entry.source]) && files.has(entry.path)) {
-                const remove = document.createElement('button');
-                remove.type = 'button';
-                remove.className = 'tools-icon-button tools-remove-source';
-                remove.title = 'Убрать файл';
-                remove.setAttribute('aria-label', 'Убрать ' + entry.path);
-                remove.innerHTML = '<span class="tools-ui-icon tools-icon-close" aria-hidden="true"></span>';
-                remove.disabled = busy;
-                remove.addEventListener('click', () => {
-                    files.delete(entry.path);
-                    clearResult();
-                    render();
-                    loadCatalog();
-                });
-                browserList.lastElementChild.appendChild(remove);
+            if (mode === 'pack' || catalogFiles[entry.source]?.path === entry.path && !isArchive(catalogFiles[entry.source]) && files.has(entry.path)) {
+                addRemove([mode === 'pack' ? entry.originalPath : entry.path], 'Убрать ' + entry.path, 'Убрать файл');
             }
         }
         if (!folders.size && !entries.length) {
@@ -403,7 +636,12 @@
             browserList.appendChild(empty);
         }
         browserStatus.textContent = countLabel(folders.size + entries.length, 'элемент', 'элемента', 'элементов')
-            + (entries.length > 500 ? ' (показаны первые 500; уточните поиск)' : '');
+            + (mode !== 'pack' && entries.length > 500 ? ' (показаны первые 500; уточните поиск)' : '');
+        if (mode === 'pack') {
+            get('queue-pages').hidden = queueMatches <= pageSize;
+            get('queue-range').textContent = queueMatches ? `${offset + 1}–${Math.min(offset + pageSize, queueMatches)} из ${queueMatches}` : '';
+            updateControls();
+        }
     };
     const renderWarnings = (panel, summary, list, count, messages) => {
         panel.hidden = !count;
@@ -469,7 +707,7 @@
         const mime = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif',
             svg: 'image/svg+xml', ogg: 'audio/ogg', mp3: 'audio/mpeg', wav: 'audio/wav', opus: 'audio/ogg', flac: 'audio/flac',
             mp4: 'video/mp4', webm: 'video/webm', ttf: 'font/ttf', otf: 'font/otf', woff: 'font/woff', woff2: 'font/woff2' }[extension] || 'application/octet-stream';
-        previewUrl = URL.createObjectURL(new Blob([data.buffer], { type: mime }));
+        previewUrl = URL.createObjectURL(data.file || new Blob([data.buffer], { type: mime }));
         browserPreview.replaceChildren();
         const title = document.createElement('h4');
         title.textContent = path;
@@ -519,7 +757,7 @@
                     specimen.style.fontFamily = 'tools-specimen';
                 }
             }).catch(() => { if (previewFont === font) browserStatus.textContent = 'Не удалось открыть шрифт.'; });
-        } else if (/\.(rpy|rpym|txt|md|json|yaml|yml|xml|html|css|js|py|csv|ini|log|sh|bat)$/i.test(path) && data.buffer.byteLength > 2 * 1024 * 1024) {
+        } else if (/\.(rpy|rpym|txt|md|json|yaml|yml|xml|html|css|js|py|csv|ini|log|sh|bat)$/i.test(path) && (data.file?.size || data.buffer.byteLength) > 2 * 1024 * 1024) {
             const note = document.createElement('p');
             note.textContent = 'Файл слишком большой для предпросмотра. Его можно скачать целиком.';
             browserPreview.appendChild(note);
@@ -587,10 +825,12 @@
         previewUrl = null;
         const source = Number(browseArchive.value) || 0;
         const scripts = browseArchive.value === 'scripts';
-        browseEntries = catalogEntries.filter(entry => scripts
+        browseEntries = mode === 'pack' ? catalogEntries : catalogEntries.filter(entry => scripts
             ? catalogFiles[entry.source] && !isArchive(catalogFiles[entry.source]) : entry.source === source);
-        browseFolder = '';
-        browserSearch.value = '';
+        if (mode !== 'pack') {
+            browseFolder = '';
+            browserSearch.value = '';
+        } else if (!browseEntries.some(entry => entry.path.startsWith(browseFolder))) browseFolder = '';
         browserList.replaceChildren();
         browserPreview.replaceChildren();
         const empty = document.createElement('p');
@@ -598,11 +838,11 @@
         empty.textContent = 'Файл не выбран';
         browserPreview.appendChild(empty);
         browser.hidden = false;
-        get('browser-title').textContent = scripts ? 'Сценарии' : catalogFiles[source]?.path || 'Файлы';
+        get('browser-title').textContent = mode === 'pack' ? 'Пути внутри архива' : scripts ? 'Скрипты' : catalogFiles[source]?.path || 'Файлы';
         renderBrowse();
     };
     on(browseArchive, 'change', openBrowse);
-    on(browserSearch, 'input', renderBrowse);
+    on(browserSearch, 'input', () => { queuePage = 0; renderBrowse(); });
     const errorDiagnostic = error => {
         const block = document.createElement('div');
         block.className = 'tools-diagnostic';
@@ -630,16 +870,17 @@
         block.append(title, explanation, details);
         return block;
     };
-    const showErrors = messages => {
+    const showErrors = (messages, inExport = task === 'export') => {
         const errors = messages.slice(0, 100).map(message => explainError(message));
+        const diagnostics = inExport ? exportErrors : errorsPanel;
         say(messages.length === 1 ? errors[0].title + (errors[0].path ? `: ${errors[0].path}` : '') + '.'
-            : `Не удалось обработать файлов: ${messages.length.toLocaleString('ru-RU')}. Причины указаны ниже.`, true);
-        errorsPanel.hidden = false;
-        for (const error of errors) errorsPanel.appendChild(errorDiagnostic(error));
+            : `Не удалось обработать файлов: ${messages.length.toLocaleString('ru-RU')}. Причины указаны ниже.`, true, inExport);
+        diagnostics.hidden = false;
+        for (const error of errors) diagnostics.appendChild(errorDiagnostic(error));
         if (messages.length > 100) {
             const remainder = document.createElement('p');
             remainder.textContent = `Показаны причины первых 100 ошибок из ${messages.length.toLocaleString('ru-RU')}. Обрабатывайте файлы меньшими наборами, чтобы увидеть остальные.`;
-            errorsPanel.appendChild(remainder);
+            diagnostics.appendChild(remainder);
         }
     };
     const endPreview = message => {
@@ -667,20 +908,26 @@
     };
     const fail = message => {
         const interrupted = task;
+        if (interrupted === 'export') {
+            exportFinished = true;
+            get('export-title').textContent = 'Не удалось обработать файлы';
+        }
         task = '';
         catalogRequest++;
         browseRequest++;
         chunks = [];
         resetWorker();
-        retryAvailable = true;
+        retryAvailable = interrupted !== 'export';
         finish();
-        if (outputs.length) {
+        if (outputs.length && interrupted === 'export') {
             showOutputs();
+            get('export-summary').hidden = false;
             get('result-description').textContent = `Готовых архивов: ${outputs.length}.`;
         }
         if (interrupted === 'preview' || interrupted === 'catalog') endPreview('Просмотр прерван. Повторите действие или выберите другой файл.');
         browserStatus.textContent = '';
-        showErrors([message]);
+        showErrors([message], interrupted === 'export');
+        if (interrupted === 'export') showOutputs();
     };
     on(cancel, 'click', () => {
         const interrupted = task;
@@ -691,7 +938,18 @@
         catalogRequest++;
         browseRequest++;
         chunks = [];
-        retryAvailable = true;
+        retryAvailable = interrupted !== 'export';
+        if (interrupted === 'export') {
+            exportFinished = outputs.length > 0;
+            exportReady = false;
+            get('export-title').textContent = 'Обработка отменена';
+            if (exportFinished) {
+                get('export-summary').hidden = false;
+                get('result-description').textContent = `Готовых архивов: ${outputs.length}.`;
+                showOutputs();
+            }
+            if (exportDialog.open) exportDialog.close();
+        }
         finish();
         render();
         if (interrupted === 'preview' || interrupted === 'catalog') endPreview('Просмотр отменён. Выберите файл, чтобы открыть его ещё раз.');
@@ -740,6 +998,11 @@
         if (data.type === 'loading') say(data.text);
         else if (data.type === 'ready') { say('Инструменты готовы. Обработка файлов…'); processedFiles = 0; progressBar.max = activeFiles.length; progressBar.value = 0; }
         else if (data.type === 'chunk') chunks.push(new Blob([data.buffer]));
+        else if (data.type === 'pack-progress') {
+            current.textContent = `${data.path} / ${size(data.current)} из ${size(data.total)}`;
+            progressBar.max = data.total || 1;
+            progressBar.value = data.current;
+        }
         else if (data.type === 'entry') {
             current.textContent = `${data.path} / ${data.current} из ${data.total}`;
             progressBar.value = processedFiles + data.current / data.total;
@@ -751,21 +1014,32 @@
                 state.classList.toggle('is-error', data.state === 'error');
             }
             current.textContent = data.path;
-            if (data.state !== 'working') progressBar.value = ++processedFiles;
+            if (data.state !== 'working' && mode !== 'pack') progressBar.value = ++processedFiles;
         } else if (data.type === 'output-start') chunks = [];
         else if (data.type === 'output') {
             if (data.result.written) {
-                const blob = new Blob(chunks, { type: 'application/zip' });
+                const blob = new Blob(chunks, { type: data.mime || 'application/zip' });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.className = 'tools-button';
                 link.href = url;
                 link.download = data.name;
-                link.textContent = `${data.name} / ${size(blob.size)}`;
+                link.innerHTML = '<span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span>';
+                const label = document.createElement('span');
+                label.textContent = 'Скачать ' + data.name;
+                link.appendChild(label);
+                link.title = `${data.name} / ${size(blob.size)}`;
                 // Downloads do not expose a completion event to the page.
                 // Clear source selections when the user starts a download;
                 // keep result URLs available for retries and remaining ZIPs.
                 on(link, 'click', () => {
+                    if (mode === 'pack' && exportReady) {
+                        packDownloadStarted = true;
+                        get('pack-install-archive').textContent = 'game/my_mod/' + data.name;
+                        get('pack-install-string').textContent = JSON.stringify('my_mod/' + data.name.slice(0, -4));
+                        updateControls();
+                    }
+                    notifyDownload();
                     if (!clearOnDownload) return;
                     for (const entry of activeFiles) files.delete(entry.path);
                     activeFiles = [];
@@ -780,37 +1054,70 @@
         } else if (data.type === 'fatal') fail(data.error);
         else if (data.type === 'done') {
             const result = data.result;
+            exportFinished = true;
+            get('export-summary').hidden = false;
+            get('export-title').textContent = result.failed || !outputs.length
+                ? outputs.length ? 'Готово с ошибками' : 'Не удалось обработать файлы' : 'Готово';
             chunks = [];
             retryAvailable = false;
-            clearOnDownload = result.failed === 0;
-            exportReady = result.failed === 0;
+            clearOnDownload = result.failed === 0 && mode !== 'pack';
+            exportReady = result.failed === 0 && outputs.length > 0;
             finish();
+            if (mode === 'pack') render();
             resultPanel.hidden = false;
             if (outputs.length) {
                 showOutputs();
-                get('result-description').textContent = `Обработано: ${result.succeeded}.`
+                get('result-description').textContent = (mode === 'pack' ? `Файлов в RPA: ${result.written}.` : `Обработано: ${result.succeeded}.`)
                     + (result.written !== result.succeeded ? ` Файлов в результате: ${result.written}.` : '')
                     + (result.failed ? ` Ошибок: ${result.failed}.` : '');
                 renderWarnings(warningsPanel, get('warnings-summary'), warningList,
                     result.warnings, result.warning_details || []);
                 if (result.failed) showErrors(result.errors.length ? result.errors : ['Нет готовых файлов.']);
-                else say('Готово.');
+                else say('');
                 for (const output of outputs) output.link.click();
             } else {
                 get('result-description').textContent = 'Файлы не удалось обработать.';
                 showErrors(result.errors.length ? result.errors : ['Нет готовых файлов.']);
+                showOutputs();
             }
+            task = '';
         }
     };
     on(downloadAll, 'click', () => {
         if (exportReady) for (const output of outputs) output.link.click();
         else processFiles();
     });
+    const openExportDialog = () => {
+        closeMenu();
+        if (!exportDialog.open) exportDialog.showModal();
+        get('export-close').focus();
+    };
+    const closeExportDialog = () => {
+        if (busy && task === 'export') cancel.click();
+        if (exportDialog.open) exportDialog.close();
+    };
+    on(exportStart, 'click', () => {
+        if (busy || enumerating) return;
+        if (exportFinished) openExportDialog();
+        else processFiles();
+    });
+    on(get('export-close'), 'click', closeExportDialog);
+    on(exportDialog, 'cancel', event => { event.preventDefault(); closeExportDialog(); });
+    on(exportDialog, 'click', event => {
+        if (event.target !== exportDialog) return;
+        const bounds = exportDialog.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right
+            || event.clientY < bounds.top || event.clientY > bounds.bottom) closeExportDialog();
+    });
+    on(exportDialog, 'close', () => { if (!disposed) (exportStart.hidden ? addButton : exportStart).focus(); });
     const ensureWorker = () => {
         if (worker) return;
         worker = new Worker(config.worker, { type: 'module', name: 'esdoc-renpy-tools' });
         worker.onmessage = handleMessage;
-        worker.onerror = () => fail('Не удалось запустить инструменты. Обновите страницу или попробуйте другой браузер.');
+        worker.onerror = event => {
+            const location = event.filename ? `\n${event.filename}:${event.lineno || 0}:${event.colno || 0}` : '';
+            fail('Не удалось запустить инструменты.' + (event.message ? `\n${event.message}${location}` : ' Обновите страницу или попробуйте другой браузер.'));
+        };
         worker.onmessageerror = () => fail('Браузер не смог передать файлы инструменту. Попробуйте добавить меньше файлов.');
     };
     const submitCatalog = () => {
@@ -819,6 +1126,20 @@
     };
     const loadCatalog = () => {
         if (!supported || busy || enumerating || !selected().length) return;
+        if (mode === 'pack') {
+            refreshPackFolders();
+            validatePack();
+            resultPanel.hidden = false;
+            downloadAll.hidden = false;
+            catalogFiles = selected();
+            catalogEntries = catalogFiles.map((entry, source) => ({ id: entry.path,
+                originalPath: entry.path, path: validPackPaths.get(entry.path) || entry.path,
+                size: entry.file.size, source }));
+            openBrowse();
+            showOutputs();
+            updateControls();
+            return;
+        }
         catalogFiles = selected();
         retryAvailable = false;
         const archives = catalogFiles.map((entry, source) => ({ entry, source })).filter(({ entry }) => isArchive(entry));
@@ -830,7 +1151,7 @@
         if (scripts.length) {
             const option = document.createElement('option');
             option.value = 'scripts';
-            option.textContent = 'Сценарии';
+            option.textContent = 'Скрипты';
             browseArchive.appendChild(option);
         }
         for (const { source, entry } of archives) {
@@ -844,7 +1165,7 @@
         get('archive-label').hidden = browseActions.hidden;
         resultPanel.hidden = false;
         downloadAll.hidden = false;
-        downloadAll.innerHTML = '<span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span><span>Скачать всё в ZIP</span>';
+        downloadAll.innerHTML = downloadButton;
         openBrowse();
         if (!archives.length) {
             updateControls();
@@ -862,12 +1183,22 @@
     };
     const processFiles = () => {
         if (!supported || busy || enumerating || !selected().length) return;
+        if (mode === 'pack' && !validatePack()) return;
         for (const output of outputs) URL.revokeObjectURL(output.url);
         outputs.length = 0;
         downloads.replaceChildren();
+        downloads.hidden = true;
+        get('export-info').hidden = true;
         warningsPanel.hidden = true;
+        downloadAll.hidden = true;
         chunks = [];
         exportReady = false;
+        exportFinished = false;
+        get('export-summary').hidden = true;
+        get('export-title').textContent = mode === 'pack' ? 'Упаковка в RPA' : 'Обработка файлов';
+        status.textContent = '';
+        errorsPanel.hidden = true;
+        packDownloadStarted = false;
         clearOnDownload = false;
         retryAvailable = false;
         busy = true;
@@ -878,10 +1209,12 @@
         progressBar.removeAttribute('value');
         current.textContent = '';
         say('Подготовка к обработке…');
+        openExportDialog();
         try {
             ensureWorker();
-            worker.postMessage({ type: 'run', config, mode: 'combined', files: activeFiles,
-                options: options() });
+            if (mode === 'pack') worker.postMessage({ type: 'pack', config, name: archiveName(packName.value),
+                files: activeFiles.map(entry => ({ file: entry.file, path: packPath(entry.path, packStrip.value, packPrefix.value) })) });
+            else worker.postMessage({ type: 'run', config, mode: 'combined', files: activeFiles, options: options() });
         } catch (error) { fail(error.message); }
     };
     on(start, 'click', loadCatalog);
@@ -889,10 +1222,14 @@
         for (const output of outputs) URL.revokeObjectURL(output.url);
         outputs.length = 0;
         downloads.replaceChildren();
+        downloads.hidden = true;
+        get('export-info').hidden = true;
         exportReady = false;
+        exportFinished = false;
+        if (exportDialog.open) exportDialog.close();
         downloadAll.hidden = !selected().length;
         updateControls();
-        if (selected().length) downloadAll.innerHTML = '<span class="tools-ui-icon tools-icon-download" aria-hidden="true"></span><span>Скачать всё в ZIP</span>';
+        if (selected().length) downloadAll.innerHTML = downloadButton;
         if (option === get('try-harder')) {
             catalogSubmitted = false;
             if (selected().some(isArchive)) {
@@ -942,7 +1279,10 @@
         controller.abort();
         resetWorker();
         clearResult();
-        files.clear();
+        modeFiles.pack.clear();
+        modeFiles.unpack.clear();
+        validPackPaths.clear();
+        activeFiles = [];
         window.__esdocToolsCleanup = null;
     };
     if (!supported) {
@@ -952,6 +1292,6 @@
         return;
     }
     controls.hidden = false;
-    get('drop-help').textContent = '.rpa, .rpyc, .rpymc, .pyc';
+    applyMode();
     render();
 })();

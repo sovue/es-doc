@@ -19,6 +19,11 @@
 
     if (!clearPlayerState || !readPlayerState || !shouldClearOnPageHide || !writePlayerState) return;
 
+    let volumeStorage = null;
+    let playerStorage = null;
+    try { volumeStorage = localStorage; } catch (error) {}
+    try { playerStorage = sessionStorage; } catch (error) {}
+
     let buttons = [];
 
     let status = document.getElementById('res-copy-status');
@@ -32,7 +37,8 @@
 
     const audio = new Audio();
     audio.preload = 'none';
-    const storedVolume = parseFloat(localStorage.getItem('es-doc-volume') ?? '1');
+    let storedVolume = 1;
+    try { storedVolume = parseFloat(volumeStorage?.getItem('es-doc-volume') ?? '1'); } catch (error) {}
     audio.volume = Number.isFinite(storedVolume) ? Math.min(Math.max(storedVolume, 0), 1) : 1;
 
     let current = null;
@@ -99,7 +105,7 @@
 
     const persist = (playing = !audio.paused, time = audio.currentTime) => {
         if (!currentSrc) return;
-        writePlayerState(sessionStorage, {
+        writePlayerState(playerStorage, {
             src: currentSrc,
             name: currentName,
             time: Number.isFinite(time) && time >= 0 ? time : 0,
@@ -151,7 +157,7 @@
     const setVolume = value => {
         const volume = Math.min(Math.max(value, 0), 1);
         audio.volume = volume;
-        localStorage.setItem('es-doc-volume', String(volume));
+        try { volumeStorage?.setItem('es-doc-volume', String(volume)); } catch (error) {}
         barVolume.value = volume;
         setFill(barVolume);
     };
@@ -167,7 +173,7 @@
         currentSrc = '';
         currentName = '';
         finished = false;
-        clearPlayerState(sessionStorage);
+        clearPlayerState(playerStorage);
     };
 
     const finish = () => {
@@ -256,7 +262,7 @@
 
     bindButtons();
 
-    const saved = readPlayerState(sessionStorage);
+    const saved = readPlayerState(playerStorage);
     if (saved) {
         current = buttons.find(button => button.dataset.playSrc === saved.src) || null;
         currentSrc = saved.src;
@@ -284,7 +290,7 @@
         // object alive without a gap (especially important in Firefox).
         if (shouldClearOnPageHide(event)) {
             audio.pause();
-            clearPlayerState(sessionStorage);
+            clearPlayerState(playerStorage);
         } else {
             persist(!audio.paused);
         }

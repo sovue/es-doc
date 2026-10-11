@@ -19,6 +19,19 @@ _TEXT_CACHE = 'public, max-age=300'
 _VERSIONED_CACHE = 'public, max-age=31536000, immutable'
 
 
+def _asset_path(folder: str, name: str):
+    if not name or any(char in name for char in ('/', '\\', ':', '\x00')):
+        raise HTTPException(404, 'Файл не существует.')
+    root = (ROOT / 'static' / folder).resolve()
+    try:
+        path = (root / name).resolve()
+        if path.is_relative_to(root) and path.is_file():
+            return path
+    except (OSError, ValueError):
+        pass
+    raise HTTPException(404, 'Файл не существует.')
+
+
 def _text_asset(request: Request, rel: str, media_type: str) -> Response:
     try:
         body, digest = load_asset(rel)
@@ -44,10 +57,12 @@ async def favicon():
 
 @router.get('/static/css/{name}')
 async def css(name, request: Request):
+    _asset_path('css', name)
     return _text_asset(request, f'static/css/{name}', 'text/css; charset=utf-8')
 
 @router.get('/static/js/{name}')
 async def js(name, request: Request):
+    _asset_path('js', name)
     return _text_asset(request, f'static/js/{name}', 'application/javascript; charset=utf-8')
 
 
@@ -62,7 +77,7 @@ async def font(name):
     # Binary asset: FileResponse, not read_text (which decodes as UTF-8).
     # Immutable, content-hashed by weight/subset, so cache hard.
     return FileResponse(
-        str(ROOT / 'static' / 'fonts' / name),
+        str(_asset_path('fonts', name)),
         media_type='font/woff2',
         headers={
             'Cache-Control': 'public, max-age=31536000, immutable',

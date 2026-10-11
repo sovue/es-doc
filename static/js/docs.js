@@ -1,5 +1,22 @@
 /* Documentation navigation; native disclosures also work without scripts. */
 (function () {
+    window.__esdocDocsCleanup?.();
+    const controller = new AbortController();
+    const signal = controller.signal;
+    let disposed = false;
+    let frame = 0;
+    let navigationFrame = 0;
+    let observer;
+    window.__esdocDocsCleanup = () => {
+        if (disposed) return;
+        disposed = true;
+        controller.abort();
+        observer?.disconnect();
+        cancelAnimationFrame(frame);
+        cancelAnimationFrame(navigationFrame);
+        window.__esdocDocsCleanup = null;
+    };
+
     const tree = document.getElementById('sidebar-all');
     const contents = document.getElementById('sidebar-contents');
     const desktopTree = matchMedia('(min-width: 62em)');
@@ -11,20 +28,22 @@
             const hadFocus = details.contains(document.activeElement);
             details.open = media.matches;
             if (hadFocus && !details.open) details.querySelector('summary').focus({preventScroll: true});
-        });
+        }, {signal});
         details.addEventListener('keydown', event => {
             if (event.key !== 'Escape' || !details.open) return;
             details.open = false;
             details.querySelector('summary').focus({preventScroll: true});
-        });
+        }, {signal});
     }
     adaptDisclosure(tree, desktopTree);
     adaptDisclosure(contents, desktopContents);
     if (contents && window.ResizeObserver) {
         const summary = contents.querySelector('summary');
-        new ResizeObserver(() => {
+        observer = new ResizeObserver(() => {
+            if (disposed) return;
             document.documentElement.style.setProperty('--doc-contents-h', summary.offsetHeight + 'px');
-        }).observe(summary);
+        });
+        observer.observe(summary);
     }
 
     // Scroll only the independent rail; preserve the document's deep link.
@@ -45,8 +64,8 @@
     const headings = [...document.querySelectorAll('.content .heading')].filter(heading => links.has(heading.id));
     if (!headings.length) return;
     let active = null;
-    let frame = 0;
     function update() {
+        if (disposed) return;
         frame = 0;
         const offset = (parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 64) + 24;
         let heading;
@@ -81,12 +100,13 @@
         active.setAttribute('aria-current', 'location');
     }
     function scheduleUpdate() {
+        if (disposed) return;
         if (!frame) frame = requestAnimationFrame(update);
     }
-    addEventListener('scroll', scheduleUpdate, {passive: true});
-    addEventListener('resize', scheduleUpdate);
-    addEventListener('hashchange', scheduleUpdate);
-    addEventListener('load', scheduleUpdate);
+    addEventListener('scroll', scheduleUpdate, {passive: true, signal});
+    addEventListener('resize', scheduleUpdate, {signal});
+    addEventListener('hashchange', scheduleUpdate, {signal});
+    addEventListener('load', scheduleUpdate, {signal});
     if (document.fonts) document.fonts.ready.then(scheduleUpdate);
     update();
 
@@ -100,12 +120,15 @@
         if (!target) return;
         event.preventDefault();
         contents.open = false;
-        requestAnimationFrame(() => {
+        cancelAnimationFrame(navigationFrame);
+        navigationFrame = requestAnimationFrame(() => {
+            navigationFrame = 0;
+            if (disposed) return;
             history.pushState(null, '', link.hash);
             target.setAttribute('tabindex', '-1');
             target.focus({preventScroll: true});
             target.scrollIntoView({block: 'start', behavior: 'auto'});
             scheduleUpdate();
         });
-    });
+    }, {signal});
 })();

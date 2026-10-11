@@ -1,3 +1,4 @@
+import asyncio
 import re
 from urllib.parse import quote
 
@@ -89,7 +90,7 @@ async def page(doc, request: Request):
     if any(i in request.query_params for i in ['s', 'search']):
         return PlainTextResponse(re.sub(r'^(#+ )|(- )|(> )|(```\w*)|(:::\w*)|(---)$', '', text, flags=re.MULTILINE).replace('\n\n', '\n'))
 
-    title, nav, body = render(text)
+    title, nav, body = await asyncio.to_thread(render, text)
 
     if any(i in request.query_params for i in ['r', 'raw']):
         return PlainTextResponse(body)

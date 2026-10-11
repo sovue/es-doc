@@ -15,6 +15,7 @@ test('real Pyodide processes RPYC and RPA, then lists and previews each result',
     pyodide.FS.mkdirTree('/catalog');
     pyodide.FS.writeFile('/tools/vendor.zip', fs.readFileSync(path.join(root, 'static/tools/vendor.zip')));
     pyodide.FS.writeFile('/tools/engine.py', fs.readFileSync(path.join(root, 'static/tools/engine.py')));
+    pyodide.FS.writeFile('/tools/rpa.py', fs.readFileSync(path.join(root, 'static/tools/rpa.py')));
     pyodide.FS.writeFile('/tools/recovery.py', fs.readFileSync(path.join(root, 'static/tools/recovery.py')));
     pyodide.FS.writeFile('/tools/pyc_decompiler.py', fs.readFileSync(path.join(root, 'static/tools/pyc_decompiler.py')))
     pyodide.FS.writeFile('/tools/bytecode.zip', fs.readFileSync(path.join(root, 'static/tools/bytecode.zip')))
@@ -30,6 +31,18 @@ with zipfile.ZipFile('/tools/syntax.zip') as bundled:
 with zipfile.ZipFile('/tools/bytecode.zip') as bundled:
     bundled.extractall('/tools')
 import engine
+import rpa
+with open('/packed-resource', 'wb') as source:
+    source.write(b'\x00\xfflocal-resource')
+packed_chunks = []
+rpa.pack([{'path': 'mods/my_mod/ресурс.bin', 'source': '/packed-resource'}], packed_chunks.append)
+with open('/catalog/packed.rpa', 'wb') as source:
+    source.write(b''.join(packed_chunks))
+packed_catalog = engine.Catalog([{'path': 'packed.rpa', 'source': '/catalog/packed.rpa'}])
+assert not packed_catalog.errors, packed_catalog.errors
+packed_listing = packed_catalog.listing()
+assert packed_listing[0]['path'] == 'mods/my_mod/ресурс.bin'
+assert packed_catalog.read(packed_listing[0]['id'], {})[1] == b'\x00\xfflocal-resource'
 pyc_data = bytes.fromhex('330d0d0a0000000000000000e30000000000000000000000000100000000000000730800000064005a00640153002802000000692a0000004e28010000007506000000616e73776572280000000028000000002800000000750a0000006578616d706c652e707975080000003c6d6f64756c653e010000007300000000')
 with open('/module.pyc', 'wb') as source:
     source.write(pyc_data)

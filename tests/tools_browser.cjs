@@ -1,13 +1,13 @@
 /* Optional integration test: run create_tools_fixtures first, start ES Doc,
    set NODE_PATH to your installed Playwright, then node tests/tools_browser.cjs.
-   TOOLS_TEST_URL defaults to http://127.0.0.1:8012/tools. */
+   TOOLS_TEST_URL defaults to http://127.0.0.1:8012/tools/unpack. */
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '..');
 const fixtures = path.join(root, 'temp/tools-fixtures');
-const target = process.env.TOOLS_TEST_URL || 'http://127.0.0.1:8012/tools';
+const target = process.env.TOOLS_TEST_URL || 'http://127.0.0.1:8012/tools/unpack';
 const origin = new URL(target).origin;
 
 (async () => {
@@ -15,6 +15,8 @@ const origin = new URL(target).origin;
     try {
         const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, colorScheme: 'light' });
         const errors = [], requests = [];
+        let batchDownloads = [];
+        page.on('download', download => batchDownloads.push(download));
         page.on('pageerror', error => errors.push(error.message));
         page.on('request', request => requests.push([request.method(), request.url()]));
         await page.goto(target);
@@ -35,19 +37,22 @@ const origin = new URL(target).origin;
         await page.keyboard.press('Escape');
 
         const finish = async () => {
-            await page.locator('#tools-download-all').click();
+            batchDownloads = [];
+            const download = page.waitForEvent('download', {timeout: 90000});
+            await page.locator('#tools-export-start').click();
             await page.locator('#tools-result').waitFor({ state: 'visible', timeout: 90000 });
             await page.waitForFunction(() => document.querySelector('#tools-downloads a')
                 && document.querySelector('#tools-browser').getAttribute('aria-busy') === 'false', undefined, { timeout: 90000 });
+            await download;
         };
         const save = async name => {
-            const promise = page.waitForEvent('download');
-            await page.locator('#tools-downloads a').first().click();
-            await (await promise).saveAs(path.join(root, 'temp/' + name));
+            assert(batchDownloads.length, 'Export should start a download automatically');
+            await batchDownloads[0].saveAs(path.join(root, 'temp/' + name));
             assert.equal(await page.locator('#tools-queue').isVisible(),
                 (await page.locator('#tools-result-description').textContent()).includes('Ошибок:'));
         };
         const clear = async () => {
+            if (await page.locator('#tools-export-dialog').isVisible()) await page.locator('#tools-export-close').click();
             if (await page.locator('#tools-clear').isVisible()) await page.locator('#tools-clear').click();
         };
 
@@ -69,7 +74,6 @@ const origin = new URL(target).origin;
 
         // A warm worker processes a recursive directory and restores paths.
         await clear();
-        await page.locator('input[value="unrpyc"]').check();
         await pick('folder', path.join(fixtures, 'game/scenario'));
         await page.locator('#tools-browser-search').fill('script.rpyc');
         assert.match(await page.locator('#tools-browser-list').textContent(), /scenario\/script.rpyc/);
@@ -77,7 +81,6 @@ const origin = new URL(target).origin;
         await save('tools-browser-folder.zip');
 
         await clear();
-        await page.locator('input[value="unrpa"]').check();
         await pick('files', path.join(fixtures, 'game/data.rpa'));
         await page.waitForFunction(() => document.querySelector('#tools-browser').getAttribute('aria-busy') === 'false');
         assert.equal(await page.locator('#tools-downloads a').count(), 0);
@@ -91,11 +94,21 @@ const origin = new URL(target).origin;
         await page.waitForFunction(() => document.querySelector('#tools-browser').getAttribute('aria-busy') === 'false');
         await finish();
         assert.deepEqual(await page.locator('#tools-downloads a').evaluateAll(links => links.map(link => link.download)), ['data.zip', 'images.zip']);
-        assert(await page.locator('#tools-download-all').isVisible());
+        assert.equal(await page.locator('#tools-download-all').isVisible(), false);
+
+        // Listing remains usable after a real Pyodide preview hits its size cap.
+        await clear();
+        await pick('files', path.join(fixtures, 'large.rpa'));
+        await page.waitForFunction(() => document.querySelector('#tools-browser').getAttribute('aria-busy') === 'false');
+        await page.locator('#tools-browser-search').fill('');
+        await page.locator('#tools-browser-list button[data-entry-id]').filter({hasText: 'big.bin'}).click();
+        await page.waitForFunction(() => document.querySelector('#tools-browser-preview').textContent.includes('Скачайте архив'));
+        await page.locator('#tools-browser-list button[data-entry-id]').filter({hasText: 'small.txt'}).click();
+        await page.locator('#tools-browser-preview pre').waitFor({state: 'visible'});
+        assert.equal((await page.locator('#tools-browser-preview .code-scroll').textContent()).trim(), 'ok');
 
         // Drop through a real DataTransfer, alongside a corrupt input.
         await clear();
-        await page.locator('input[value="unrpa"]').check();
         const script = [...fs.readFileSync(path.join(fixtures, 'game/scenario/script.rpyc'))];
         await page.evaluate(bytes => {
             const transfer = new DataTransfer();
@@ -103,17 +116,20 @@ const origin = new URL(target).origin;
             transfer.items.add(new File(['invalid'], 'bad.rpyc'));
             document.getElementById('tools-drop').dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer: transfer }));
         }, script);
-        assert(await page.locator('input[value="unrpyc"]').isChecked());
+        assert(await page.locator('#tools-mode-unpack').isChecked());
         await finish();
         assert.match(await page.locator('#tools-result-description').textContent(), /Ошибок: 1/);
         await save('tools-browser-partial.zip');
 
         // Soft navigation must clean up the worker and initialize exactly once.
+        await page.locator('#tools-export-close').click();
         await page.locator('.site-header a[href="/materials"]').click();
         await page.waitForURL('**/materials');
         assert.equal(await page.evaluate(() => window.__esdocToolsCleanup), null);
         await page.locator('.site-header a[href="/tools"]').click();
         await page.waitForURL('**/tools');
+        await page.locator('#site-content a[href="/tools/unpack"]').click();
+        await page.waitForURL('**/tools/unpack');
         await page.locator('#tools-controls').waitFor({ state: 'visible' });
         assert.equal(await page.locator('#tools-file-list li').count(), 0);
 

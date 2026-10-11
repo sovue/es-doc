@@ -33,5 +33,6 @@ content/*
 !content/main
 
 .impeccable/critique/
+.impeccable/review/
 .agents/
 .codex/
