@@ -120,4 +120,7 @@ jobs:
             docker compose --env-file .env.production -f docker-compose.yml logs --tail=100
             exit 1
           }
+          # Reclaim build cache and unused Docker resources after a successful deployment.
+          docker builder prune -a -f
+          docker system prune -a -f
           DEPLOY
