@@ -212,6 +212,9 @@ class _ConfigContainer():
         # Sprites are composed lazily on first request and cached on disk.
         self.sprite_layers = {}
 
+        # Catalogue key -> validated local layer Paths, separate from game sprites.
+        self.community_sprite_layers = {}
+
         # {'original': {category: items}, 'community': {...}} from the game's
         # declarations and community files (see lifespan/resources_cache.py).
         self.resources = {}

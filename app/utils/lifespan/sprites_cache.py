@@ -35,16 +35,17 @@ def parse_sprites():
     CONFIG.sprite_layers = sprites
     logger.info(f'{len(sprites)} sprite combinations found.')
 
-def sprite_file(name):
-    return sprites_path() / f'{name}.webp'
+def sprite_file(name, community=False):
+    root = CONFIG.cache_path / 'community-sprites' if community else sprites_path()
+    return root / f'{name}.webp'
 
-def is_composed(name):
+def is_composed(name, community=False):
     # Both the declaration and every layer contribute to the composed bytes.
-    path = sprite_file(name)
-    layers = CONFIG.sprite_layers.get(name)
+    path = sprite_file(name, community)
+    layers = (CONFIG.community_sprite_layers if community else CONFIG.sprite_layers).get(name)
     if not path.is_file() or not layers:
         return False
-    sources = [p for p in _sprite_sources() if p.exists()]
+    sources = [] if community else [p for p in _sprite_sources() if p.exists()]
     sources.extend(CONFIG.res_path / layer for layer in layers)
     try:
         newest = max(source.stat().st_mtime_ns for source in sources)
@@ -52,9 +53,9 @@ def is_composed(name):
     except OSError:
         return False
 
-def compose_sprite(name):
+def compose_sprite(name, community=False):
 
-    layers = CONFIG.sprite_layers[name]
+    layers = (CONFIG.community_sprite_layers if community else CONFIG.sprite_layers)[name]
 
     starttime = time.time()
 
@@ -63,11 +64,14 @@ def compose_sprite(name):
 
     for layer in layers[1:]:
         with Image.open(CONFIG.res_path / layer) as overlay:
+            if community and overlay.size != img.size:
+                raise ValueError('All layers of a community sprite must have the same dimensions')
             img.alpha_composite(overlay.convert('RGBA'))
 
     # Write to a temp name and swap it in, so a request that arrives while a
     # compose is in flight never sees a half-written file.
-    path = sprite_file(name)
+    path = sprite_file(name, community)
+    path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix('.webp.tmp')
     img.save(tmp, 'WEBP', quality=CONFIG.setting('images.sprite-quality'))
     os.replace(tmp, path)

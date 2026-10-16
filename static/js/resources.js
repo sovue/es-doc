@@ -139,6 +139,7 @@
             const raw = option.dataset.raw || '';
             const thumb = option.dataset.thumb || '';
             const file = option.dataset.file || '';
+            const label = option.dataset.label || code;
 
             name.textContent = code;
             distance.textContent = option.dataset.distance;
@@ -146,9 +147,9 @@
 
             if (imageLink && image && raw && thumb) {
                 imageLink.href = raw;
-                imageLink.dataset.zoom = code;
+                imageLink.dataset.zoom = label;
                 imageLink.dataset.file = file;
-                imageLink.setAttribute('aria-label', `Открыть «${code}» в полном размере`);
+                imageLink.setAttribute('aria-label', `Открыть «${label}» в полном размере`);
                 image.src = thumb;
                 image.alt = '';
             }
@@ -229,7 +230,7 @@
         row.addEventListener('res:sprite-filter', event => {
             const query = event.detail.query;
             const match = query
-                ? options.find(option => option.dataset.code.toLowerCase().includes(query))
+                ? options.find(option => `${option.dataset.code} ${option.dataset.distance}`.toLowerCase().includes(query))
                 : options[0];
             if (match) {
                 select(match);

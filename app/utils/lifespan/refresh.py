@@ -102,6 +102,7 @@ def _watchers():
         res / 'media.rpy',
         assets / 'descriptions.yaml',
         assets / 'community-descriptions.yaml',
+        assets / 'community-sprites.json',
         assets / 'nsfw.yaml',
     )
     community_files = _under(assets / 'community')

@@ -28,6 +28,8 @@ def _source_file(kind, name):
     # or the community drop-in folder next to it.
     if kind == 'sprite':
         return sprite_file(name)
+    if kind == 'community-sprite':
+        return sprite_file(name, community=True) if name in CONFIG.community_sprite_layers else None
     if kind == 'community':
         listed = any(i['file'] == name and i['thumb']
                      for category in CONFIG.resources.get('community', {}).values()

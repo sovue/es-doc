@@ -48,18 +48,18 @@ def _artist_img_lock(url, kind):
         lock = _artist_img_locks[(url, kind)] = asyncio.Lock()
     return lock
 
-async def _ensure_composed(sprite):
+async def _ensure_composed(sprite, community=False):
 
-    if sprite not in CONFIG.sprite_layers:
+    if sprite not in (CONFIG.community_sprite_layers if community else CONFIG.sprite_layers):
         raise HTTPException(404, f'Спрайт "{sprite}" не существует.')
 
-    if not is_composed(sprite):
+    if not is_composed(sprite, community):
         async with compose_lock:
             # Re-check: the request holding the lock before us may have
             # composed this very sprite.
-            if not is_composed(sprite):
+            if not is_composed(sprite, community):
                 try:
-                    await asyncio.to_thread(compose_sprite, sprite)
+                    await asyncio.to_thread(compose_sprite, sprite, community)
                 except Exception:
                     logger.exception(f'Composing sprite "{sprite}" failed.')
                     raise HTTPException(500, f'Не удалось собрать спрайт "{sprite}".') from None
@@ -70,6 +70,13 @@ async def sprite_page(sprite, request: Request):
     await _ensure_composed(sprite)
 
     return FileResponse(str(sprite_file(sprite)), media_type='image/webp', headers=cache_headers(precompressed=True))
+
+
+@router.get('/community-sprite/{sprite}')
+async def community_sprite_page(sprite: str):
+    await _ensure_composed(sprite, community=True)
+    return FileResponse(str(sprite_file(sprite, community=True)), media_type='image/webp',
+                        headers=cache_headers(precompressed=True))
 
 def _find_tinted(kind, name):
     return next((i for collection in CONFIG.resources.values()
@@ -110,12 +117,12 @@ async def tinted_page(kind, name, request: Request):
 @router.get('/thumb/{kind}/{name:path}')
 async def thumb_page(kind, name, request: Request):
 
-    if kind not in ('bg', 'cg', 'anim', 'sprite', 'community'):
+    if kind not in ('bg', 'cg', 'anim', 'sprite', 'community', 'community-sprite'):
         raise HTTPException(404, f'Категория "{kind}" не существует.')
 
-    if kind == 'sprite':
+    if kind in ('sprite', 'community-sprite'):
         # A sprite thumb derives from the composed sprite, so compose first.
-        await _ensure_composed(name)
+        await _ensure_composed(name, community=kind == 'community-sprite')
     elif kind == 'community':
         if not any(i['file'] == name and i['thumb']
                    for items in CONFIG.resources.get('community', {}).values()

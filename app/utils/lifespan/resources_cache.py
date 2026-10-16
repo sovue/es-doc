@@ -6,6 +6,7 @@ from urllib.parse import quote
 
 from ..config import CONFIG
 from ..logging import root_logger
+from .community_sprites import parse_community_sprites
 
 logger = root_logger.getChild('lifespan').getChild('resources-cache')
 
@@ -706,7 +707,7 @@ def _build_search_items(collection, collection_name='original'):
             }
             if collection_name == 'community':
                 row['context'] = 'Ресурсы сообщества / ' + row['context']
-                row['keywords'] = ' '.join([item['file'], *item.get('captions', [])])
+                row['keywords'] = ' '.join([item['file'], item.get('search', ''), *item.get('captions', [])])
             # Real descriptions (auto bg/music or hand-written) are searchable
             # too; the "уточняется" placeholder would only add noise.
             if item['desc'] and item['desc'] not in (PLACEHOLDER_DESC, UNDECLARED_DESC):
@@ -731,11 +732,18 @@ def parse_resources():
     # Community files are independent of the game's Ren'Py declarations.
     community_root = CONFIG.res_path.parent / 'community'
     community = _parse_community(community_root, _load_community_descriptions())
+    custom_sprites, custom_layers = parse_community_sprites()
+    used_layers = {path for item in custom_sprites for path in item['layer_files']}
+    community['sprites'] = custom_sprites + [
+        item for item in community['sprites']
+        if (community_root / item['file']).resolve() not in used_layers
+    ]
 
     # NSFW CG declarations are cut from the original collection and are not
     # listed in the community collection either.
     original['cg'] = [i for i in original['cg'] if not i['nsfw']]
 
+    CONFIG.community_sprite_layers = custom_layers
     CONFIG.resources = {'original': original, 'community': community}
     # Merged into CONFIG.search_items at startup and after assets refreshes.
     CONFIG.resource_search_items = (

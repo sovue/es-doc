@@ -83,6 +83,8 @@ def _count(category, items):
     # sit behind their toggle and are not part of the headline numbers.
     if category == 'sprites' and items and 'sprites' in items[0]:
         return sum(len(group['sprites']) for group in items)
+    if category == 'sprites':
+        return sum(len(item.get('variants', [item])) for item in items)
     return sum(1 for i in items if i['declared'])
 
 
@@ -309,6 +311,14 @@ async def listing(collection, category, request: Request):
         present = {i['time'] for i in items}
         bg_times = [(key, label) for key, label in BG_TIME_LABELS.items() if key in present]
 
+    community_sprite_groups = {}
+    if category == 'sprites' and collection == 'community':
+        for item in items:
+            group = item.get('sprite_group')
+            if group:
+                entry = community_sprite_groups.setdefault(group['rid'], {**group, 'families': []})
+                entry['families'].append(item)
+
     return templates.TemplateResponse(request, 'resources_list.html', {
         'collection': collection,
         'collection_meta': COLLECTIONS[collection],
@@ -317,8 +327,8 @@ async def listing(collection, category, request: Request):
         'categories': switcher,
         'items': items,
         'count': _count(category, items),
-        'count_all': (len(items) if category != 'sprites' or collection == 'community'
-                      else sum(len(g['sprites']) for g in items)),
+        'count_all': _count(category, items) if category == 'sprites' else len(items),
+        'community_sprite_groups': list(community_sprite_groups.values()),
         'has_undeclared': (category != 'sprites'
                            and any(not i['declared'] for i in items)),
         'other_href': other_href,

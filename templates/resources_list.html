@@ -54,8 +54,8 @@
     data-variant-count="{{ family.variants|length }}">
     {% if primary.thumb %}
     <a class="res-thumb res-thumb--sprite" href="{{ primary.raw }}"
-       data-media-surface data-zoom="{{ primary.code }}" data-file="{{ primary.name }}.webp"
-       aria-label="Открыть «{{ primary.code }}» в полном размере">
+       data-media-surface data-zoom="{{ family.title or primary.code }}" data-file="{{ primary.name }}.webp"
+       aria-label="Открыть «{{ family.title or primary.code }}» в полном размере">
         <img src="{{ primary.thumb }}" loading="lazy" decoding="async" alt="">
     </a>
     {% else %}
@@ -66,7 +66,8 @@
             <span class="res-sprite-picker">
                 <button type="button" class="res-sprite-trigger" aria-haspopup="listbox"
                         aria-expanded="false" aria-label="Выбрать дистанцию для {{ family.name }}">
-                    <code class="res-name">{{ primary.code }}</code>
+                    {% if collection == 'community' %}<span class="res-name res-title">{{ primary.title }}</span>
+                    {% else %}<code class="res-name">{{ primary.code }}</code>{% endif %}
                     <span class="res-sprite-distance" data-sprite-distance>{{ primary.distance }}</span>
                 </button>
                 <span class="res-sprite-menu" role="listbox" aria-label="Дистанция спрайта">
@@ -75,6 +76,7 @@
                             {% if variant.rid != primary.rid %}id="{{ variant.rid }}"{% endif %}
                             data-code="{{ variant.code }}" data-name="{{ variant.name }}"
                             data-distance="{{ variant.distance }}"
+                            data-label="{{ family.title or variant.code }}"
                             {% if variant.raw %}data-raw="{{ variant.raw }}"{% endif %}
                             {% if variant.thumb %}data-thumb="{{ variant.thumb }}"{% endif %}
                             data-file="{{ variant.name }}.webp"
@@ -87,7 +89,7 @@
         </span>
     </div>
     <div class="res-actions">
-        {{ res.copy_button(primary.code) }}
+        {% if collection == 'original' %}{{ res.copy_button(primary.code) }}{% endif %}
         {% if primary.raw %}{{ res.dl_button(primary.raw, primary.name + '.webp') }}{% endif %}
     </div>
 </li>
@@ -226,6 +228,42 @@
                 </ul>
             </section>
             {% endfor %}
+
+            {% elif category_meta.media == 'sprites' and collection == 'community' %}
+            {% if community_sprite_groups %}
+            <nav class="res-jump" aria-label="Группы спрайтов">
+                <ul role="list">
+                    {% for group in community_sprite_groups %}
+                    <li><a href="#{{ group.rid }}">{{ group.title }}</a></li>
+                    {% endfor %}
+                </ul>
+            </nav>
+            {% for group in community_sprite_groups %}
+            <section class="res-group" aria-labelledby="{{ group.rid }}">
+                <h2 class="res-group-title" id="{{ group.rid }}">{{ group.title }}</h2>
+                {% if group.desc %}<p class="res-desc">{{ group.desc }}</p>{% endif %}
+                {% if group.author.name %}
+                <p class="res-caption">Автор:
+                    {% if group.author.link %}<a href="{{ group.author.link }}">{{ group.author.name }}</a>
+                    {% else %}{{ group.author.name }}{% endif %}
+                </p>
+                {% endif %}
+                <ul class="res-list" role="list">
+                    {% for family in group.families %}{{ sprite_row(family) }}{% endfor %}
+                </ul>
+            </section>
+            {% endfor %}
+            {% endif %}
+            {% set plain_sprites = items|rejectattr('sprite_group')|list %}
+            {% if plain_sprites %}
+            <section class="res-group" aria-labelledby="community-sprite-files">
+                {% if community_sprite_groups %}<h2 class="res-group-title" id="community-sprite-files">Отдельные изображения</h2>
+                {% else %}<h2 class="sr-only" id="community-sprite-files">Спрайты</h2>{% endif %}
+                <ul class="res-list" role="list">
+                    {% for item in plain_sprites %}{{ image_row(item, sprite=true) }}{% endfor %}
+                </ul>
+            </section>
+            {% endif %}
 
             {% elif category_meta.media == 'characters' %}
             <ul class="res-list" role="list">
