@@ -19,6 +19,16 @@ from unrpa import UnRPA
 
 CHUNK = 256 * 1024
 MAX_PREVIEW_BYTES = 64 * 1024 * 1024
+MAX_DECOMPILE_INPUT_BYTES = 128 * 1024 * 1024
+MAX_DECOMPILED_DATA_BYTES = 256 * 1024 * 1024
+MAX_COMPRESSED_RPA_INDEX_BYTES = 64 * 1024 * 1024
+MAX_RPA_INDEX_BYTES = 128 * 1024 * 1024
+MAX_RPA_INDEX_ENTRIES = 250_000
+MAX_RPA_INDEX_SEGMENTS = 1_000_000
+
+
+class ResourceLimitError(ValueError):
+    """An input exceeded a deliberate memory or structure limit."""
 
 
 def safe_path(value):
@@ -34,12 +44,23 @@ def safe_path(value):
     return value
 
 
-def checked_decompress(data):
+def checked_decompress(data, max_output=MAX_DECOMPILED_DATA_BYTES,
+                       error_code='LIMIT_DECOMPILED_DATA'):
     decoder = zlib.decompressobj()
-    result = decoder.decompress(data)
+    result = bytearray()
+    pending = data
+    while pending:
+        remaining = max_output - len(result)
+        chunk = decoder.decompress(pending, remaining + 1)
+        result.extend(chunk)
+        if len(result) > max_output:
+            raise ResourceLimitError(error_code)
+        pending = decoder.unconsumed_tail
+        if not pending:
+            break
     if not decoder.eof:
         raise ValueError('Truncated compressed data')
-    return result
+    return bytes(result)
 
 
 class CheckedZlib:
@@ -80,15 +101,24 @@ def read_index(tool, source, version):
     size = source.tell()
     if not 0 <= offset < size:
         raise ValueError('Invalid archive index offset')
+    if size - offset > MAX_COMPRESSED_RPA_INDEX_BYTES:
+        raise ResourceLimitError('LIMIT_RPA_INDEX_COMPRESSED')
     source.seek(offset)
-    index = IndexUnpickler(io.BytesIO(checked_decompress(source.read())),
+    compressed = source.read(MAX_COMPRESSED_RPA_INDEX_BYTES + 1)
+    if len(compressed) > MAX_COMPRESSED_RPA_INDEX_BYTES:
+        raise ResourceLimitError('LIMIT_RPA_INDEX_COMPRESSED')
+    index = IndexUnpickler(io.BytesIO(checked_decompress(
+        compressed, MAX_RPA_INDEX_BYTES, 'LIMIT_RPA_INDEX_EXPANDED')),
                            encoding='bytes').load()
     if not isinstance(index, dict):
         raise TypeError('Invalid archive index')
+    if len(index) > MAX_RPA_INDEX_ENTRIES:
+        raise ResourceLimitError('LIMIT_RPA_INDEX_ENTRIES')
     normalized = {}
     # Preserve shared pickle segment lists rather than multiplying their
     # allocations for every path. Each unique list is validated only once.
     records_by_id = {}
+    segment_count = 0
     for path, entries in index.items():
         path = safe_path(path)
         if path in normalized or not isinstance(entries, (list, tuple)) or not entries:
@@ -98,6 +128,9 @@ def read_index(tool, source, version):
             continue
         records = []
         for entry in entries:
+            segment_count += 1
+            if segment_count > MAX_RPA_INDEX_SEGMENTS:
+                raise ResourceLimitError('LIMIT_RPA_INDEX_SEGMENTS')
             extended_index = getattr(version, 'extended_index', False)
             if extended_index and isinstance(entry, (list, tuple)) and len(entry) in (4, 5, 6, 7):
                 # This extended layout ignores first/end/end2/dlen2 metadata. Its dlen
@@ -142,7 +175,7 @@ class RenamedRPA3:
 def archive_index(tool, source, options):
     try:
         return read_index(tool, source, tool.detect_version())
-    except (MemoryError, OverflowError):
+    except (MemoryError, OverflowError, ResourceLimitError):
         raise
     except Exception:
         if not options.get('try_harder'):
@@ -386,8 +419,25 @@ def process(files, mode, options, sink, notify=lambda event: None):
             output.writestr(reserve(path), data)
             result['written'] += 1
 
-        def script(path, data):
-            text, logs = pyc_decompiler.decompile(data) if path.lower().endswith('.pyc') else decompile(data, options)
+        def copy_source(path, source):
+            with output.open(reserve(path), 'w', force_zip64=True) as destination:
+                while True:
+                    chunk = source.read(CHUNK)
+                    if not chunk:
+                        break
+                    destination.write(chunk)
+            result['written'] += 1
+
+        def script(path, data, preserve_input=False):
+            try:
+                text, logs = pyc_decompiler.decompile(data) if path.lower().endswith('.pyc') else decompile(data, options)
+            except ResourceLimitError as error:
+                if str(error) != 'LIMIT_DECOMPILED_DATA':
+                    raise
+                if preserve_input:
+                    write_bytes(path, data)
+                warn(path, 'Декомпиляция пропущена: распакованные данные сценария превышают 256 МиБ. Оригинал сохранён.')
+                return
             target = source_name(path)
             write_bytes(target, text)
             for log in logs:
@@ -403,10 +453,19 @@ def process(files, mode, options, sink, notify=lambda event: None):
                 input_paths.add(path)
                 with open(entry['source'], 'rb') as source:
                     if path.lower().endswith(('.rpyc', '.rpymc', '.pyc')) and mode != 'unrpa':
+                        source.seek(0, 2)
+                        input_size = source.tell()
+                        source.seek(0)
+                        if input_size > MAX_DECOMPILE_INPUT_BYTES:
+                            copy_source(path, source)
+                            warn(path, 'Декомпиляция пропущена: файл сценария превышает 128 МиБ. Оригинал сохранён.')
+                            result['succeeded'] += 1
+                            notify({'type': 'file', 'index': number, 'path': path, 'state': 'done'})
+                            continue
                         data = source.read()
                         if path.lower().endswith('.pyc'):
                             write_bytes(path, data)
-                        script(path, data)
+                        script(path, data, preserve_input=not path.lower().endswith('.pyc'))
                     elif path.lower().endswith('.rpa') and mode != 'unrpyc':
                         tool = UnRPA(entry['source'])
                         index = archive_index(tool, source, options)
@@ -418,13 +477,18 @@ def process(files, mode, options, sink, notify=lambda event: None):
                             notify({'type': 'entry', 'index': number, 'path': target,
                                     'current': count + 1, 'total': len(index)})
                             stream = Segments(source, segments)
-                            compiled = io.BytesIO() if mode == 'combined' and name.lower().endswith(('.rpyc', '.rpymc', '.pyc')) else None
+                            is_compiled = name.lower().endswith(('.rpyc', '.rpymc', '.pyc'))
+                            compiled_size = sum(length for _, length, _ in segments) if is_compiled else 0
+                            can_decompile = mode == 'combined' and is_compiled and compiled_size <= MAX_DECOMPILE_INPUT_BYTES
+                            compiled = io.BytesIO() if can_decompile else None
                             with output.open(reserve(target), 'w', force_zip64=True) as destination:
                                 for chunk in iter(stream.read, b''):
                                     destination.write(chunk)
                                     if compiled is not None:
                                         compiled.write(chunk)
                             result['written'] += 1
+                            if mode == 'combined' and is_compiled and not can_decompile:
+                                warn(target, 'Декомпиляция пропущена: файл сценария превышает 128 МиБ. Оригинал сохранён.')
                             if compiled is not None:
                                 try:
                                     generated = source_name(target)
