@@ -1,5 +1,4 @@
-import asyncio
-import signal
+import asyncio, signal, os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -136,6 +135,9 @@ async def lifespan(app: FastAPI):
     # on disk (docs, yaml lists, game resources) reach the site without a
     # restart (see refresh.py).
     worker = asyncio.create_task(worker_refresh_caches())
+
+    if os.environ['ES_DOC_DEBUG'] == '1' and os.name == 'nt':
+        os.system('start "" "http://localhost:8000/"')
 
     yield
 
