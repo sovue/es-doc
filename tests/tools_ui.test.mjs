@@ -507,8 +507,8 @@ test('PYC accepts uploads and shows Python source preview', async () => {
     assert.equal(pending.type, 'source-read')
     ui.send({ type: 'source-file', requestId: pending.requestId, name: 'module.py',
         buffer: new TextEncoder().encode('answer = 42\n').buffer, warnings: [], html: null })
-    assert.equal(ui.get('browser-preview').children[2].download, 'module.py')
-    assert.match(ui.get('browser-preview').children[1].children[0].children[1].children[0].textContent, /answer = 42/)
+    assert.equal(ui.get('browser-preview').children[1].download, 'module.py')
+    assert.match(ui.get('browser-preview').children[0].children[1].children[1].children[0].textContent, /answer = 42/)
 })
 
 for (const [name, mime] of [['track.OPUS', 'audio/ogg'], ['track.FLAC', 'audio/flac']]) {
@@ -558,10 +558,10 @@ test('click requests one source and renders highlighted code with a separate gut
     const html = '<span class="k">label</span> start:\n';
     ui.send({ type: 'source-file', requestId: read.requestId, name: 'script.rpy', html,
         buffer: new TextEncoder().encode('label start:\n').buffer });
-    const pre = ui.get('browser-preview').children[1].children[0];
+    const pre = ui.get('browser-preview').children[0].children[1];
     assert.equal(pre.children[0].textContent, '1');
     assert.equal(pre.children[1].children[0].innerHTML, html);
-    assert.equal(ui.get('browser-preview').children[2].download, 'script.rpy');
+    assert.equal(ui.get('browser-preview').children[1].download, 'script.rpy');
     assert.equal(ui.get('downloads').children.length, 0);
 });
 
@@ -571,19 +571,20 @@ test('preview uses the shared code panel and copies source text without the gutt
     const text = 'label start:\n    pass\n';
     ui.send({ type: 'source-file', requestId: ui.messages.at(-1).requestId, name: 'script.rpy',
         buffer: new TextEncoder().encode(text).buffer });
-    const frame = ui.get('browser-preview').children[1];
+    const frame = ui.get('browser-preview').children[0];
     assert.equal(frame.className, 'code-block code-block--numbered tools-code-frame');
-    assert.equal(frame.children[1].className, 'code-copy');
-    const pre = frame.children[0], scroll = pre.children[1];
+    const copy = frame.children[0].children[1].children[0];
+    assert.equal(copy.className, 'code-copy');
+    const pre = frame.children[1], scroll = pre.children[1];
     assert.equal(pre.tabIndex, 0);
     assert.equal(pre.attributes['aria-label'], 'Код файла');
     assert.notEqual(scroll.tabIndex, 0);
-    scroll.scrollLeft = 0;
+    pre.scrollLeft = 0;
     let prevented = false;
     pre.emit('keydown', { key: 'ArrowRight', preventDefault: () => { prevented = true; } });
-    assert.equal(scroll.scrollLeft, 40);
+    assert.equal(pre.scrollLeft, 40);
     assert.equal(prevented, true);
-    frame.children[1].click();
+    copy.click();
     assert.deepEqual(ui.copied, [text]);
 });
 
@@ -636,8 +637,8 @@ test('switching files reuses ready previews and warnings without another worker 
     const requests = ui.messages.length;
     open(0);
     assert.equal(ui.messages.length, requests);
-    assert.equal(ui.get('browser-preview').children[0].children[0].textContent, 'script.rpy');
-    assert.equal(ui.get('browser-preview').children[0].children[1].hidden, false);
+    assert.equal(ui.get('browser-preview').children[0].children[0].children[0].children[0].textContent, 'script.rpy');
+    assert.equal(ui.get('browser-preview').children[0].children[0].children[0].children[1].hidden, false);
     assert.equal(ui.get('cancel').hidden, true);
     ui.get('no-init-offset').checked = true; ui.get('no-init-offset').emit('change');
     assert.equal(ui.messages.length, requests + 1);
@@ -821,7 +822,7 @@ test('file warnings use the same indicator next to the filename, with safely ren
     ui.get('browser-list').children[0].children[0].click();
     ui.send({ type: 'source-file', requestId: ui.messages.at(-1).requestId, name: 'script.rpy',
         buffer: new TextEncoder().encode('label start:').buffer, warnings: ['<script>not executable</script>'] });
-    const heading = ui.get('browser-preview').children[0];
+    const heading = ui.get('browser-preview').children[0].children[0].children[0];
     assert.equal(heading.children[0].textContent, 'script.rpy');
     const warning = heading.children[1];
     assert.equal(warning.open, false);
@@ -831,7 +832,7 @@ test('file warnings use the same indicator next to the filename, with safely ren
     assert.equal(diagnostic.children[2].children[0].textContent, 'Техническое сообщение');
     assert.equal(diagnostic.children[2].children[1].textContent, '<script>not executable</script>');
     assert.equal(warning.children[1].attributes['aria-label'], 'Причины предупреждений файла');
-    assert.equal(ui.get('browser-preview').children[2].download, 'script.rpy');
+    assert.equal(ui.get('browser-preview').children[1].download, 'script.rpy');
 });
 
 test('legacy warnings show the Russian explanation before the original log in the file preview', async () => {
@@ -840,7 +841,7 @@ test('legacy warnings show the Russian explanation before the original log in th
     const message = "Warning: analysis found signs that this .rpyc file was generated by ren'py\n version 7 or below, while this unrpyc version targets ren'py\n version 8. Decompilation will still be attempted.";
     ui.send({ type: 'source-file', requestId: ui.messages.at(-1).requestId, name: 'script.rpy',
         buffer: new TextEncoder().encode('label start:').buffer, warnings: [message] });
-    const diagnostic = ui.get('browser-preview').children[0].children[1].children[1].children[0];
+    const diagnostic = ui.get('browser-preview').children[0].children[0].children[0].children[1].children[1].children[0];
     assert.match(diagnostic.children[1].textContent, /Файл декомпилирован/);
     assert.match(diagnostic.children[1].textContent, /возможны ошибки и неточности/);
     assert.equal(diagnostic.children[2].children[1].textContent, message);
